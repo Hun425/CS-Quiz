@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 데이터베이스 서비스
+  postgres:
+    image: postgres:15-alpine
+    container_name: quiz-postgres
+    environment:
+      POSTGRES_DB: quiz_db
+      POSTGRES_USER: quizuser
+      POSTGRES_PASSWORD: quizpass
+      # 타임존 설정 - 한국 시간 사용
+      TZ: Asia/Seoul
+    ports:
+      - "5432:5432"
+    volumes:
+      # 데이터 영속성을 위한 볼륨 설정
+      - postgres_data:/var/lib/postgresql/data
+      # 초기화 스크립트 디렉토리 마운트
+      - ./sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      # 데이터베이스 헬스체크 설정
+      test: ["CMD-SHELL", "pg_isready -U quizuser -d quiz_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - quiz-network
+
+  # Redis 캐시 서비스
+  redis:
+    image: redis:7-alpine
+    container_name: quiz-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - quiz-network
+
+  # Elasticsearch 검색 엔진
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+    container_name: quiz-elasticsearch
+    environment:
+      - node.name=quiz-es01
+      - cluster.name=quiz-es-cluster
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - quiz-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  elasticsearch_data:
+
+networks:
+  quiz-network:
+    driver: bridge
