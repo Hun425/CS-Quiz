@@ -53,7 +53,7 @@ public class Quiz {
     @Column(name = "attempt_count")
     private Integer attemptCount;
 
-    @Column(name = "avg_score", precision = 5, scale = 2)
+    @Column(name = "avg_score")
     private Double avgScore;
 
     @Column(name = "valid_until")
