@@ -7,6 +7,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.util.StringUtils;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -66,6 +67,17 @@ public class User {
             totalPoints = 0;
         }
         isActive = true;
+    }
+
+    // 프로필 업데이트 메서드
+    public void updateProfile(String username, String profileImage) {
+        if (StringUtils.hasText(username)) {
+            this.username = username;
+        }
+        if (StringUtils.hasText(profileImage)) {
+            this.profileImage = profileImage;
+        }
+        this.updatedAt = ZonedDateTime.now();
     }
 
     @PreUpdate
