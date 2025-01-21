@@ -4,8 +4,12 @@ import com.quizplatform.core.config.security.oauth.OAuth2UserInfo;
 import com.quizplatform.core.config.security.oauth.OAuth2UserInfoFactory;
 import com.quizplatform.core.domain.user.AuthProvider;
 import com.quizplatform.core.domain.user.User;
+import com.quizplatform.core.exception.OAuth2AuthenticationProcessingException;
 import com.quizplatform.core.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -17,74 +21,104 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
-
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder; // 필요한 경우 비밀번호 인코딩을 위해
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        OAuth2User oauth2User = super.loadUser(userRequest);
-
         try {
+            OAuth2User oauth2User = super.loadUser(userRequest);
             return processOAuth2User(userRequest, oauth2User);
         } catch (Exception ex) {
-            // OAuth2 인증 처리 중 예외 발생 시 처리
-            throw new OAuth2AuthenticationException(ex.getMessage());
+            logger.error("OAuth2 인증 처리 중 오류 발생", ex);
+            throw new OAuth2AuthenticationException("Authentication failed: " + ex.getMessage());
         }
     }
 
-    private OAuth2User processOAuth2User(OAuth2UserRequest userRequest, OAuth2User oauth2User) {
-        // OAuth2 제공자(Google, Github, Kakao) 확인
-        String registrationId = userRequest.getClientRegistration().getRegistrationId().toUpperCase();
-        AuthProvider authProvider = AuthProvider.valueOf(registrationId);
+    @Transactional
+    protected OAuth2User processOAuth2User(OAuth2UserRequest userRequest, OAuth2User oauth2User) {
+        // OAuth2 제공자 확인
+        AuthProvider authProvider = AuthProvider.valueOf(
+                userRequest.getClientRegistration().getRegistrationId().toUpperCase()
+        );
 
-        // OAuth2UserInfo 객체 생성
-        OAuth2UserInfo oauth2UserInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(authProvider, oauth2User.getAttributes());
+        OAuth2UserInfo oauth2UserInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(
+                authProvider,
+                oauth2User.getAttributes()
+        );
 
-        // 이메일 정보가 없는 경우 예외 처리
-        String email = oauth2UserInfo.getEmail();
-        if (!StringUtils.hasText(email)) {
-            throw new OAuth2AuthenticationException("Email not found from OAuth2 provider");
-        }
+        // 이메일 검증
+        validateEmail(oauth2UserInfo.getEmail());
 
-        // 기존 사용자 조회 또는 새로운 사용자 생성
-        Optional<User> userOptional = userRepository.findByEmail(email);
-        User user;
+        // 사용자 처리
+        User user = processUser(oauth2UserInfo, authProvider);
 
-        if (userOptional.isPresent()) {
-            user = userOptional.get();
-            // 다른 OAuth2 제공자로 가입한 경우 예외 처리
-            if (!user.getProvider().equals(authProvider)) {
-                throw new OAuth2AuthenticationException(
-                        "You're signed up with " + user.getProvider() + ". Please use that to login.");
-            }
-            // 기존 사용자 정보 업데이트
-            user = updateExistingUser(user, oauth2UserInfo);
-        } else {
-            // 새로운 사용자 등록
-            user = registerNewUser(oauth2UserInfo, authProvider);
-        }
+        // 마지막 로그인 시간 업데이트
+        user.updateLastLogin();
+        userRepository.save(user);
 
         return com.quizplatform.core.security.UserPrincipal.create(user, oauth2User.getAttributes());
     }
 
+    private void validateEmail(String email) {
+        if (!StringUtils.hasText(email)) {
+            throw new OAuth2AuthenticationException("Email not found from OAuth2 provider");
+        }
+    }
+
+    @Transactional
+    protected User processUser(OAuth2UserInfo oauth2UserInfo, AuthProvider authProvider) {
+        Optional<User> userOptional = userRepository.findByEmail(oauth2UserInfo.getEmail());
+
+        if (userOptional.isPresent()) {
+            return updateExistingUser(userOptional.get(), oauth2UserInfo, authProvider);
+        }
+
+        return registerNewUser(oauth2UserInfo, authProvider);
+    }
+
+    private User updateExistingUser(User user, OAuth2UserInfo oauth2UserInfo, AuthProvider authProvider) {
+        // 제공자 검증
+        if (!user.getProvider().equals(authProvider)) {
+            throw new OAuth2AuthenticationProcessingException(
+                    String.format("이미 %s 계정으로 가입된 이메일입니다. 해당 계정으로 로그인해주세요.", user.getProvider())
+            );
+        }
+
+        // 프로필 업데이트
+        user.updateProfile(
+                oauth2UserInfo.getName(),
+                oauth2UserInfo.getImageUrl()
+        );
+
+        return userRepository.save(user);
+    }
+
     private User registerNewUser(OAuth2UserInfo oauth2UserInfo, AuthProvider authProvider) {
+        // 사용자명 중복 체크 및 생성
+        String username = generateUniqueUsername(oauth2UserInfo.getName());
+
         User user = User.builder()
                 .provider(authProvider)
                 .providerId(oauth2UserInfo.getId())
                 .email(oauth2UserInfo.getEmail())
-                .username(oauth2UserInfo.getName())
+                .username(username)
                 .profileImage(oauth2UserInfo.getImageUrl())
                 .build();
 
         return userRepository.save(user);
     }
 
-    private User updateExistingUser(User user, OAuth2UserInfo oauth2UserInfo) {
-        user.updateProfile(
-                oauth2UserInfo.getName(),
-                oauth2UserInfo.getImageUrl()
-        );
-        return userRepository.save(user);
+    private String generateUniqueUsername(String baseName) {
+        String username = baseName;
+        int suffix = 1;
+
+        while (userRepository.existsByUsername(username)) {
+            username = String.format("%s%d", baseName, suffix++);
+        }
+
+        return username;
     }
 }
