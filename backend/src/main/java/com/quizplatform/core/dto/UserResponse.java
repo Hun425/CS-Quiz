@@ -1,4 +1,4 @@
-package com.quizplatform.modules.user.application.dto;
+package com.quizplatform.core.dto;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

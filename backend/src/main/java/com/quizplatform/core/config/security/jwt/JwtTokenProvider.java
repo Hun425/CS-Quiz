@@ -1,5 +1,7 @@
 package com.quizplatform.core.config.security.jwt;
 
+import com.quizplatform.core.exception.InvalidTokenException;
+import com.quizplatform.core.exception.TokenExpiredException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -118,6 +120,26 @@ public class JwtTokenProvider {
         long refreshThreshold = accessTokenValidityInMilliseconds / 5; // 20% threshold
         return remainingTime > 0 && remainingTime < refreshThreshold;
     }
+
+    /**
+     * 주어진 토큰의 남은 유효 시간을 밀리초 단위로 계산합니다.
+     * 토큰이 이미 만료된 경우 0을 반환합니다.
+     *
+     * @param token JWT 토큰
+     * @return 남은 유효 시간 (밀리초)
+     */
+    public long getRemainingExpirationMs(String token) {
+        try {
+            Claims claims = getClaimsFromToken(token);
+            Date expiration = claims.getExpiration();
+            Date now = new Date();
+
+            return Math.max(0, expiration.getTime() - now.getTime());
+        } catch (ExpiredJwtException e) {
+            return 0;
+        }
+    }
+
 
 
     public boolean validateToken(String token) {

@@ -22,6 +22,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder; // 필요한 경우 비밀번호 인코딩을 위해
@@ -32,7 +33,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             OAuth2User oauth2User = super.loadUser(userRequest);
             return processOAuth2User(userRequest, oauth2User);
         } catch (Exception ex) {
-            logger.error("OAuth2 인증 처리 중 오류 발생", ex);
             throw new OAuth2AuthenticationException("Authentication failed: " + ex.getMessage());
         }
     }

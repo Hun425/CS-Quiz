@@ -22,7 +22,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final com.quizplatform.core.security.jwt.JwtTokenProvider tokenProvider;
+    private final JwtTokenProvider tokenProvider;
     private final UserDetailsService userDetailsService;
 
     @Override
