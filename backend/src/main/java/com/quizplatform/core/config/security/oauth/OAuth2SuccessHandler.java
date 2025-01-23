@@ -1,6 +1,7 @@
 package com.quizplatform.core.config.security.oauth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.quizplatform.core.config.security.UserPrincipal;
 import com.quizplatform.core.config.security.jwt.JwtTokenProvider;
 import com.quizplatform.core.dto.AuthResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,7 +39,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             return;
         }
 
-        com.quizplatform.core.security.UserPrincipal userPrincipal = (com.quizplatform.core.security.UserPrincipal) authentication.getPrincipal();
+       UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
         // JWT 토큰 생성
         String accessToken = tokenProvider.generateAccessToken(authentication);

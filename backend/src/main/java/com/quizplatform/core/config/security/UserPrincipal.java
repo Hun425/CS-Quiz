@@ -1,5 +1,6 @@
-package com.quizplatform.core.security;
+package com.quizplatform.core.config.security;
 
+import com.quizplatform.core.domain.user.AuthProvider;
 import com.quizplatform.core.domain.user.User;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
@@ -14,13 +15,18 @@ public class UserPrincipal implements OAuth2User, UserDetails {
     private final UUID id;
     private final String email;
     private final String password;
+    private final String profileImage;    // 추가
+    private final AuthProvider provider;  // 추가
     private final Collection<? extends GrantedAuthority> authorities;
     private Map<String, Object> attributes;
 
-    public UserPrincipal(UUID id, String email, String password, Collection<? extends GrantedAuthority> authorities) {
+    public UserPrincipal(UUID id, String email, String password, String profileImage,
+                         AuthProvider provider, Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.email = email;
         this.password = password;
+        this.profileImage = profileImage;
+        this.provider = provider;
         this.authorities = authorities;
     }
 
@@ -33,6 +39,8 @@ public class UserPrincipal implements OAuth2User, UserDetails {
                 user.getId(),
                 user.getEmail(),
                 "",
+                user.getProfileImage(),
+                user.getProvider(),
                 authorities
         );
     }

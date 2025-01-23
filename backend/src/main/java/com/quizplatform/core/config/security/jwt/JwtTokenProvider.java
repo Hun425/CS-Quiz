@@ -5,18 +5,27 @@ import com.quizplatform.core.exception.TokenExpiredException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.security.Key;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
+import java.util.UUID;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class JwtTokenProvider {
+
+    private final RedisTemplate<String, String> redisTemplate;
+
 
     @Value("${jwt.secret}")
     private String jwtSecret;
@@ -32,6 +41,11 @@ public class JwtTokenProvider {
     @PostConstruct
     public void init() {
         this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+    }
+
+    // 리프레시 토큰 만료 시간을 반환하는 메소드
+    public long getRefreshTokenExpirationMs() {
+        return refreshTokenValidityInMilliseconds;
     }
 
     public String generateAccessToken(Authentication authentication) {
@@ -161,5 +175,34 @@ public class JwtTokenProvider {
             log.error("JWT claims string is empty");
         }
         return false;
+    }
+
+
+
+    /**
+     * 사용자의 토큰을 무효화합니다.
+     * 이 메소드는 로그아웃 시 호출되며, 해당 사용자의 모든 토큰을 블랙리스트에 추가합니다.
+     *
+     * @param userId 무효화할 토큰의 사용자 ID
+     */
+    public void invalidateToken(UUID userId) {
+        try {
+            // 블랙리스트 키 생성 (예: "blacklist:userId")
+            String blacklistKey = "blacklist:" + userId.toString();
+
+            // 현재 시간을 저장 (토큰이 무효화된 시점)
+            String blacklistValue = String.valueOf(Instant.now().getEpochSecond());
+
+            // Redis에 저장하고 만료 시간 설정
+            // 만료 시간은 리프레시 토큰의 남은 유효 기간과 동일하게 설정
+            redisTemplate.opsForValue().set(
+                    blacklistKey,
+                    blacklistValue,
+                    Duration.ofMillis(getRefreshTokenExpirationMs())
+            );
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to invalidate token", e);
+        }
     }
 }

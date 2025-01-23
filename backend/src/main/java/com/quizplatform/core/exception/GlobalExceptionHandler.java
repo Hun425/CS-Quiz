@@ -1,10 +1,13 @@
 package com.quizplatform.core.exception;
 
+import com.quizplatform.modules.user.application.dto.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.time.LocalDateTime;
 
 // com.quizplatform.core.exception 패키지에 위치
 @RestControllerAdvice

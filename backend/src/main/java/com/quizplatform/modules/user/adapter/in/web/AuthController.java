@@ -1,10 +1,12 @@
-package com.quizplatform.core.controller;
+package com.quizplatform.modules.user.adapter.in.web;
 
+import com.quizplatform.core.config.security.UserPrincipal;
 import com.quizplatform.core.config.security.jwt.JwtTokenProvider;
 import com.quizplatform.core.domain.user.AuthProvider;
 import com.quizplatform.core.dto.AuthResponse;
 import com.quizplatform.core.dto.UserResponse;
-import com.quizplatform.core.security.UserPrincipal;
+
+import com.quizplatform.core.service.CustomUserDetailsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -15,8 +17,13 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -25,7 +32,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final JwtTokenProvider tokenProvider;
-
+    private final CustomUserDetailsService customUserDetailsService;
     @Operation(summary = "소셜 로그인 URL 조회",
             description = "특정 소셜 미디어 제공자의 OAuth2 로그인 URL을 반환합니다.")
     @ApiResponses({
@@ -77,7 +84,6 @@ public class AuthController {
     })
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refreshToken(
-            @Parameter(description = "리프레시 토큰", required = true)
             @RequestHeader("Authorization") String refreshToken) {
         // Bearer 접두사 제거
         refreshToken = refreshToken.substring(7);
@@ -85,7 +91,19 @@ public class AuthController {
         // 토큰 검증 및 새로운 액세스 토큰 발급
         if (tokenProvider.validateToken(refreshToken)) {
             String userId = tokenProvider.getUserIdFromToken(refreshToken);
-            String newAccessToken = tokenProvider.generateAccessToken(/* authentication object */);
+
+            // 1. 사용자 정보를 데이터베이스에서 가져옵니다
+            UserDetails userDetails = customUserDetailsService.loadUserById(UUID.fromString(userId));
+
+            // 2. Authentication 객체를 생성합니다
+            Authentication authentication = new UsernamePasswordAuthenticationToken(
+                    userDetails,
+                    null,  // credentials (비밀번호)는 필요없으므로 null
+                    userDetails.getAuthorities()
+            );
+
+            // 3. 새로운 액세스 토큰을 생성합니다
+            String newAccessToken = tokenProvider.generateAccessToken(authentication);
 
             return ResponseEntity.ok(AuthResponse.builder()
                     .accessToken(newAccessToken)

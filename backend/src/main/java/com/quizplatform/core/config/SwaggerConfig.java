@@ -14,6 +14,7 @@ public class SwaggerConfig {
 
     @Bean
     public OpenAPI openAPI() {
+        // 보안 스키마 이름 상수 정의
         final String securitySchemeName = "bearerAuth";
 
         // API 기본 정보 설정
@@ -33,11 +34,15 @@ public class SwaggerConfig {
                 .bearerFormat("JWT");
 
         // API 문서에 보안 요구사항 추가
-        SecurityRequirement securityRequirement = new SecurityRequirement().addList(securitySchemeName);
+        SecurityRequirement securityRequirement = new SecurityRequirement()
+                .addList(securitySchemeName);
 
+        // OpenAPI 객체 생성 및 반환 (버전 명시적 지정)
         return new OpenAPI()
                 .info(info)
                 .addSecurityItem(securityRequirement)
-                .components(new Components().addSecuritySchemes(securitySchemeName, securityScheme));
+                .components(new Components()
+                        .addSecuritySchemes(securitySchemeName, securityScheme))
+                .openapi("3.0.1");  // OpenAPI 버전을 명시적으로 지정
     }
 }

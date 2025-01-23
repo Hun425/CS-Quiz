@@ -1,8 +1,9 @@
 package com.quizplatform.core.service;
 
+import com.quizplatform.core.config.security.UserPrincipal;
 import com.quizplatform.core.domain.user.User;
 import com.quizplatform.core.repository.UserRepository;
-import com.quizplatform.core.security.UserPrincipal;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

@@ -1,5 +1,6 @@
 package com.quizplatform.core.config.security.oauth;
 
+import com.quizplatform.core.config.security.UserPrincipal;
 import com.quizplatform.core.config.security.oauth.OAuth2UserInfo;
 import com.quizplatform.core.config.security.oauth.OAuth2UserInfoFactory;
 import com.quizplatform.core.domain.user.AuthProvider;
@@ -9,6 +10,8 @@ import com.quizplatform.core.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -18,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +29,6 @@ import java.util.Optional;
 @Slf4j
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder; // 필요한 경우 비밀번호 인코딩을 위해
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -59,7 +62,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         user.updateLastLogin();
         userRepository.save(user);
 
-        return com.quizplatform.core.security.UserPrincipal.create(user, oauth2User.getAttributes());
+        return UserPrincipal.create(user, oauth2User.getAttributes());
     }
 
     private void validateEmail(String email) {
@@ -120,5 +123,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
 
         return username;
+    }
+
+    public UserDetails loadUserById(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + id));
+        return UserPrincipal.create(user);
     }
 }

@@ -1,15 +1,26 @@
 package com.quizplatform.core.dto;
 
+import com.quizplatform.core.domain.user.AuthProvider;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public record UserResponse(
-        UUID id,
-        String email,
-        String username,
-        String profileImage,
-        String role,
-        Integer totalPoints,
-        LocalDateTime lastLogin,
-        LocalDateTime createdAt
-) {}
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserResponse {
+    private UUID id;
+    private String email;
+    private String username;
+    private String profileImage;
+    private String role;
+    private Integer totalPoints;
+    private LocalDateTime lastLogin;
+    private LocalDateTime createdAt;
+    private AuthProvider provider;  // 이 필드를 추가
+}
