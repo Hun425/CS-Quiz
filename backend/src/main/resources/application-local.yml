@@ -1,19 +1,112 @@
 spring:
-  # 개발 환경 데이터베이스 설정
+  # ?? ???? ??
+  profiles:
+    active: local
+
+  # ????? ??
+  datasource:
+    url: jdbc:postgresql://localhost:5432/quiz_db
+    username: quizuser
+    password: quizpass
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+      max-lifetime: 1200000
+
+  # JPA ??
   jpa:
     hibernate:
-      ddl-auto: update  # 개발 환경에서만 사용
+      ddl-auto: update  # ??? ??? ??
+    show-sql: true
     properties:
       hibernate:
         format_sql: true
-        use_sql_comments: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          time_zone: Asia/Seoul
+        # ?? ?? ??
+        jdbc.batch_size: 50
+        order_inserts: true
+        order_updates: true
+    open-in-view: false  # OSIV ????
 
-  # 개발 환경 로깅 설정
-  output:
-    ansi:
-      enabled: always
+  # Redis ??
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 10000
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
+          max-wait: -1ms
 
-# 개발 환경 로깅 설정
+  # Elasticsearch ??
+  elasticsearch:
+    uris: http://localhost:9200
+    connection-timeout: 5s
+    socket-timeout: 3s
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            redirect-uri: "{baseUrl}/oauth2/callback/{registrationId}"
+            scope:
+              - email
+              - profile
+
+          github:
+            client-id: ${GITHUB_CLIENT_ID}
+            client-secret: ${GITHUB_CLIENT_SECRET}
+            redirect-uri: "{baseUrl}/oauth2/callback/{registrationId}"
+            scope:
+              - user:email
+              - read:user
+
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET}
+            redirect-uri: "{baseUrl}/oauth2/callback/{registrationId}"
+            authorization-grant-type: authorization_code
+            client-authentication-method: POST
+            client-name: Kakao
+            scope:
+              - profile_nickname
+              - profile_image
+              - account_email
+
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
+app:
+  oauth2:
+    authorized-redirect-uri: ${OAUTH2_AUTHORIZED_REDIRECT_URI:http://localhost:3000/oauth2/redirect}
+
+
+# ?? ??
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+  tomcat:
+    max-threads: 200
+    accept-count: 100
+    connection-timeout: 5s
+
+# ?? ??
 logging:
   level:
     root: INFO
@@ -23,12 +116,28 @@ logging:
     org.springframework.cache: TRACE
     org.springframework.data.elasticsearch.client.WIRE: TRACE
 
-# 개발 환경 actuator 설정
+# JWT ??
+jwt:
+  secret: ${JWT_SECRET:your256bitlong32charactersecretkey}  # ?? ?? ????? ????? ??
+  access-token-validity: 3600000  # 1??
+  refresh-token-validity: 1209600000  # 2?
+
+# ?? ??
+cache:
+  quiz:
+    ttl: 3600  # 1??
+  user:
+    ttl: 1800  # 30?
+
+# ?????? ???? ??
 management:
   endpoints:
     web:
       exposure:
-        include: "*"
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
 
 
 # application.yml에 추가할 설정
@@ -45,3 +154,7 @@ springdoc:
   default-produces-media-type: application/json
   paths-to-match:
     - /api/**  # API 문서화할 경로 패턴
+
+
+
+
