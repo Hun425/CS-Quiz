@@ -1,39 +1,56 @@
 package com.quizplatform.core.exception;
 
-import com.quizplatform.modules.user.application.dto.ErrorResponse;
+
+import com.quizplatform.core.dto.error.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
-// com.quizplatform.core.exception 패키지에 위치
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(TokenException.class)
-    public ResponseEntity<ErrorResponse> handleTokenException(TokenException e) {
-        log.error("Token error occurred: {}", e.getMessage());
-        return createErrorResponse(HttpStatus.UNAUTHORIZED, e.getMessage());
+    @ExceptionHandler(BusinessException.class)
+    protected ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e) {
+        log.error("BusinessException: {}", e.getMessage());
+        ErrorCode errorCode = e.getErrorCode();
+        ErrorResponse response = ErrorResponse.of(errorCode);
+        return new ResponseEntity<>(response, errorCode.getStatus());
     }
 
-    @ExceptionHandler(TokenExpiredException.class)
-    public ResponseEntity<ErrorResponse> handleTokenExpiredException(TokenExpiredException e) {
-        log.error("Token expired: {}", e.getMessage());
-        return createErrorResponse(HttpStatus.UNAUTHORIZED, "Token has expired");
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    protected ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        log.error("MethodArgumentNotValidException: {}", e.getMessage());
+        List<ErrorResponse.FieldError> fieldErrors = e.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(error -> ErrorResponse.FieldError.builder()
+                        .field(error.getField())
+                        .value(error.getRejectedValue() != null ? error.getRejectedValue().toString() : "")
+                        .reason(error.getDefaultMessage())
+                        .build())
+                .collect(Collectors.toList());
+
+        return new ResponseEntity<>(
+                ErrorResponse.of(ErrorCode.INVALID_INPUT_VALUE, fieldErrors),
+                HttpStatus.BAD_REQUEST
+        );
     }
 
-    private ResponseEntity<ErrorResponse> createErrorResponse(HttpStatus status, String message) {
-        ErrorResponse errorResponse = ErrorResponse.builder()
-                .status(status.value())
-                .error(status.getReasonPhrase())
-                .message(message)
-                .timestamp(LocalDateTime.now())
-                .build();
-        return new ResponseEntity<>(errorResponse, status);
+    @ExceptionHandler(Exception.class)
+    protected ResponseEntity<ErrorResponse> handleException(Exception e) {
+        log.error("Exception: {}", e.getMessage());
+        ErrorResponse response = ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+
 }
 

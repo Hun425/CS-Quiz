@@ -15,14 +15,17 @@ public class UserPrincipal implements OAuth2User, UserDetails {
     private final UUID id;
     private final String email;
     private final String password;
-    private final String profileImage;    // 추가
-    private final AuthProvider provider;  // 추가
+    private final String profileImage;
+    private final AuthProvider provider;
     private final Collection<? extends GrantedAuthority> authorities;
+    private final User user;  // 도메인 User 객체를 저장하는 필드
     private Map<String, Object> attributes;
 
-    public UserPrincipal(UUID id, String email, String password, String profileImage,
+    // 생성자에 User 객체를 추가하여 초기화합니다.
+    public UserPrincipal(User user, String email, String password, String profileImage,
                          AuthProvider provider, Collection<? extends GrantedAuthority> authorities) {
-        this.id = id;
+        this.user = user;
+        this.id = user.getId();
         this.email = email;
         this.password = password;
         this.profileImage = profileImage;
@@ -30,15 +33,16 @@ public class UserPrincipal implements OAuth2User, UserDetails {
         this.authorities = authorities;
     }
 
+    // 정적 팩토리 메서드에서 User 객체를 전달합니다.
     public static UserPrincipal create(User user) {
         List<GrantedAuthority> authorities = Collections.singletonList(
                 new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
         );
 
         return new UserPrincipal(
-                user.getId(),
+                user,
                 user.getEmail(),
-                "",
+                "",  // 패스워드가 필요하다면 user.getPassword()를 사용
                 user.getProfileImage(),
                 user.getProvider(),
                 authorities
@@ -51,6 +55,12 @@ public class UserPrincipal implements OAuth2User, UserDetails {
         return userPrincipal;
     }
 
+    // 이 메서드를 통해 도메인 User 객체를 반환할 수 있습니다.
+    public User getUser() {
+        return user;
+    }
+
+    // 나머지 UserDetails, OAuth2User 메서드 구현...
     @Override
     public String getUsername() {
         return email;

@@ -1,7 +1,7 @@
 package com.quizplatform.core.dto.quiz;
 
 import com.quizplatform.core.domain.quiz.QuizReview;
-import lombok.Getter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;

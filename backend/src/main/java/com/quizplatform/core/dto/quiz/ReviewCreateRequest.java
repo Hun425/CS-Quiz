@@ -1,5 +1,7 @@
 package com.quizplatform.core.dto.quiz;
 
+import com.quizplatform.core.exception.BusinessException;
+import com.quizplatform.core.exception.ErrorCode;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -16,13 +18,13 @@ public class ReviewCreateRequest {
     // 유효성 검사 메서드
     public void validate() {
         if (rating < 1 || rating > 5) {
-            throw new InvalidTokenException("별점은 1에서 5 사이여야 합니다.");
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
         if (content == null || content.trim().isEmpty()) {
-            throw new InvalidTokenException("리뷰 내용은 필수입니다.");
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
         if (content.length() > 1000) {
-            throw new InvalidTokenException("리뷰 내용은 1000자를 초과할 수 없습니다.");
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 }

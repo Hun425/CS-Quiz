@@ -1,6 +1,8 @@
 package com.quizplatform.core.domain.user;
 
 import com.quizplatform.core.domain.quiz.Achievement;
+import com.quizplatform.core.service.event.DomainEventPublisher;
+import com.quizplatform.core.service.event.UserLevelUpEvent;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -55,14 +57,15 @@ public class UserLevel {
         }
     }
 
-    // 레벨업 처리
     private void levelUp() {
+        int oldLevel = level; // 기존 레벨 저장
         level++;
         currentExp -= requiredExp;
         requiredExp = calculateNextLevelExp();
-        // 레벨업 이벤트 발행
-        ApplicationEventPublisher.publishEvent(new UserLevelUpEvent(this));
+        // 두 개의 인자(this, oldLevel)를 전달합니다.
+        DomainEventPublisher.publishEvent(new UserLevelUpEvent(this, oldLevel));
     }
+
 
     // 다음 레벨 필요 경험치 계산
     private int calculateNextLevelExp() {
