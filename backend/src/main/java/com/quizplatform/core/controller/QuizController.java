@@ -26,7 +26,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/quizzes")
+@RequestMapping("/v1/quizzes")
 @RequiredArgsConstructor
 @Validated
 @Tag(name = "Quiz Controller", description = "퀴즈 관련 API를 제공합니다.")
