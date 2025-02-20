@@ -24,17 +24,21 @@ public class QBattleAnswer extends EntityPathBase<BattleAnswer> {
 
     public final StringPath answer = createString("answer");
 
-    public final DateTimePath<java.time.LocalDateTime> answerTime = createDateTime("answerTime", java.time.LocalDateTime.class);
+    public final BooleanPath correct = createBoolean("correct");
 
     public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
 
-    public final ComparablePath<java.util.UUID> id = createComparable("id", java.util.UUID.class);
+    public final NumberPath<Integer> earnedPoints = createNumber("earnedPoints", Integer.class);
 
-    public final BooleanPath isCorrect = createBoolean("isCorrect");
+    public final ComparablePath<java.util.UUID> id = createComparable("id", java.util.UUID.class);
 
     public final QBattleParticipant participant;
 
     public final com.quizplatform.core.domain.question.QQuestion question;
+
+    public final NumberPath<Integer> timeBonus = createNumber("timeBonus", Integer.class);
+
+    public final NumberPath<Integer> timeTaken = createNumber("timeTaken", Integer.class);
 
     public QBattleAnswer(String variable) {
         this(BattleAnswer.class, forVariable(variable), INITS);

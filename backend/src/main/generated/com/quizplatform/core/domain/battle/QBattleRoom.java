@@ -48,6 +48,8 @@ public class QBattleRoom extends EntityPathBase<BattleRoom> {
 
     public final NumberPath<Long> version = createNumber("version", Long.class);
 
+    public final QBattleParticipant winner;
+
     public QBattleRoom(String variable) {
         this(BattleRoom.class, forVariable(variable), INITS);
     }
@@ -67,6 +69,7 @@ public class QBattleRoom extends EntityPathBase<BattleRoom> {
     public QBattleRoom(Class<? extends BattleRoom> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
         this.quiz = inits.isInitialized("quiz") ? new com.quizplatform.core.domain.quiz.QQuiz(forProperty("quiz"), inits.get("quiz")) : null;
+        this.winner = inits.isInitialized("winner") ? new QBattleParticipant(forProperty("winner"), inits.get("winner")) : null;
     }
 
 }

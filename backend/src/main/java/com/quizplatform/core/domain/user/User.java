@@ -27,6 +27,9 @@ public class User {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private UserBattleStats battleStats;
+
     @Column(nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     private AuthProvider provider;

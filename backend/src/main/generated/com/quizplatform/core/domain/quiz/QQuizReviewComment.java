@@ -50,7 +50,7 @@ public class QQuizReviewComment extends EntityPathBase<QuizReviewComment> {
 
     public QQuizReviewComment(Class<? extends QuizReviewComment> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.commenter = inits.isInitialized("commenter") ? new com.quizplatform.core.domain.user.QUser(forProperty("commenter")) : null;
+        this.commenter = inits.isInitialized("commenter") ? new com.quizplatform.core.domain.user.QUser(forProperty("commenter"), inits.get("commenter")) : null;
         this.parentReview = inits.isInitialized("parentReview") ? new QQuizReview(forProperty("parentReview"), inits.get("parentReview")) : null;
     }
 

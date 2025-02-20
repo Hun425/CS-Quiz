@@ -52,7 +52,7 @@ public class BattleProgressBuilder {
                 .hasAnsweredCurrent(participant.hasAnsweredCurrentQuestion(
                         battleRoom.getCurrentQuestionIndex()))
                 .currentStreak(participant.getCurrentStreak())
-                .correctRate(participant.getCorrectAnswerRate())
+                .correctRate(participant.getAccuracy())
                 .averageAnswerTime(participant.getAverageAnswerTime())
                 .build();
     }

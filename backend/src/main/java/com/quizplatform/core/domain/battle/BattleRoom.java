@@ -33,6 +33,10 @@ public class BattleRoom {
     private static final int READY_TIMEOUT_SECONDS = 30;
     private static final int QUESTION_TRANSITION_SECONDS = 5;
 
+    @OneToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "winner_id")
+    private BattleParticipant winner;  // 승자 필드 추가
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
@@ -118,7 +122,7 @@ public class BattleRoom {
     }
 
     // 배틀 시작 가능 여부 확인
-    private boolean isReadyToStart() {
+    public boolean isReadyToStart() {
         return participants.size() >= MIN_PARTICIPANTS &&
                 participants.size() <= maxParticipants &&
                 participants.stream().allMatch(BattleParticipant::isReady);
@@ -388,4 +392,54 @@ public class BattleRoom {
             }
             return currentQuestion.getTimeLimitSeconds();
         }
+
+    /**
+     * 현재 문제가 마지막 문제인지 확인합니다.
+     */
+    public boolean isLastQuestion() {
+        return currentQuestionIndex == quiz.getQuestions().size() - 1;
+    }
+
+
+    /**
+     * 남은 시간(초)을 계산합니다.
+     */
+    public int getRemainingTimeSeconds() {
+        if (status != BattleRoomStatus.IN_PROGRESS || currentQuestionStartTime == null) {
+            return 0;
+        }
+
+        Question currentQuestion = getCurrentQuestion();
+        if (currentQuestion == null) {
+            return 0;
+        }
+
+        long remainingSeconds = java.time.Duration.between(
+                LocalDateTime.now(),
+                currentQuestionStartTime.plusSeconds(currentQuestion.getTimeLimitSeconds())
+        ).getSeconds();
+
+        return (int) Math.max(0, remainingSeconds);
+    }
+
+    /**
+     * 모든 문제 목록을 반환합니다.
+     */
+    public List<Question> getQuestions() {
+        return quiz.getQuestions();
+    }
+
+
+    /**
+     * 총 소요 시간(초)을 계산합니다.
+     */
+    public int getTotalTimeSeconds() {
+        if (startTime == null) {
+            return 0;
+        }
+        LocalDateTime endDateTime = endTime != null ? endTime : LocalDateTime.now();
+        return (int) java.time.Duration.between(startTime, endDateTime).getSeconds();
+    }
+
+
 }

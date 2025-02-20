@@ -1,8 +1,8 @@
 package com.quizplatform.core.domain.battle;
 
-
 import com.quizplatform.core.domain.question.Question;
 import com.quizplatform.core.domain.user.User;
+import com.quizplatform.core.dto.battle.BattleStatus;
 import com.quizplatform.core.exception.BusinessException;
 import com.quizplatform.core.exception.ErrorCode;
 import jakarta.persistence.*;
@@ -18,7 +18,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
 
 @Entity
 @Table(name = "battle_participants")
@@ -45,7 +44,13 @@ public class BattleParticipant {
     private int currentScore = 0;
 
     @Column(name = "is_ready")
-    private boolean isReady = false;
+    private boolean ready = false;
+
+    @Column(name = "is_active")
+    private boolean active = true;
+
+    @Column(name = "current_streak")
+    private int currentStreak = 0;
 
     @Column(name = "last_activity")
     private LocalDateTime lastActivity;
@@ -53,194 +58,174 @@ public class BattleParticipant {
     @CreatedDate
     private LocalDateTime createdAt;
 
+    // 최대 비활성 시간 (분)
+    private static final int MAX_INACTIVE_MINUTES = 5;
+    // 보너스 점수 상수들
+    private static final int STREAK_BONUS_THRESHOLD_1 = 3;
+    private static final int STREAK_BONUS_THRESHOLD_2 = 5;
+    private static final int STREAK_BONUS_POINTS_1 = 3;
+    private static final int STREAK_BONUS_POINTS_2 = 5;
+
     @Builder
     public BattleParticipant(BattleRoom battleRoom, User user) {
         this.battleRoom = battleRoom;
         this.user = user;
         this.lastActivity = LocalDateTime.now();
+        validateParticipant(battleRoom, user);
     }
 
-    // 답변 제출 메서드를 수정하여 새로운 시간 보너스 계산 로직 적용
-    public BattleAnswer submitAnswer(Question question, String answer) {
-        // 현재 진행 중인 문제가 맞는지 확인
-        if (!battleRoom.getCurrentQuestion().equals(question)) {
-            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+    private void validateParticipant(BattleRoom battleRoom, User user) {
+        if (battleRoom == null) {
+            throw new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND);
         }
-
-        // 제한 시간 초과 여부 확인
-        LocalDateTime questionStartTime = getQuestionStartTime();
-        if (question.isTimeExpired(questionStartTime)) {
-            throw new BusinessException(ErrorCode.QUIZ_TIME_EXPIRED);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
+    }
 
-        // 답변 생성
-        BattleAnswer battleAnswer = BattleAnswer.builder()
-                .participant(this)
-                .question(question)
-                .answer(answer)
-                .isCorrect(question.isCorrectAnswer(answer))
-                .answerTime(LocalDateTime.now())
-                .build();
+    public BattleAnswer submitAnswer(Question question, String answer, int timeSpentSeconds) {
+        validateAnswerSubmission(question, timeSpentSeconds);
 
-        answers.add(battleAnswer);
-        updateScore(battleAnswer, questionStartTime);
-        this.lastActivity = LocalDateTime.now();
+        BattleAnswer battleAnswer = createBattleAnswer(question, answer, timeSpentSeconds);
+        processAnswerResult(battleAnswer);
+        updateActivityStatus();
 
         return battleAnswer;
     }
 
-    // 점수 업데이트 로직 수정
-    private void updateScore(BattleAnswer answer, LocalDateTime questionStartTime) {
-        if (answer.isCorrect()) {
-            // 기본 점수
-            int basePoints = answer.getQuestion().getPoints();
-
-            // 남은 시간 계산
-            int secondsRemaining = calculateRemainingSeconds(
-                    questionStartTime,
-                    answer.getAnswerTime(),
-                    answer.getQuestion().getTimeLimitSeconds()
-            );
-
-            // 시간 보너스 계산
-            int timeBonus = answer.getQuestion().calculateTimeBonus(secondsRemaining);
-
-            // 총점 업데이트
-            this.currentScore += (basePoints + timeBonus);
+    private void validateAnswerSubmission(Question question, int timeSpentSeconds) {
+        if (hasAnsweredCurrentQuestion()) {
+            throw new BusinessException(ErrorCode.ANSWER_ALREADY_SUBMITTED);
+        }
+        if (!isActive()) {
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
+        if (timeSpentSeconds > question.getTimeLimitSeconds()) {
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 
-    // 현재 문제의 시작 시간 계산
-    private LocalDateTime getQuestionStartTime() {
-        int currentIndex = battleRoom.getCurrentQuestionIndex();
-        Question currentQuestion = battleRoom.getCurrentQuestion();
-
-        // 배틀 시작 시간 + 이전 문제들의 시간 제한 합계
-        LocalDateTime startTime = battleRoom.getStartTime();
-        List<Question> previousQuestions = battleRoom.getQuiz().getQuestions()
-                .subList(0, currentIndex);
-
-        int previousTimeTotal = previousQuestions.stream()
-                .mapToInt(Question::getTimeLimitSeconds)
-                .sum();
-
-        return startTime.plusSeconds(previousTimeTotal);
+    private BattleAnswer createBattleAnswer(Question question, String answer, int timeSpentSeconds) {
+        return BattleAnswer.builder()
+                .participant(this)
+                .question(question)
+                .answer(answer)
+                .timeTaken(timeSpentSeconds)
+                .build();
     }
 
-    // 남은 시간 계산 (초 단위)
-    private int calculateRemainingSeconds(
-            LocalDateTime questionStartTime,
-            LocalDateTime answerTime,
-            int timeLimitSeconds
-    ) {
-        LocalDateTime deadline = questionStartTime.plusSeconds(timeLimitSeconds);
-        Duration remainingTime = Duration.between(answerTime, deadline);
-        return (int) Math.max(0, remainingTime.getSeconds());
+    private void processAnswerResult(BattleAnswer battleAnswer) {
+        Question question = battleAnswer.getQuestion();
+        boolean isCorrect = question.isCorrectAnswer(battleAnswer.getAnswer());
+        battleAnswer.setCorrect(isCorrect);
+
+        if (isCorrect) {
+            processCorrectAnswer(battleAnswer, question);
+        } else {
+            processIncorrectAnswer(battleAnswer);
+        }
+
+        answers.add(battleAnswer);
     }
 
-    // 현재 문제 답변 여부 확인
+    private void processCorrectAnswer(BattleAnswer battleAnswer, Question question) {
+        int earnedPoints = calculateTotalPoints(question, battleAnswer.getTimeTaken());
+        battleAnswer.setEarnedPoints(earnedPoints);
+        currentScore += earnedPoints;
+        currentStreak++;
+    }
+
+    private void processIncorrectAnswer(BattleAnswer battleAnswer) {
+        battleAnswer.setEarnedPoints(0);
+        currentStreak = 0;
+    }
+
+    private int calculateTotalPoints(Question question, int timeSpentSeconds) {
+        int basePoints = question.getPoints();
+        int timeBonus = calculateTimeBonus(timeSpentSeconds, question.getTimeLimitSeconds());
+        int streakBonus = calculateStreakBonus();
+
+        return basePoints + timeBonus + streakBonus;
+    }
+
+    private int calculateTimeBonus(int timeSpentSeconds, int timeLimitSeconds) {
+        double timeRatio = 1 - (timeSpentSeconds / (double) timeLimitSeconds);
+        if (timeRatio >= 0.7) return 3;
+        if (timeRatio >= 0.5) return 2;
+        if (timeRatio >= 0.3) return 1;
+        return 0;
+    }
+
+    private int calculateStreakBonus() {
+        if (currentStreak >= STREAK_BONUS_THRESHOLD_2) return STREAK_BONUS_POINTS_2;
+        if (currentStreak >= STREAK_BONUS_THRESHOLD_1) return STREAK_BONUS_POINTS_1;
+        return 0;
+    }
+
+    public boolean hasAnsweredCurrentQuestion() {
+        return answers.size() > battleRoom.getCurrentQuestionIndex();
+    }
+
     public boolean hasAnsweredCurrentQuestion(int questionIndex) {
+        // 전달받은 questionIndex보다 많은 답변이 제출되었는지 확인합니다.
         return answers.size() > questionIndex;
     }
 
-    // 준비 상태 토글
+    public int getCorrectAnswersCount() {
+        return (int) answers.stream()
+                .filter(BattleAnswer::isCorrect)
+                .count();
+    }
+
     public void toggleReady() {
-        this.isReady = !this.isReady;
+        validateReadyToggle();
+        this.ready = !this.ready;
+        updateActivityStatus();
+    }
+
+    private void validateReadyToggle() {
+        if (!battleRoom.getStatus().name().equals(BattleStatus.WAITING.name())) {
+            throw new BusinessException(ErrorCode.BATTLE_ALREADY_STARTED);
+        }
+        if (!isActive()) {
+            throw new BusinessException(ErrorCode.PARTICIPANT_INACTIVE);
+        }
+    }
+
+    public boolean isActive() {
+        return active && !hasExceededInactiveTime();
+    }
+
+    private boolean hasExceededInactiveTime() {
+        return Duration.between(lastActivity, LocalDateTime.now())
+                .toMinutes() >= MAX_INACTIVE_MINUTES;
+    }
+
+    private void updateActivityStatus() {
         this.lastActivity = LocalDateTime.now();
     }
 
-    // 활성 상태 확인 (5분 이내 활동이 있었는지)
-    public boolean isActive() {
-        return Duration.between(lastActivity, LocalDateTime.now()).toMinutes() < 5;
+    public double getAccuracy() {
+        if (answers.isEmpty()) return 0.0;
+        return (getCorrectAnswersCount() / (double) answers.size()) * 100;
     }
 
-    // 총 답변 시간 계산
-    public Duration getTotalAnswerTime() {
-        if (answers.isEmpty()) {
-            return Duration.ZERO;
-        }
-
-        // 첫 답변부터 마지막 답변까지의 시간
-        LocalDateTime firstAnswerTime = answers.get(0).getAnswerTime();
-        LocalDateTime lastAnswerTime = answers.get(answers.size() - 1).getAnswerTime();
-
-        return Duration.between(firstAnswerTime, lastAnswerTime);
-    }
-
-    // 평균 답변 시간 계산
     public Duration getAverageAnswerTime() {
-        if (answers.isEmpty()) {
-            return Duration.ZERO;
-        }
+        if (answers.isEmpty()) return Duration.ZERO;
 
         long totalSeconds = answers.stream()
-                .mapToLong(answer ->
-                        Duration.between(
-                                getQuestionStartTimeForAnswer(answer),
-                                answer.getAnswerTime()
-                        ).getSeconds()
-                )
+                .mapToInt(BattleAnswer::getTimeTaken)
                 .sum();
-
         return Duration.ofSeconds(totalSeconds / answers.size());
     }
 
-    // 특정 답변에 대한 문제 시작 시간 계산
-    private LocalDateTime getQuestionStartTimeForAnswer(BattleAnswer answer) {
-        int answerIndex = answers.indexOf(answer);
-        return getQuestionStartTime();
+    public void addBonusPoints(int bonusPoints) {
+        // 보너스 점수를 현재 점수에 더함
+        this.currentScore += bonusPoints;
     }
 
-    // 모든 답변이 정답인지 확인
     public boolean hasAllCorrectAnswers() {
-        // 아직 모든 문제를 풀지 않았다면 false 반환
-        if (answers.size() < battleRoom.getQuiz().getQuestions().size()) {
-            return false;
-        }
-
-        return answers.stream().allMatch(BattleAnswer::isCorrect);
-    }
-
-    // 보너스 점수 추가
-    public void addBonusPoints(int points) {
-        if (points < 0) {
-            throw new BusinessException(ErrorCode.INVALID_BONUS_POINTS);
-        }
-        this.currentScore += points;
-    }
-
-    // 정답률 계산
-    public double getCorrectAnswerRate() {
-        if (answers.isEmpty()) {
-            return 0.0;
-        }
-        return answers.stream()
-                .filter(BattleAnswer::isCorrect)
-                .count() * 100.0 / answers.size();
-    }
-
-    // 연속 정답 횟수 계산
-    public int getCurrentStreak() {
-        int streak = 0;
-        for (int i = answers.size() - 1; i >= 0; i--) {
-            if (answers.get(i).isCorrect()) {
-                streak++;
-            } else {
-                break;
-            }
-        }
-        return streak;
-    }
-
-    // 특정 문제 인덱스의 답변 시간 가져오기
-    public Duration getAnswerTimeForQuestion(int questionIndex) {
-        if (questionIndex >= answers.size()) {
-            throw new BusinessException(ErrorCode.ANSWER_NOT_FOUND);
-        }
-
-        BattleAnswer answer = answers.get(questionIndex);
-        LocalDateTime questionStart = battleRoom.getQuestionStartTimeForIndex(questionIndex);
-
-        return Duration.between(questionStart, answer.getAnswerTime());
+        // 참가자의 답변이 존재하고 모두 정답이면 true 반환
+        return !answers.isEmpty() && answers.stream().allMatch(BattleAnswer::isCorrect);
     }
 }

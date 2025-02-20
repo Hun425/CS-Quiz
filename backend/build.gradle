@@ -45,6 +45,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 
+	//WebSocket
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'

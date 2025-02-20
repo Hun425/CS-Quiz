@@ -1,9 +1,9 @@
 package com.quizplatform.core.domain.quiz;
 
-
 import com.quizplatform.core.domain.question.Question;
 import com.quizplatform.core.domain.tag.Tag;
 import com.quizplatform.core.domain.user.User;
+import com.quizplatform.core.dto.battle.BattleResult;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -68,11 +68,7 @@ public class Quiz {
     private List<Question> questions = new ArrayList<>();
 
     @ManyToMany
-    @JoinTable(
-            name = "quiz_tags",
-            joinColumns = @JoinColumn(name = "quiz_id"),
-            inverseJoinColumns = @JoinColumn(name = "tag_id")
-    )
+    @JoinTable(name = "quiz_tags", joinColumns = @JoinColumn(name = "quiz_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
     private Set<Tag> tags = new HashSet<>();
 
     @CreatedDate
@@ -82,8 +78,7 @@ public class Quiz {
     private LocalDateTime updatedAt;
 
     @Builder
-    public Quiz(User creator, String title, String description, QuizType quizType,
-                DifficultyLevel difficultyLevel, Integer timeLimit) {
+    public Quiz(User creator, String title, String description, QuizType quizType, DifficultyLevel difficultyLevel, Integer timeLimit) {
         this.creator = creator;
         this.title = title;
         this.description = description;
@@ -136,14 +131,7 @@ public class Quiz {
 
     // 데일리 퀴즈 복사본 생성
     public Quiz createDailyCopy() {
-        Quiz dailyQuiz = Quiz.builder()
-                .creator(this.creator)
-                .title("[Daily] " + this.title)
-                .description(this.description)
-                .quizType(QuizType.DAILY)
-                .difficultyLevel(this.difficultyLevel)
-                .timeLimit(this.timeLimit)
-                .build();
+        Quiz dailyQuiz = Quiz.builder().creator(this.creator).title("[Daily] " + this.title).description(this.description).quizType(QuizType.DAILY).difficultyLevel(this.difficultyLevel).timeLimit(this.timeLimit).build();
 
         // 태그 복사
         this.tags.forEach(dailyQuiz::addTag);
@@ -155,6 +143,13 @@ public class Quiz {
         });
 
         return dailyQuiz;
+    }
+
+    // 배틀 결과를 반영하여 통계를 업데이트하는 메서드
+    public void updateBattleStats(BattleResult result) {
+        // 배틀의 최고 점수를 이번 퀴즈 시도의 점수로 기록합니다.
+        // 이미 recordAttempt 메서드가 attemptCount와 avgScore를 업데이트하도록 구현되어 있으므로 재사용합니다.
+        recordAttempt(result.getHighestScore());
     }
 
     // 남은 시간 확인

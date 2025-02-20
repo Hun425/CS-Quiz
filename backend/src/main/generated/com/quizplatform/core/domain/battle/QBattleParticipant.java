@@ -22,6 +22,8 @@ public class QBattleParticipant extends EntityPathBase<BattleParticipant> {
 
     public static final QBattleParticipant battleParticipant = new QBattleParticipant("battleParticipant");
 
+    public final BooleanPath active = createBoolean("active");
+
     public final ListPath<BattleAnswer, QBattleAnswer> answers = this.<BattleAnswer, QBattleAnswer>createList("answers", BattleAnswer.class, QBattleAnswer.class, PathInits.DIRECT2);
 
     public final QBattleRoom battleRoom;
@@ -30,11 +32,13 @@ public class QBattleParticipant extends EntityPathBase<BattleParticipant> {
 
     public final NumberPath<Integer> currentScore = createNumber("currentScore", Integer.class);
 
+    public final NumberPath<Integer> currentStreak = createNumber("currentStreak", Integer.class);
+
     public final ComparablePath<java.util.UUID> id = createComparable("id", java.util.UUID.class);
 
-    public final BooleanPath isReady = createBoolean("isReady");
-
     public final DateTimePath<java.time.LocalDateTime> lastActivity = createDateTime("lastActivity", java.time.LocalDateTime.class);
+
+    public final BooleanPath ready = createBoolean("ready");
 
     public final com.quizplatform.core.domain.user.QUser user;
 
@@ -57,7 +61,7 @@ public class QBattleParticipant extends EntityPathBase<BattleParticipant> {
     public QBattleParticipant(Class<? extends BattleParticipant> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
         this.battleRoom = inits.isInitialized("battleRoom") ? new QBattleRoom(forProperty("battleRoom"), inits.get("battleRoom")) : null;
-        this.user = inits.isInitialized("user") ? new com.quizplatform.core.domain.user.QUser(forProperty("user")) : null;
+        this.user = inits.isInitialized("user") ? new com.quizplatform.core.domain.user.QUser(forProperty("user"), inits.get("user")) : null;
     }
 
 }

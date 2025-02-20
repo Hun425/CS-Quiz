@@ -1,4 +1,4 @@
-package com.quizplatform.core.controller;
+package com.quizplatform.core.controller.quiz;
 
 import com.quizplatform.core.config.security.UserPrincipal;
 import com.quizplatform.core.domain.quiz.Quiz;
@@ -142,4 +142,5 @@ public class QuizController {
         QuizStatistics statistics = quizService.getQuizStatistics(quizId);
         return ResponseEntity.ok(CommonApiResponse.success(QuizStatisticsResponse.from(statistics)));
     }
+
 }

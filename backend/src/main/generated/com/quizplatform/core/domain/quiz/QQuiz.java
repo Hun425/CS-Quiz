@@ -74,7 +74,7 @@ public class QQuiz extends EntityPathBase<Quiz> {
 
     public QQuiz(Class<? extends Quiz> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.creator = inits.isInitialized("creator") ? new com.quizplatform.core.domain.user.QUser(forProperty("creator")) : null;
+        this.creator = inits.isInitialized("creator") ? new com.quizplatform.core.domain.user.QUser(forProperty("creator"), inits.get("creator")) : null;
     }
 
 }

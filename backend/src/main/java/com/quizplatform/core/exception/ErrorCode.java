@@ -21,6 +21,7 @@ public enum ErrorCode {
     QUIZ_NOT_FOUND(HttpStatus.NOT_FOUND, "Q001", "퀴즈를 찾을 수 없습니다."),
     QUIZ_ALREADY_COMPLETED(HttpStatus.CONFLICT, "Q002", "이미 완료된 퀴즈입니다."),
     QUIZ_TIME_EXPIRED(HttpStatus.FORBIDDEN, "Q003", "퀴즈 시간이 만료되었습니다."),
+    INVALID_QUESTION(HttpStatus.NOT_FOUND,"Q004","잘못된 퀴즈입니다"),
 
     // Review Related Errors
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "리뷰를 찾을 수 없습니다."),
@@ -62,8 +63,10 @@ public enum ErrorCode {
     // 배틀 검증 관련 에러
     INVALID_PARTICIPANT_COUNT(HttpStatus.BAD_REQUEST, "B050", "잘못된 참가자 수입니다."),
     INVALID_BATTLE_SETTINGS(HttpStatus.BAD_REQUEST, "B051", "잘못된 배틀 설정입니다."),
-    BATTLE_VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "B052", "배틀 검증 오류가 발생했습니다.");
+    BATTLE_VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "B052", "배틀 검증 오류가 발생했습니다."),
 
+
+    PARTICIPANT_INACTIVE(HttpStatus.BAD_REQUEST, "11", "배틀 검증 오류가 발생했습니다.");
     private final HttpStatus status;
     private final String code;
     private final String message;
