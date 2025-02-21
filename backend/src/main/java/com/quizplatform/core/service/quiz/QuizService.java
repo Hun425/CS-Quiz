@@ -11,6 +11,7 @@ import com.quizplatform.core.domain.tag.Tag;
 import com.quizplatform.core.domain.user.User;
 import com.quizplatform.core.dto.question.QuestionCreateRequest;
 import com.quizplatform.core.dto.quiz.QuizCreateRequest;
+import com.quizplatform.core.dto.quiz.QuizSummaryResponse;
 import com.quizplatform.core.exception.BusinessException;
 import com.quizplatform.core.exception.ErrorCode;
 import com.quizplatform.core.repository.UserRepository;
@@ -132,8 +133,16 @@ public class QuizService {
     /**
      * 주어진 조건에 맞는 퀴즈 목록을 검색합니다.
      */
-    public Page<Quiz> searchQuizzes(QuizSearchCondition condition, Pageable pageable) {
-        return quizRepository.search(condition, pageable);
+    @Transactional(readOnly = true)
+    public Page<QuizSummaryResponse> searchQuizzesDto(QuizSearchCondition condition, Pageable pageable) {
+        Page<Quiz> quizzes = quizRepository.search(condition, pageable);
+        // 트랜잭션 내에서 DTO로 변환
+        return quizzes.map(QuizSummaryResponse::from);
+    }
+
+    public Quiz getQuizWithQuestions(UUID quizId) {
+        return quizRepository.findByIdWithQuestions(quizId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND));
     }
 
     /**

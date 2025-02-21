@@ -88,9 +88,8 @@ public class QuizController {
     public ResponseEntity<CommonApiResponse<PageResponse<QuizSummaryResponse>>> searchQuizzes(
             @ModelAttribute QuizSearchRequest request,
             Pageable pageable) {
-        Page<Quiz> quizzes = quizService.searchQuizzes(request.toCondition(), pageable);
-        return ResponseEntity.ok(CommonApiResponse.success(PageResponse.of(
-                quizzes.map(QuizSummaryResponse::from))));
+        Page<QuizSummaryResponse> quizzesDto = quizService.searchQuizzesDto(request.toCondition(), pageable);
+        return ResponseEntity.ok(CommonApiResponse.success(PageResponse.of(quizzesDto)));
     }
 
     @Operation(summary = "데일리 퀴즈 조회", description = "오늘의 데일리 퀴즈를 조회합니다.")

@@ -61,4 +61,7 @@ public interface QuizRepository extends JpaRepository<Quiz, UUID>, CustomQuizRep
             "JOIN q.tags t " +
             "WHERE t = :tag")
     Page<Quiz> findByTags(@Param("tag") Tag tag, Pageable pageable);
+
+    @Query("SELECT q FROM Quiz q LEFT JOIN FETCH q.questions WHERE q.id = :id")
+    Optional<Quiz> findByIdWithQuestions(@Param("id") UUID id);
 }
