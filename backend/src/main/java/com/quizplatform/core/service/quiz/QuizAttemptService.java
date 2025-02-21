@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 // Service implementation
@@ -27,7 +26,7 @@ public class QuizAttemptService {
     private final QuestionAttemptRepository questionAttemptRepository;
     private final QuizRepository quizRepository;
 
-    public QuizAttempt startQuiz(UUID quizId, User user) {
+    public QuizAttempt startQuiz(Long quizId, User user) {
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND));
 
@@ -43,7 +42,7 @@ public class QuizAttemptService {
                 .build());
     }
 
-    public QuestionAttempt submitAnswer(UUID quizAttemptId, UUID questionId, String answer) {
+    public QuestionAttempt submitAnswer(Long quizAttemptId, Long questionId, String answer) {
         QuizAttempt quizAttempt = quizAttemptRepository.findById(quizAttemptId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
 
@@ -64,7 +63,7 @@ public class QuizAttemptService {
         return questionAttemptRepository.save(questionAttempt);
     }
 
-    public QuizAttempt completeQuiz(UUID quizAttemptId) {
+    public QuizAttempt completeQuiz(Long quizAttemptId) {
         QuizAttempt quizAttempt = quizAttemptRepository.findById(quizAttemptId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
 
@@ -76,7 +75,7 @@ public class QuizAttemptService {
         return quizAttemptRepository.save(quizAttempt);
     }
 
-    public List<QuestionAttemptDto> getQuizResults(UUID quizAttemptId) {
+    public List<QuestionAttemptDto> getQuizResults(Long quizAttemptId) {
         QuizAttempt quizAttempt = quizAttemptRepository.findById(quizAttemptId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
 

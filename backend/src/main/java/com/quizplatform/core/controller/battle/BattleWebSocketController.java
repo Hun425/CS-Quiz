@@ -9,7 +9,6 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
-import java.util.UUID;
 
 @Controller
 @RequiredArgsConstructor
@@ -81,7 +80,7 @@ public class BattleWebSocketController {
     /**
      * 다음 문제로 진행
      */
-    private void moveToNextQuestion(UUID roomId) {
+    private void moveToNextQuestion(Long roomId) {
         BattleNextQuestionResponse response = battleService.prepareNextQuestion(roomId);
 
         if (response.isGameOver()) {
@@ -99,7 +98,7 @@ public class BattleWebSocketController {
     /**
      * 대결 시작
      */
-    private void startBattle(UUID roomId) {
+    private void startBattle(Long roomId) {
         BattleStartResponse response = battleService.startBattle(roomId);
 
         // 대결 시작 알림 전송
@@ -112,7 +111,7 @@ public class BattleWebSocketController {
     /**
      * 대결 종료
      */
-    private void endBattle(UUID roomId) {
+    private void endBattle(Long roomId) {
         BattleEndResponse response = battleService.endBattle(roomId);
 
         // 최종 결과 전송

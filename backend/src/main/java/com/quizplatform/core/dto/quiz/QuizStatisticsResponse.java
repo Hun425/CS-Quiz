@@ -23,7 +23,7 @@ public class QuizStatisticsResponse {
     @Getter
     @Builder
     public static class QuestionStatistics {
-        private UUID questionId;
+        private Long questionId;
         private int correctAnswers;
         private int totalAttempts;
         private double correctRate;

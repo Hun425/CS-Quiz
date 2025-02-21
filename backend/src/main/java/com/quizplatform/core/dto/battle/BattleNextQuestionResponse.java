@@ -10,7 +10,7 @@ import java.util.UUID;
 @Getter
 @Builder
 public class BattleNextQuestionResponse {
-    private UUID questionId;
+    private Long questionId;
     private String questionText;
     private String questionType;
     private List<String> options;

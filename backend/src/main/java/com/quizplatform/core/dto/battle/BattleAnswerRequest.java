@@ -9,8 +9,8 @@ import java.util.UUID;
 @Getter
 @Builder
 public class BattleAnswerRequest {
-    private UUID roomId;
-    private UUID questionId;
+    private Long roomId;
+    private Long questionId;
     private String answer;
     private int timeSpentSeconds;
 }

@@ -10,7 +10,6 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 // BattleProgress를 생성하는 빌더 클래스
 @RequiredArgsConstructor
@@ -19,7 +18,7 @@ public class BattleProgressBuilder {
 
     public BattleProgress build() {
         // 참가자별 진행 상황 계산
-        Map<UUID, ParticipantProgress> participantProgresses = new HashMap<>();
+        Map<Long, ParticipantProgress> participantProgresses = new HashMap<>();
         for (BattleParticipant participant : battleRoom.getParticipants()) {
             participantProgresses.put(
                     participant.getId(),

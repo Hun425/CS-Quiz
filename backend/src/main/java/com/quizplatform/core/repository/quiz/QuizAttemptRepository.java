@@ -11,9 +11,8 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
-public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, UUID> {
+public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, Long> {
 
     List<QuizAttempt> findByQuiz(Quiz quiz);
     Page<QuizAttempt> findByUser(User user, Pageable pageable);

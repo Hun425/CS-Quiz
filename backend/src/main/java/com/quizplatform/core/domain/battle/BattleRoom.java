@@ -38,8 +38,8 @@ public class BattleRoom {
     private BattleParticipant winner;  // 승자 필드 추가
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiz_id")
@@ -260,7 +260,7 @@ public class BattleRoom {
     }
 
     // 참가자별 점수 조회
-    private Map<UUID, Integer> getParticipantScores() {
+    private Map<Long, Integer> getParticipantScores() {
         return participants.stream()
                 .collect(Collectors.toMap(
                         p -> p.getUser().getId(),

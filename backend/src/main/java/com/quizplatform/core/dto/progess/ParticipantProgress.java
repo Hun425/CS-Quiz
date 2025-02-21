@@ -8,7 +8,7 @@ import java.util.UUID;
 @Getter
 @Builder
 public class ParticipantProgress {
-    private UUID participantId;           // 참가자 ID
+    private Long participantId;           // 참가자 ID
     private String username;              // 사용자 이름
     private int currentScore;             // 현재 점수
     private int correctAnswers;           // 맞은 문제 수

@@ -9,7 +9,7 @@ import java.util.UUID;
 @Getter
 @Builder
 public class BattleJoinRequest {
-    private UUID userId;
-    private UUID roomId;
+    private Long userId;
+    private Long roomId;
     private boolean isReady;
 }

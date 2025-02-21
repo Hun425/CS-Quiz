@@ -23,8 +23,8 @@ import java.util.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Quiz {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creator_id")

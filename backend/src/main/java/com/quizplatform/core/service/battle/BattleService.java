@@ -105,7 +105,7 @@ public class BattleService {
     /**
      * 대결 시작 준비 상태 확인
      */
-    public boolean isReadyToStart(UUID roomId) {
+    public boolean isReadyToStart(Long roomId) {
         BattleRoom room = battleRoomRepository.findById(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
@@ -116,7 +116,7 @@ public class BattleService {
      * 대결 시작 처리
      */
     @Transactional
-    public BattleStartResponse startBattle(UUID roomId) {
+    public BattleStartResponse startBattle(Long roomId) {
         BattleRoom room = battleRoomRepository.findById(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
@@ -131,7 +131,7 @@ public class BattleService {
      * 다음 문제 준비
      */
     @Transactional
-    public BattleNextQuestionResponse prepareNextQuestion(UUID roomId) {
+    public BattleNextQuestionResponse prepareNextQuestion(Long roomId) {
         BattleRoom room = battleRoomRepository.findById(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
@@ -148,7 +148,7 @@ public class BattleService {
     /**
      * 모든 참가자의 답변 여부 확인
      */
-    public boolean allParticipantsAnswered(UUID roomId) {
+    public boolean allParticipantsAnswered(Long roomId) {
         BattleRoom room = battleRoomRepository.findById(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
@@ -158,7 +158,7 @@ public class BattleService {
     /**
      * 대결 진행 상황 조회
      */
-    public BattleProgressResponse getBattleProgress(UUID roomId) {
+    public BattleProgressResponse getBattleProgress(Long roomId) {
         BattleRoom room = battleRoomRepository.findById(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
@@ -169,7 +169,7 @@ public class BattleService {
      * 대결 종료 처리
      */
     @Transactional
-    public BattleEndResponse endBattle(UUID roomId) {
+    public BattleEndResponse endBattle(Long roomId) {
         BattleRoom room = battleRoomRepository.findById(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
@@ -203,7 +203,7 @@ public class BattleService {
             return null;
         }
 
-        return participantRepository.findById(UUID.fromString(participantId))
+        return participantRepository.findById(Long.parseLong(participantId))
                 .orElse(null);
     }
 
@@ -303,7 +303,7 @@ public class BattleService {
      * 현재 진행 상태와 참가자들의 점수 현황을 포함합니다.
      */
     private BattleProgressResponse createBattleProgressResponse(BattleRoom room) {
-        Map<UUID, BattleProgressResponse.ParticipantProgress> participantProgress = new HashMap<>();
+        Map<Long, BattleProgressResponse.ParticipantProgress> participantProgress = new HashMap<>();
 
         room.getParticipants().forEach(participant -> {
             participantProgress.put(
@@ -434,7 +434,7 @@ public class BattleService {
     private BattleEndResponse createBattleEndResponse(BattleResult result) {
         List<BattleEndResponse.ParticipantResult> participantResults = result.getParticipants().stream()
                 .map(participant -> {
-                    Map<UUID, Boolean> questionResults = participant.getAnswers().stream()
+                    Map<Long, Boolean> questionResults = participant.getAnswers().stream()
                             .collect(Collectors.toMap(
                                     answer -> answer.getQuestion().getId(),
                                     BattleAnswer::isCorrect

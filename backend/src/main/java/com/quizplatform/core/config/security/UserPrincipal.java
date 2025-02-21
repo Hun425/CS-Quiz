@@ -12,7 +12,7 @@ import java.util.*;
 
 @Getter
 public class UserPrincipal implements OAuth2User, UserDetails {
-    private final UUID id;
+    private final Long id;
     private final String email;
     private final String password;
     private final String profileImage;

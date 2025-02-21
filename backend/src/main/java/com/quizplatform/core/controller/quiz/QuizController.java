@@ -22,7 +22,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -57,9 +56,10 @@ public class QuizController {
     @PutMapping("/{quizId}")
     public ResponseEntity<CommonApiResponse<QuizResponse>> updateQuiz(
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @Parameter(description = "수정할 퀴즈의 ID",
-                    example = "#{T(com.quizplatform.core.config.TestDataInitializer).EXAMPLE_QUIZ_ID}")
-            @PathVariable UUID quizId,
+            @Parameter(description = "수정할 퀴즈의 ID"
+//                    example = "#{T(com.quizplatform.core.config.TestDataInitializer).EXAMPLE_QUIZ_ID}")
+            )
+            @PathVariable Long quizId,
             @Valid @RequestBody QuizCreateRequest request) {
         Quiz quiz = quizService.updateQuiz(quizId, request);
         return ResponseEntity.ok(CommonApiResponse.success(QuizResponse.from(quiz)));
@@ -72,9 +72,10 @@ public class QuizController {
     })
     @GetMapping("/{quizId}")
     public ResponseEntity<CommonApiResponse<QuizDetailResponse>> getQuiz(
-            @Parameter(description = "조회할 퀴즈의 ID",
-                    example = "#{T(com.quizplatform.core.config.TestDataInitializer).EXAMPLE_QUIZ_ID}")
-            @PathVariable UUID quizId) {
+            @Parameter(description = "조회할 퀴즈의 ID"
+//                    example = "#{T(com.quizplatform.core.config.TestDataInitializer).EXAMPLE_QUIZ_ID}"
+                    )
+            @PathVariable Long quizId) {
         Quiz quiz = quizService.getQuizWithoutQuestions(quizId);
         return ResponseEntity.ok(CommonApiResponse.success(QuizDetailResponse.from(quiz)));
     }
@@ -127,9 +128,10 @@ public class QuizController {
     })
     @GetMapping("/tags/{tagId}")
     public ResponseEntity<CommonApiResponse<PageResponse<QuizSummaryResponse>>> getQuizzesByTag(
-            @Parameter(description = "조회할 태그의 ID",
-                    example = "#{T(com.quizplatform.core.config.TestDataInitializer).EXAMPLE_TAG_ID}")
-            @PathVariable UUID tagId,
+            @Parameter(description = "조회할 태그의 ID"
+//                    example = "#{T(com.quizplatform.core.config.TestDataInitializer).EXAMPLE_TAG_ID}")
+            )
+            @PathVariable Long tagId,
             Pageable pageable) {
         Page<Quiz> quizzes = quizService.getQuizzesByTag(tagId, pageable);
         return ResponseEntity.ok(CommonApiResponse.success(PageResponse.of(
@@ -143,9 +145,10 @@ public class QuizController {
     })
     @GetMapping("/{quizId}/statistics")
     public ResponseEntity<CommonApiResponse<QuizStatisticsResponse>> getQuizStatistics(
-            @Parameter(description = "통계를 조회할 퀴즈의 ID",
-                    example = "#{T(com.quizplatform.core.config.TestDataInitializer).EXAMPLE_QUIZ_ID}")
-            @PathVariable UUID quizId) {
+            @Parameter(description = "통계를 조회할 퀴즈의 ID"
+//                    example = "#{T(com.quizplatform.core.config.TestDataInitializer).EXAMPLE_QUIZ_ID}")
+            )
+            @PathVariable Long quizId) {
         QuizStatistics statistics = quizService.getQuizStatistics(quizId);
         return ResponseEntity.ok(CommonApiResponse.success(QuizStatisticsResponse.from(statistics)));
     }

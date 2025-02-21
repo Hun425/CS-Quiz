@@ -3,7 +3,6 @@ package com.quizplatform.core.domain.quiz;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.util.UUID;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -53,7 +52,7 @@ public class QuizStatistics {
     @Getter
     @Builder
     public static class QuestionStatistic {
-        private UUID questionId;
+        private Long questionId;
         private int correctAnswers;
         private int totalAttempts;
         private double correctRate;

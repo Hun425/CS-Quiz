@@ -7,7 +7,6 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.util.List;
-import java.util.UUID;
 
 // 퀴즈 생성을 위한 DTO
 @Getter
@@ -18,6 +17,6 @@ public class QuizCreateRequest {
     private QuizType quizType;
     private DifficultyLevel difficultyLevel;
     private Integer timeLimit;
-    private List<UUID> tagIds;
+    private List<Long> tagIds;
     private List<QuestionCreateRequest> questions;
 }

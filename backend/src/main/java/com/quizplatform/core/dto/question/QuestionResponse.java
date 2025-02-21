@@ -12,7 +12,7 @@ import java.util.UUID;
 @Getter
 @Builder
 public class QuestionResponse {
-    private UUID id;
+    private Long id;
     private QuestionType questionType;
     private String questionText;
     private String codeSnippet;

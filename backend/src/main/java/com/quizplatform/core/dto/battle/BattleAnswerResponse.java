@@ -9,7 +9,7 @@ import java.util.UUID;
 @Getter
 @Builder
 public class BattleAnswerResponse {
-    private UUID questionId;
+    private Long questionId;
     private boolean isCorrect;
     private int earnedPoints;
     private int timeBonus;

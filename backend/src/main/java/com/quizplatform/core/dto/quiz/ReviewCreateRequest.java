@@ -10,8 +10,8 @@ import java.util.UUID;
 @Getter
 @Builder
 public class ReviewCreateRequest {
-    private UUID reviewerId;
-    private UUID quizId;
+    private Long reviewerId;
+    private Long quizId;
     private int rating;
     private String content;
 

@@ -1,6 +1,5 @@
 package com.quizplatform.core.service.quiz;
 
-
 import com.quizplatform.core.domain.question.Question;
 import com.quizplatform.core.domain.question.QuestionAttempt;
 import com.quizplatform.core.domain.quiz.DifficultyLevel;
@@ -38,15 +37,16 @@ public class QuizService {
     private final TagRepository tagRepository;
     private final UserRepository userRepository;
     private final QuizAttemptRepository quizAttemptRepository;
+
     /**
      * 새로운 퀴즈를 생성합니다.
      * 이 메서드는 퀴즈의 기본 정보와 함께 문제들도 함께 생성합니다.
      */
     @Transactional
-    public Quiz createQuiz(UUID creatorId, QuizCreateRequest request) {
+    public Quiz createQuiz(Long creatorId, QuizCreateRequest request) {
         // 퀴즈 생성자 조회
         User creator = userRepository.findById(creatorId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "User not found with id: " + creatorId));
 
         // 태그 조회 및 검증
         Set<Tag> tags = validateAndGetTags(request.getTagIds());
@@ -77,9 +77,9 @@ public class QuizService {
      * 문제와 태그의 수정도 함께 처리합니다.
      */
     @Transactional
-    public Quiz updateQuiz(UUID quizId, QuizCreateRequest request) {
+    public Quiz updateQuiz(Long quizId, QuizCreateRequest request) {
         Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND, "Quiz not found with id: " + quizId));
 
         // 기본 정보 업데이트
         quiz.update(
@@ -111,7 +111,7 @@ public class QuizService {
         List<Quiz> recentDailyQuizzes = quizRepository
                 .findRecentDailyQuizzes(LocalDateTime.now().minusDays(7));
 
-        Set<UUID> recentTagIds = new HashSet<>();
+        Set<Long> recentTagIds = new HashSet<>();
         Set<DifficultyLevel> recentDifficulties = new HashSet<>();
 
         recentDailyQuizzes.forEach(quiz -> {
@@ -121,7 +121,7 @@ public class QuizService {
 
         // 적절한 퀴즈 선택
         Quiz selectedQuiz = quizRepository.findQuizForDaily(recentTagIds, recentDifficulties)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_READY_TO_START));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_READY_TO_START, "No quiz available for daily creation based on recent data"));
 
         // 데일리 퀴즈로 설정
         Quiz dailyQuiz = selectedQuiz.createDailyCopy();
@@ -140,9 +140,9 @@ public class QuizService {
         return quizzes.map(QuizSummaryResponse::from);
     }
 
-    public Quiz getQuizWithQuestions(UUID quizId) {
+    public Quiz getQuizWithQuestions(Long quizId) {
         return quizRepository.findByIdWithQuestions(quizId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND, "Quiz not found with id: " + quizId));
     }
 
     /**
@@ -166,10 +166,10 @@ public class QuizService {
     }
 
     // 내부 헬퍼 메서드들
-    private Set<Tag> validateAndGetTags(List<UUID> tagIds) {
+    private Set<Tag> validateAndGetTags(List<Long> tagIds) {
         return tagIds.stream()
                 .map(tagId -> tagRepository.findById(tagId)
-                        .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND)))
+                        .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND, "Tag not found with id: " + tagId)))
                 .collect(Collectors.toSet());
     }
 
@@ -200,9 +200,9 @@ public class QuizService {
     /**
      * 문제 내용을 제외한 퀴즈 정보를 조회합니다.
      */
-    public Quiz getQuizWithoutQuestions(UUID quizId) {
+    public Quiz getQuizWithoutQuestions(Long quizId) {
         Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND, "Quiz not found with id: " + quizId));
 
         // 문제 내용은 제외하고 기본 정보만 반환
         quiz.getQuestions().size(); // 지연 로딩 초기화
@@ -214,16 +214,16 @@ public class QuizService {
      */
     public Quiz getCurrentDailyQuiz() {
         return quizRepository.findCurrentDailyQuiz(LocalDateTime.now())
-                .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR));
+                .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "Current daily quiz not found at " + LocalDateTime.now()));
     }
 
     /**
      * 특정 태그에 속한 퀴즈 목록을 조회합니다.
      */
     @Transactional(readOnly = true)
-    public Page<Quiz> getQuizzesByTag(UUID tagId, Pageable pageable) {
+    public Page<Quiz> getQuizzesByTag(Long tagId, Pageable pageable) {
         Tag tag = tagRepository.findById(tagId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR));
+                .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "Tag not found with id: " + tagId));
 
         return quizRepository.findByTags(tag, pageable);
     }
@@ -232,15 +232,15 @@ public class QuizService {
      * 퀴즈의 상세 통계 정보를 조회합니다.
      */
     @Transactional(readOnly = true)
-    public QuizStatistics getQuizStatistics(UUID quizId) {
+    public QuizStatistics getQuizStatistics(Long quizId) {
         Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND, "Quiz not found with id: " + quizId));
 
         // 퀴즈 시도 기록 조회
         List<QuizAttempt> attempts = quizAttemptRepository.findByQuiz(quiz);
 
         // 문제별 통계 계산
-        Map<UUID, QuestionStatistics> questionStats = calculateQuestionStatistics(quiz, attempts);
+        Map<Long, QuestionStatistics> questionStats = calculateQuestionStatistics(quiz, attempts);
 
         return QuizStatistics.builder()
                 .totalAttempts(attempts.size())
@@ -252,8 +252,8 @@ public class QuizService {
                 .build();
     }
 
-    private Map<UUID, QuestionStatistics> calculateQuestionStatistics(Quiz quiz, List<QuizAttempt> attempts) {
-        Map<UUID, QuestionStatistics> stats = new HashMap<>();
+    private Map<Long, QuestionStatistics> calculateQuestionStatistics(Quiz quiz, List<QuizAttempt> attempts) {
+        Map<Long, QuestionStatistics> stats = new HashMap<>();
 
         // 각 문제별 통계 초기화
         quiz.getQuestions().forEach(question -> {
@@ -273,12 +273,12 @@ public class QuizService {
 
     @Getter
     private static class QuestionStatistics {
-        private final UUID questionId;
+        private final Long questionId;
         private int correctAnswers = 0;
         private int totalAttempts = 0;
         private long totalTimeSeconds = 0;
 
-        public QuestionStatistics(UUID questionId) {
+        public QuestionStatistics(Long questionId) {
             this.questionId = questionId;
         }
 
@@ -329,7 +329,7 @@ public class QuizService {
     }
 
     private List<QuizStatistics.QuestionStatistic> createQuestionStatisticsList(
-            Map<UUID, QuestionStatistics> questionStats) {
+            Map<Long, QuestionStatistics> questionStats) {
         return questionStats.values().stream()
                 .map(stats -> QuizStatistics.QuestionStatistic.builder()
                         .questionId(stats.getQuestionId())

@@ -7,14 +7,13 @@ import lombok.Getter;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 @Getter
 public class QuizSearchRequest {
     private String title;
     private DifficultyLevel difficultyLevel;
     private QuizType quizType;
-    private List<UUID> tagIds;
+    private List<Long> tagIds;
     private Integer minQuestions;
     private Integer maxQuestions;
     private String orderBy;

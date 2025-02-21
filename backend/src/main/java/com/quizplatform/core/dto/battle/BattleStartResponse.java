@@ -11,7 +11,7 @@ import java.util.UUID;
 @Getter
 @Builder
 public class BattleStartResponse {
-    private UUID roomId;
+    private Long roomId;
     private List<ParticipantInfo> participants;
     private int totalQuestions;
     private int timeLimit;
@@ -21,7 +21,7 @@ public class BattleStartResponse {
     @Getter
     @Builder
     public static class ParticipantInfo {
-        private UUID userId;
+        private Long userId;
         private String username;
         private String profileImage;
         private int level;

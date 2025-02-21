@@ -9,9 +9,8 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
-public interface BattleParticipantRepository extends JpaRepository<BattleParticipant, UUID> {
+public interface BattleParticipantRepository extends JpaRepository<BattleParticipant, Long> {
     List<BattleParticipant> findByBattleRoom(BattleRoom battleRoom);
 
     Optional<BattleParticipant> findByBattleRoomAndUser(BattleRoom battleRoom, User user);

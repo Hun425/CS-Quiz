@@ -9,7 +9,7 @@ import java.util.UUID;
 @Getter
 @Builder
 public class TagResponse {
-    private UUID id;
+    private Long id;
     private String name;
     private String description;
     private int quizCount;

@@ -12,8 +12,8 @@ import java.util.stream.Collectors;
 @Getter
 @Builder
 public class QuizReviewDto {
-    private UUID id;
-    private UUID quizId;
+    private Long id;
+    private Long quizId;
     private String reviewerName;
     private int rating;
     private String content;

@@ -5,14 +5,13 @@ import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 // 대결방 입장 응답 DTO
 @Getter
 @Builder
 public class BattleJoinResponse {
-    private UUID roomId;
-    private UUID userId;
+    private Long roomId;
+    private Long userId;
     private String username;
     private int currentParticipants;
     private int maxParticipants;
@@ -22,7 +21,7 @@ public class BattleJoinResponse {
     @Getter
     @Builder
     public static class ParticipantInfo {
-        private UUID userId;
+        private Long userId;
         private String username;
         private String profileImage;
         private int level;

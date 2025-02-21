@@ -9,8 +9,8 @@ import java.util.UUID;
 @Getter
 @Builder
 public class QuestionAttemptDto {
-    private UUID id;
-    private UUID questionId;
+    private Long id;
+    private Long questionId;
     private String questionText;
     private String userAnswer;
     private boolean isCorrect;

@@ -10,10 +10,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
-import java.util.UUID;
 
 // Repository interfaces
-public interface QuizReviewRepository extends JpaRepository<QuizReview, UUID> {
+public interface QuizReviewRepository extends JpaRepository<QuizReview, Long> {
     Page<QuizReview> findByQuiz(Quiz quiz, Pageable pageable);
     List<QuizReview> findByReviewer(User reviewer);
 

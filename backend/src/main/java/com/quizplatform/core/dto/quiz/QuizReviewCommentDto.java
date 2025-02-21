@@ -9,7 +9,7 @@ import java.util.UUID;
 @Getter
 @Builder
 public class QuizReviewCommentDto {
-    private UUID id;
+    private Long id;
     private String commenterName;
     private String content;
     private LocalDateTime createdAt;

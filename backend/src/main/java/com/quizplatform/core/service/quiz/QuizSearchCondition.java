@@ -9,8 +9,6 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-
 @Getter
 @Builder
 public class QuizSearchCondition {
@@ -18,7 +16,7 @@ public class QuizSearchCondition {
     private String title;                    // 제목 검색
     private DifficultyLevel difficultyLevel; // 난이도
     private QuizType quizType;              // 퀴즈 유형
-    private List<UUID> tagIds;              // 태그 ID 목록
+    private List<Long> tagIds;              // 태그 ID 목록
     private Integer minQuestions;            // 최소 문제 수
     private Integer maxQuestions;            // 최대 문제 수
     private String orderBy;                  // 정렬 기준
@@ -30,7 +28,7 @@ public class QuizSearchCondition {
     private Integer minAttempts;            // 최소 시도 횟수
     private LocalDateTime createdAfter;     // 생성일 시작
     private LocalDateTime createdBefore;    // 생성일 종료
-    private UUID creatorId;                 // 생성자 ID
+    private Long creatorId;                 // 생성자 ID
 
     // 정렬 옵션 상수
     public static final String ORDER_BY_CREATED_DATE = "createdAt";
@@ -126,14 +124,14 @@ public class QuizSearchCondition {
 
     // 빌더 패턴을 사용한 기본값 설정
     public static class QuizSearchConditionBuilder {
-        private List<UUID> tagIds = new ArrayList<>();
+        private List<Long> tagIds = new ArrayList<>();
         private String orderBy = ORDER_BY_CREATED_DATE;
         private Boolean isPublic = true;
 
         // 기존 빌더 메서드들은 그대로 유지...
 
         // 태그 ID 추가 메서드
-        public QuizSearchConditionBuilder addTagId(UUID tagId) {
+        public QuizSearchConditionBuilder addTagId(Long tagId) {
             if (this.tagIds == null) {
                 this.tagIds = new ArrayList<>();
             }

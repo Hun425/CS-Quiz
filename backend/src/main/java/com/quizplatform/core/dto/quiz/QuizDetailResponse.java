@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 @Getter
 @Builder
 public class QuizDetailResponse {
-    private UUID id;
+    private Long id;
     private String title;
     private String description;
     private QuizType quizType;

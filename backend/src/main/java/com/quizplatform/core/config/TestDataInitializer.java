@@ -18,7 +18,7 @@ import java.nio.charset.StandardCharsets;
 @Profile({"dev", "local", "test"})
 public class TestDataInitializer {
 
-    // Swagger 예제로 사용할 UUID 값을 정적 변수로 선언
+    // Swagger 예제로 사용할 Long 값을 정적 변수로 선언
     public static String EXAMPLE_QUIZ_ID;
     public static String EXAMPLE_USER_ID;
     public static String EXAMPLE_TAG_ID;
@@ -39,14 +39,13 @@ public class TestDataInitializer {
 
         if (!dataExists) {
             // 데이터가 없는 경우에만 스크립트 실행
-            executeSqlScript("classpath:dummy_data_user.sql");
-            executeSqlScript("classpath:dummy_data_battle.sql");
+            executeSqlScript("classpath:dummy_data.sql");
             log.info("더미 데이터가 성공적으로 로드되었습니다.");
         } else {
             log.info("데이터가 이미 존재합니다. 스크립트 실행을 건너뜁니다.");
         }
 
-        // 3. Swagger 예제에 사용할 UUID 값 저장
+        // 3. Swagger 예제에 사용할 Long 값 저장
         fetchExampleIds();
     }
 

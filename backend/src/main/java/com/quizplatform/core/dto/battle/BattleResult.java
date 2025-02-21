@@ -11,7 +11,7 @@ import java.util.UUID;
 @Getter
 @Builder
 public class BattleResult {
-    private final UUID roomId;
+    private final Long roomId;
     private final BattleParticipant winner;
     private final List<BattleParticipant> participants;
     private final int highestScore;

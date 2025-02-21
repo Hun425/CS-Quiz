@@ -11,7 +11,7 @@ import java.util.UUID;
 @Getter
 @Builder
 public class UserSummaryResponse {
-    private UUID id;
+    private Long id;
     private String username;
     private String profileImage;
     private int level;

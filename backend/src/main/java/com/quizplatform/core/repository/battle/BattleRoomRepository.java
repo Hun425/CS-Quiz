@@ -9,10 +9,9 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 // Repository interfaces
-public interface BattleRoomRepository extends JpaRepository<BattleRoom, UUID> {
+public interface BattleRoomRepository extends JpaRepository<BattleRoom, Long> {
     @Query("SELECT br FROM BattleRoom br WHERE br.status = :status")
     List<BattleRoom> findByStatus(@Param("status") BattleRoomStatus status);
 

@@ -10,9 +10,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
-import java.util.UUID;
 
-public interface QuestionAttemptRepository extends JpaRepository<QuestionAttempt, UUID> {
+public interface QuestionAttemptRepository extends JpaRepository<QuestionAttempt, Long> {
     List<QuestionAttempt> findByQuizAttempt(QuizAttempt quizAttempt);
 
     @Query("SELECT qa FROM QuestionAttempt qa " +
