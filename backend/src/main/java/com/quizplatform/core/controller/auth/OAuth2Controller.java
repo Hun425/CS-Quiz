@@ -1,4 +1,4 @@
-package com.quizplatform.core.controller;
+package com.quizplatform.core.controller.auth;
 
 import com.quizplatform.core.config.security.jwt.JwtTokenProvider;
 import com.quizplatform.core.dto.AuthResponse;
