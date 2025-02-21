@@ -100,7 +100,6 @@ app:
 server:
   port: 8080
   servlet:
-    context-path: /api
   tomcat:
     max-threads: 200
     accept-count: 100
@@ -146,14 +145,14 @@ springdoc:
     path: /swagger-ui.html  # Swagger UI 경로 설정
     groups-order: DESC
     operationsSorter: method
-    disable-swagger-default-url: true
+#    disable-swagger-default-url: true
   api-docs:
     path: /api-docs  # API 문서 JSON 경로
   show-actuator: false  # Actuator 엔드포인트 문서화 비활성화
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
   paths-to-match:
-    - /api/**  # API 문서화할 경로 패턴
+    - /api/**
 
 
 

@@ -17,7 +17,6 @@ import java.security.Key;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
-import java.util.UUID;
 
 @Slf4j
 @Component
@@ -185,7 +184,7 @@ public class JwtTokenProvider {
      *
      * @param userId 무효화할 토큰의 사용자 ID
      */
-    public void invalidateToken(UUID userId) {
+    public void invalidateToken(Long userId) {
         try {
             // 블랙리스트 키 생성 (예: "blacklist:userId")
             String blacklistKey = "blacklist:" + userId.toString();

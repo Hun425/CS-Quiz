@@ -12,7 +12,7 @@ public class UserDto {
 
     @Schema(description = "사용자 응답 DTO")
     public record Response(
-            @Schema(description = "사용자 ID") UUID id,
+            @Schema(description = "사용자 ID") Long id,
             @Schema(description = "이메일") String email,
             @Schema(description = "사용자명") String username,
             @Schema(description = "프로필 이미지 URL") String profileImage,

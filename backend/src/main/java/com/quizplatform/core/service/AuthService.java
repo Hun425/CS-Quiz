@@ -9,7 +9,6 @@ import com.quizplatform.core.exception.OAuth2AuthenticationProcessingException;
 import com.quizplatform.core.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
@@ -33,7 +32,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.time.Instant;
 import java.util.*;
 
 @Slf4j
@@ -117,7 +115,7 @@ public class AuthService {
         }
 
         String userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
-        User user = userRepository.findById(UUID.fromString(userId))
+        User user = userRepository.findById(Long.parseLong(userId))
                 .orElseThrow(() -> new OAuth2AuthenticationProcessingException("사용자를 찾을 수 없습니다."));
 
         // 새로운 액세스 토큰 생성
@@ -138,7 +136,7 @@ public class AuthService {
      */
     @Transactional
     public void logout(String userId) {
-        jwtTokenProvider.invalidateToken(UUID.fromString(userId));
+        jwtTokenProvider.invalidateToken(Long.parseLong(userId));
     }
 
     /**

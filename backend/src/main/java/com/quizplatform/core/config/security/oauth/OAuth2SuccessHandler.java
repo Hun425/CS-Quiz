@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -71,7 +70,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 
-    private void saveRefreshToken(UUID userId, String refreshToken) {
+    private void saveRefreshToken(Long userId, String refreshToken) {
         String key = "refresh_token:" + userId;
         redisTemplate.opsForValue().set(
                 key,

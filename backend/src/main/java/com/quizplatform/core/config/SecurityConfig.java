@@ -30,15 +30,21 @@ public class SecurityConfig {
     private static final String[] WHITE_LIST = {
             "/",
             "/api/v1/auth/**",
-            "/swagger-ui/**",
+            "/swagger-ui/**",          // Keep this for direct access
+            "/api/swagger-ui/**",      // Add this to match your actual path
             "/swagger-ui.html",
+            "/api/swagger-ui.html",    // Add this too if needed
             "/swagger-resources/**",
+            "/api/swagger-resources/**", // Add this for resources
             "/v3/api-docs/**",
+            "/api/v3/api-docs/**",     // Add this for API docs
             "/api-docs/**",
+            "/api/api-docs/**",        // Add this too
             "/api/v1/quizzes/public/**",
             "/h2-console/**",
-            "/api/swagger-ui.html/**",
-            "/webjars/**"
+            "/webjars/**",
+            "/api/webjars/**",
+            "/api/quizzes/**"
     };
 
     @Bean
