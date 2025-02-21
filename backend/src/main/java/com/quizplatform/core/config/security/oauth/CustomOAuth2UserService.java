@@ -1,8 +1,6 @@
 package com.quizplatform.core.config.security.oauth;
 
 import com.quizplatform.core.config.security.UserPrincipal;
-import com.quizplatform.core.config.security.oauth.OAuth2UserInfo;
-import com.quizplatform.core.config.security.oauth.OAuth2UserInfoFactory;
 import com.quizplatform.core.domain.user.AuthProvider;
 import com.quizplatform.core.domain.user.User;
 import com.quizplatform.core.exception.OAuth2AuthenticationProcessingException;
@@ -12,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -21,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -125,7 +121,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return username;
     }
 
-    public UserDetails loadUserById(UUID id) {
+    public UserDetails loadUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + id));
         return UserPrincipal.create(user);

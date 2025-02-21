@@ -14,7 +14,7 @@ import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
 
 @Configuration
-@EnableElasticsearchRepositories(basePackages = "com.quizplatform.modules.search.adapter.out.persistence")
+@EnableElasticsearchRepositories(basePackages = "com.quizplatform.modules.search.domain.out.persistence")
 class ElasticsearchConfig {
 
     @Value("${spring.elasticsearch.uris}")

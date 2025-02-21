@@ -1,146 +1,120 @@
 package com.quizplatform.core.domain.quiz;
 
+
+import com.quizplatform.core.domain.question.Question;
+import com.quizplatform.core.domain.question.QuestionAttempt;
 import com.quizplatform.core.domain.user.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.Duration;
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "quiz_attempts")
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class QuizAttempt {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id")
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "quiz_id", nullable = false)
+    @JoinColumn(name = "quiz_id")
     private Quiz quiz;
 
-    @Column(name = "start_time", nullable = false)
-    private ZonedDateTime startTime;
+    @Column(name = "start_time")
+    private LocalDateTime startTime;
 
     @Column(name = "end_time")
-    private ZonedDateTime endTime;
+    private LocalDateTime endTime;
 
     private Integer score;
 
-    @Column(name = "is_completed", nullable = false)
-    private boolean isCompleted;
+    @Column(name = "is_completed")
+    private boolean isCompleted = false;
 
     @Column(name = "time_taken")
-    private Integer timeTaken; // 초 단위로 저장
+    private Integer timeTaken; // 초 단위
 
     @OneToMany(mappedBy = "quizAttempt", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QuestionAttempt> questionAttempts = new ArrayList<>();
 
-    @Column(name = "last_answered_question_index")
-    private Integer lastAnsweredQuestionIndex;
-
-    @Column(name = "remaining_time")
-    private Integer remainingTime; // 초 단위로 저장
-
-    @Column(name = "created_at", nullable = false)
-    private ZonedDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = ZonedDateTime.now();
-        if (lastAnsweredQuestionIndex == null) {
-            lastAnsweredQuestionIndex = 0;
-        }
-        isCompleted = false;
-    }
+    @CreatedDate
+    private LocalDateTime createdAt;
 
     @Builder
     public QuizAttempt(User user, Quiz quiz) {
         this.user = user;
         this.quiz = quiz;
-        this.startTime = ZonedDateTime.now();
-        this.lastAnsweredQuestionIndex = 0;
-        this.isCompleted = false;
-        if (quiz.getTimeLimit() != null) {
-            this.remainingTime = quiz.getTimeLimit() * 60; // 분을 초로 변환
-        }
+        this.startTime = LocalDateTime.now();
     }
 
-    public void addQuestionAttempt(QuestionAttempt questionAttempt) {
-        questionAttempts.add(questionAttempt);
-        questionAttempt.setQuizAttempt(this);
-        lastAnsweredQuestionIndex = questionAttempts.size() - 1;
-        updateRemainingTime();
+    // 퀴즈 완료 처리
+    public void complete() {
+        this.endTime = LocalDateTime.now();
+        this.timeTaken = calculateTimeTaken();
+        this.score = calculateScore();
+        this.isCompleted = true;
     }
 
-    public void completeAttempt() {
-        if (!isCompleted) {
-            this.endTime = ZonedDateTime.now();
-            this.timeTaken = calculateTimeTaken();
-            this.score = calculateScore();
-            this.isCompleted = true;
+    // 문제 답변 추가
+    public QuestionAttempt addQuestionAttempt(Question question, String userAnswer) {
+        QuestionAttempt questionAttempt = QuestionAttempt.builder()
+                .quizAttempt(this)
+                .question(question)
+                .userAnswer(userAnswer)
+                .isCorrect(question.isCorrectAnswer(userAnswer))
+                .timeTaken(calculateTimeTakenSinceLastAttempt())
+                .build();
 
-            // 퀴즈 통계 업데이트
-            quiz.addNewAttempt(this.score);
-        }
+        this.questionAttempts.add(questionAttempt);
+        return questionAttempt;
     }
 
-    public void updateRemainingTime() {
-        if (remainingTime != null && !isCompleted) {
-            Duration timePassed = Duration.between(startTime, ZonedDateTime.now());
-            remainingTime = quiz.getTimeLimit() * 60 - (int) timePassed.getSeconds();
-            if (remainingTime <= 0) {
-                completeAttempt();
-            }
-        }
-    }
-
-    private int calculateTimeTaken() {
-        if (startTime != null && endTime != null) {
-            return (int) Duration.between(startTime, endTime).getSeconds();
-        }
-        return 0;
-    }
-
+    // 점수 계산
     private int calculateScore() {
-        return questionAttempts.stream()
-                .filter(QuestionAttempt::isCorrect)
-                .mapToInt(qa -> qa.getQuestion().getPoints())
+        int totalPoints = quiz.getQuestions().stream()
+                .mapToInt(Question::getPoints)
                 .sum();
+
+        int earnedPoints = questionAttempts.stream()
+                .filter(QuestionAttempt::isCorrect)
+                .mapToInt(attempt -> attempt.getQuestion().getPoints())
+                .sum();
+
+        return totalPoints == 0 ? 0 : (int) ((double) earnedPoints / totalPoints * 100);
     }
 
-    public boolean canResume() {
-        if (isCompleted) {
-            return false;
-        }
-        if (quiz.getTimeLimit() != null && remainingTime != null) {
-            return remainingTime > 0;
-        }
-        return true;
+    // 총 소요 시간 계산 (초 단위)
+    private int calculateTimeTaken() {
+        return (int) java.time.Duration.between(startTime, endTime).getSeconds();
     }
 
-    public double getProgressPercentage() {
-        if (quiz.getQuestionCount() == 0) {
-            return 0.0;
-        }
-        return (double) questionAttempts.size() / quiz.getQuestionCount() * 100;
+    // 마지막 답변 이후 경과 시간 계산
+    private int calculateTimeTakenSinceLastAttempt() {
+        LocalDateTime lastAttemptTime = questionAttempts.isEmpty() ?
+                startTime :
+                questionAttempts.get(questionAttempts.size() - 1).getCreatedAt();
+
+        return (int) java.time.Duration.between(lastAttemptTime, LocalDateTime.now()).getSeconds();
     }
 
-    public QuestionAttempt getCurrentQuestionAttempt() {
-        if (lastAnsweredQuestionIndex < questionAttempts.size()) {
-            return questionAttempts.get(lastAnsweredQuestionIndex);
-        }
-        return null;
+    // 제한 시간 초과 여부 확인
+    public boolean isTimeExpired() {
+        if (quiz.getTimeLimit() == null) return false;
+        LocalDateTime deadline = startTime.plusMinutes(quiz.getTimeLimit());
+        return LocalDateTime.now().isAfter(deadline);
     }
 }
