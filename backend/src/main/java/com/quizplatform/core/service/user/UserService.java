@@ -2,24 +2,25 @@ package com.quizplatform.core.service.user;
 
 
 import com.quizplatform.core.domain.quiz.Achievement;
-import com.quizplatform.core.domain.quiz.AchievementRecord;
 import com.quizplatform.core.domain.quiz.QuizAttempt;
 import com.quizplatform.core.domain.user.LevelUpRecord;
 import com.quizplatform.core.domain.user.User;
 import com.quizplatform.core.domain.user.UserLevel;
 import com.quizplatform.core.dto.user.*;
 import com.quizplatform.core.repository.UserRepository;
-import com.quizplatform.core.repository.level.UserLevelRepository;
 import com.quizplatform.core.repository.question.QuestionAttemptRepository;
 import com.quizplatform.core.repository.quiz.QuizAttemptRepository;
 import com.quizplatform.core.repository.tag.TagRepository;
 import com.quizplatform.core.repository.user.AchievementRepository;
+import com.quizplatform.core.repository.user.UserLevelRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -89,35 +90,42 @@ public class UserService {
         // 퀴즈 시도 활동
         List<RecentActivityDto> activities = new ArrayList<>();
 
-        // 퀴즈 시도 데이터 가져오기
-        List<QuizAttempt> recentAttempts = quizAttemptRepository.findByUserIdOrderByCreatedAtDesc(userId, limit);
-        for (QuizAttempt attempt : recentAttempts) {
-            activities.add(new RecentActivityDto(
-                    attempt.getId(),
-                    "QUIZ_ATTEMPT",
-                    attempt.getQuiz().getId(),
-                    attempt.getQuiz().getTitle(),
-                    attempt.getScore(),
-                    null,
-                    null,
-                    null,
-                    formatDateTime(attempt.getCreatedAt())
-            ));
-        }
+        // Pageable 객체 생성 (0은 첫 페이지, limit은 페이지 크기)
+        PageRequest pageRequest = PageRequest.of(0, limit);
 
-        // 업적 획득 활동 (구현 필요)
-        List<AchievementRecord> recentAchievements = achievementRepository.findRecentAchievementsByUserId(userId, limit);
-        for (AchievementRecord record : recentAchievements) {
+        // 리포지토리 메서드 호출
+        List<QuizAttempt> recentAttempts = quizAttemptRepository.findByUserIdOrderByCreatedAtDesc(userId, pageRequest);
+
+
+
+        // 업적 획득 활동
+        List<Object[]> achievementRecords = achievementRepository.findRecentAchievementsByUserId(userId, limit);
+        for (Object[] record : achievementRecords) {
+            Long id = ((Number) record[0]).longValue();
+            String achievementStr = (String) record[2];  // enum 문자열
+            String achievementName = (String) record[3];
+            LocalDateTime earnedAt = (LocalDateTime) record[4];
+
+            // Achievement enum의 ordinal 값을 ID로 사용
+            Long achievementId = null;
+            try {
+                Achievement achievement = Achievement.valueOf(achievementStr);
+                achievementId = (long) achievement.ordinal();
+            } catch (IllegalArgumentException e) {
+                // 잘못된 enum 값이 있을 경우 로깅하고 계속 진행
+                achievementId = -1L;  // 기본값 설정
+            }
+
             activities.add(new RecentActivityDto(
-                    record.getId(),
+                    id,
                     "ACHIEVEMENT_EARNED",
                     null,
                     null,
                     null,
-                    record.getAchievementId(),
-                    record.getAchievementName(),
+                    achievementId,
+                    achievementName,
                     null,
-                    formatDateTime(record.getEarnedAt())
+                    formatDateTime(ZonedDateTime.from(earnedAt))
             ));
         }
 
@@ -159,10 +167,11 @@ public class UserService {
             String earnedAt = null;
 
             if (isEarned) {
-                // 업적 획득 시간 조회 (구현 필요)
-                AchievementRecord record = achievementRepository.findByUserIdAndAchievement(userId, achievement);
+                // 업적 획득 시간 조회
+                Object[] record = achievementRepository.findByUserIdAndAchievement(userId, achievement.name());
                 if (record != null) {
-                    earnedAt = formatDateTime(record.getEarnedAt());
+                    LocalDateTime earnedAtTime = (LocalDateTime) record[4]; // 인덱스는 네이티브 쿼리 결과 순서에 맞춰 조정
+                    earnedAt = earnedAtTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
                 }
             }
 

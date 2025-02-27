@@ -65,6 +65,6 @@ public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, Long> 
     Integer getMinScoreByUserId(@Param("userId") Long userId);
 
     @Query("SELECT qa FROM QuizAttempt qa WHERE qa.user.id = :userId ORDER BY qa.createdAt DESC")
-    List<QuizAttempt> findByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId, @Param("limit") int limit);
+    List<QuizAttempt> findByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId, Pageable pageable);
 
 }
