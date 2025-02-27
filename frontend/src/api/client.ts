@@ -1,24 +1,30 @@
 // src/api/client.ts
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import axios, {
+    AxiosInstance,
+    AxiosRequestConfig,
+    AxiosResponse,
+    AxiosError,
+    InternalAxiosRequestConfig  // Add this import
+} from 'axios';
 import { useAuthStore } from '../store/authStore';
 import { refreshAccessToken } from '../utils/authUtils';
 
-// 요청 구성 확장 타입
-interface ExtendedAxiosRequestConfig extends AxiosRequestConfig {
+// 요청 구성 확장 타입 - 변경
+interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
     _retry?: boolean;
 }
 
 // 기본 API 클라이언트 설정
 const apiClient: AxiosInstance = axios.create({
-    baseURL: 'http://localhost:8080', // 백엔드 서버 URL
+    baseURL: 'http://localhost:8080',
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
-// 요청 인터셉터
+// 요청 인터셉터 - 매개변수 타입 변경
 apiClient.interceptors.request.use(
-    async (config: AxiosRequestConfig): Promise<AxiosRequestConfig> => {
+    async (config: InternalAxiosRequestConfig): Promise<InternalAxiosRequestConfig> => {
         // 인증 상태 확인
         const { isAuthenticated, accessToken, isTokenExpired } = useAuthStore.getState();
 
@@ -28,20 +34,14 @@ apiClient.interceptors.request.use(
             if (refreshed) {
                 // 토큰 갱신 성공, 새 토큰으로 헤더 설정
                 const newToken = useAuthStore.getState().accessToken;
-                if (!config.headers) {
-                    config.headers = {};
-                }
-                config.headers['Authorization'] = `Bearer ${newToken}`;
+                config.headers.set('Authorization', `Bearer ${newToken}`);
             } else {
                 // 토큰 갱신 실패, 로그아웃 처리
                 useAuthStore.getState().logout();
             }
         } else if (isAuthenticated && accessToken) {
             // 토큰이 유효하면 헤더에 추가
-            if (!config.headers) {
-                config.headers = {};
-            }
-            config.headers['Authorization'] = `Bearer ${accessToken}`;
+            config.headers.set('Authorization', `Bearer ${accessToken}`);
         }
 
         return config;
@@ -51,7 +51,7 @@ apiClient.interceptors.request.use(
     }
 );
 
-// 응답 인터셉터
+// 응답 인터셉터 - 타입 변경
 apiClient.interceptors.response.use(
     (response: AxiosResponse): AxiosResponse => response,
     async (error: AxiosError): Promise<unknown> => {
@@ -71,10 +71,7 @@ apiClient.interceptors.response.use(
             if (refreshed) {
                 // 토큰 갱신 성공, 원래 요청 재시도
                 const newToken = useAuthStore.getState().accessToken;
-                if (!originalRequest.headers) {
-                    originalRequest.headers = {};
-                }
-                originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+                originalRequest.headers.set('Authorization', `Bearer ${newToken}`);
                 return apiClient(originalRequest);
             }
         }

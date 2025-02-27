@@ -11,6 +11,7 @@ import LoginPage from './pages/LoginPage';
 import OAuth2CallbackPage from './pages/OAuth2CallbackPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import ProfilePage from './pages/ProfilePage';
 
 const router = createBrowserRouter([
     {
@@ -69,6 +70,22 @@ const router = createBrowserRouter([
                         <div>내 퀴즈 페이지 (구현 예정)</div>
                     </ProtectedRoute>
                 ),
+            },
+
+            // 내 프로필 페이지
+            {
+                path: 'profile',
+                element: (
+                    <ProtectedRoute>
+                        <ProfilePage />
+                    </ProtectedRoute>
+                ),
+            },
+
+            // 다른 사용자 프로필 페이지
+            {
+                path: 'profile/:userId',
+                element: <ProfilePage />,
             },
         ],
     },
