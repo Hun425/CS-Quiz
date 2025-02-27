@@ -47,4 +47,24 @@ public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, Long> 
             @Param("user") User user,
             @Param("quiz") Quiz quiz
     );
+
+    long countByUserId(Long userId);
+
+    long countByUserIdAndIsCompletedTrue(Long userId);
+
+    @Query("SELECT AVG(qa.score) FROM QuizAttempt qa WHERE qa.user.id = :userId")
+    Double getAverageScoreByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT SUM(qa.timeTaken) FROM QuizAttempt qa WHERE qa.user.id = :userId")
+    Integer getTotalTimeTakenByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT MAX(qa.score) FROM QuizAttempt qa WHERE qa.user.id = :userId")
+    Integer getMaxScoreByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT MIN(qa.score) FROM QuizAttempt qa WHERE qa.user.id = :userId AND qa.score > 0")
+    Integer getMinScoreByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT qa FROM QuizAttempt qa WHERE qa.user.id = :userId ORDER BY qa.createdAt DESC")
+    List<QuizAttempt> findByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId, @Param("limit") int limit);
+
 }

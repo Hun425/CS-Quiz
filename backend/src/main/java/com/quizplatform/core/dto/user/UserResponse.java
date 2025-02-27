@@ -1,4 +1,4 @@
-package com.quizplatform.core.dto;
+package com.quizplatform.core.dto.user;
 
 import com.quizplatform.core.domain.user.AuthProvider;
 import lombok.AllArgsConstructor;
@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Getter
 @Builder
