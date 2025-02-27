@@ -3,7 +3,6 @@ package com.quizplatform.core.service.user;
 
 import com.quizplatform.core.domain.quiz.Achievement;
 import com.quizplatform.core.domain.quiz.QuizAttempt;
-import com.quizplatform.core.domain.user.LevelUpRecord;
 import com.quizplatform.core.domain.user.User;
 import com.quizplatform.core.domain.user.UserLevel;
 import com.quizplatform.core.dto.user.*;
@@ -12,6 +11,7 @@ import com.quizplatform.core.repository.question.QuestionAttemptRepository;
 import com.quizplatform.core.repository.quiz.QuizAttemptRepository;
 import com.quizplatform.core.repository.tag.TagRepository;
 import com.quizplatform.core.repository.user.AchievementRepository;
+import com.quizplatform.core.repository.user.UserLevelHistoryRepository;
 import com.quizplatform.core.repository.user.UserLevelRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -40,7 +40,7 @@ public class UserService {
     private final QuestionAttemptRepository questionAttemptRepository;
     private final TagRepository tagRepository;
     private final AchievementRepository achievementRepository;
-
+    private final UserLevelHistoryRepository userLevelHistoryRepository;
     @Cacheable(value = "userProfiles", key = "#userId")
     public UserProfileDto getUserProfile(Long userId) {
         User user = userRepository.findById(userId)
@@ -129,19 +129,24 @@ public class UserService {
             ));
         }
 
-        // 레벨업 활동 (구현 필요)
-        List<LevelUpRecord> recentLevelUps = userLevelRepository.findRecentLevelUpsByUserId(userId, limit);
-        for (LevelUpRecord record : recentLevelUps) {
+        // 레벨업 활동
+        List<Object[]> levelUpRecords = userLevelHistoryRepository.findRecentLevelUpsByUserId(userId, limit);
+        for (Object[] record : levelUpRecords) {
+            Long id = ((Number) record[0]).longValue();
+            Integer oldLevel = ((Number) record[2]).intValue();
+            Integer newLevel = ((Number) record[3]).intValue();
+            LocalDateTime occurredAt = (LocalDateTime) record[4];
+
             activities.add(new RecentActivityDto(
-                    record.getId(),
+                    id,
                     "LEVEL_UP",
                     null,
                     null,
                     null,
                     null,
                     null,
-                    record.getNewLevel(),
-                    formatDateTime(record.getOccurredAt())
+                    newLevel,
+                    formatDateTime(ZonedDateTime.from(occurredAt))
             ));
         }
 
