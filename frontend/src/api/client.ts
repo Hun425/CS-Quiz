@@ -1,5 +1,12 @@
 // src/api/client.ts
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import { useAuthStore } from '../store/authStore';
+import { refreshAccessToken } from '../utils/authUtils';
+
+// 요청 구성 확장 타입
+interface ExtendedAxiosRequestConfig extends AxiosRequestConfig {
+    _retry?: boolean;
+}
 
 // 기본 API 클라이언트 설정
 const apiClient: AxiosInstance = axios.create({
@@ -11,54 +18,68 @@ const apiClient: AxiosInstance = axios.create({
 
 // 요청 인터셉터
 apiClient.interceptors.request.use(
-    (config) => {
-        // 로컬 스토리지에서 토큰 가져오기
-        const token = localStorage.getItem('accessToken');
-        if (token) {
-            config.headers['Authorization'] = `Bearer ${token}`;
+    async (config: AxiosRequestConfig): Promise<AxiosRequestConfig> => {
+        // 인증 상태 확인
+        const { isAuthenticated, accessToken, isTokenExpired } = useAuthStore.getState();
+
+        // 인증이 필요한 요청이고 토큰이 만료된 경우 갱신 시도
+        if (isAuthenticated && isTokenExpired() && config.url !== '/api/oauth2/refresh') {
+            const refreshed = await refreshAccessToken();
+            if (refreshed) {
+                // 토큰 갱신 성공, 새 토큰으로 헤더 설정
+                const newToken = useAuthStore.getState().accessToken;
+                if (!config.headers) {
+                    config.headers = {};
+                }
+                config.headers['Authorization'] = `Bearer ${newToken}`;
+            } else {
+                // 토큰 갱신 실패, 로그아웃 처리
+                useAuthStore.getState().logout();
+            }
+        } else if (isAuthenticated && accessToken) {
+            // 토큰이 유효하면 헤더에 추가
+            if (!config.headers) {
+                config.headers = {};
+            }
+            config.headers['Authorization'] = `Bearer ${accessToken}`;
         }
+
         return config;
     },
-    (error) => {
+    (error: Error): Promise<Error> => {
         return Promise.reject(error);
     }
 );
 
 // 응답 인터셉터
 apiClient.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-        const originalRequest = error.config;
+    (response: AxiosResponse): AxiosResponse => response,
+    async (error: AxiosError): Promise<unknown> => {
+        const originalRequest = error.config as ExtendedAxiosRequestConfig;
 
-        // 토큰 만료 처리 (401 Unauthorized)
-        if (error.response.status === 401 && !originalRequest._retry) {
+        // 인증 오류가 발생하고, 토큰 갱신 시도가 아직 이루어지지 않은 경우
+        if (
+            error.response?.status === 401 &&
+            originalRequest &&
+            !originalRequest._retry &&
+            originalRequest.url !== '/api/oauth2/refresh'
+        ) {
             originalRequest._retry = true;
 
-            try {
-                // 리프레시 토큰으로 새 액세스 토큰 요청
-                const refreshToken = localStorage.getItem('refreshToken');
-                const response = await axios.post('http://localhost:8080/api/oauth2/refresh', {}, {
-                    headers: {
-                        'Authorization': `Bearer ${refreshToken}`,
-                    },
-                });
-
-                // 새 토큰 저장
-                const { accessToken } = response.data;
-                localStorage.setItem('accessToken', accessToken);
-
-                // 원래 요청 헤더 업데이트
-                originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
-                return axios(originalRequest);
-            } catch (refreshError) {
-                // 리프레시 토큰도 만료된 경우, 로그아웃 처리
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('refreshToken');
-                // 로그인 페이지로 리다이렉트 (추후 구현)
-                return Promise.reject(refreshError);
+            // 토큰 갱신 시도
+            const refreshed = await refreshAccessToken();
+            if (refreshed) {
+                // 토큰 갱신 성공, 원래 요청 재시도
+                const newToken = useAuthStore.getState().accessToken;
+                if (!originalRequest.headers) {
+                    originalRequest.headers = {};
+                }
+                originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+                return apiClient(originalRequest);
             }
         }
 
+        // 토큰 갱신 실패 또는 다른 오류
         return Promise.reject(error);
     }
 );
@@ -68,10 +89,10 @@ export const api = {
     get: <T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
         return apiClient.get<T>(url, config);
     },
-    post: <T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+    post: <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
         return apiClient.post<T>(url, data, config);
     },
-    put: <T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+    put: <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
         return apiClient.put<T>(url, data, config);
     },
     delete: <T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {

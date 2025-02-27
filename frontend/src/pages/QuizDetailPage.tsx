@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { quizApi } from '../api/quizApi';
-import { QuizDetailResponse } from '../types/api';
+import { QuizDetailResponse } from '../types/api'; // QuizResponse가 아닌 QuizDetailResponse 임포트
 import { useAuthStore } from '../store/authStore';
 
 const QuizDetailPage: React.FC = () => {
@@ -10,6 +10,7 @@ const QuizDetailPage: React.FC = () => {
     const navigate = useNavigate();
     const { isAuthenticated } = useAuthStore();
 
+    // 타입을 QuizResponse에서 QuizDetailResponse로 변경
     const [quiz, setQuiz] = useState<QuizDetailResponse | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
@@ -23,11 +24,12 @@ const QuizDetailPage: React.FC = () => {
                 const response = await quizApi.getQuiz(parseInt(quizId));
 
                 if (response.data.success) {
+                    // 응답 데이터 타입이 QuizDetailResponse임
                     setQuiz(response.data.data);
                 } else {
                     setError('퀴즈를 불러오는 데 실패했습니다.');
                 }
-            } catch (err: any) {
+            } catch (err) {
                 console.error('퀴즈 상세 로딩 중 오류:', err);
                 setError('퀴즈 상세 정보를 불러오는 중 오류가 발생했습니다.');
             } finally {

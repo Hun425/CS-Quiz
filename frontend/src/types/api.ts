@@ -64,35 +64,6 @@ export interface QuestionResponse {
     timeLimitSeconds: number;
 }
 
-// 퀴즈 상세 타입
-export interface QuizDetailResponse {
-    id: number;
-    title: string;
-    description: string;
-    quizType: 'DAILY' | 'TAG_BASED' | 'TOPIC_BASED' | 'CUSTOM';
-    difficultyLevel: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
-    timeLimit: number;
-    questionCount: number;
-    tags: TagResponse[];
-    creator: UserSummaryResponse;
-    statistics: any; // 필요한 경우 더 구체적인 타입으로 변경하세요
-    createdAt: string;
-}
-
-// 퀴즈 전체 응답 타입
-export interface QuizResponse {
-    id: number;
-    title: string;
-    description: string;
-    quizType: 'DAILY' | 'TAG_BASED' | 'TOPIC_BASED' | 'CUSTOM';
-    difficultyLevel: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
-    timeLimit: number;
-    questionCount: number;
-    tags: TagResponse[];
-    questions: QuestionResponse[];
-    creator: UserSummaryResponse;
-    createdAt: string;
-}
 
 // 질문 생성 요청 타입
 export interface QuestionCreateRequest {
@@ -116,4 +87,33 @@ export interface QuizCreateRequest {
     timeLimit: number;
     tagIds: number[];
     questions: QuestionCreateRequest[];
+}
+
+// 이 부분이 중요합니다 - QuizDetailResponse와 QuizResponse의 차이점
+export interface QuizDetailResponse {
+    id: number;
+    title: string;
+    description: string;
+    quizType: 'DAILY' | 'TAG_BASED' | 'TOPIC_BASED' | 'CUSTOM';
+    difficultyLevel: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+    timeLimit: number;
+    questionCount: number;
+    tags: TagResponse[];
+    creator: UserSummaryResponse;
+    createdAt: string;
+    // questions 속성이 없음
+}
+
+export interface QuizResponse {
+    id: number;
+    title: string;
+    description: string;
+    quizType: 'DAILY' | 'TAG_BASED' | 'TOPIC_BASED' | 'CUSTOM';
+    difficultyLevel: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+    timeLimit: number;
+    questionCount: number;
+    tags: TagResponse[];
+    questions: QuestionResponse[]; // 이 속성이 QuizDetailResponse에는 없음
+    creator: UserSummaryResponse;
+    createdAt: string;
 }

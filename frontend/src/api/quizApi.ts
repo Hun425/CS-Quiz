@@ -56,4 +56,9 @@ export const quizApi = {
     getQuizStatistics: (quizId: number) => {
         return api.get<CommonApiResponse<any>>(`/api/quizzes/${quizId}/statistics`);
     },
+
+    // 플레이 가능한 퀴즈 조회 (문제 포함)
+    getPlayableQuiz: (quizId: number) => {
+        return api.get<CommonApiResponse<QuizResponse>>(`/api/quizzes/${quizId}/play`);
+    },
 };

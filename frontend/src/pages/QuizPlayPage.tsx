@@ -9,7 +9,7 @@ import { useAuthStore } from '../store/authStore';
 const QuizPlayPage: React.FC = () => {
     const { quizId } = useParams<{ quizId: string }>();
     const navigate = useNavigate();
-    const { isAuthenticated, user } = useAuthStore();
+    const { isAuthenticated } = useAuthStore();
 
     const [quiz, setQuiz] = useState<QuizResponse | null>(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
@@ -34,7 +34,8 @@ const QuizPlayPage: React.FC = () => {
 
             try {
                 setLoading(true);
-                const response = await quizApi.getQuiz(parseInt(quizId));
+                // QuizPlayPage.tsx
+                const response = await quizApi.getPlayableQuiz(parseInt(quizId));
 
                 if (response.data.success) {
                     setQuiz(response.data.data);

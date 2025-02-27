@@ -8,7 +8,9 @@ import QuizDetailPage from './pages/QuizDetailPage';
 import QuizPlayPage from './pages/QuizPlayPage';
 import QuizResultsPage from './pages/QuizResultsPage';
 import LoginPage from './pages/LoginPage';
+import OAuth2CallbackPage from './pages/OAuth2CallbackPage';
 import NotFoundPage from './pages/NotFoundPage';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
 const router = createBrowserRouter([
     {
@@ -30,15 +32,43 @@ const router = createBrowserRouter([
             },
             {
                 path: 'quizzes/:quizId/play',
-                element: <QuizPlayPage />,
+                element: (
+                    <ProtectedRoute>
+                        <QuizPlayPage />
+                    </ProtectedRoute>
+                ),
             },
             {
                 path: 'quizzes/:quizId/results',
-                element: <QuizResultsPage />,
+                element: (
+                    <ProtectedRoute>
+                        <QuizResultsPage />
+                    </ProtectedRoute>
+                ),
             },
             {
                 path: 'login',
                 element: <LoginPage />,
+            },
+            {
+                path: 'oauth2/callback/:provider',
+                element: <OAuth2CallbackPage />,
+            },
+            {
+                path: 'profile',
+                element: (
+                    <ProtectedRoute>
+                        <div>프로필 페이지 (구현 예정)</div>
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: 'my-quizzes',
+                element: (
+                    <ProtectedRoute>
+                        <div>내 퀴즈 페이지 (구현 예정)</div>
+                    </ProtectedRoute>
+                ),
             },
         ],
     },
