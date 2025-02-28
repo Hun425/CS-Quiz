@@ -4,7 +4,6 @@ import com.quizplatform.core.domain.quiz.Achievement;
 import com.quizplatform.core.service.event.DomainEventPublisher;
 import com.quizplatform.core.service.event.UserLevelUpEvent;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
@@ -65,6 +64,12 @@ public class UserLevel {
         DomainEventPublisher.publishEvent(new UserLevelUpEvent(this, oldLevel));
     }
 
+    public UserLevel(User user) {
+        this.user = user;
+        this.level = 1; // 초기 레벨
+        this.currentExp = 0; // 초기 경험치
+        this.requiredExp = 100; // 다음 레벨에 필요한 초기 경험치
+    }
 
     // 다음 레벨 필요 경험치 계산
     private int calculateNextLevelExp() {

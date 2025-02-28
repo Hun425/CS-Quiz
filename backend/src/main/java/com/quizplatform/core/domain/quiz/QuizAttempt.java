@@ -64,7 +64,9 @@ public class QuizAttempt {
     // 퀴즈 완료 처리
     public void complete() {
         this.endTime = LocalDateTime.now();
-        this.timeTaken = calculateTimeTaken();
+        if (this.timeTaken == null) {
+            this.timeTaken = calculateTimeTaken();
+        }
         this.score = calculateScore();
         this.isCompleted = true;
     }
@@ -116,5 +118,9 @@ public class QuizAttempt {
         if (quiz.getTimeLimit() == null) return false;
         LocalDateTime deadline = startTime.plusMinutes(quiz.getTimeLimit());
         return LocalDateTime.now().isAfter(deadline);
+    }
+
+    public void setTimeTaken(Integer timeTaken) {
+        this.timeTaken = timeTaken;
     }
 }
