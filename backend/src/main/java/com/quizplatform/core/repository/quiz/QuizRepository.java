@@ -62,6 +62,9 @@ public interface QuizRepository extends JpaRepository<Quiz, Long>, CustomQuizRep
             "ORDER BY q.title ASC") // 명시적인 정렬 조건 추가
     Page<Quiz> findByTags(@Param("tag") Tag tag, Pageable pageable);
 
-    @Query("SELECT q FROM Quiz q LEFT JOIN FETCH q.questions WHERE q.id = :id")
+    @Query("SELECT q FROM Quiz q LEFT JOIN FETCH q.questions LEFT JOIN FETCH q.creator WHERE q.id = :id")
     Optional<Quiz> findByIdWithQuestions(@Param("id") Long id);
+
+    @Query("SELECT q FROM Quiz q LEFT JOIN FETCH q.tags WHERE q.id = :id")
+    Optional<Quiz> findByIdWithTags(@Param("id") Long id);
 }

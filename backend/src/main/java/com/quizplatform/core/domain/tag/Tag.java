@@ -37,10 +37,10 @@ public class Tag {
     @OneToMany(mappedBy = "parent")
     private Set<Tag> children = new HashSet<>();
 
-    @ManyToMany(mappedBy = "tags")
+    @ManyToMany(mappedBy = "tags", fetch = FetchType.EAGER)
     private Set<Quiz> quizzes = new HashSet<>();
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
             name = "tag_synonyms",
             joinColumns = @JoinColumn(name = "tag_id")

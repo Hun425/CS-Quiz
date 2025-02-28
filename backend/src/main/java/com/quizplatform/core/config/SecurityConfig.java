@@ -40,7 +40,7 @@ public class SecurityConfig {
             "/api/v3/api-docs/**",     // Add this for API docs
             "/api-docs/**",
             "/api/api-docs/**",        // Add this too
-            "/api/v1/quizzes/public/**",
+            "/api/v1/**",
             "/h2-console/**",
             "/webjars/**",
             "/api/webjars/**",

@@ -199,11 +199,12 @@ public class QuizService {
      * 문제 내용을 제외한 퀴즈 정보를 조회합니다.
      */
     public Quiz getQuizWithoutQuestions(Long quizId) {
-        Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND, "Quiz not found with id: " + quizId));
-
-        // 문제 내용은 제외하고 기본 정보만 반환
-        quiz.getQuestions().size(); // 지연 로딩 초기화
+        // questions 컬렉션도 함께 로드하는 findByIdWithQuestions()를 사용하거나
+        Quiz quiz = quizRepository.findByIdWithQuestions(quizId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND));
+        // 또는 명시적으로 초기화
+        quiz.getQuestions().size();
+        quiz.getTags().size();  // 태그도 초기화
         return quiz;
     }
 
