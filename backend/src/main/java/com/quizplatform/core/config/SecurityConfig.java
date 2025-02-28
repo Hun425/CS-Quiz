@@ -30,22 +30,25 @@ public class SecurityConfig {
     private static final String[] WHITE_LIST = {
             "/",
             "/api/v1/auth/**",
-            "/swagger-ui/**",          // Keep this for direct access
-            "/api/swagger-ui/**",      // Add this to match your actual path
-            "/swagger-ui.html",
-            "/api/swagger-ui.html",    // Add this too if needed
+            "/swagger-ui/**",
+            "/api/swagger-ui/**",
+            "/api/swagger-ui.html",
             "/swagger-resources/**",
-            "/api/swagger-resources/**", // Add this for resources
+            "/api/swagger-resources/**",
             "/v3/api-docs/**",
-            "/api/v3/api-docs/**",     // Add this for API docs
+            "/api/v3/api-docs/**",
             "/api-docs/**",
-            "/api/api-docs/**",        // Add this too
+            "/api/api-docs/**",
             "/api/v1/**",
+            "/api/oauth2/**",
             "/h2-console/**",
             "/webjars/**",
             "/api/webjars/**",
-            "/api/quizzes/**"
+            "/api/quizzes/**",
+            "/oauth2/**"
     };
+
+
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -65,8 +68,14 @@ public class SecurityConfig {
                                 .userService(oAuth2UserService)
                         )
                         .successHandler(oAuth2SuccessHandler)
-                )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                        .redirectionEndpoint(endpoint -> endpoint
+                                .baseUri("/api/oauth2/callback/*")  // 리다이렉션 엔드포인트 명시적 설정
+                        )
+                        .authorizationEndpoint(endpoint -> endpoint
+                                .baseUri("/api/oauth2/authorize")    // 인증 엔드포인트 명시적 설정
+                        )
+                ).addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
 
         return http.build();
     }

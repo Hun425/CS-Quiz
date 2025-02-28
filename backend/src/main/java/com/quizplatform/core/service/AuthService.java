@@ -158,24 +158,37 @@ public class AuthService {
      */
     private OAuth2AccessToken getOAuth2AccessToken(ClientRegistration registration, String code) {
         RestTemplate restTemplate = new RestTemplate();
-
-        // 토큰 요청에 필요한 파라미터 설정
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        HttpHeaders headers = new HttpHeaders();
+
+        // 공통 파라미터 설정
         parameters.add(OAuth2ParameterNames.GRANT_TYPE, "authorization_code");
         parameters.add(OAuth2ParameterNames.CODE, code);
         parameters.add(OAuth2ParameterNames.REDIRECT_URI, registration.getRedirectUri());
-        parameters.add(OAuth2ParameterNames.CLIENT_ID, registration.getClientId());
-        parameters.add(OAuth2ParameterNames.CLIENT_SECRET, registration.getClientSecret());
 
-        // HTTP 헤더 설정
-        HttpHeaders headers = new HttpHeaders();
+        // 제공자별 처리
+        switch(registration.getRegistrationId().toLowerCase()) {
+            case "google":
+                // Google은 헤더에 인증 정보를 넣지 않고 본문에만 포함
+                parameters.add(OAuth2ParameterNames.CLIENT_ID, registration.getClientId());
+                parameters.add(OAuth2ParameterNames.CLIENT_SECRET, registration.getClientSecret());
+                break;
+
+            case "github":
+            case "kakao":
+                // GitHub, Kakao는 Basic Auth 헤더 사용
+                parameters.add(OAuth2ParameterNames.CLIENT_ID, registration.getClientId());
+                parameters.add(OAuth2ParameterNames.CLIENT_SECRET, registration.getClientSecret());
+
+                // Basic Auth 추가 (일부 제공자는 이를 요구함)
+                String credentials = registration.getClientId() + ":" + registration.getClientSecret();
+                String encodedCredentials = Base64.getEncoder().encodeToString(credentials.getBytes());
+                headers.add("Authorization", "Basic " + encodedCredentials);
+                break;
+        }
+
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-
-        // Basic Auth 헤더 추가 (일부 제공자는 이를 요구함)
-        String credentials = registration.getClientId() + ":" + registration.getClientSecret();
-        String encodedCredentials = Base64.getEncoder().encodeToString(credentials.getBytes());
-        headers.add("Authorization", "Basic " + encodedCredentials);
 
         // HTTP 요청 생성 및 전송
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(parameters, headers);

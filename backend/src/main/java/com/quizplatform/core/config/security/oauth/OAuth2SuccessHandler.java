@@ -15,8 +15,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 @Component
@@ -60,11 +58,13 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 .username(userPrincipal.getUsername())
                 .build();
 
-        // 프론트엔드로 리다이렉트 (인코딩된 토큰 정보와 함께)
+// Modified code:
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
-                .queryParam("token_info", URLEncoder.encode(
-                        objectMapper.writeValueAsString(authResponse),
-                        StandardCharsets.UTF_8.toString()))
+                .queryParam("token", authResponse.getAccessToken())
+                .queryParam("refreshToken", authResponse.getRefreshToken())
+                .queryParam("email", authResponse.getEmail())
+                .queryParam("username", authResponse.getUsername())
+                .queryParam("expiresIn", authResponse.getExpiresIn())
                 .build().toUriString();
 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);

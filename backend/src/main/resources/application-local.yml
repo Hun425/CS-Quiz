@@ -56,7 +56,7 @@ spring:
           google:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
-            redirect-uri: "{baseUrl}/oauth2/callback/{registrationId}"
+            redirect-uri: "{baseUrl}/api/oauth2/callback/{registrationId}"
             scope:
               - email
               - profile
@@ -64,7 +64,7 @@ spring:
           github:
             client-id: ${GITHUB_CLIENT_ID}
             client-secret: ${GITHUB_CLIENT_SECRET}
-            redirect-uri: "{baseUrl}/oauth2/callback/{registrationId}"
+            redirect-uri: "{baseUrl}/api/oauth2/callback/{registrationId}"
             scope:
               - user:email
               - read:user
@@ -72,7 +72,7 @@ spring:
           kakao:
             client-id: ${KAKAO_CLIENT_ID}
             client-secret: ${KAKAO_CLIENT_SECRET}
-            redirect-uri: "{baseUrl}/oauth2/callback/{registrationId}"
+            redirect-uri: "{baseUrl}/api/oauth2/callback/{registrationId}"
             authorization-grant-type: authorization_code
             client-authentication-method: POST
             client-name: Kakao
@@ -91,6 +91,7 @@ spring:
 app:
   oauth2:
     authorized-redirect-uri: ${OAUTH2_AUTHORIZED_REDIRECT_URI:http://localhost:3000/oauth2/redirect}
+
 
 
 # ?? ??

@@ -40,13 +40,21 @@ public class OAuth2Controller {
 
     @Operation(summary = "OAuth2 콜백 처리", description = "소셜 로그인 인증 후 콜백을 처리하고 JWT 토큰을 발급합니다.")
     @GetMapping("/callback/{provider}")
-    public void oauth2Callback(@PathVariable String provider, @Parameter(description = "인증 코드") @RequestParam String code, HttpServletRequest request, HttpServletResponse response) throws IOException {
-
+    public void oauth2Callback(@PathVariable String provider,
+                               @RequestParam String code,
+                               HttpServletRequest request,
+                               HttpServletResponse response) throws IOException {
         // OAuth2 인증 처리 및 JWT 토큰 발급
         AuthResponse authResponse = authService.processOAuth2Login(provider, code);
 
         // 프론트엔드 리다이렉트 URI 생성
-        String targetUrl = UriComponentsBuilder.fromUriString(authService.getAuthorizedRedirectUri()).queryParam("token", authResponse.getAccessToken()).queryParam("refreshToken", authResponse.getRefreshToken()).build().toUriString();
+        String targetUrl = UriComponentsBuilder.fromUriString(authService.getAuthorizedRedirectUri())
+                .queryParam("token", authResponse.getAccessToken())
+                .queryParam("refreshToken", authResponse.getRefreshToken())
+                .queryParam("email", authResponse.getEmail())
+                .queryParam("username", authResponse.getUsername())
+                .queryParam("expiresIn", authResponse.getExpiresIn())
+                .build().toUriString();
 
         // 프론트엔드로 리다이렉트
         response.sendRedirect(targetUrl);
