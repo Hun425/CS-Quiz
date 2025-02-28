@@ -4,12 +4,12 @@ import axios, {
     AxiosRequestConfig,
     AxiosResponse,
     AxiosError,
-    InternalAxiosRequestConfig  // Add this import
+    InternalAxiosRequestConfig
 } from 'axios';
 import { useAuthStore } from '../store/authStore';
 import { refreshAccessToken } from '../utils/authUtils';
 
-// 요청 구성 확장 타입 - 변경
+// 요청 구성 확장 타입
 interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
     _retry?: boolean;
 }
@@ -22,7 +22,7 @@ const apiClient: AxiosInstance = axios.create({
     },
 });
 
-// 요청 인터셉터 - 매개변수 타입 변경
+// 요청 인터셉터
 apiClient.interceptors.request.use(
     async (config: InternalAxiosRequestConfig): Promise<InternalAxiosRequestConfig> => {
         // 인증 상태 확인
@@ -51,7 +51,7 @@ apiClient.interceptors.request.use(
     }
 );
 
-// 응답 인터셉터 - 타입 변경
+// 응답 인터셉터
 apiClient.interceptors.response.use(
     (response: AxiosResponse): AxiosResponse => response,
     async (error: AxiosError): Promise<unknown> => {

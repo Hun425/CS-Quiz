@@ -22,12 +22,13 @@ export const refreshAccessToken = async (): Promise<boolean> => {
     if (!refreshToken) return false;
 
     try {
+        // 백엔드는 refreshToken을 Authorization 헤더로 기대합니다
         const response = await api.post<AuthResponse>(
             '/api/oauth2/refresh',
-            {}, // 빈 객체로 요청 바디 전달
+            null, // 요청 바디가 없음
             {
                 headers: {
-                    'Authorization': `Bearer ${refreshToken}`
+                    'Authorization': refreshToken // "Bearer" 접두사 없이 전송
                 }
             }
         );

@@ -2,8 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import axios, { AxiosError } from 'axios';
-import { AuthResponse, UserResponse } from '../types/auth';
 
 const OAuth2CallbackPage: React.FC = () => {
     const { provider } = useParams<{ provider: string }>();
@@ -15,50 +13,47 @@ const OAuth2CallbackPage: React.FC = () => {
     const [processing, setProcessing] = useState<boolean>(true);
 
     useEffect(() => {
-        // 인가 코드 추출
-        const searchParams = new URLSearchParams(location.search);
-        const code = searchParams.get('code');
-
-        if (!code) {
-            setError('인증 코드가 없습니다. 다시 로그인해 주세요.');
-            setProcessing(false);
-            return;
-        }
-
         const handleOAuth2Callback = async (): Promise<void> => {
             try {
-                // 백엔드에 인가 코드 전송하여 토큰 발급 요청
-                const response = await axios.get<AuthResponse>(
-                    `http://localhost:8080/api/oauth2/callback/${provider}`,
-                    { params: { code } }
-                );
+                // URL에서 token과 refreshToken 파라미터 추출
+                const searchParams = new URLSearchParams(location.search);
+                const token = searchParams.get('token');
+                const refreshToken = searchParams.get('refreshToken');
 
-                // 응답 데이터 확인
-                const { accessToken, refreshToken, expiresIn } = response.data;
+                if (!token || !refreshToken) {
+                    setError('인증 토큰을 받지 못했습니다. 다시 로그인해 주세요.');
+                    setProcessing(false);
+                    return;
+                }
 
-                if (accessToken) {
-                    // 사용자 정보 가져오는 API 호출
-                    const userResponse = await axios.get<UserResponse>(
-                        'http://localhost:8080/api/users/me',
-                        {
-                            headers: {
-                                Authorization: `Bearer ${accessToken}`
-                            }
-                        }
-                    );
+                // 사용자 정보 가져오는 API 호출
+                const response = await fetch('http://localhost:8080/api/users/me/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('사용자 정보를 가져오는데 실패했습니다.');
+                }
+
+                const userData = await response.json();
+
+                if (userData.success && userData.data) {
+                    const user = userData.data;
 
                     // 로그인 상태 저장
                     login(
-                        accessToken,
+                        token,
                         refreshToken,
                         {
-                            id: userResponse.data.id,
-                            username: userResponse.data.username,
-                            email: userResponse.data.email,
-                            profileImage: userResponse.data.profileImage,
-                            level: userResponse.data.level
+                            id: user.id,
+                            username: user.username,
+                            email: user.email,
+                            profileImage: user.profileImage,
+                            level: user.level
                         },
-                        expiresIn
+                        3600 * 1000 // 1시간 기본 만료 시간
                     );
 
                     // 리다이렉션 처리
@@ -66,15 +61,13 @@ const OAuth2CallbackPage: React.FC = () => {
                     localStorage.removeItem('authRedirect'); // 리다이렉트 URL 삭제
                     navigate(redirectTo);
                 } else {
-                    setError('로그인 중 오류가 발생했습니다. 다시 시도해 주세요.');
+                    setError('사용자 정보를 가져오는데 실패했습니다.');
                     setProcessing(false);
                 }
             } catch (err: unknown) {
                 console.error('OAuth 콜백 처리 중 오류:', err);
 
-                if (err instanceof AxiosError) {
-                    setError(`인증 처리 중 오류가 발생했습니다: ${err.message || '서버 오류'}`);
-                } else if (err instanceof Error) {
+                if (err instanceof Error) {
                     setError(`인증 처리 중 오류가 발생했습니다: ${err.message}`);
                 } else {
                     setError('인증 처리 중 알 수 없는 오류가 발생했습니다.');
@@ -86,6 +79,7 @@ const OAuth2CallbackPage: React.FC = () => {
 
         handleOAuth2Callback();
     }, [provider, location.search, login, navigate]);
+
     if (error) {
         return (
             <div className="oauth-callback-error" style={{
