@@ -42,12 +42,12 @@ const LoginPage: React.FC = () => {
     const handleOAuth2Login = (provider: Provider) => {
         setLoggingIn(provider);
 
-        // 현재 위치 저장 (리다이렉트 후 돌아올 수 있도록)
+        // 현재 위치 저장
         const from = location.state?.from || '/';
         localStorage.setItem('authRedirect', from);
 
-        // OAuth2 인증 URL로 리다이렉트
-        const redirectUrl = `http://localhost:8080/api/oauth2/authorize/${provider}`;
+        // OAuth2 인증 URL로 리다이렉트 - 백엔드 설정과 일치하도록 수정
+        const redirectUrl = `http://localhost:8080/api/oauth2/authorize/${provider.toLowerCase()}`;
         window.location.href = redirectUrl;
     };
 

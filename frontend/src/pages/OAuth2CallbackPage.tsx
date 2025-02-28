@@ -13,12 +13,18 @@ const OAuth2CallbackPage: React.FC = () => {
     const [processing, setProcessing] = useState<boolean>(true);
 
     useEffect(() => {
+        // In OAuth2CallbackPage.tsx, modify the handleOAuth2Callback function
+
         const handleOAuth2Callback = async (): Promise<void> => {
             try {
                 // URL에서 token과 refreshToken 파라미터 추출
                 const searchParams = new URLSearchParams(location.search);
                 const token = searchParams.get('token');
                 const refreshToken = searchParams.get('refreshToken');
+                const email = searchParams.get('email');
+                const username = searchParams.get('username');
+                const expiresInStr = searchParams.get('expiresIn');
+                const expiresIn = expiresInStr ? parseInt(expiresInStr) : 3600 * 1000; // Default to 1 hour
 
                 if (!token || !refreshToken) {
                     setError('인증 토큰을 받지 못했습니다. 다시 로그인해 주세요.');
@@ -48,12 +54,12 @@ const OAuth2CallbackPage: React.FC = () => {
                         refreshToken,
                         {
                             id: user.id,
-                            username: user.username,
-                            email: user.email,
+                            username: username || user.username,
+                            email: email || user.email,
                             profileImage: user.profileImage,
                             level: user.level
                         },
-                        3600 * 1000 // 1시간 기본 만료 시간
+                        expiresIn // Use the expires_in value from the response
                     );
 
                     // 리다이렉션 처리

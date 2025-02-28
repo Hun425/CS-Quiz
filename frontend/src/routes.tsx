@@ -12,6 +12,7 @@ import OAuth2CallbackPage from './pages/OAuth2CallbackPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import ProfilePage from './pages/ProfilePage';
+import QuizCreatePage from "@/pages/QuizCreatePage.tsx";
 
 const router = createBrowserRouter([
     {
@@ -52,7 +53,7 @@ const router = createBrowserRouter([
                 element: <LoginPage />,
             },
             {
-                path: 'oauth2/callback/:provider',
+                path: 'api/oauth2/callback/:provider',
                 element: <OAuth2CallbackPage />,
             },
             {
@@ -86,6 +87,16 @@ const router = createBrowserRouter([
             {
                 path: 'profile/:userId',
                 element: <ProfilePage />,
+            },
+
+            // 퀴즈 생성 페이지
+            {
+                path: 'QuizCreatePage',
+                element: (
+                    <ProtectedRoute>
+                        <QuizCreatePage />
+                    </ProtectedRoute>
+                ),
             },
         ],
     },
