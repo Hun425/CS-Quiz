@@ -19,7 +19,7 @@ import java.util.Set;
 @Table(name = "user_levels")
 @EntityListeners(AuditingEntityListener.class)
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 public class UserLevel {
 
     @Id

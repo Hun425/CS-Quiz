@@ -14,6 +14,7 @@ import com.quizplatform.core.exception.ErrorCode;
 import com.quizplatform.core.repository.question.QuestionAttemptRepository;
 import com.quizplatform.core.repository.quiz.QuizAttemptRepository;
 import com.quizplatform.core.repository.quiz.QuizRepository;
+import com.quizplatform.core.service.level.LevelingService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ public class QuizAttemptService {
     private final QuizAttemptRepository quizAttemptRepository;
     private final QuestionAttemptRepository questionAttemptRepository;
     private final QuizRepository quizRepository;
+    private final LevelingService levelingService;
 
     public QuizAttempt startQuiz(Long quizId, User user) {
         Quiz quiz = quizRepository.findById(quizId)
