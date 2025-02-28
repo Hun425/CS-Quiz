@@ -2,10 +2,7 @@ package com.quizplatform.core.service.quiz;
 
 import com.quizplatform.core.domain.question.Question;
 import com.quizplatform.core.domain.question.QuestionAttempt;
-import com.quizplatform.core.domain.quiz.DifficultyLevel;
-import com.quizplatform.core.domain.quiz.Quiz;
-import com.quizplatform.core.domain.quiz.QuizAttempt;
-import com.quizplatform.core.domain.quiz.QuizStatistics;
+import com.quizplatform.core.domain.quiz.*;
 import com.quizplatform.core.domain.tag.Tag;
 import com.quizplatform.core.domain.user.User;
 import com.quizplatform.core.dto.question.QuestionCreateRequest;
@@ -37,7 +34,8 @@ public class QuizService {
     private final TagRepository tagRepository;
     private final UserRepository userRepository;
     private final QuizAttemptRepository quizAttemptRepository;
-
+    private final QuizAttemptService quizAttemptService;
+    
     /**
      * 새로운 퀴즈를 생성합니다.
      * 이 메서드는 퀴즈의 기본 정보와 함께 문제들도 함께 생성합니다.
@@ -352,5 +350,44 @@ public class QuizService {
         // 적절한 난이도 계산 로직 구현
         // ... 구현 ...
         return DifficultyLevel.INTERMEDIATE; // 임시 반환
+    }
+
+    /**
+     * 플레이 가능한 퀴즈 정보를 조회합니다.
+     * 퀴즈 시작 시 퀴즈 시도(QuizAttempt) 객체를 생성하고 퀴즈 정보를 반환합니다.
+     *
+     * @param quizId 조회할 퀴즈 ID
+     * @param userId 사용자 ID
+     * @return 플레이 가능한 퀴즈 객체
+     */
+    @Transactional
+    public Quiz getPlayableQuiz(Long quizId, Long userId) {
+        // 퀴즈 조회
+        Quiz quiz = quizRepository.findByIdWithQuestions(quizId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND, "퀴즈를 찾을 수 없습니다. ID: " + quizId));
+
+        // 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다. ID: " + userId));
+
+        // 퀴즈가 공개된 것인지 확인
+        if (!quiz.isPublic() && !quiz.getCreator().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.QUIZ_NOT_FOUND, "접근할 수 없는 퀴즈입니다.");
+        }
+
+        // 데일리 퀴즈인 경우 이미 완료했는지 체크
+        if (quiz.getQuizType() == QuizType.DAILY &&
+                quizAttemptRepository.hasCompletedQuiz(user, quiz)) {
+            throw new BusinessException(ErrorCode.QUIZ_ALREADY_COMPLETED, "이미 완료한 데일리 퀴즈입니다.");
+        }
+
+        // 퀴즈 시도 객체 생성 (시작 시간 기록)
+        QuizAttempt quizAttempt = quizAttemptService.startQuiz(quizId, user);
+
+        // 퀴즈 조회수 증가
+        quiz.incrementViewCount();
+        quizRepository.save(quiz);
+
+        return quiz;
     }
 }

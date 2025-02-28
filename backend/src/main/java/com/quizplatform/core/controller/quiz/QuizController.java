@@ -152,4 +152,34 @@ public class QuizController {
         QuizStatistics statistics = quizService.getQuizStatistics(quizId);
         return ResponseEntity.ok(CommonApiResponse.success(QuizStatisticsResponse.from(statistics)));
     }
+
+    /**
+     * 퀴즈 플레이를 위한 퀴즈 정보를 제공합니다.
+     * 문제와 선택지를 포함하며, 정답은 제외합니다.
+     */
+    @Operation(summary = "플레이 가능한 퀴즈 조회", description = "퀴즈 플레이를 위한 문제와 선택지가 포함된 퀴즈 정보를 제공합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "퀴즈 정보가 성공적으로 조회되었습니다."),
+            @ApiResponse(responseCode = "404", description = "퀴즈를 찾을 수 없습니다."),
+            @ApiResponse(responseCode = "403", description = "퀴즈에 접근할 권한이 없습니다.")
+    })
+    @GetMapping("/{quizId}/play")
+    public ResponseEntity<CommonApiResponse<QuizResponse>> getPlayableQuiz(
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Parameter(description = "플레이할 퀴즈의 ID") @PathVariable Long quizId) {
+
+        // 사용자 인증 확인
+        if (userPrincipal == null) {
+            return ResponseEntity.status(403).body(
+                    CommonApiResponse.error("로그인이 필요합니다.", "UNAUTHORIZED")
+            );
+        }
+
+        // 퀴즈 서비스를 통해 플레이 가능한 퀴즈 정보 조회
+        Quiz quiz = quizService.getPlayableQuiz(quizId, userPrincipal.getId());
+
+        // DTO로 변환하여 응답
+        return ResponseEntity.ok(CommonApiResponse.success(QuizResponse.from(quiz)));
+    }
+
 }
