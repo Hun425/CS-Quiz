@@ -92,7 +92,7 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
                                 .and(quiz.tags.any().in(tags))
                 )
                 .orderBy(
-                        Expressions.numberTemplate(Double.class, "RAND()").asc()
+                        Expressions.numberTemplate(Double.class, "random()").asc()
                 )
                 .limit(limit)
                 .fetch();

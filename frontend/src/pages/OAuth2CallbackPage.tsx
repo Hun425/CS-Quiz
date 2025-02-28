@@ -13,18 +13,16 @@ const OAuth2CallbackPage: React.FC = () => {
     const [processing, setProcessing] = useState<boolean>(true);
 
     useEffect(() => {
-        // In OAuth2CallbackPage.tsx, modify the handleOAuth2Callback function
-
         const handleOAuth2Callback = async (): Promise<void> => {
             try {
-                // URL에서 token과 refreshToken 파라미터 추출
+                // URL에서 token, refreshToken 및 기타 파라미터 추출
                 const searchParams = new URLSearchParams(location.search);
                 const token = searchParams.get('token');
                 const refreshToken = searchParams.get('refreshToken');
                 const email = searchParams.get('email');
                 const username = searchParams.get('username');
                 const expiresInStr = searchParams.get('expiresIn');
-                const expiresIn = expiresInStr ? parseInt(expiresInStr) : 3600 * 1000; // Default to 1 hour
+                const expiresIn = expiresInStr ? parseInt(expiresInStr) : 3600 * 1000; // 기본 1시간
 
                 if (!token || !refreshToken) {
                     setError('인증 토큰을 받지 못했습니다. 다시 로그인해 주세요.');
@@ -32,7 +30,7 @@ const OAuth2CallbackPage: React.FC = () => {
                     return;
                 }
 
-                // 사용자 정보 가져오는 API 호출
+                // 사용자 정보 가져오기 (백엔드 API 호출)
                 const response = await fetch('http://localhost:8080/api/users/me/profile', {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -59,13 +57,11 @@ const OAuth2CallbackPage: React.FC = () => {
                             profileImage: user.profileImage,
                             level: user.level
                         },
-                        expiresIn // Use the expires_in value from the response
+                        expiresIn
                     );
 
-                    // 리다이렉션 처리
-                    const redirectTo = localStorage.getItem('authRedirect') || '/';
-                    localStorage.removeItem('authRedirect'); // 리다이렉트 URL 삭제
-                    navigate(redirectTo);
+                    // 항상 홈("/")으로 리다이렉션
+                    navigate('/');
                 } else {
                     setError('사용자 정보를 가져오는데 실패했습니다.');
                     setProcessing(false);

@@ -93,7 +93,7 @@ spring:
 
 app:
   oauth2:
-    authorized-redirect-uri: ${OAUTH2_AUTHORIZED_REDIRECT_URI:http://localhost:3000/oauth2/redirect}
+    authorized-redirect-uri: ${OAUTH2_AUTHORIZED_REDIRECT_URI:http://localhost:3000/api/oauth2/redirect}
 
 
 # ?? ??

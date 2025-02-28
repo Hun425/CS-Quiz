@@ -50,7 +50,7 @@ public interface QuizRepository extends JpaRepository<Quiz, Long>, CustomQuizRep
             "AND t.id NOT IN :recentTagIds " +
             "AND q.difficultyLevel NOT IN :recentDifficulties " +
             "AND q.isPublic = true " +
-            "ORDER BY RAND()")
+            "ORDER BY random()")
     Optional<Quiz> findQuizForDaily(
             @Param("recentTagIds") Set<Long> recentTagIds,
             @Param("recentDifficulties") Set<DifficultyLevel> recentDifficulties

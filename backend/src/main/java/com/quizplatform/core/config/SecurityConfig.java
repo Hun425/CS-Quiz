@@ -1,7 +1,6 @@
 package com.quizplatform.core.config;
 
 import com.quizplatform.core.config.security.jwt.JwtAuthenticationFilter;
-
 import com.quizplatform.core.config.security.oauth.CustomOAuth2UserService;
 import com.quizplatform.core.config.security.oauth.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +15,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -48,13 +50,21 @@ public class SecurityConfig {
             "/oauth2/**"
     };
 
-
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configure(http))
+                .cors(cors -> cors.configurationSource(request -> {
+                    CorsConfiguration config = new CorsConfiguration();
+                    // 프론트엔드 주소에 맞게 수정
+                    config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
+                    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                    config.setAllowedHeaders(List.of("*"));
+                    config.setAllowCredentials(true);
+                    // 필요한 경우 노출할 헤더 추가 (예: Authorization)
+                    config.setExposedHeaders(List.of("Authorization"));
+                    return config;
+                }))
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
@@ -74,8 +84,8 @@ public class SecurityConfig {
                         .authorizationEndpoint(endpoint -> endpoint
                                 .baseUri("/api/oauth2/authorize")    // 인증 엔드포인트 명시적 설정
                         )
-                ).addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
