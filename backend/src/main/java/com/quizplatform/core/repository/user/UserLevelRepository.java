@@ -1,5 +1,6 @@
-package com.quizplatform.core.repository.level;
+package com.quizplatform.core.repository.user;
 
+import com.quizplatform.core.domain.user.LevelUpRecord;
 import com.quizplatform.core.domain.user.User;
 import com.quizplatform.core.domain.user.UserLevel;
 import org.springframework.data.domain.Page;
@@ -12,6 +13,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserLevelRepository extends JpaRepository<UserLevel, Long> {
+
+    Optional<UserLevel> findByUserId(Long userId);
+
+    @Query(value = "SELECT id, user_id, previous_level AS oldLevel, level AS newLevel, updated_at AS occurredAt FROM user_level_history WHERE user_id = :userId ORDER BY updated_at DESC LIMIT :limit", nativeQuery = true)
+    List<LevelUpRecord> findRecentLevelUpsByUserId(@Param("userId") Long userId, @Param("limit") int limit);
 
     Optional<UserLevel> findByUser(User user);
 

@@ -1,7 +1,6 @@
 package com.quizplatform.core.config;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -56,27 +55,26 @@ public class RedisConfig {
     }
 
     @Bean
-    public CacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
-        // 기본 캐시 설정
-        RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(30))  // 기본 TTL 30분
-                .serializeKeysWith(
-                        RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer())
-                )
-                .serializeValuesWith(
-                        RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer())
-                );
-
-        // 캐시별 TTL 설정
+    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
-        cacheConfigurations.put("quiz", defaultConfig.entryTtl(Duration.ofHours(1)));  // 퀴즈 캐시 1시간
-        cacheConfigurations.put("userProgress", defaultConfig.entryTtl(Duration.ofDays(1)));  // 진행상태 1일
-        cacheConfigurations.put("dailyQuiz", defaultConfig.entryTtl(Duration.ofHours(24)));  // 데일리 퀴즈 24시간
 
-        return RedisCacheManager.builder(redisConnectionFactory)
-                .cacheDefaults(defaultConfig)
+        // 각 캐시의 TTL 설정
+        cacheConfigurations.put("userProfiles", createCacheConfiguration(Duration.ofHours(1)));
+        cacheConfigurations.put("userStatistics", createCacheConfiguration(Duration.ofMinutes(30)));
+        cacheConfigurations.put("userAchievements", createCacheConfiguration(Duration.ofHours(1)));
+        cacheConfigurations.put("userTopicPerformance", createCacheConfiguration(Duration.ofHours(1)));
+
+        return RedisCacheManager.builder(connectionFactory)
+                .cacheDefaults(createCacheConfiguration(Duration.ofMinutes(10)))
                 .withInitialCacheConfigurations(cacheConfigurations)
                 .build();
+    }
+
+    private RedisCacheConfiguration createCacheConfiguration(Duration ttl) {
+        return RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(ttl)
+                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()));
     }
 
 

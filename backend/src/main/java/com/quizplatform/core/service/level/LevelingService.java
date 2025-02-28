@@ -4,7 +4,7 @@ import com.quizplatform.core.domain.quiz.Achievement;
 import com.quizplatform.core.domain.quiz.QuizAttempt;
 import com.quizplatform.core.domain.user.User;
 import com.quizplatform.core.domain.user.UserLevel;
-import com.quizplatform.core.repository.level.UserLevelRepository;
+import com.quizplatform.core.repository.user.UserLevelRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
