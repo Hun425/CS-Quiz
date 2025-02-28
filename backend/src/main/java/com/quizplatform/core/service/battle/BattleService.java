@@ -3,11 +3,13 @@ package com.quizplatform.core.service.battle;
 import com.quizplatform.core.domain.battle.BattleAnswer;
 import com.quizplatform.core.domain.battle.BattleParticipant;
 import com.quizplatform.core.domain.battle.BattleRoom;
+import com.quizplatform.core.domain.battle.BattleRoomStatus;
 import com.quizplatform.core.domain.question.Question;
 import com.quizplatform.core.domain.quiz.Quiz;
 import com.quizplatform.core.domain.user.User;
 import com.quizplatform.core.domain.user.UserBattleStats;
 import com.quizplatform.core.dto.battle.*;
+import com.quizplatform.core.dto.progess.BattleProgress;
 import com.quizplatform.core.exception.BusinessException;
 import com.quizplatform.core.exception.ErrorCode;
 import com.quizplatform.core.repository.UserRepository;
@@ -15,8 +17,11 @@ import com.quizplatform.core.repository.battle.BattleParticipantRepository;
 import com.quizplatform.core.repository.battle.BattleRoomRepository;
 import com.quizplatform.core.repository.quiz.QuizRepository;
 import com.quizplatform.core.repository.user.UserBattleStatsRepository;
+import com.quizplatform.core.service.level.LevelingService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +32,8 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
+@Slf4j
 public class BattleService {
     private final BattleRoomRepository battleRoomRepository;
     private final BattleParticipantRepository participantRepository;
@@ -34,17 +41,142 @@ public class BattleService {
     private final QuizRepository quizRepository;
     private final UserBattleStatsRepository userBattleStatsRepository;
     private final RedisTemplate<String, String> redisTemplate;
+    private final LevelingService levelingService;
 
-
+    // Redis 키 접두사
     private static final String BATTLE_ROOM_KEY_PREFIX = "battle:room:";
     private static final String PARTICIPANT_KEY_PREFIX = "battle:participant:";
     private static final int ROOM_EXPIRE_SECONDS = 3600; // 1시간
 
     /**
-     * 대결방 입장 처리
-     * Redis를 활용하여 실시간 참가자 상태를 관리합니다.
+     * 새로운 대결방 생성
      */
-    @Transactional
+    public BattleRoom createBattleRoom(User creator, Long quizId, Integer maxParticipants) {
+        // 퀴즈 조회
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND, "퀴즈를 찾을 수 없습니다."));
+
+        // 대결방 생성
+        BattleRoom battleRoom = BattleRoom.builder()
+                .quiz(quiz)
+                .maxParticipants(maxParticipants != null ? maxParticipants : 4)
+                .build();
+
+        // 대결방 설정 유효성 검사
+        battleRoom.validateBattleSettings();
+
+        // 대결방 저장
+        BattleRoom savedRoom = battleRoomRepository.save(battleRoom);
+
+        // 방장을 첫 참가자로 추가
+        addParticipant(savedRoom, creator);
+
+        return savedRoom;
+    }
+
+    /**
+     * 대결방 조회
+     */
+    public BattleRoom getBattleRoom(Long roomId) {
+        return battleRoomRepository.findById(roomId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND, "대결방을 찾을 수 없습니다."));
+    }
+
+    /**
+     * 상태별 대결방 조회
+     */
+    public List<BattleRoom> getBattleRoomsByStatus(BattleRoomStatus status) {
+        return battleRoomRepository.findByStatus(status);
+    }
+
+    /**
+     * 사용자별 활성 대결방 조회
+     */
+    public BattleRoom getActiveBattleRoomByUser(User user) {
+        return battleRoomRepository.findActiveRoomByUser(user, BattleRoomStatus.IN_PROGRESS)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND, "활성 대결방이 없습니다."));
+    }
+
+    /**
+     * 대결방 참가
+     */
+    public BattleRoom joinBattleRoom(Long roomId, User user) {
+        BattleRoom battleRoom = getBattleRoom(roomId);
+
+        // 이미 시작된 대결인지 확인
+        if (battleRoom.getStatus() != BattleRoomStatus.WAITING) {
+            throw new BusinessException(ErrorCode.BATTLE_ALREADY_STARTED, "이미 시작된 대결방입니다.");
+        }
+
+        // 정원 초과 확인
+        if (battleRoom.isParticipantLimitReached()) {
+            throw new BusinessException(ErrorCode.BATTLE_ROOM_FULL, "대결방이 가득 찼습니다.");
+        }
+
+        // 이미 참가 중인지 확인
+        if (participantRepository.existsByBattleRoomAndUser(battleRoom, user)) {
+            throw new BusinessException(ErrorCode.ALREADY_PARTICIPATING, "이미 참가 중인 사용자입니다.");
+        }
+
+        // 참가자 추가
+        addParticipant(battleRoom, user);
+
+        return battleRoom;
+    }
+
+    /**
+     * 준비 상태 토글
+     */
+    public BattleRoom toggleReady(Long roomId, User user) {
+        BattleRoom battleRoom = getBattleRoom(roomId);
+
+        // 참가자 조회
+        BattleParticipant participant = participantRepository.findByBattleRoomAndUser(battleRoom, user)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND, "참가자를 찾을 수 없습니다."));
+
+        // 준비 상태 토글
+        participant.toggleReady();
+        participantRepository.save(participant);
+
+        // 모든 참가자가 준비 완료되었는지 확인하고 자동 시작
+        if (isReadyToStart(roomId)) {
+            startBattle(roomId);
+        }
+
+        return battleRoom;
+    }
+
+    /**
+     * 대결방 나가기
+     */
+    public BattleRoom leaveBattleRoom(Long roomId, User user) {
+        BattleRoom battleRoom = getBattleRoom(roomId);
+
+        // 이미 시작된 대결인지 확인
+        if (battleRoom.getStatus() == BattleRoomStatus.IN_PROGRESS) {
+            throw new BusinessException(ErrorCode.BATTLE_ALREADY_STARTED, "진행 중인 대결에서는 나갈 수 없습니다.");
+        }
+
+        // 참가자 조회
+        BattleParticipant participant = participantRepository.findByBattleRoomAndUser(battleRoom, user)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND, "참가자를 찾을 수 없습니다."));
+
+        // 참가자 제거
+        battleRoom.getParticipants().remove(participant);
+        participantRepository.delete(participant);
+
+        // 참가자가 없으면 대결방 삭제
+        if (battleRoom.getParticipants().isEmpty()) {
+            battleRoomRepository.delete(battleRoom);
+            return null;
+        }
+
+        return battleRoom;
+    }
+
+    /**
+     * 대결방 입장 처리 (WebSocket)
+     */
     public BattleJoinResponse joinBattle(BattleJoinRequest request, String sessionId) {
         // 대결방 조회
         BattleRoom room = battleRoomRepository.findById(request.getRoomId())
@@ -55,8 +187,7 @@ public class BattleService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         // 참가자 생성 및 저장
-        BattleParticipant participant = room.addParticipant(user);
-        participant = participantRepository.save(participant);
+        BattleParticipant participant = addParticipant(room, user);
 
         // Redis에 참가자 정보 저장
         saveParticipantToRedis(participant, sessionId);
@@ -66,10 +197,8 @@ public class BattleService {
     }
 
     /**
-     * 답변 처리
-     * 답변의 정확성을 검증하고 점수를 계산합니다.
+     * 답변 처리 (WebSocket)
      */
-    @Transactional
     public BattleAnswerResponse processAnswer(BattleAnswerRequest request, String sessionId) {
         // Redis에서 참가자 정보 조회
         BattleParticipant participant = getParticipantFromRedis(sessionId);
@@ -77,24 +206,20 @@ public class BattleService {
             throw new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND);
         }
 
-        // 현재 배틀룸의 현재 문제를 조회합니다.
+        // 현재 배틀룸의 현재 문제를 조회
         Question currentQuestion = participant.getBattleRoom().getCurrentQuestion();
 
-        // 요청으로 전달된 질문 ID와 현재 문제의 ID가 일치하는지 검증 (원하는 검증 로직에 따라 수정 가능)
+        // 요청으로 전달된 질문 ID와 현재 문제의 ID가 일치하는지 검증
         if (currentQuestion == null || !currentQuestion.getId().equals(request.getQuestionId())) {
             throw new BusinessException(ErrorCode.INVALID_QUESTION);
         }
 
-        // 답변 제출 및 점수 계산: 이제 Question 객체를 전달합니다.
+        // 답변 제출 및 점수 계산
         BattleAnswer answer = participant.submitAnswer(
                 currentQuestion,
                 request.getAnswer(),
                 request.getTimeSpentSeconds()
         );
-
-        // 결과 저장
-        participantRepository.save(participant);
-
 
         // 결과 저장
         participantRepository.save(participant);
@@ -115,7 +240,6 @@ public class BattleService {
     /**
      * 대결 시작 처리
      */
-    @Transactional
     public BattleStartResponse startBattle(Long roomId) {
         BattleRoom room = battleRoomRepository.findById(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
@@ -130,7 +254,6 @@ public class BattleService {
     /**
      * 다음 문제 준비
      */
-    @Transactional
     public BattleNextQuestionResponse prepareNextQuestion(Long roomId) {
         BattleRoom room = battleRoomRepository.findById(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
@@ -168,7 +291,6 @@ public class BattleService {
     /**
      * 대결 종료 처리
      */
-    @Transactional
     public BattleEndResponse endBattle(Long roomId) {
         BattleRoom room = battleRoomRepository.findById(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
@@ -182,6 +304,26 @@ public class BattleService {
         updateStatistics(result);
 
         return createBattleEndResponse(result);
+    }
+
+    // 내부 도우미 메서드들
+
+    /**
+     * 참가자 추가
+     */
+    private BattleParticipant addParticipant(BattleRoom battleRoom, User user) {
+        BattleParticipant participant = BattleParticipant.builder()
+                .battleRoom(battleRoom)
+                .user(user)
+                .build();
+
+        // 참가자에게 UserBattleStats가 없으면 생성
+        if (user.getBattleStats() == null) {
+            UserBattleStats stats = new UserBattleStats(user);
+            userBattleStatsRepository.save(stats);
+        }
+
+        return participantRepository.save(participant);
     }
 
     // Redis 관련 헬퍼 메서드들
@@ -209,7 +351,6 @@ public class BattleService {
 
     /**
      * 대결방 입장 응답 생성
-     * 현재 참가자 상태와 방 정보를 포함한 응답을 생성합니다.
      */
     private BattleJoinResponse createBattleJoinResponse(BattleRoom room, BattleParticipant newParticipant) {
         List<BattleJoinResponse.ParticipantInfo> participants = room.getParticipants().stream()
@@ -235,7 +376,6 @@ public class BattleService {
 
     /**
      * 답변 결과 응답 생성
-     * 답변의 정확성, 획득 점수, 보너스 점수 등을 포함합니다.
      */
     private BattleAnswerResponse createBattleAnswerResponse(BattleAnswer answer) {
         Question question = answer.getQuestion();
@@ -253,7 +393,6 @@ public class BattleService {
 
     /**
      * 대결 시작 응답 생성
-     * 첫 번째 문제와 참가자 정보를 포함합니다.
      */
     private BattleStartResponse createBattleStartResponse(BattleRoom room) {
         List<BattleStartResponse.ParticipantInfo> participants = room.getParticipants().stream()
@@ -283,7 +422,6 @@ public class BattleService {
 
     /**
      * 다음 문제 응답 생성
-     * 문제 내용과 선택지, 제한시간 등을 포함합니다.
      */
     private BattleNextQuestionResponse createNextQuestionResponse(Question question, boolean isLast) {
         return BattleNextQuestionResponse.builder()
@@ -300,7 +438,6 @@ public class BattleService {
 
     /**
      * 대결 진행 상황 응답 생성
-     * 현재 진행 상태와 참가자들의 점수 현황을 포함합니다.
      */
     private BattleProgressResponse createBattleProgressResponse(BattleRoom room) {
         Map<Long, BattleProgressResponse.ParticipantProgress> participantProgress = new HashMap<>();
@@ -331,15 +468,14 @@ public class BattleService {
 
     /**
      * 대결 결과 계산
-     * 최종 승자 결정과 통계를 계산합니다.
      */
     private BattleResult calculateBattleResult(BattleRoom room) {
         List<BattleParticipant> sortedParticipants = room.getParticipants().stream()
                 .sorted(Comparator.comparingInt(BattleParticipant::getCurrentScore).reversed())
                 .collect(Collectors.toList());
 
-        BattleParticipant winner = sortedParticipants.get(0);
-        int highestScore = winner.getCurrentScore();
+        BattleParticipant winner = sortedParticipants.isEmpty() ? null : sortedParticipants.get(0);
+        int highestScore = winner != null ? winner.getCurrentScore() : 0;
 
         return BattleResult.builder()
                 .roomId(room.getId())
@@ -349,77 +485,38 @@ public class BattleService {
                 .startTime(room.getStartTime())
                 .endTime(LocalDateTime.now())
                 .totalTimeSeconds(room.getTotalTimeSeconds())
+                .battleRoom(room)
                 .build();
     }
 
     /**
      * 경험치 보상 지급
-     * 승자와 참가자들에게 경험치를 부여합니다.
      */
     private void awardExperiencePoints(BattleResult result) {
-        // 승자에게 추가 경험치 부여
-        User winner = result.getWinner().getUser();
-        int winnerExp = calculateWinnerExperience(result);
-        winner.gainExperience(winnerExp);
-        userRepository.save(winner);
+        if (result.getWinner() == null) return;
 
-        // 다른 참가자들에게 기본 경험치 부여
+        // 승자에게 경험치 부여
+        levelingService.calculateBattleExp(result, result.getWinner().getUser());
+
+        // 다른 참가자들에게 경험치 부여
         result.getParticipants().stream()
                 .filter(p -> !p.equals(result.getWinner()))
                 .forEach(participant -> {
-                    User user = participant.getUser();
-                    int exp = calculateParticipantExperience(participant);
-                    user.gainExperience(exp);
-                    userRepository.save(user);
+                    levelingService.calculateBattleExp(result, participant.getUser());
                 });
     }
 
     /**
-     * 승자 경험치 계산
-     * 점수, 정답률, 승리 보너스를 고려합니다.
-     */
-    private int calculateWinnerExperience(BattleResult result) {
-        BattleParticipant winner = result.getWinner();
-
-        // 기본 경험치 (점수 기반)
-        int baseExp = winner.getCurrentScore();
-
-        // 정답률 보너스
-        double correctRate = winner.getCorrectAnswersCount() / (double) result.getTotalQuestions();
-        int accuracyBonus = correctRate >= 0.8 ? 50 : 0;
-
-        // 승리 보너스
-        int winBonus = 100;
-
-        return baseExp + accuracyBonus + winBonus;
-    }
-
-    /**
-     * 참가자 경험치 계산
-     * 점수와 정답률을 고려합니다.
-     */
-    private int calculateParticipantExperience(BattleParticipant participant) {
-        // 기본 경험치 (점수의 80%)
-        int baseExp = (int) (participant.getCurrentScore() * 0.8);
-
-        // 정답률 보너스
-        double correctRate = participant.getCorrectAnswersCount() /
-                (double) participant.getBattleRoom().getQuestions().size();
-        int accuracyBonus = correctRate >= 0.7 ? 30 : 0;
-
-        return baseExp + accuracyBonus;
-    }
-
-    /**
      * 통계 업데이트
-     * 사용자와 퀴즈의 통계 정보를 업데이트합니다.
      */
     private void updateStatistics(BattleResult result) {
         // 사용자 통계 업데이트
         result.getParticipants().forEach(participant -> {
             UserBattleStats stats = participant.getUser().getBattleStats();
-            stats.updateStats(participant);
-            userBattleStatsRepository.save(stats);
+            if (stats != null) {
+                stats.updateStats(participant);
+                userBattleStatsRepository.save(stats);
+            }
         });
 
         // 퀴즈 통계 업데이트
@@ -429,7 +526,7 @@ public class BattleService {
     }
 
     /**
-     * 대결 종료 응답을 생성합니다.
+     * 대결 종료 응답을 생성
      */
     private BattleEndResponse createBattleEndResponse(BattleResult result) {
         List<BattleEndResponse.ParticipantResult> participantResults = result.getParticipants().stream()
@@ -463,7 +560,7 @@ public class BattleService {
     }
 
     /**
-     * 참가자의 평균 답변 시간을 계산합니다.
+     * 참가자의 평균 답변 시간을 계산
      */
     private int calculateAverageTime(BattleParticipant participant) {
         List<BattleAnswer> answers = participant.getAnswers();
@@ -477,7 +574,7 @@ public class BattleService {
     }
 
     /**
-     * 획득한 경험치를 계산합니다.
+     * 획득한 경험치를 계산
      */
     private int calculateExperienceGained(BattleParticipant participant, BattleResult result) {
         // 기본 경험치 (점수의 10%)
