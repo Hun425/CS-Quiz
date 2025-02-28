@@ -394,5 +394,57 @@ FROM winner_selection ws
 WHERE battle_rooms.id = ws.battle_room_id
   AND battle_rooms.status = 'FINISHED'
     )
+-- 사용자 업적 이력 데이터 생성
+    , inserted_achievement_history AS (
+INSERT INTO public.user_achievement_history (
+    user_id,
+    achievement,
+    achievement_name,
+    earned_at
+)
+SELECT
+    u.id,
+    achievement,
+    CASE achievement
+    WHEN 'FIRST_QUIZ_COMPLETED' THEN '첫 퀴즈 완료'
+    WHEN 'PERFECT_SCORE' THEN '완벽한 점수'
+    WHEN 'WINNING_STREAK_3' THEN '3연승'
+    WHEN 'WINNING_STREAK_5' THEN '5연승'
+    WHEN 'DAILY_QUIZ_MASTER' THEN '데일리 퀴즈 마스터'
+    END as achievement_name,
+    NOW() - (INTERVAL '1 day' * (random() * 30)::integer)
+FROM public.users u
+    CROSS JOIN (
+    SELECT unnest(ARRAY[
+    'FIRST_QUIZ_COMPLETED',
+    'PERFECT_SCORE',
+    'WINNING_STREAK_3',
+    'WINNING_STREAK_5',
+    'DAILY_QUIZ_MASTER'
+    ]) as achievement
+    ) a
+WHERE u.role = 'USER'
+    LIMIT 15 -- 각 사용자마다 몇 개의 업적을 생성할지 제한
+    )
+
+-- 사용자 레벨업 이력 데이터 생성
+    , inserted_level_history AS (
+INSERT INTO public.user_level_history (
+    user_id,
+    previous_level,
+    level,
+    updated_at
+)
+SELECT
+    u.id,
+    u.level - level_inc,
+    u.level,
+    NOW() - (INTERVAL '1 day' * ((5 - level_inc) * 5 + (random() * 5)::integer))
+FROM public.users u
+    CROSS JOIN generate_series(1, 3) as level_inc
+WHERE u.level >= level_inc -- 현재 레벨보다 낮은 과거 레벨만 생성
+ORDER BY u.id, level_inc DESC
+    )
+
 -- 최종 결과 확인
 SELECT 'Battle system data insertion completed successfully.' as result;

@@ -22,4 +22,10 @@ public interface QuestionAttemptRepository extends JpaRepository<QuestionAttempt
             @Param("question") Question question,
             Pageable pageable
     );
+
+    @Query("SELECT COUNT(qa) FROM QuestionAttempt qa WHERE qa.quizAttempt.user.id = :userId AND qa.isCorrect = true")
+    long countCorrectAnswersByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT COUNT(qa) FROM QuestionAttempt qa WHERE qa.quizAttempt.user.id = :userId")
+    long countTotalQuestionsByUserId(@Param("userId") Long userId);
 }

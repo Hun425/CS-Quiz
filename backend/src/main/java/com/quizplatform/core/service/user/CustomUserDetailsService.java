@@ -1,4 +1,4 @@
-package com.quizplatform.core.service;
+package com.quizplatform.core.service.user;
 
 import com.quizplatform.core.config.security.UserPrincipal;
 import com.quizplatform.core.domain.user.User;
