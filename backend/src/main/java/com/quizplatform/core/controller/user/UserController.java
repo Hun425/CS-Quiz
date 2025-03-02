@@ -1,5 +1,6 @@
 package com.quizplatform.core.controller.user;
 
+import com.quizplatform.core.config.security.UserPrincipal;
 import com.quizplatform.core.dto.common.CommonApiResponse;
 import com.quizplatform.core.dto.user.*;
 import com.quizplatform.core.service.user.UserService;
@@ -11,8 +12,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,10 +33,11 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
     })
     @GetMapping("/{userId}/profile")
-    public CommonApiResponse<UserProfileDto> getUserProfile(
+    public ResponseEntity<CommonApiResponse<UserProfileDto>> getUserProfile(
             @Parameter(description = "조회할 사용자 ID", required = true)
             @PathVariable Long userId) {
-        return CommonApiResponse.success(userService.getUserProfile(userId));
+        UserProfileDto profile = userService.getUserProfile(userId);
+        return ResponseEntity.ok(CommonApiResponse.success(profile));
     }
 
     @Operation(summary = "내 프로필 조회", description = "현재 로그인한 사용자의 프로필 정보를 조회합니다.")
@@ -45,11 +47,12 @@ public class UserController {
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
     })
     @GetMapping("/me/profile")
-    public CommonApiResponse<UserProfileDto> getMyProfile(
+    public ResponseEntity<CommonApiResponse<UserProfileDto>> getMyProfile(
             @Parameter(hidden = true)
-            @AuthenticationPrincipal OAuth2User principal) {
-        Long userId = Long.valueOf(principal.getName());
-        return CommonApiResponse.success(userService.getUserProfile(userId));
+            @AuthenticationPrincipal UserPrincipal principal) {
+        Long userId = principal.getId();
+        UserProfileDto profile = userService.getUserProfile(userId);
+        return ResponseEntity.ok(CommonApiResponse.success(profile));
     }
 
     @Operation(summary = "사용자 통계 조회", description = "특정 사용자의 퀴즈 참여 통계를 조회합니다.")
@@ -59,10 +62,11 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
     })
     @GetMapping("/{userId}/statistics")
-    public CommonApiResponse<UserStatisticsDto> getUserStatistics(
+    public ResponseEntity<CommonApiResponse<UserStatisticsDto>> getUserStatistics(
             @Parameter(description = "조회할 사용자 ID", required = true)
             @PathVariable Long userId) {
-        return CommonApiResponse.success(userService.getUserStatistics(userId));
+        UserStatisticsDto statistics = userService.getUserStatistics(userId);
+        return ResponseEntity.ok(CommonApiResponse.success(statistics));
     }
 
     @Operation(summary = "내 통계 조회", description = "현재 로그인한 사용자의 퀴즈 참여 통계를 조회합니다.")
@@ -72,11 +76,12 @@ public class UserController {
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
     })
     @GetMapping("/me/statistics")
-    public CommonApiResponse<UserStatisticsDto> getMyStatistics(
+    public ResponseEntity<CommonApiResponse<UserStatisticsDto>> getMyStatistics(
             @Parameter(hidden = true)
-            @AuthenticationPrincipal OAuth2User principal) {
-        Long userId = Long.valueOf(principal.getName());
-        return CommonApiResponse.success(userService.getUserStatistics(userId));
+            @AuthenticationPrincipal UserPrincipal principal) {
+        Long userId = principal.getId();
+        UserStatisticsDto statistics = userService.getUserStatistics(userId);
+        return ResponseEntity.ok(CommonApiResponse.success(statistics));
     }
 
     @Operation(summary = "사용자 최근 활동 조회", description = "특정 사용자의 최근 활동 내역을 조회합니다.")
@@ -86,12 +91,13 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
     })
     @GetMapping("/{userId}/recent-activities")
-    public CommonApiResponse<List<RecentActivityDto>> getRecentActivities(
+    public ResponseEntity<CommonApiResponse<List<RecentActivityDto>>> getRecentActivities(
             @Parameter(description = "조회할 사용자 ID", required = true)
             @PathVariable Long userId,
             @Parameter(description = "조회할 최대 활동 개수", example = "10")
             @RequestParam(defaultValue = "10") int limit) {
-        return CommonApiResponse.success(userService.getRecentActivities(userId, limit));
+        List<RecentActivityDto> activities = userService.getRecentActivities(userId, limit);
+        return ResponseEntity.ok(CommonApiResponse.success(activities));
     }
 
     @Operation(summary = "내 최근 활동 조회", description = "현재 로그인한 사용자의 최근 활동 내역을 조회합니다.")
@@ -101,13 +107,14 @@ public class UserController {
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
     })
     @GetMapping("/me/recent-activities")
-    public CommonApiResponse<List<RecentActivityDto>> getMyRecentActivities(
+    public ResponseEntity<CommonApiResponse<List<RecentActivityDto>>> getMyRecentActivities(
             @Parameter(hidden = true)
-            @AuthenticationPrincipal OAuth2User principal,
+            @AuthenticationPrincipal UserPrincipal principal,
             @Parameter(description = "조회할 최대 활동 개수", example = "10")
             @RequestParam(defaultValue = "10") int limit) {
-        Long userId = Long.valueOf(principal.getName());
-        return CommonApiResponse.success(userService.getRecentActivities(userId, limit));
+        Long userId = principal.getId();
+        List<RecentActivityDto> activities = userService.getRecentActivities(userId, limit);
+        return ResponseEntity.ok(CommonApiResponse.success(activities));
     }
 
     @Operation(summary = "사용자 업적 조회", description = "특정 사용자가 획득한 업적 목록을 조회합니다.")
@@ -117,10 +124,11 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
     })
     @GetMapping("/{userId}/achievements")
-    public CommonApiResponse<List<AchievementDto>> getAchievements(
+    public ResponseEntity<CommonApiResponse<List<AchievementDto>>> getAchievements(
             @Parameter(description = "조회할 사용자 ID", required = true)
             @PathVariable Long userId) {
-        return CommonApiResponse.success(userService.getAchievements(userId));
+        List<AchievementDto> achievements = userService.getAchievements(userId);
+        return ResponseEntity.ok(CommonApiResponse.success(achievements));
     }
 
     @Operation(summary = "내 업적 조회", description = "현재 로그인한 사용자가 획득한 업적 목록을 조회합니다.")
@@ -130,11 +138,12 @@ public class UserController {
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
     })
     @GetMapping("/me/achievements")
-    public CommonApiResponse<List<AchievementDto>> getMyAchievements(
+    public ResponseEntity<CommonApiResponse<List<AchievementDto>>> getMyAchievements(
             @Parameter(hidden = true)
-            @AuthenticationPrincipal OAuth2User principal) {
-        Long userId = Long.valueOf(principal.getName());
-        return CommonApiResponse.success(userService.getAchievements(userId));
+            @AuthenticationPrincipal UserPrincipal principal) {
+        Long userId = principal.getId();
+        List<AchievementDto> achievements = userService.getAchievements(userId);
+        return ResponseEntity.ok(CommonApiResponse.success(achievements));
     }
 
     @Operation(summary = "사용자 주제별 성과 조회", description = "특정 사용자의 태그(주제)별 퀴즈 성과를 조회합니다.")
@@ -144,10 +153,11 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
     })
     @GetMapping("/{userId}/topic-performance")
-    public CommonApiResponse<List<TopicPerformanceDto>> getTopicPerformance(
+    public ResponseEntity<CommonApiResponse<List<TopicPerformanceDto>>> getTopicPerformance(
             @Parameter(description = "조회할 사용자 ID", required = true)
             @PathVariable Long userId) {
-        return CommonApiResponse.success(userService.getTopicPerformance(userId));
+        List<TopicPerformanceDto> topicPerformance = userService.getTopicPerformance(userId);
+        return ResponseEntity.ok(CommonApiResponse.success(topicPerformance));
     }
 
     @Operation(summary = "내 주제별 성과 조회", description = "현재 로그인한 사용자의 태그(주제)별 퀴즈 성과를 조회합니다.")
@@ -157,11 +167,12 @@ public class UserController {
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
     })
     @GetMapping("/me/topic-performance")
-    public CommonApiResponse<List<TopicPerformanceDto>> getMyTopicPerformance(
+    public ResponseEntity<CommonApiResponse<List<TopicPerformanceDto>>> getMyTopicPerformance(
             @Parameter(hidden = true)
-            @AuthenticationPrincipal OAuth2User principal) {
-        Long userId = Long.valueOf(principal.getName());
-        return CommonApiResponse.success(userService.getTopicPerformance(userId));
+            @AuthenticationPrincipal UserPrincipal principal) {
+        Long userId = principal.getId();
+        List<TopicPerformanceDto> topicPerformance = userService.getTopicPerformance(userId);
+        return ResponseEntity.ok(CommonApiResponse.success(topicPerformance));
     }
 
     @Operation(summary = "프로필 정보 업데이트", description = "현재 로그인한 사용자의 프로필 정보를 업데이트합니다.")
@@ -172,12 +183,13 @@ public class UserController {
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
     })
     @PutMapping("/me/profile")
-    public CommonApiResponse<UserProfileDto> updateProfile(
+    public ResponseEntity<CommonApiResponse<UserProfileDto>> updateProfile(
             @Parameter(hidden = true)
-            @AuthenticationPrincipal OAuth2User principal,
+            @AuthenticationPrincipal UserPrincipal principal,
             @Parameter(description = "업데이트할 프로필 정보", required = true)
             @RequestBody UserProfileUpdateRequest request) {
-        Long userId = Long.valueOf(principal.getName());
-        return CommonApiResponse.success(userService.updateProfile(userId, request));
+        Long userId = principal.getId();
+        UserProfileDto updatedProfile = userService.updateProfile(userId, request);
+        return ResponseEntity.ok(CommonApiResponse.success(updatedProfile));
     }
 }

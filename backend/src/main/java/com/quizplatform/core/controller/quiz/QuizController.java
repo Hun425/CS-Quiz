@@ -2,7 +2,6 @@ package com.quizplatform.core.controller.quiz;
 
 import com.quizplatform.core.config.security.UserPrincipal;
 import com.quizplatform.core.domain.quiz.Quiz;
-import com.quizplatform.core.domain.quiz.QuizStatistics;
 import com.quizplatform.core.dto.common.CommonApiResponse;
 import com.quizplatform.core.dto.common.PageResponse;
 import com.quizplatform.core.dto.quiz.*;
@@ -22,7 +21,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/quizzes")
@@ -42,8 +40,8 @@ public class QuizController {
     public ResponseEntity<CommonApiResponse<QuizResponse>> createQuiz(
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
             @Valid @RequestBody QuizCreateRequest request) {
-        Quiz quiz = quizService.createQuiz(userPrincipal.getId(), request);
-        return ResponseEntity.ok(CommonApiResponse.success(QuizResponse.from(quiz)));
+        QuizResponse quiz = quizService.createQuiz(userPrincipal.getId(), request);
+        return ResponseEntity.ok(CommonApiResponse.success(quiz));
     }
 
     @Operation(summary = "퀴즈 수정", description = "기존 퀴즈를 수정합니다. 퀴즈 생성자나 관리자만 수정할 수 있습니다.")
@@ -56,13 +54,10 @@ public class QuizController {
     @PutMapping("/{quizId}")
     public ResponseEntity<CommonApiResponse<QuizResponse>> updateQuiz(
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @Parameter(description = "수정할 퀴즈의 ID"
-//                    example = "#{T(com.quizplatform.core.config.TestDataInitializer).EXAMPLE_QUIZ_ID}")
-            )
-            @PathVariable Long quizId,
+            @Parameter(description = "수정할 퀴즈의 ID") @PathVariable Long quizId,
             @Valid @RequestBody QuizCreateRequest request) {
-        Quiz quiz = quizService.updateQuiz(quizId, request);
-        return ResponseEntity.ok(CommonApiResponse.success(QuizResponse.from(quiz)));
+        QuizResponse quiz = quizService.updateQuiz(quizId, request);
+        return ResponseEntity.ok(CommonApiResponse.success(quiz));
     }
 
     @Operation(summary = "퀴즈 상세 조회", description = "문제 내용 없이 퀴즈 상세 정보를 조회합니다.")
@@ -72,12 +67,9 @@ public class QuizController {
     })
     @GetMapping("/{quizId}")
     public ResponseEntity<CommonApiResponse<QuizDetailResponse>> getQuiz(
-            @Parameter(description = "조회할 퀴즈의 ID"
-//                    example = "#{T(com.quizplatform.core.config.TestDataInitializer).EXAMPLE_QUIZ_ID}"
-                    )
-            @PathVariable Long quizId) {
-        Quiz quiz = quizService.getQuizWithoutQuestions(quizId);
-        return ResponseEntity.ok(CommonApiResponse.success(QuizDetailResponse.from(quiz)));
+            @Parameter(description = "조회할 퀴즈의 ID") @PathVariable Long quizId) {
+        QuizDetailResponse quiz = quizService.getQuizWithoutQuestions(quizId);
+        return ResponseEntity.ok(CommonApiResponse.success(quiz));
     }
 
     @Operation(summary = "퀴즈 검색", description = "태그, 난이도, 제목 등으로 퀴즈를 검색합니다.")
@@ -100,8 +92,8 @@ public class QuizController {
     })
     @GetMapping("/daily")
     public ResponseEntity<CommonApiResponse<QuizResponse>> getDailyQuiz() {
-        Quiz dailyQuiz = quizService.getCurrentDailyQuiz();
-        return ResponseEntity.ok(CommonApiResponse.success(QuizResponse.from(dailyQuiz)));
+        QuizResponse dailyQuiz = quizService.getCurrentDailyQuiz();
+        return ResponseEntity.ok(CommonApiResponse.success(dailyQuiz));
     }
 
     @Operation(summary = "추천 퀴즈 조회", description = "사용자에게 추천되는 퀴즈 목록을 조회합니다.")
@@ -113,12 +105,9 @@ public class QuizController {
     public ResponseEntity<CommonApiResponse<List<QuizSummaryResponse>>> getRecommendedQuizzes(
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
             @RequestParam(defaultValue = "5") int limit) {
-        List<Quiz> recommendedQuizzes = quizService.getRecommendedQuizzes(
+        List<QuizSummaryResponse> recommendedQuizzes = quizService.getRecommendedQuizzes(
                 userPrincipal.getUser(), limit);
-        return ResponseEntity.ok(CommonApiResponse.success(
-                recommendedQuizzes.stream()
-                        .map(QuizSummaryResponse::from)
-                        .collect(Collectors.toList())));
+        return ResponseEntity.ok(CommonApiResponse.success(recommendedQuizzes));
     }
 
     @Operation(summary = "태그별 퀴즈 조회", description = "특정 태그의 퀴즈 목록을 조회합니다.")
@@ -128,14 +117,10 @@ public class QuizController {
     })
     @GetMapping("/tags/{tagId}")
     public ResponseEntity<CommonApiResponse<PageResponse<QuizSummaryResponse>>> getQuizzesByTag(
-            @Parameter(description = "조회할 태그의 ID"
-//                    example = "#{T(com.quizplatform.core.config.TestDataInitializer).EXAMPLE_TAG_ID}")
-            )
-            @PathVariable Long tagId,
+            @Parameter(description = "조회할 태그의 ID") @PathVariable Long tagId,
             Pageable pageable) {
-        Page<Quiz> quizzes = quizService.getQuizzesByTag(tagId, pageable);
-        return ResponseEntity.ok(CommonApiResponse.success(PageResponse.of(
-                quizzes.map(QuizSummaryResponse::from))));
+        Page<QuizSummaryResponse> quizzes = quizService.getQuizzesByTag(tagId, pageable);
+        return ResponseEntity.ok(CommonApiResponse.success(PageResponse.of(quizzes)));
     }
 
     @Operation(summary = "퀴즈 통계 조회", description = "특정 퀴즈의 통계 정보를 조회합니다.")
@@ -145,12 +130,9 @@ public class QuizController {
     })
     @GetMapping("/{quizId}/statistics")
     public ResponseEntity<CommonApiResponse<QuizStatisticsResponse>> getQuizStatistics(
-            @Parameter(description = "통계를 조회할 퀴즈의 ID"
-//                    example = "#{T(com.quizplatform.core.config.TestDataInitializer).EXAMPLE_QUIZ_ID}")
-            )
-            @PathVariable Long quizId) {
-        QuizStatistics statistics = quizService.getQuizStatistics(quizId);
-        return ResponseEntity.ok(CommonApiResponse.success(QuizStatisticsResponse.from(statistics)));
+            @Parameter(description = "통계를 조회할 퀴즈의 ID") @PathVariable Long quizId) {
+        QuizStatisticsResponse statistics = quizService.getQuizStatistics(quizId);
+        return ResponseEntity.ok(CommonApiResponse.success(statistics));
     }
 
     /**
@@ -168,18 +150,7 @@ public class QuizController {
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal,
             @Parameter(description = "플레이할 퀴즈의 ID") @PathVariable Long quizId) {
 
-        // 사용자 인증 확인
-        if (userPrincipal == null) {
-            return ResponseEntity.status(403).body(
-                    CommonApiResponse.error("로그인이 필요합니다.", "UNAUTHORIZED")
-            );
-        }
-
-        // 퀴즈 서비스를 통해 플레이 가능한 퀴즈 정보 조회
-        Quiz quiz = quizService.getPlayableQuiz(quizId, userPrincipal.getId());
-
-        // DTO로 변환하여 응답
-        return ResponseEntity.ok(CommonApiResponse.success(QuizResponse.from(quiz)));
+        QuizResponse quiz = quizService.getPlayableQuiz(quizId, userPrincipal.getId());
+        return ResponseEntity.ok(CommonApiResponse.success(quiz));
     }
-
 }

@@ -1,8 +1,6 @@
 package com.quizplatform.core.controller.battle;
 
 import com.quizplatform.core.config.security.UserPrincipal;
-import com.quizplatform.core.domain.battle.BattleRoom;
-import com.quizplatform.core.domain.battle.BattleRoomStatus;
 import com.quizplatform.core.dto.battle.BattleRoomCreateRequest;
 import com.quizplatform.core.dto.battle.BattleRoomResponse;
 import com.quizplatform.core.dto.common.CommonApiResponse;
@@ -20,7 +18,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/battles")
@@ -49,13 +46,13 @@ public class BattleController {
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "인증이 필요합니다.");
         }
 
-        BattleRoom battleRoom = battleService.createBattleRoom(
+        BattleRoomResponse battleRoom = battleService.createBattleRoom(
                 userPrincipal.getUser(),
                 request.getQuizId(),
                 request.getMaxParticipants()
         );
 
-        return ResponseEntity.ok(CommonApiResponse.success(BattleRoomResponse.from(battleRoom)));
+        return ResponseEntity.ok(CommonApiResponse.success(battleRoom));
     }
 
     /**
@@ -70,8 +67,8 @@ public class BattleController {
     public ResponseEntity<CommonApiResponse<BattleRoomResponse>> getBattleRoom(
             @Parameter(description = "대결방 ID") @PathVariable Long roomId) {
 
-        BattleRoom battleRoom = battleService.getBattleRoom(roomId);
-        return ResponseEntity.ok(CommonApiResponse.success(BattleRoomResponse.from(battleRoom)));
+        BattleRoomResponse battleRoom = battleService.getBattleRoom(roomId);
+        return ResponseEntity.ok(CommonApiResponse.success(battleRoom));
     }
 
     /**
@@ -83,13 +80,8 @@ public class BattleController {
     })
     @GetMapping("/active")
     public ResponseEntity<CommonApiResponse<List<BattleRoomResponse>>> getActiveBattleRooms() {
-        List<BattleRoom> battleRooms = battleService.getBattleRoomsByStatus(BattleRoomStatus.WAITING);
-
-        List<BattleRoomResponse> responses = battleRooms.stream()
-                .map(BattleRoomResponse::from)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(CommonApiResponse.success(responses));
+        List<BattleRoomResponse> battleRooms = battleService.getBattleRoomsByStatus(com.quizplatform.core.domain.battle.BattleRoomStatus.WAITING);
+        return ResponseEntity.ok(CommonApiResponse.success(battleRooms));
     }
 
     /**
@@ -111,8 +103,8 @@ public class BattleController {
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "인증이 필요합니다.");
         }
 
-        BattleRoom battleRoom = battleService.joinBattleRoom(roomId, userPrincipal.getUser());
-        return ResponseEntity.ok(CommonApiResponse.success(BattleRoomResponse.from(battleRoom)));
+        BattleRoomResponse battleRoom = battleService.joinBattleRoom(roomId, userPrincipal.getUser());
+        return ResponseEntity.ok(CommonApiResponse.success(battleRoom));
     }
 
     /**
@@ -134,8 +126,8 @@ public class BattleController {
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "인증이 필요합니다.");
         }
 
-        BattleRoom battleRoom = battleService.toggleReady(roomId, userPrincipal.getUser());
-        return ResponseEntity.ok(CommonApiResponse.success(BattleRoomResponse.from(battleRoom)));
+        BattleRoomResponse battleRoom = battleService.toggleReady(roomId, userPrincipal.getUser());
+        return ResponseEntity.ok(CommonApiResponse.success(battleRoom));
     }
 
     /**
@@ -157,8 +149,8 @@ public class BattleController {
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "인증이 필요합니다.");
         }
 
-        BattleRoom battleRoom = battleService.leaveBattleRoom(roomId, userPrincipal.getUser());
-        return ResponseEntity.ok(CommonApiResponse.success(BattleRoomResponse.from(battleRoom)));
+        BattleRoomResponse battleRoom = battleService.leaveBattleRoom(roomId, userPrincipal.getUser());
+        return ResponseEntity.ok(CommonApiResponse.success(battleRoom));
     }
 
     /**
@@ -178,7 +170,7 @@ public class BattleController {
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "인증이 필요합니다.");
         }
 
-        BattleRoom battleRoom = battleService.getActiveBattleRoomByUser(userPrincipal.getUser());
-        return ResponseEntity.ok(CommonApiResponse.success(BattleRoomResponse.from(battleRoom)));
+        BattleRoomResponse battleRoom = battleService.getActiveBattleRoomByUser(userPrincipal.getUser());
+        return ResponseEntity.ok(CommonApiResponse.success(battleRoom));
     }
 }

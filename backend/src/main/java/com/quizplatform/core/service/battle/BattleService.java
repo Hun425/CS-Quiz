@@ -1,8 +1,6 @@
 package com.quizplatform.core.service.battle;
 
-import com.quizplatform.core.domain.battle.BattleAnswer;
-import com.quizplatform.core.domain.battle.BattleParticipant;
-import com.quizplatform.core.domain.battle.BattleRoom;
+import com.quizplatform.core.domain.battle.*;
 import com.quizplatform.core.domain.battle.BattleRoomStatus;
 import com.quizplatform.core.domain.question.Question;
 import com.quizplatform.core.domain.quiz.Quiz;
@@ -17,11 +15,11 @@ import com.quizplatform.core.repository.battle.BattleParticipantRepository;
 import com.quizplatform.core.repository.battle.BattleRoomRepository;
 import com.quizplatform.core.repository.quiz.QuizRepository;
 import com.quizplatform.core.repository.user.UserBattleStatsRepository;
+import com.quizplatform.core.service.common.EntityMapperService;
 import com.quizplatform.core.service.level.LevelingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +40,7 @@ public class BattleService {
     private final UserBattleStatsRepository userBattleStatsRepository;
     private final RedisTemplate<String, String> redisTemplate;
     private final LevelingService levelingService;
+    private final EntityMapperService entityMapperService;
 
     // Redis 키 접두사
     private static final String BATTLE_ROOM_KEY_PREFIX = "battle:room:";
@@ -51,9 +50,9 @@ public class BattleService {
     /**
      * 새로운 대결방 생성
      */
-    public BattleRoom createBattleRoom(User creator, Long quizId, Integer maxParticipants) {
-        // 퀴즈 조회
-        Quiz quiz = quizRepository.findById(quizId)
+    public BattleRoomResponse createBattleRoom(User creator, Long quizId, Integer maxParticipants) {
+        // 퀴즈 조회 (with FETCH JOIN)
+        Quiz quiz = quizRepository.findByIdWithAllDetails(quizId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND, "퀴즈를 찾을 수 없습니다."));
 
         // 대결방 생성
@@ -71,37 +70,56 @@ public class BattleService {
         // 방장을 첫 참가자로 추가
         addParticipant(savedRoom, creator);
 
-        return savedRoom;
+        return entityMapperService.mapToBattleRoomResponse(savedRoom);
     }
 
     /**
      * 대결방 조회
      */
-    public BattleRoom getBattleRoom(Long roomId) {
-        return battleRoomRepository.findById(roomId)
+    public BattleRoomResponse getBattleRoom(Long roomId) {
+        BattleRoom battleRoom = battleRoomRepository.findByIdWithDetails(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND, "대결방을 찾을 수 없습니다."));
+
+        return entityMapperService.mapToBattleRoomResponse(battleRoom);
     }
 
     /**
      * 상태별 대결방 조회
      */
-    public List<BattleRoom> getBattleRoomsByStatus(BattleRoomStatus status) {
-        return battleRoomRepository.findByStatus(status);
+    public List<BattleRoomResponse> getBattleRoomsByStatus(BattleRoomStatus status) {
+        List<BattleRoom> rooms = battleRoomRepository.findByStatus(status);
+
+        // N+1 문제를 방지하기 위해 ID 목록으로 한 번에 상세 조회
+        List<Long> roomIds = rooms.stream().map(BattleRoom::getId).collect(Collectors.toList());
+        List<BattleRoom> detailedRooms = new ArrayList<>();
+
+        for (Long id : roomIds) {
+            battleRoomRepository.findByIdWithDetails(id).ifPresent(detailedRooms::add);
+        }
+
+        return entityMapperService.mapToBattleRoomResponseList(detailedRooms);
     }
 
     /**
      * 사용자별 활성 대결방 조회
      */
-    public BattleRoom getActiveBattleRoomByUser(User user) {
-        return battleRoomRepository.findActiveRoomByUser(user, BattleRoomStatus.IN_PROGRESS)
+    public BattleRoomResponse getActiveBattleRoomByUser(User user) {
+        BattleRoom room = battleRoomRepository.findActiveRoomByUser(user, BattleRoomStatus.IN_PROGRESS)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND, "활성 대결방이 없습니다."));
+
+        // 상세 정보 로드
+        room = battleRoomRepository.findByIdWithDetails(room.getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND, "활성 대결방이 없습니다."));
+
+        return entityMapperService.mapToBattleRoomResponse(room);
     }
 
     /**
      * 대결방 참가
      */
-    public BattleRoom joinBattleRoom(Long roomId, User user) {
-        BattleRoom battleRoom = getBattleRoom(roomId);
+    public BattleRoomResponse joinBattleRoom(Long roomId, User user) {
+        BattleRoom battleRoom = battleRoomRepository.findByIdWithDetails(roomId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND, "대결방을 찾을 수 없습니다."));
 
         // 이미 시작된 대결인지 확인
         if (battleRoom.getStatus() != BattleRoomStatus.WAITING) {
@@ -121,14 +139,15 @@ public class BattleService {
         // 참가자 추가
         addParticipant(battleRoom, user);
 
-        return battleRoom;
+        return entityMapperService.mapToBattleRoomResponse(battleRoom);
     }
 
     /**
      * 준비 상태 토글
      */
-    public BattleRoom toggleReady(Long roomId, User user) {
-        BattleRoom battleRoom = getBattleRoom(roomId);
+    public BattleRoomResponse toggleReady(Long roomId, User user) {
+        BattleRoom battleRoom = battleRoomRepository.findByIdWithDetails(roomId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND, "대결방을 찾을 수 없습니다."));
 
         // 참가자 조회
         BattleParticipant participant = participantRepository.findByBattleRoomAndUser(battleRoom, user)
@@ -143,14 +162,15 @@ public class BattleService {
             startBattle(roomId);
         }
 
-        return battleRoom;
+        return entityMapperService.mapToBattleRoomResponse(battleRoom);
     }
 
     /**
      * 대결방 나가기
      */
-    public BattleRoom leaveBattleRoom(Long roomId, User user) {
-        BattleRoom battleRoom = getBattleRoom(roomId);
+    public BattleRoomResponse leaveBattleRoom(Long roomId, User user) {
+        BattleRoom battleRoom = battleRoomRepository.findByIdWithDetails(roomId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND, "대결방을 찾을 수 없습니다."));
 
         // 이미 시작된 대결인지 확인
         if (battleRoom.getStatus() == BattleRoomStatus.IN_PROGRESS) {
@@ -171,7 +191,7 @@ public class BattleService {
             return null;
         }
 
-        return battleRoom;
+        return entityMapperService.mapToBattleRoomResponse(battleRoom);
     }
 
     /**
@@ -179,15 +199,18 @@ public class BattleService {
      */
     public BattleJoinResponse joinBattle(BattleJoinRequest request, String sessionId) {
         // 대결방 조회
-        BattleRoom room = battleRoomRepository.findById(request.getRoomId())
+        BattleRoom room = battleRoomRepository.findByIdWithDetails(request.getRoomId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
         // 사용자 조회
-        User user = userRepository.findById(request.getUserId())
+        User user = userRepository.findByIdWithStats(request.getUserId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         // 참가자 생성 및 저장
-        BattleParticipant participant = addParticipant(room, user);
+        BattleParticipant participant = room.getParticipants().stream()
+                .filter(p -> p.getUser().getId().equals(user.getId()))
+                .findFirst()
+                .orElseGet(() -> addParticipant(room, user));
 
         // Redis에 참가자 정보 저장
         saveParticipantToRedis(participant, sessionId);
@@ -206,13 +229,21 @@ public class BattleService {
             throw new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND);
         }
 
+        // 배틀룸 상세 정보 로드
+        BattleRoom battleRoom = battleRoomRepository.findByIdWithAllDetails(participant.getBattleRoom().getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
+
         // 현재 배틀룸의 현재 문제를 조회
-        Question currentQuestion = participant.getBattleRoom().getCurrentQuestion();
+        Question currentQuestion = battleRoom.getCurrentQuestion();
 
         // 요청으로 전달된 질문 ID와 현재 문제의 ID가 일치하는지 검증
         if (currentQuestion == null || !currentQuestion.getId().equals(request.getQuestionId())) {
             throw new BusinessException(ErrorCode.INVALID_QUESTION);
         }
+
+        // 참가자 엔티티 다시 로드하여 최신 상태 확보
+        participant = participantRepository.findById(participant.getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND));
 
         // 답변 제출 및 점수 계산
         BattleAnswer answer = participant.submitAnswer(
@@ -222,7 +253,10 @@ public class BattleService {
         );
 
         // 결과 저장
-        participantRepository.save(participant);
+        participant = participantRepository.save(participant);
+
+        // Redis에 업데이트된 참가자 정보 저장
+        saveParticipantToRedis(participant, sessionId);
 
         return createBattleAnswerResponse(answer);
     }
@@ -231,7 +265,7 @@ public class BattleService {
      * 대결 시작 준비 상태 확인
      */
     public boolean isReadyToStart(Long roomId) {
-        BattleRoom room = battleRoomRepository.findById(roomId)
+        BattleRoom room = battleRoomRepository.findByIdWithDetails(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
         return room.isReadyToStart();
@@ -241,7 +275,7 @@ public class BattleService {
      * 대결 시작 처리
      */
     public BattleStartResponse startBattle(Long roomId) {
-        BattleRoom room = battleRoomRepository.findById(roomId)
+        BattleRoom room = battleRoomRepository.findByIdWithAllDetails(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
         // 대결 시작 상태로 변경
@@ -255,10 +289,12 @@ public class BattleService {
      * 다음 문제 준비
      */
     public BattleNextQuestionResponse prepareNextQuestion(Long roomId) {
-        BattleRoom room = battleRoomRepository.findById(roomId)
+        BattleRoom room = battleRoomRepository.findByIdWithAllDetails(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
         Question nextQuestion = room.startNextQuestion();
+        battleRoomRepository.save(room);
+
         if (nextQuestion == null) {
             return BattleNextQuestionResponse.builder()
                     .isGameOver(true)
@@ -272,7 +308,7 @@ public class BattleService {
      * 모든 참가자의 답변 여부 확인
      */
     public boolean allParticipantsAnswered(Long roomId) {
-        BattleRoom room = battleRoomRepository.findById(roomId)
+        BattleRoom room = battleRoomRepository.findByIdWithAllDetails(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
         return room.allParticipantsAnswered();
@@ -282,17 +318,18 @@ public class BattleService {
      * 대결 진행 상황 조회
      */
     public BattleProgressResponse getBattleProgress(Long roomId) {
-        BattleRoom room = battleRoomRepository.findById(roomId)
+        BattleRoom room = battleRoomRepository.findByIdWithAllDetails(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
-        return createBattleProgressResponse(room);
+        BattleProgress battleProgress = room.getProgress();
+        return createBattleProgressResponse(battleProgress);
     }
 
     /**
      * 대결 종료 처리
      */
     public BattleEndResponse endBattle(Long roomId) {
-        BattleRoom room = battleRoomRepository.findById(roomId)
+        BattleRoom room = battleRoomRepository.findByIdWithAllDetails(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
         // 대결 종료 및 결과 계산
@@ -303,7 +340,10 @@ public class BattleService {
         awardExperiencePoints(result);
         updateStatistics(result);
 
-        return createBattleEndResponse(result);
+        // 저장
+        battleRoomRepository.save(room);
+
+        return entityMapperService.mapToBattleEndResponse(result);
     }
 
     // 내부 도우미 메서드들
@@ -312,16 +352,20 @@ public class BattleService {
      * 참가자 추가
      */
     private BattleParticipant addParticipant(BattleRoom battleRoom, User user) {
+        // 사용자에게 UserBattleStats가 없으면 생성
+        if (user.getBattleStats() == null) {
+            UserBattleStats stats = new UserBattleStats(user);
+            userBattleStatsRepository.save(stats);
+
+            // 사용자 다시 로드하여 양방향 관계 초기화
+            user = userRepository.findByIdWithStats(user.getId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        }
+
         BattleParticipant participant = BattleParticipant.builder()
                 .battleRoom(battleRoom)
                 .user(user)
                 .build();
-
-        // 참가자에게 UserBattleStats가 없으면 생성
-        if (user.getBattleStats() == null) {
-            UserBattleStats stats = new UserBattleStats(user);
-            userBattleStatsRepository.save(stats);
-        }
 
         return participantRepository.save(participant);
     }
@@ -439,30 +483,30 @@ public class BattleService {
     /**
      * 대결 진행 상황 응답 생성
      */
-    private BattleProgressResponse createBattleProgressResponse(BattleRoom room) {
+    private BattleProgressResponse createBattleProgressResponse(BattleProgress progress) {
         Map<Long, BattleProgressResponse.ParticipantProgress> participantProgress = new HashMap<>();
 
-        room.getParticipants().forEach(participant -> {
+        progress.getParticipantProgresses().forEach((id, p) -> {
             participantProgress.put(
-                    participant.getUser().getId(),
+                    id,
                     BattleProgressResponse.ParticipantProgress.builder()
-                            .userId(participant.getUser().getId())
-                            .username(participant.getUser().getUsername())
-                            .currentScore(participant.getCurrentScore())
-                            .correctAnswers(participant.getCorrectAnswersCount())
-                            .hasAnsweredCurrent(participant.hasAnsweredCurrentQuestion())
-                            .currentStreak(participant.getCurrentStreak())
+                            .userId(id)
+                            .username(p.getUsername())
+                            .currentScore(p.getCurrentScore())
+                            .correctAnswers(p.getCorrectAnswers())
+                            .hasAnsweredCurrent(p.isHasAnsweredCurrent())
+                            .currentStreak(p.getCurrentStreak())
                             .build()
             );
         });
 
         return BattleProgressResponse.builder()
-                .roomId(room.getId())
-                .currentQuestionIndex(room.getCurrentQuestionIndex())
-                .totalQuestions(room.getQuestions().size())
-                .remainingTimeSeconds(room.getRemainingTimeSeconds())
+                .roomId(progress.getBattleRoomId())
+                .currentQuestionIndex(progress.getCurrentQuestionIndex())
+                .totalQuestions(progress.getTotalQuestions())
+                .remainingTimeSeconds((int) progress.getRemainingTime().getSeconds())
                 .participantProgress(participantProgress)
-                .status(BattleStatus.valueOf(room.getStatus().name()))
+                .status(BattleStatus.valueOf(progress.getStatus().name()))
                 .build();
     }
 
@@ -470,9 +514,8 @@ public class BattleService {
      * 대결 결과 계산
      */
     private BattleResult calculateBattleResult(BattleRoom room) {
-        List<BattleParticipant> sortedParticipants = room.getParticipants().stream()
-                .sorted(Comparator.comparingInt(BattleParticipant::getCurrentScore).reversed())
-                .collect(Collectors.toList());
+        List<BattleParticipant> sortedParticipants = new ArrayList<>(room.getParticipants());
+        sortedParticipants.sort(Comparator.comparingInt(BattleParticipant::getCurrentScore).reversed());
 
         BattleParticipant winner = sortedParticipants.isEmpty() ? null : sortedParticipants.get(0);
         int highestScore = winner != null ? winner.getCurrentScore() : 0;
@@ -485,6 +528,7 @@ public class BattleService {
                 .startTime(room.getStartTime())
                 .endTime(LocalDateTime.now())
                 .totalTimeSeconds(room.getTotalTimeSeconds())
+                .totalQuestions(room.getQuestions().size())
                 .battleRoom(room)
                 .build();
     }
@@ -498,7 +542,7 @@ public class BattleService {
         // 승자에게 경험치 부여
         levelingService.calculateBattleExp(result, result.getWinner().getUser());
 
-        // 다른 참가자들에게 경험치 부여
+        // 다른 참가자들에게도 경험치 부여
         result.getParticipants().stream()
                 .filter(p -> !p.equals(result.getWinner()))
                 .forEach(participant -> {
@@ -523,74 +567,5 @@ public class BattleService {
         Quiz quiz = result.getBattleRoom().getQuiz();
         quiz.updateBattleStats(result);
         quizRepository.save(quiz);
-    }
-
-    /**
-     * 대결 종료 응답을 생성
-     */
-    private BattleEndResponse createBattleEndResponse(BattleResult result) {
-        List<BattleEndResponse.ParticipantResult> participantResults = result.getParticipants().stream()
-                .map(participant -> {
-                    Map<Long, Boolean> questionResults = participant.getAnswers().stream()
-                            .collect(Collectors.toMap(
-                                    answer -> answer.getQuestion().getId(),
-                                    BattleAnswer::isCorrect
-                            ));
-
-                    return BattleEndResponse.ParticipantResult.builder()
-                            .userId(participant.getUser().getId())
-                            .username(participant.getUser().getUsername())
-                            .finalScore(participant.getCurrentScore())
-                            .correctAnswers(participant.getCorrectAnswersCount())
-                            .averageTimeSeconds(calculateAverageTime(participant))
-                            .experienceGained(calculateExperienceGained(participant, result))
-                            .isWinner(participant.equals(result.getWinner()))
-                            .questionResults(questionResults)
-                            .build();
-                })
-                .collect(Collectors.toList());
-
-        return BattleEndResponse.builder()
-                .roomId(result.getRoomId())
-                .results(participantResults)
-                .totalQuestions(result.getTotalQuestions())
-                .timeTakenSeconds(result.getTotalTimeSeconds())
-                .endTime(result.getEndTime())
-                .build();
-    }
-
-    /**
-     * 참가자의 평균 답변 시간을 계산
-     */
-    private int calculateAverageTime(BattleParticipant participant) {
-        List<BattleAnswer> answers = participant.getAnswers();
-        if (answers.isEmpty()) {
-            return 0;
-        }
-        int totalTime = answers.stream()
-                .mapToInt(BattleAnswer::getTimeTaken)
-                .sum();
-        return totalTime / answers.size();
-    }
-
-    /**
-     * 획득한 경험치를 계산
-     */
-    private int calculateExperienceGained(BattleParticipant participant, BattleResult result) {
-        // 기본 경험치 (점수의 10%)
-        int baseExp = participant.getCurrentScore() / 10;
-
-        // 승리 보너스
-        if (participant.equals(result.getWinner())) {
-            baseExp *= 1.5;  // 승리 시 50% 추가 경험치
-        }
-
-        // 정답률 보너스
-        double correctRate = (double) participant.getCorrectAnswersCount() / result.getTotalQuestions();
-        if (correctRate >= 0.8) {
-            baseExp += 50;  // 80% 이상 정답 시 추가 보너스
-        }
-
-        return baseExp;
     }
 }

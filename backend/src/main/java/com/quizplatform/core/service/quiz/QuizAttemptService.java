@@ -14,6 +14,7 @@ import com.quizplatform.core.exception.ErrorCode;
 import com.quizplatform.core.repository.question.QuestionAttemptRepository;
 import com.quizplatform.core.repository.quiz.QuizAttemptRepository;
 import com.quizplatform.core.repository.quiz.QuizRepository;
+import com.quizplatform.core.service.common.EntityMapperService;
 import com.quizplatform.core.service.level.LevelingService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-// Service implementation
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -33,9 +33,13 @@ public class QuizAttemptService {
     private final QuestionAttemptRepository questionAttemptRepository;
     private final QuizRepository quizRepository;
     private final LevelingService levelingService;
+    private final EntityMapperService entityMapperService;
 
+    /**
+     * 퀴즈 시도 시작
+     */
     public QuizAttempt startQuiz(Long quizId, User user) {
-        Quiz quiz = quizRepository.findById(quizId)
+        Quiz quiz = quizRepository.findByIdWithAllDetails(quizId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND));
 
         // 이미 완료한 퀴즈인지 확인 (DAILY 퀴즈의 경우)
@@ -50,6 +54,9 @@ public class QuizAttemptService {
                 .build());
     }
 
+    /**
+     * 개별 문제 답변 제출
+     */
     public QuestionAttempt submitAnswer(Long quizAttemptId, Long questionId, String answer) {
         QuizAttempt quizAttempt = quizAttemptRepository.findById(quizAttemptId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
@@ -71,6 +78,9 @@ public class QuizAttemptService {
         return questionAttemptRepository.save(questionAttempt);
     }
 
+    /**
+     * 퀴즈 완료 처리
+     */
     public QuizAttempt completeQuiz(Long quizAttemptId) {
         QuizAttempt quizAttempt = quizAttemptRepository.findById(quizAttemptId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
@@ -83,6 +93,9 @@ public class QuizAttemptService {
         return quizAttemptRepository.save(quizAttempt);
     }
 
+    /**
+     * 퀴즈 결과 조회
+     */
     public List<QuestionAttemptDto> getQuizResults(Long quizAttemptId) {
         QuizAttempt quizAttempt = quizAttemptRepository.findById(quizAttemptId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
@@ -91,9 +104,13 @@ public class QuizAttemptService {
             throw new BusinessException(ErrorCode.BATTLE_NOT_STARTED, "퀴즈가 완료되지 않았습니다.");
         }
 
-        return quizAttempt.getQuestionAttempts().stream()
-                .map(QuestionAttemptDto::from)
-                .collect(Collectors.toList());
+        // 질문과 답변 관계 초기화
+        quizAttempt.getQuestionAttempts().forEach(attempt -> {
+            attempt.getQuestion().getQuestionText();
+            attempt.getQuestion().getExplanation();
+        });
+
+        return entityMapperService.mapToQuestionAttemptDtoList(quizAttempt.getQuestionAttempts());
     }
 
     /**
@@ -160,7 +177,7 @@ public class QuizAttemptService {
         int experienceGained = experienceAfter - experienceBefore;
 
         // 결과 응답 생성
-        return generateQuizResultResponse(quizAttempt, experienceGained);
+        return entityMapperService.mapToQuizResultResponse(quizAttempt, experienceGained);
     }
 
     /**
@@ -187,52 +204,6 @@ public class QuizAttemptService {
         }
 
         // 경험치 정보는 더 이상 계산할 수 없으므로 0으로 설정
-        return generateQuizResultResponse(quizAttempt, 0);
-    }
-
-    /**
-     * 퀴즈 결과 응답 DTO 생성
-     */
-    private QuizResultResponse generateQuizResultResponse(QuizAttempt quizAttempt, int experienceGained) {
-        Quiz quiz = quizAttempt.getQuiz();
-
-        // 문제별 결과 생성
-        List<QuizResultResponse.QuestionResultDto> questionResults = new ArrayList<>();
-        quizAttempt.getQuestionAttempts().forEach(qa -> {
-            Question question = qa.getQuestion();
-            questionResults.add(
-                    QuizResultResponse.QuestionResultDto.builder()
-                            .id(question.getId())
-                            .questionText(question.getQuestionText())
-                            .yourAnswer(qa.getUserAnswer())
-                            .correctAnswer(question.getCorrectAnswer())
-                            .isCorrect(qa.isCorrect())
-                            .explanation(question.getExplanation())
-                            .points(question.getPoints())
-                            .build()
-            );
-        });
-
-        // 총 가능 점수 계산
-        int totalPossibleScore = quiz.getQuestions().stream()
-                .mapToInt(Question::getPoints)
-                .sum();
-
-        // 결과 응답 생성
-        return QuizResultResponse.builder()
-                .quizId(quiz.getId())
-                .title(quiz.getTitle())
-                .totalQuestions(quiz.getQuestions().size())
-                .correctAnswers((int)quizAttempt.getQuestionAttempts().stream()
-                        .filter(QuestionAttempt::isCorrect)
-                        .count())
-                .score(quizAttempt.getScore())
-                .totalPossibleScore(totalPossibleScore)
-                .timeTaken(quizAttempt.getTimeTaken())
-                .completedAt(quizAttempt.getEndTime())
-                .experienceGained(experienceGained)
-                .newTotalExperience(quizAttempt.getUser().getExperience())
-                .questions(questionResults)
-                .build();
+        return entityMapperService.mapToQuizResultResponse(quizAttempt, 0);
     }
 }
