@@ -13,10 +13,10 @@ interface ProtectedRouteProps {
  */
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     const location = useLocation();
-    const { isAuthenticated, isTokenExpired } = useAuthStore();
-
+    const { isAuthenticated, expiresAt } = useAuthStore();
+    const isTokenValid = expiresAt ? Date.now() < expiresAt : false;
     // 인증 상태 확인
-    const authenticated = isAuthenticated && !isTokenExpired();
+    const authenticated = isAuthenticated && isTokenValid;
 
     useEffect(() => {
         // 인증이 필요한 페이지 경로 저장
