@@ -1,5 +1,5 @@
 // src/api/tagApi.ts - 태그 관련 API 연동
-import axios from 'axios';
+import axios, {AxiosHeaders} from 'axios';
 import { TagResponse, PageResponse } from '../types/api';
 import { getAuthHeader } from '../utils/auth';
 
@@ -12,14 +12,15 @@ const apiClient = axios.create({
     },
 });
 
+
 apiClient.interceptors.request.use(
     (config) => {
         const authHeader = getAuthHeader();
         if (authHeader) {
-            config.headers = {
+            config.headers = new AxiosHeaders({
                 ...config.headers,
                 ...authHeader,
-            };
+            });
         }
         return config;
     },

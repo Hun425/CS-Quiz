@@ -104,6 +104,7 @@ export interface QuizDetailResponse {
 
 export interface QuizResponse extends QuizDetailResponse {
     questions: QuestionResponse[];
+    attemptId?: number;
 }
 
 export interface QuizSummaryResponse {
@@ -257,3 +258,4 @@ export interface UserProfileUpdateRequest {
     username?: string;
     profileImage?: string;
 }
+

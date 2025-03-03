@@ -14,9 +14,12 @@ interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
     _retry?: boolean;
 }
 
+// 백엔드 API 기본 URL 설정
+const BASE_URL = 'http://localhost:8080/api';
+
 // 기본 API 클라이언트 설정
 const apiClient: AxiosInstance = axios.create({
-    baseURL: 'http://localhost:8080',
+    baseURL: BASE_URL,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -26,22 +29,23 @@ const apiClient: AxiosInstance = axios.create({
 apiClient.interceptors.request.use(
     async (config: InternalAxiosRequestConfig): Promise<InternalAxiosRequestConfig> => {
         // 인증 상태 확인
-        const { isAuthenticated, accessToken, isTokenExpired } = useAuthStore.getState();
+        const { isAuthenticated, token, expiresAt } = useAuthStore.getState();
+        const isTokenExpired = expiresAt && expiresAt < Date.now();
 
         // 인증이 필요한 요청이고 토큰이 만료된 경우 갱신 시도
-        if (isAuthenticated && isTokenExpired() && config.url !== '/api/oauth2/refresh') {
+        if (isAuthenticated && isTokenExpired && config.url !== '/oauth2/refresh') {
             const refreshed = await refreshAccessToken();
             if (refreshed) {
                 // 토큰 갱신 성공, 새 토큰으로 헤더 설정
-                const newToken = useAuthStore.getState().accessToken;
+                const newToken = useAuthStore.getState().token;
                 config.headers.set('Authorization', `Bearer ${newToken}`);
             } else {
                 // 토큰 갱신 실패, 로그아웃 처리
                 useAuthStore.getState().logout();
             }
-        } else if (isAuthenticated && accessToken) {
+        } else if (isAuthenticated && token) {
             // 토큰이 유효하면 헤더에 추가
-            config.headers.set('Authorization', `Bearer ${accessToken}`);
+            config.headers.set('Authorization', `Bearer ${token}`);
         }
 
         return config;
@@ -62,7 +66,7 @@ apiClient.interceptors.response.use(
             error.response?.status === 401 &&
             originalRequest &&
             !originalRequest._retry &&
-            originalRequest.url !== '/api/oauth2/refresh'
+            originalRequest.url !== '/oauth2/refresh'
         ) {
             originalRequest._retry = true;
 
@@ -70,7 +74,7 @@ apiClient.interceptors.response.use(
             const refreshed = await refreshAccessToken();
             if (refreshed) {
                 // 토큰 갱신 성공, 원래 요청 재시도
-                const newToken = useAuthStore.getState().accessToken;
+                const newToken = useAuthStore.getState().token;
                 originalRequest.headers.set('Authorization', `Bearer ${newToken}`);
                 return apiClient(originalRequest);
             }

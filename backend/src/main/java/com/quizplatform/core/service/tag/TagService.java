@@ -9,6 +9,7 @@ import com.quizplatform.core.exception.ErrorCode;
 import com.quizplatform.core.repository.tag.TagRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -35,7 +36,15 @@ public class TagService {
     @Transactional(readOnly = true)
     @Cacheable(value = "tags", key = "'all'")
     public List<TagResponse> getAllTags() {
-        return tagRepository.findAll().stream()
+        List<Tag> tags = tagRepository.findAll();
+
+        // 세션이 열려있는 상태에서 지연 로딩된 컬렉션을 명시적으로 초기화
+        for (Tag tag : tags) {
+            Hibernate.initialize(tag.getSynonyms());
+            Hibernate.initialize(tag.getQuizzes());
+        }
+
+        return tags.stream()
                 .map(TagResponse::from)
                 .collect(Collectors.toList());
     }
@@ -67,6 +76,11 @@ public class TagService {
     public TagResponse getTag(Long tagId) {
         Tag tag = tagRepository.findById(tagId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND, "태그를 찾을 수 없습니다. ID: " + tagId));
+
+        // 세션이 열려있는 상태에서 지연 로딩된 컬렉션을 명시적으로 초기화
+        Hibernate.initialize(tag.getSynonyms());
+        Hibernate.initialize(tag.getQuizzes());
+
         return TagResponse.from(tag);
     }
 
@@ -77,6 +91,13 @@ public class TagService {
     @Cacheable(value = "tags", key = "'roots'")
     public List<TagResponse> getRootTags() {
         List<Tag> rootTags = tagRepository.findAllRootTags();
+
+        // 세션이 열려있는 상태에서 지연 로딩된 컬렉션을 명시적으로 초기화
+        for (Tag tag : rootTags) {
+            Hibernate.initialize(tag.getSynonyms());
+            Hibernate.initialize(tag.getQuizzes());
+        }
+
         return rootTags.stream()
                 .map(TagResponse::from)
                 .collect(Collectors.toList());
@@ -88,12 +109,21 @@ public class TagService {
     @Transactional(readOnly = true)
     @Cacheable(value = "tags", key = "'popular:' + #limit")
     public List<TagResponse> getPopularTags(int limit) {
-        return tagRepository.findAll().stream()
+        List<Tag> allTags = tagRepository.findAll();
+
+        // 세션이 열려있는 상태에서 지연 로딩된 컬렉션을 명시적으로 초기화
+        for (Tag tag : allTags) {
+            Hibernate.initialize(tag.getSynonyms());
+            Hibernate.initialize(tag.getQuizzes());
+        }
+
+        return allTags.stream()
                 .sorted(Comparator.comparing(tag -> tag.getQuizzes().size(), Comparator.reverseOrder()))
                 .limit(limit)
                 .map(TagResponse::from)
                 .collect(Collectors.toList());
     }
+
 
     /**
      * 새로운 태그를 생성합니다.

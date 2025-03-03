@@ -2,10 +2,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { quizApi } from '../api/quizApi';
-import { QuizResponse, QuestionResponse } from '../types/api';
+import { QuizResponse, QuestionResponse, QuizSubmitRequest } from '../types/api';
 import { useAuthStore } from '../store/authStore';
 
-// 퀴즈 플레이 페이지 컴포넌트
 const QuizPlayPage: React.FC = () => {
     const { quizId } = useParams<{ quizId: string }>();
     const navigate = useNavigate();
@@ -19,6 +18,9 @@ const QuizPlayPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [quizStarted, setQuizStarted] = useState<boolean>(false);
     const [quizCompleted, setQuizCompleted] = useState<boolean>(false);
+    const [quizAttemptId, setQuizAttemptId] = useState<number | null>(null);
+    const [startTime, setStartTime] = useState<number | null>(null);
+    const [submitting, setSubmitting] = useState<boolean>(false);
 
     // 인증 확인
     useEffect(() => {
@@ -34,19 +36,25 @@ const QuizPlayPage: React.FC = () => {
 
             try {
                 setLoading(true);
-                // QuizPlayPage.tsx
                 const response = await quizApi.getPlayableQuiz(parseInt(quizId));
 
                 if (response.data.success) {
-                    setQuiz(response.data.data);
+                    const quizData = response.data.data;
+                    setQuiz(quizData);
+
+                    // 새로운 퀴즈 시도 ID 저장
+                    if (response.data.data.attemptId) {
+                        setQuizAttemptId(response.data.data.attemptId);
+                    }
+
                     // 전체 퀴즈 시간을 초 단위로 설정
-                    setTimeLeft(response.data.data.timeLimit * 60);
+                    setTimeLeft(quizData.timeLimit * 60);
                 } else {
-                    setError('퀴즈를 불러오는 데 실패했습니다.');
+                    setError('퀴즈를 불러오는 데 실패했습니다: ' + response.data.message);
                 }
             } catch (err: any) {
                 console.error('퀴즈 로딩 중 오류:', err);
-                setError('퀴즈를 불러오는 중 오류가 발생했습니다.');
+                setError('퀴즈를 불러오는 중 오류가 발생했습니다: ' + (err.response?.data?.message || err.message));
             } finally {
                 setLoading(false);
             }
@@ -77,6 +85,7 @@ const QuizPlayPage: React.FC = () => {
     // 퀴즈 시작
     const handleStartQuiz = () => {
         setQuizStarted(true);
+        setStartTime(Date.now());
     };
 
     // 답변 선택
@@ -102,16 +111,39 @@ const QuizPlayPage: React.FC = () => {
     };
 
     // 퀴즈 제출
-    const handleSubmitQuiz = () => {
-        // 여기에 실제 제출 로직을 구현합니다.
-        // API 호출을 통해 답변을 서버에 전송하고 결과를 받아옵니다.
-        // 여기서는 단순히 퀴즈 완료 상태로 변경합니다.
-        setQuizCompleted(true);
+    const handleSubmitQuiz = async () => {
+        console.log('Submitting quiz with:', { quiz, quizId, quizAttemptId, submitting });
+        if (!quiz || !quizId || !quizAttemptId || submitting) return;
 
-        // 그 다음 결과 페이지로 이동합니다.
-        // 실제로는 서버에서 받아온 결과 ID를 사용합니다.
-        if (quiz) {
-            navigate(`/quizzes/${quizId}/results?temp=1`);
+        setSubmitting(true);
+
+        try {
+            // 총 소요 시간 계산 (초)
+            const timeTaken = startTime ? Math.floor((Date.now() - startTime) / 1000) : timeLeft;
+
+            // 제출 데이터 구성
+            const submitData: QuizSubmitRequest = {
+                quizAttemptId: quizAttemptId,
+                answers: answers,
+                timeTaken: timeTaken
+            };
+
+            // API 호출
+            const response = await quizApi.submitQuiz(parseInt(quizId), submitData);
+
+            if (response.data.success) {
+                setQuizCompleted(true);
+
+                // 결과 페이지로 이동
+                navigate(`/quizzes/${quizId}/results/${quizAttemptId}`);
+            } else {
+                setError('퀴즈 제출에 실패했습니다: ' + response.data.message);
+                setSubmitting(false);
+            }
+        } catch (err: any) {
+            console.error('퀴즈 제출 중 오류:', err);
+            setError('퀴즈 제출 중 오류가 발생했습니다: ' + (err.response?.data?.message || err.message));
+            setSubmitting(false);
         }
     };
 
@@ -238,19 +270,19 @@ const QuizPlayPage: React.FC = () => {
             case 'SHORT_ANSWER':
                 return (
                     <div className="short-answer">
-            <textarea
-                value={answers[question.id] || ''}
-                onChange={(e) => handleAnswerSelect(question.id, e.target.value)}
-                placeholder="답변을 입력하세요..."
-                style={{
-                    width: '100%',
-                    padding: '1rem',
-                    borderRadius: '4px',
-                    border: '1px solid #e0e0e0',
-                    fontSize: '1rem',
-                    minHeight: '100px'
-                }}
-            />
+                        <textarea
+                            value={answers[question.id] || ''}
+                            onChange={(e) => handleAnswerSelect(question.id, e.target.value)}
+                            placeholder="답변을 입력하세요..."
+                            style={{
+                                width: '100%',
+                                padding: '1rem',
+                                borderRadius: '4px',
+                                border: '1px solid #e0e0e0',
+                                fontSize: '1rem',
+                                minHeight: '100px'
+                            }}
+                        />
                     </div>
                 );
 
@@ -259,19 +291,19 @@ const QuizPlayPage: React.FC = () => {
             default:
                 return (
                     <div className="default-answer">
-            <textarea
-                value={answers[question.id] || ''}
-                onChange={(e) => handleAnswerSelect(question.id, e.target.value)}
-                placeholder="답변을 입력하세요..."
-                style={{
-                    width: '100%',
-                    padding: '1rem',
-                    borderRadius: '4px',
-                    border: '1px solid #e0e0e0',
-                    fontSize: '1rem',
-                    minHeight: '100px'
-                }}
-            />
+                        <textarea
+                            value={answers[question.id] || ''}
+                            onChange={(e) => handleAnswerSelect(question.id, e.target.value)}
+                            placeholder="답변을 입력하세요..."
+                            style={{
+                                width: '100%',
+                                padding: '1rem',
+                                borderRadius: '4px',
+                                border: '1px solid #e0e0e0',
+                                fontSize: '1rem',
+                                minHeight: '100px'
+                            }}
+                        />
                     </div>
                 );
         }
@@ -427,17 +459,18 @@ const QuizPlayPage: React.FC = () => {
                 ) : (
                     <button
                         onClick={handleSubmitQuiz}
+                        disabled={submitting}
                         style={{
                             padding: '0.5rem 1rem',
                             borderRadius: '4px',
                             border: 'none',
-                            backgroundColor: '#4caf50',
+                            backgroundColor: submitting ? '#ccc' : '#4caf50',
                             color: 'white',
-                            cursor: 'pointer',
+                            cursor: submitting ? 'not-allowed' : 'pointer',
                             fontWeight: 'bold'
                         }}
                     >
-                        퀴즈 제출하기
+                        {submitting ? '제출 중...' : '퀴즈 제출하기'}
                     </button>
                 )}
             </div>
@@ -479,6 +512,26 @@ const QuizPlayPage: React.FC = () => {
                     </button>
                 ))}
             </div>
+
+            {/* 제출 경고 */}
+            {currentQuestionIndex === (quiz?.questions.length || 0) - 1 && (
+                <div style={{
+                    marginTop: '2rem',
+                    padding: '1rem',
+                    backgroundColor: '#fff9c4',
+                    borderRadius: '4px',
+                    border: '1px solid #ffeb3b'
+                }}>
+                    <p style={{ margin: 0, fontWeight: 'bold', color: '#f57f17' }}>
+                        제출 전 확인하세요!
+                    </p>
+                    <p style={{ margin: '0.5rem 0 0' }}>
+                        퀴즈를 제출하면 더 이상 답변을 수정할 수 없습니다.
+                        {Object.keys(answers).length < (quiz?.questions.length || 0) &&
+                            ` 아직 ${(quiz?.questions.length || 0) - Object.keys(answers).length}개의 문제에 답하지 않았습니다.`}
+                    </p>
+                </div>
+            )}
         </div>
     );
 };

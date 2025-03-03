@@ -67,7 +67,7 @@ const BattleRoomPage: React.FC = () => {
                     if (user) {
                         const myParticipant = room.participants.find(p => p.userId === user.id);
                         if (myParticipant) {
-                            setIsReady(myParticipant.ready);
+                            setIsReady(myParticipant.isReady);
                         }
                     }
 
@@ -171,9 +171,18 @@ const BattleRoomPage: React.FC = () => {
     // 참가자 입장 이벤트 핸들러
     const handleParticipantJoin = (data: BattleJoinResponse) => {
         console.log('참가자 입장:', data);
-        setParticipants(data.participants);
-    };
 
+        // 백엔드와의 타입 일치를 위해 명시적으로 맵핑 (isReady 속성은 이미 올바르게 포함됨)
+        const updatedParticipants = data.participants.map(participant => ({
+            userId: participant.userId,
+            username: participant.username,
+            profileImage: participant.profileImage,
+            level: participant.level,
+            isReady: participant.isReady
+        }));
+
+        setParticipants(updatedParticipants);
+    };
     // 배틀 시작 이벤트 핸들러
     const handleBattleStart = (data: BattleStartResponse) => {
         console.log('배틀 시작:', data);
