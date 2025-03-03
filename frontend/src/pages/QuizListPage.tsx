@@ -1,13 +1,16 @@
 // src/pages/QuizListPage.tsx
 import React, { useEffect, useState } from 'react';
 import { quizApi } from '../api/quizApi';
+import { tagApi } from '../api/tagApi';
 import { QuizSummaryResponse, PageResponse, TagResponse } from '../types/api';
 import QuizCard from '../components/quiz/QuizCard';
+import TagSelector from '../components/tag/TagSelector';
 
 const QuizListPage: React.FC = () => {
     // 상태 관리
     const [quizzes, setQuizzes] = useState<QuizSummaryResponse[]>([]);
     const [tags, setTags] = useState<TagResponse[]>([]);
+    const [popularTags, setPopularTags] = useState<TagResponse[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -24,24 +27,8 @@ const QuizListPage: React.FC = () => {
 
     // 초기 데이터 로드
     useEffect(() => {
-        const fetchTags = async () => {
-            try {
-                // 여기서는 태그 API를 별도로 호출하는 것을 가정합니다.
-                // 실제로는 태그 API를 구현해야 합니다.
-                // 예시로 더미 데이터를 사용합니다.
-                setTags([
-                    { id: 1, name: '알고리즘', description: '알고리즘 관련 퀴즈', quizCount: 10, synonyms: [] },
-                    { id: 2, name: '자료구조', description: '자료구조 관련 퀴즈', quizCount: 8, synonyms: [] },
-                    { id: 3, name: '네트워크', description: '네트워크 관련 퀴즈', quizCount: 5, synonyms: [] },
-                    { id: 4, name: '운영체제', description: '운영체제 관련 퀴즈', quizCount: 7, synonyms: [] },
-                    { id: 5, name: '데이터베이스', description: 'DB 관련 퀴즈', quizCount: 6, synonyms: [] }
-                ]);
-            } catch (err) {
-                console.error('태그 로딩 중 오류:', err);
-            }
-        };
-
         fetchTags();
+        fetchPopularTags();
         fetchQuizzes();
     }, []);
 
@@ -49,6 +36,32 @@ const QuizListPage: React.FC = () => {
     useEffect(() => {
         fetchQuizzes();
     }, [page, size, selectedDifficulty, selectedQuizType, selectedTags]);
+
+    // 태그 데이터 가져오기
+    const fetchTags = async () => {
+        try {
+            const response = await tagApi.getAllTags();
+            if (response.data.success) {
+                setTags(response.data.data);
+            } else {
+                console.error('태그 데이터를 불러오는 데 실패했습니다.');
+            }
+        } catch (err) {
+            console.error('태그 로딩 중 오류:', err);
+        }
+    };
+
+    // 인기 태그 가져오기
+    const fetchPopularTags = async () => {
+        try {
+            const response = await tagApi.getPopularTags(10); // 상위 10개 태그만 가져옴
+            if (response.data.success) {
+                setPopularTags(response.data.data);
+            }
+        } catch (err) {
+            console.error('인기 태그 로딩 중 오류:', err);
+        }
+    };
 
     // 검색 버튼 클릭 시 호출되는 함수
     const handleSearch = () => {
@@ -83,15 +96,6 @@ const QuizListPage: React.FC = () => {
             setError('퀴즈 데이터를 불러오는 중 오류가 발생했습니다.');
         } finally {
             setLoading(false);
-        }
-    };
-
-    // 태그 선택/해제 토글
-    const toggleTagSelection = (tagId: number) => {
-        if (selectedTags.includes(tagId)) {
-            setSelectedTags(selectedTags.filter(id => id !== tagId));
-        } else {
-            setSelectedTags([...selectedTags, tagId]);
         }
     };
 
@@ -187,16 +191,31 @@ const QuizListPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* 태그 필터 */}
+                {/* 태그 필터 (TagSelector 컴포넌트 사용) */}
+                <div style={{ marginBottom: '1rem' }}>
+                    <TagSelector
+                        selectedTagIds={selectedTags}
+                        onChange={setSelectedTags}
+                        label="태그로 필터링"
+                    />
+                </div>
+
+                {/* 인기 태그 버튼 */}
                 <div style={{ marginBottom: '1rem' }}>
                     <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-                        태그
+                        인기 태그
                     </label>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                        {tags.map((tag) => (
+                        {popularTags.map((tag) => (
                             <button
                                 key={tag.id}
-                                onClick={() => toggleTagSelection(tag.id)}
+                                onClick={() => {
+                                    if (selectedTags.includes(tag.id)) {
+                                        setSelectedTags(selectedTags.filter(id => id !== tag.id));
+                                    } else {
+                                        setSelectedTags([...selectedTags, tag.id]);
+                                    }
+                                }}
                                 style={{
                                     padding: '0.3rem 0.6rem',
                                     borderRadius: '4px',

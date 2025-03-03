@@ -73,7 +73,7 @@ public class Tag {
     }
 
     // setter 메서드들
-    protected void setParent(Tag parent) {
+    public void setParent(Tag parent) {
         this.parent = parent;
     }
 }

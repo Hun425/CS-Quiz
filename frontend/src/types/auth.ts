@@ -24,6 +24,7 @@ export interface User {
     email: string;
     profileImage?: string;
     level: number;
+    role: string;
 }
 
 export interface AuthState {

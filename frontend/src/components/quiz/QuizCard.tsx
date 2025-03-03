@@ -8,67 +8,92 @@ interface QuizCardProps {
 }
 
 const QuizCard: React.FC<QuizCardProps> = ({ quiz }) => {
-    // 난이도에 따른 색상
+    // 난이도에 따른 색상 및 라벨
     const getDifficultyColor = (level: string) => {
         switch (level) {
-            case 'BEGINNER': return '#4caf50';  // 초록색
-            case 'INTERMEDIATE': return '#ff9800';  // 주황색
-            case 'ADVANCED': return '#f44336';  // 빨간색
-            default: return '#9e9e9e';  // 회색
+            case 'BEGINNER': return '#4caf50'; // 초록색
+            case 'INTERMEDIATE': return '#ff9800'; // 주황색
+            case 'ADVANCED': return '#f44336'; // 빨간색
+            default: return '#9e9e9e'; // 회색
         }
     };
 
-    return (
-        <div style={{
-            borderRadius: '8px',
-            padding: '16px',
-            border: '1px solid #e0e0e0',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-            marginBottom: '16px',
-            transition: 'transform 0.2s ease',
-            cursor: 'pointer',
-        }}>
-            <Link to={`/quizzes/${quiz.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <h3 style={{ marginTop: 0 }}>{quiz.title}</h3>
+    const getDifficultyLabel = (level: string) => {
+        switch (level) {
+            case 'BEGINNER': return '입문';
+            case 'INTERMEDIATE': return '중급';
+            case 'ADVANCED': return '고급';
+            default: return '알 수 없음';
+        }
+    };
 
-                <div style={{ display: 'flex', marginBottom: '8px' }}>
+    // 퀴즈 타입 한글 표시
+    const getQuizTypeLabel = (type: string) => {
+        switch (type) {
+            case 'DAILY': return '데일리 퀴즈';
+            case 'TAG_BASED': return '태그 기반';
+            case 'TOPIC_BASED': return '주제 기반';
+            case 'CUSTOM': return '커스텀';
+            default: return '알 수 없음';
+        }
+    };
+
+    // 날짜 포맷팅
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return new Intl.DateTimeFormat('ko-KR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        }).format(date);
+    };
+
+    return (
+        <div className="quiz-card" style={{
+            border: '1px solid #e0e0e0',
+            borderRadius: '8px',
+            padding: '1.5rem',
+            backgroundColor: 'white',
+            transition: 'transform 0.2s, box-shadow 0.2s',
+            cursor: 'pointer',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 4px 8px rgba(0,0,0,0.15)'
+            }
+        }}>
+            <Link to={`/quizzes/${quiz.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.2rem', color: '#1976d2' }}>{quiz.title}</h3>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
           <span style={{
               backgroundColor: getDifficultyColor(quiz.difficultyLevel),
               color: 'white',
-              padding: '2px 8px',
+              padding: '0.25rem 0.5rem',
               borderRadius: '4px',
-              fontSize: '0.8rem',
-              marginRight: '8px'
+              fontSize: '0.75rem'
           }}>
-            {quiz.difficultyLevel}
+            {getDifficultyLabel(quiz.difficultyLevel)}
           </span>
-
                     <span style={{
                         backgroundColor: '#e0e0e0',
-                        padding: '2px 8px',
+                        padding: '0.25rem 0.5rem',
                         borderRadius: '4px',
-                        fontSize: '0.8rem'
+                        fontSize: '0.75rem'
                     }}>
-            {quiz.quizType.replace('_', ' ')}
+            {getQuizTypeLabel(quiz.quizType)}
           </span>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span>문제 수: {quiz.questionCount}</span>
-                    <span>평균 점수: {quiz.avgScore?.toFixed(1) || '아직 없음'}</span>
-                </div>
-
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                    {quiz.tags.map(tag => (
-                        <span key={tag.id} style={{
-                            backgroundColor: '#f0f0f0',
-                            padding: '2px 8px',
-                            borderRadius: '4px',
-                            fontSize: '0.8rem'
-                        }}>
-              {tag.name}
-            </span>
-                    ))}
+                    <span style={{
+                        backgroundColor: '#e0e0e0',
+                        padding: '0.25rem 0.5rem',
+                        borderRadius: '4px',
+                        fontSize: '0.75rem'
+                    }}>
+            {quiz.questionCount}문제
+          </span>
                 </div>
             </Link>
         </div>

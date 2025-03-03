@@ -1,14 +1,12 @@
 // src/types/api.ts
-// 공통 API 응답 타입
 export interface CommonApiResponse<T> {
     success: boolean;
     data: T;
-    message: string;
+    message?: string;
     timestamp: string;
     code: string;
 }
 
-// 페이지네이션 응답 타입
 export interface PageResponse<T> {
     content: T[];
     page: number;
@@ -19,16 +17,17 @@ export interface PageResponse<T> {
     last: boolean;
 }
 
-// 유저 요약 타입
-export interface UserSummaryResponse {
-    id: number;
+// 인증 응답 타입
+export interface AuthResponse {
+    accessToken: string;
+    refreshToken: string;
+    email: string;
     username: string;
-    profileImage: string;
-    level: number;
-    joinedAt: string;
+    tokenType: string;
+    expiresIn: number;
 }
 
-// 태그 타입
+// 태그 관련 타입
 export interface TagResponse {
     id: number;
     name: string;
@@ -37,20 +36,14 @@ export interface TagResponse {
     synonyms: string[];
 }
 
-// 퀴즈 요약 타입
-export interface QuizSummaryResponse {
-    id: number;
-    title: string;
-    quizType: 'DAILY' | 'TAG_BASED' | 'TOPIC_BASED' | 'CUSTOM';
-    difficultyLevel: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
-    questionCount: number;
-    attemptCount: number;
-    avgScore: number;
-    tags: TagResponse[];
-    createdAt: string;
+export interface TagCreateRequest {
+    name: string;
+    description?: string;
+    parentId?: number;
+    synonyms?: string[];
 }
 
-// 질문 타입
+// 퀴즈 관련 타입
 export interface QuestionResponse {
     id: number;
     questionType: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'CODE_ANALYSIS' | 'DIAGRAM_BASED';
@@ -64,32 +57,18 @@ export interface QuestionResponse {
     timeLimitSeconds: number;
 }
 
-
-// 질문 생성 요청 타입
 export interface QuestionCreateRequest {
     questionType: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'CODE_ANALYSIS' | 'DIAGRAM_BASED';
     questionText: string;
     codeSnippet?: string;
     diagramData?: string;
-    options: string[];
+    options?: string[];
     correctAnswer: string;
     explanation: string;
     points: number;
     difficultyLevel: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
 }
 
-// 퀴즈 생성 요청 타입
-export interface QuizCreateRequest {
-    title: string;
-    description: string;
-    quizType: 'DAILY' | 'TAG_BASED' | 'TOPIC_BASED' | 'CUSTOM';
-    difficultyLevel: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
-    timeLimit: number;
-    tagIds: number[];
-    questions: QuestionCreateRequest[];
-}
-
-// 이 부분이 중요합니다 - QuizDetailResponse와 QuizResponse의 차이점
 export interface QuizDetailResponse {
     id: number;
     title: string;
@@ -99,21 +78,182 @@ export interface QuizDetailResponse {
     timeLimit: number;
     questionCount: number;
     tags: TagResponse[];
-    creator: UserSummaryResponse;
+    creator: {
+        id: number;
+        username: string;
+        profileImage: string | null;
+        level: number;
+        joinedAt: string;
+    };
+    statistics?: {
+        totalAttempts: number;
+        averageScore: number;
+        completionRate: number;
+        averageTimeSeconds: number;
+        difficultyDistribution: Record<string, number>;
+        questionStatistics?: {
+            questionId: number;
+            correctAnswers: number;
+            totalAttempts: number;
+            correctRate: number;
+            averageTimeSeconds: number;
+        }[];
+    };
     createdAt: string;
-    // questions 속성이 없음
 }
 
-export interface QuizResponse {
+export interface QuizResponse extends QuizDetailResponse {
+    questions: QuestionResponse[];
+}
+
+export interface QuizSummaryResponse {
     id: number;
     title: string;
-    description: string;
     quizType: 'DAILY' | 'TAG_BASED' | 'TOPIC_BASED' | 'CUSTOM';
     difficultyLevel: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
-    timeLimit: number;
     questionCount: number;
+    attemptCount: number;
+    avgScore: number;
     tags: TagResponse[];
-    questions: QuestionResponse[]; // 이 속성이 QuizDetailResponse에는 없음
-    creator: UserSummaryResponse;
     createdAt: string;
+}
+
+export interface QuizCreateRequest {
+    title: string;
+    description: string;
+    quizType: 'TAG_BASED' | 'TOPIC_BASED' | 'CUSTOM';
+    difficultyLevel: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+    timeLimit: number;
+    tagIds: number[];
+    questions: QuestionCreateRequest[];
+}
+
+export interface QuizSearchRequest {
+    title?: string;
+    difficultyLevel?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+    quizType?: 'DAILY' | 'TAG_BASED' | 'TOPIC_BASED' | 'CUSTOM';
+    tagIds?: number[];
+    minQuestions?: number;
+    maxQuestions?: number;
+    orderBy?: string;
+}
+
+export interface QuizSubmitRequest {
+    quizAttemptId: number;
+    answers: Record<number, string>;
+    timeTaken?: number;
+}
+
+export interface QuizResultResponse {
+    quizId: number;
+    title: string;
+    totalQuestions: number;
+    correctAnswers: number;
+    score: number;
+    totalPossibleScore: number;
+    timeTaken: number;
+    completedAt: string;
+    experienceGained: number;
+    newTotalExperience: number;
+    questions: {
+        id: number;
+        questionText: string;
+        yourAnswer: string;
+        correctAnswer: string;
+        isCorrect: boolean;
+        explanation: string;
+        points: number;
+    }[];
+}
+
+// 배틀 관련 타입
+export interface BattleRoomCreateRequest {
+    quizId: number;
+    maxParticipants?: number;
+}
+
+export interface BattleRoomResponse {
+    id: number;
+    roomCode: string;
+    quizTitle: string;
+    quizId: number;
+    status: string;
+    maxParticipants: number;
+    currentParticipants: number;
+    participants: {
+        id: number;
+        userId: number;
+        username: string;
+        profileImage: string | null;
+        ready: boolean;
+        level: number;
+        currentScore: number;
+    }[];
+    createdAt: string;
+    startTime?: string;
+    endTime?: string;
+    timeLimit?: number;
+    questionCount: number;
+}
+
+// src/types/user.ts
+export interface UserProfile {
+    id: number;
+    username: string;
+    email: string;
+    profileImage: string | null;
+    level: number;
+    experience: number;
+    requiredExperience: number;
+    totalPoints: number;
+    joinedAt: string;
+    lastLogin?: string;
+}
+
+export interface UserStatistics {
+    totalQuizzesTaken: number;
+    totalQuizzesCompleted: number;
+    averageScore: number;
+    totalCorrectAnswers: number;
+    totalQuestions: number;
+    correctRate: number;
+    totalTimeTaken: number;
+    bestScore: number;
+    worstScore: number;
+}
+
+export interface RecentActivity {
+    id: number;
+    type: 'QUIZ_ATTEMPT' | 'ACHIEVEMENT_EARNED' | 'LEVEL_UP';
+    quizId?: number;
+    quizTitle?: string;
+    score?: number;
+    achievementId?: number;
+    achievementName?: string;
+    newLevel?: number;
+    timestamp: string;
+}
+
+export interface Achievement {
+    id: number;
+    name: string;
+    description: string;
+    iconUrl: string;
+    earnedAt?: string;
+    progress: number;
+    requirementDescription: string;
+}
+
+export interface TopicPerformance {
+    tagId: number;
+    tagName: string;
+    quizzesTaken: number;
+    averageScore: number;
+    correctRate: number;
+    strength: boolean;
+}
+
+export interface UserProfileUpdateRequest {
+    username?: string;
+    profileImage?: string;
 }
