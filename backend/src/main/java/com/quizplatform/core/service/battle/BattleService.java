@@ -230,7 +230,7 @@ public class BattleService {
         }
 
         // 배틀룸 상세 정보 로드
-        BattleRoom battleRoom = battleRoomRepository.findByIdWithAllDetails(participant.getBattleRoom().getId())
+        BattleRoom battleRoom = battleRoomRepository.findByIdWithQuizQuestions(participant.getBattleRoom().getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
         // 현재 배틀룸의 현재 문제를 조회
@@ -275,7 +275,7 @@ public class BattleService {
      * 대결 시작 처리
      */
     public BattleStartResponse startBattle(Long roomId) {
-        BattleRoom room = battleRoomRepository.findByIdWithAllDetails(roomId)
+        BattleRoom room = battleRoomRepository.findByIdWithQuizQuestions(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
         // 대결 시작 상태로 변경
@@ -289,7 +289,7 @@ public class BattleService {
      * 다음 문제 준비
      */
     public BattleNextQuestionResponse prepareNextQuestion(Long roomId) {
-        BattleRoom room = battleRoomRepository.findByIdWithAllDetails(roomId)
+        BattleRoom room = battleRoomRepository.findByIdWithQuizQuestions(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
         Question nextQuestion = room.startNextQuestion();
@@ -308,7 +308,7 @@ public class BattleService {
      * 모든 참가자의 답변 여부 확인
      */
     public boolean allParticipantsAnswered(Long roomId) {
-        BattleRoom room = battleRoomRepository.findByIdWithAllDetails(roomId)
+        BattleRoom room = battleRoomRepository.findByIdWithQuizQuestions(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
         return room.allParticipantsAnswered();
@@ -318,7 +318,7 @@ public class BattleService {
      * 대결 진행 상황 조회
      */
     public BattleProgressResponse getBattleProgress(Long roomId) {
-        BattleRoom room = battleRoomRepository.findByIdWithAllDetails(roomId)
+        BattleRoom room = battleRoomRepository.findByIdWithQuizQuestions(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
         BattleProgress battleProgress = room.getProgress();
@@ -329,7 +329,7 @@ public class BattleService {
      * 대결 종료 처리
      */
     public BattleEndResponse endBattle(Long roomId) {
-        BattleRoom room = battleRoomRepository.findByIdWithAllDetails(roomId)
+        BattleRoom room = battleRoomRepository.findByIdWithQuizQuestions(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
         // 대결 종료 및 결과 계산
