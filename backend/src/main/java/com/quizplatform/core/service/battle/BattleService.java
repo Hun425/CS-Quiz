@@ -446,27 +446,64 @@ public class BattleService {
         return participantRepository.save(participant);
     }
 
-    // Redis 관련 헬퍼 메서드들
+    /**
+     * Redis에 참가자 정보 저장 개선
+     */
     private void saveParticipantToRedis(BattleParticipant participant, String sessionId) {
-        String participantKey = PARTICIPANT_KEY_PREFIX + sessionId;
-        redisTemplate.opsForValue().set(
-                participantKey,
-                participant.getId().toString(),
-                ROOM_EXPIRE_SECONDS,
-                TimeUnit.SECONDS
-        );
+        if (participant == null || sessionId == null || sessionId.isEmpty()) {
+            log.warn("Redis에 참가자 정보 저장 실패: 유효하지 않은 참가자 또는 세션 ID");
+            return;
+        }
+
+        try {
+            String participantKey = PARTICIPANT_KEY_PREFIX + sessionId;
+            redisTemplate.opsForValue().set(
+                    participantKey,
+                    participant.getId().toString(),
+                    ROOM_EXPIRE_SECONDS,
+                    TimeUnit.SECONDS
+            );
+
+            // 참가자 ID로 세션 ID를 역으로 매핑 (세션 검색 용이)
+            String sessionKey = "battle:participant:session:" + participant.getId();
+            redisTemplate.opsForValue().set(
+                    sessionKey,
+                    sessionId,
+                    ROOM_EXPIRE_SECONDS,
+                    TimeUnit.SECONDS
+            );
+
+            log.debug("Redis에 참가자 정보 저장 성공: participantId={}, sessionId={}",
+                    participant.getId(), sessionId);
+        } catch (Exception e) {
+            log.error("Redis에 참가자 정보 저장 중 오류 발생", e);
+        }
     }
 
+    /**
+     * Redis에서 참가자 정보 조회 개선
+     */
     private BattleParticipant getParticipantFromRedis(String sessionId) {
-        String participantKey = PARTICIPANT_KEY_PREFIX + sessionId;
-        String participantId = redisTemplate.opsForValue().get(participantKey);
-
-        if (participantId == null) {
+        if (sessionId == null || sessionId.isEmpty()) {
+            log.warn("Redis에서 참가자 정보 조회 실패: 유효하지 않은 세션 ID");
             return null;
         }
 
-        return participantRepository.findById(Long.parseLong(participantId))
-                .orElse(null);
+        try {
+            String participantKey = PARTICIPANT_KEY_PREFIX + sessionId;
+            String participantId = redisTemplate.opsForValue().get(participantKey);
+
+            if (participantId == null) {
+                log.warn("Redis에서 참가자 ID를 찾을 수 없음: sessionId={}", sessionId);
+                return null;
+            }
+
+            return participantRepository.findById(Long.parseLong(participantId))
+                    .orElse(null);
+        } catch (Exception e) {
+            log.error("Redis에서 참가자 정보 조회 중 오류 발생", e);
+            return null;
+        }
     }
 
 

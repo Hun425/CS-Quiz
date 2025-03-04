@@ -186,7 +186,7 @@ export interface BattleRoomResponse {
         userId: number;
         username: string;
         profileImage: string | null;
-        ready: boolean;
+        isReady: boolean;
         level: number;
         currentScore: number;
     }[];

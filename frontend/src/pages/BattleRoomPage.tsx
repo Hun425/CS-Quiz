@@ -86,7 +86,6 @@ const BattleRoomPage: React.FC = () => {
         fetchBattleRoom();
     }, [roomId, user]);
 
-    // WebSocket 연결 및 이벤트 핸들러 등록
     useEffect(() => {
         if (!battleRoom || !isAuthenticated || !roomId) return;
 
@@ -95,9 +94,7 @@ const BattleRoomPage: React.FC = () => {
             try {
                 await battleWebSocketService.connect(parseInt(roomId));
 
-                // 각종 이벤트 핸들러 등록
-                battleWebSocketService.on<BattleJoinResponse>('JOIN', handleParticipantJoin);
-                // 추가: PARTICIPANTS 이벤트 핸들러 등록 (준비 상태 변경 시)
+                // 각종 이벤트 핸들러 등록 - 이벤트 이름 수정
                 battleWebSocketService.on<BattleJoinResponse>('PARTICIPANTS', handleParticipantJoin);
                 battleWebSocketService.on<BattleStartResponse>('START', handleBattleStart);
                 battleWebSocketService.on<BattleProgressResponse>('PROGRESS', handleBattleProgress);
@@ -170,40 +167,20 @@ const BattleRoomPage: React.FC = () => {
         return () => clearInterval(countdownTimer);
     }, [countdownActive]);
 
+    // 참가자 입장 이벤트 핸들러
     const handleParticipantJoin = (data: BattleJoinResponse) => {
-        console.log('참가자 정보 업데이트:', data);
+        console.log('참가자 입장:', data);
 
-        // 현재 참가자 목록과 서버에서 받은 목록을 비교하여 새 참가자만 확인
-        const newParticipant = data.participants.find(
-            serverParticipant => !participants.some(
-                localParticipant => localParticipant.userId === serverParticipant.userId
-            )
-        );
+        // 백엔드와의 타입 일치를 위해 명시적으로 맵핑 (isReady 속성은 이미 올바르게 포함됨)
+        const updatedParticipants = data.participants.map(participant => ({
+            userId: participant.userId,
+            username: participant.username,
+            profileImage: participant.profileImage,
+            level: participant.level,
+            isReady: participant.isReady
+        }));
 
-        // 새 참가자가 있으면 알림 표시 (선택적)
-        if (newParticipant) {
-            console.log(`새 참가자 입장: ${newParticipant.username}`);
-            // 여기에 알림 토스트 등을 추가할 수 있음
-        }
-
-        // 서버로부터 받은 업데이트된 참가자 목록 설정 (준비 상태 유지)
-        setParticipants(data.participants);
-
-        // 방 상태 업데이트
-        if (battleRoom) {
-            setBattleRoom({
-                ...battleRoom,
-                currentParticipants: data.participants.length
-            });
-        }
-
-        // 내 준비 상태는 서버 데이터로 업데이트
-        if (user) {
-            const myParticipant = data.participants.find(p => p.userId === user.id);
-            if (myParticipant) {
-                setIsReady(myParticipant.isReady);
-            }
-        }
+        setParticipants(updatedParticipants);
     };
     // 배틀 시작 이벤트 핸들러
     const handleBattleStart = (data: BattleStartResponse) => {
@@ -260,27 +237,26 @@ const BattleRoomPage: React.FC = () => {
         // 필요에 따라 추가 처리
     };
 
-    const handleToggleReady = () => {
-        if (!roomId || !user) return;
+    // 준비 상태 토글
+    const handleToggleReady = async () => {
+        if (!roomId) return;
 
-        // 로컬 상태 즉시 업데이트
-        setIsReady(!isReady);
+        try {
+            const response = await battleApi.toggleReady(parseInt(roomId));
 
-        // 참가자 목록에서 현재 사용자의 준비 상태 업데이트
-        const updatedParticipants = participants.map(participant => {
-            if (participant.userId === user.id) {
-                return {
-                    ...participant,
-                    isReady: !isReady // 현재 상태의 반대로 변경
-                };
+            if (response.data.success) {
+                const updatedRoom = response.data.data;
+                setBattleRoom(updatedRoom);
+
+                // 내 준비 상태 토글
+                setIsReady(!isReady);
+            } else {
+                setError('준비 상태 변경에 실패했습니다.');
             }
-            return participant;
-        });
-
-        setParticipants(updatedParticipants);
-
-        // WebSocket을 통해 준비 상태 토글 요청
-        battleWebSocketService.toggleReady();
+        } catch (err) {
+            console.error('준비 상태 변경 중 오류:', err);
+            setError('준비 상태 변경 중 오류가 발생했습니다.');
+        }
     };
 
     // 배틀룸 나가기
@@ -607,7 +583,22 @@ const BattleRoomPage: React.FC = () => {
                     justifyContent: 'center',
                     marginTop: '2rem'
                 }}>
-                    {/* 준비 상태 토글 버튼 */}
+                    <button
+                        onClick={handleLeaveBattle}
+                        style={{
+                            padding: '1rem 2rem',
+                            borderRadius: '8px',
+                            backgroundColor: '#f44336',
+                            color: 'white',
+                            border: 'none',
+                            fontSize: '1.1rem',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                        }}
+                    >
+                        나가기
+                    </button>
                     <button
                         onClick={handleToggleReady}
                         style={{
@@ -623,24 +614,6 @@ const BattleRoomPage: React.FC = () => {
                         }}
                     >
                         {isReady ? '준비 취소' : '준비 완료'}
-                    </button>
-
-                    {/* 나가기 버튼 */}
-                    <button
-                        onClick={handleLeaveBattle}
-                        style={{
-                            padding: '1rem 2rem',
-                            borderRadius: '8px',
-                            backgroundColor: '#9e9e9e',
-                            color: 'white',
-                            border: 'none',
-                            fontSize: '1.1rem',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
-                        }}
-                    >
-                        나가기
                     </button>
                 </div>
 
