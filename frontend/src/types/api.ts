@@ -104,7 +104,7 @@ export interface QuizDetailResponse {
 
 export interface QuizResponse extends QuizDetailResponse {
     questions: QuestionResponse[];
-    attemptId?: number;
+    quizAttemptId?: number;
 }
 
 export interface QuizSummaryResponse {

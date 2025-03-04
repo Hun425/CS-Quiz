@@ -27,6 +27,7 @@ public class QuizResponse {
     private List<QuestionResponse> questions;
     private UserSummaryResponse creator;
     private LocalDateTime createdAt;
+    private Long quizAttemptId; // 새로 추가된 필드
 
     public static QuizResponse from(Quiz quiz) {
         return QuizResponse.builder()
@@ -45,6 +46,24 @@ public class QuizResponse {
                         .collect(Collectors.toList()))
                 .creator(UserSummaryResponse.from(quiz.getCreator()))
                 .createdAt(quiz.getCreatedAt())
+                .build();
+    }
+
+    // quizAttemptId를 설정하는 메서드 추가
+    public QuizResponse withQuizAttemptId(Long quizAttemptId) {
+        return QuizResponse.builder()
+                .id(this.id)
+                .title(this.title)
+                .description(this.description)
+                .quizType(this.quizType)
+                .difficultyLevel(this.difficultyLevel)
+                .timeLimit(this.timeLimit)
+                .questionCount(this.questionCount)
+                .tags(this.tags)
+                .questions(this.questions)
+                .creator(this.creator)
+                .createdAt(this.createdAt)
+                .quizAttemptId(quizAttemptId)
                 .build();
     }
 }

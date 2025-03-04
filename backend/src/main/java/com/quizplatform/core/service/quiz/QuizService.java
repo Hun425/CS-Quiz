@@ -261,13 +261,17 @@ public class QuizService {
         }
 
         // 퀴즈 시도 객체 생성 (시작 시간 기록)
-        quizAttemptService.startQuiz(quizId, user);
+        QuizAttempt quizAttempt = quizAttemptService.startQuiz(quizId, user);
 
         // 퀴즈 조회수 증가
         quiz.incrementViewCount();
         quizRepository.save(quiz);
 
-        return entityMapperService.mapToQuizResponse(quiz);
+        // 기본 퀴즈 응답 생성
+        QuizResponse quizResponse = entityMapperService.mapToQuizResponse(quiz);
+
+        // 퀴즈 시도 ID 추가
+        return quizResponse.withQuizAttemptId(quizAttempt.getId());
     }
 
     // 내부 헬퍼 메서드들

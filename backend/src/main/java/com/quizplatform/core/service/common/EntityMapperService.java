@@ -30,12 +30,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class EntityMapperService {
 
-    @Transactional(readOnly = true)
-    public QuizResponse mapToQuizResponse(Quiz quiz) {
-        // 필요한 연관 관계 초기화
-        initializeQuizAssociations(quiz);
-        return QuizResponse.from(quiz);
-    }
 
     @Transactional(readOnly = true)
     public QuizDetailResponse mapToQuizDetailResponse(Quiz quiz) {
@@ -243,5 +237,22 @@ public class EntityMapperService {
         }
 
         return baseExp;
+    }
+
+    @Transactional(readOnly = true)
+    public QuizResponse mapToQuizResponse(Quiz quiz) {
+        // 필요한 연관 관계 초기화
+        initializeQuizAssociations(quiz);
+        return QuizResponse.from(quiz);
+    }
+
+    /**
+     * Quiz 엔티티로부터 QuizResponse를 생성하며, 퀴즈 시도 ID를 추가로 설정합니다.
+     */
+    @Transactional(readOnly = true)
+    public QuizResponse mapToQuizResponseWithAttemptId(Quiz quiz, Long quizAttemptId) {
+        // 필요한 연관 관계 초기화
+        initializeQuizAssociations(quiz);
+        return QuizResponse.from(quiz).withQuizAttemptId(quizAttemptId);
     }
 }

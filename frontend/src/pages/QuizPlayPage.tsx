@@ -42,9 +42,8 @@ const QuizPlayPage: React.FC = () => {
                     const quizData = response.data.data;
                     setQuiz(quizData);
 
-                    // 새로운 퀴즈 시도 ID 저장
-                    if (response.data.data.attemptId) {
-                        setQuizAttemptId(response.data.data.attemptId);
+                    if (response.data.data.quizAttemptId) {
+                        setQuizAttemptId(response.data.data.quizAttemptId);
                     }
 
                     // 전체 퀴즈 시간을 초 단위로 설정
