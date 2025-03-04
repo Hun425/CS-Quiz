@@ -197,65 +197,65 @@ export interface BattleRoomResponse {
     questionCount: number;
 }
 
-// src/types/user.ts
-export interface UserProfile {
-    id: number;
-    username: string;
-    email: string;
-    profileImage: string | null;
-    level: number;
-    experience: number;
-    requiredExperience: number;
-    totalPoints: number;
-    joinedAt: string;
-    lastLogin?: string;
+// WebSocket 메시지 응답 타입
+export interface BattleJoinResponse {
+    participants: {
+        userId: number;
+        username: string;
+        profileImage: string | null;
+        level: number;
+        isReady: boolean;
+    }[];
 }
 
-export interface UserStatistics {
-    totalQuizzesTaken: number;
-    totalQuizzesCompleted: number;
-    averageScore: number;
-    totalCorrectAnswers: number;
+export interface BattleStartResponse {
+    firstQuestion: BattleNextQuestionResponse;
+}
+
+export interface BattleProgressResponse {
+    participantProgress: {
+        [userId: number]: {
+            userId: number;
+            username: string;
+            currentScore: number;
+            correctAnswers: number;
+            totalAnswered: number;
+            hasAnsweredCurrent: boolean;
+            currentStreak: number;
+        };
+    };
+    currentQuestionIndex: number;
+}
+
+export interface BattleNextQuestionResponse {
+    questionId: number;
+    questionText: string;
+    questionType: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'CODE_ANALYSIS' | 'DIAGRAM_BASED';
+    options?: string[];
+    timeLimit: number;
+    points: number;
+    isGameOver: boolean;
+}
+
+export interface BattleEndResponse {
+    results: {
+        userId: number;
+        username: string;
+        finalScore: number;
+        correctAnswers: number;
+        totalQuestions: number;
+        experienceGained: number;
+        isWinner: boolean;
+    }[];
     totalQuestions: number;
-    correctRate: number;
-    totalTimeTaken: number;
-    bestScore: number;
-    worstScore: number;
+    timeTakenSeconds: number;
+    endTime: string;
 }
 
-export interface RecentActivity {
-    id: number;
-    type: 'QUIZ_ATTEMPT' | 'ACHIEVEMENT_EARNED' | 'LEVEL_UP';
-    quizId?: number;
-    quizTitle?: string;
-    score?: number;
-    achievementId?: number;
-    achievementName?: string;
-    newLevel?: number;
-    timestamp: string;
+export interface BattleAnswerResponse {
+    questionId: number;
+    isCorrect: boolean;
+    correctAnswer: string;
+    explanation: string;
+    pointsEarned: number;
 }
-
-export interface Achievement {
-    id: number;
-    name: string;
-    description: string;
-    iconUrl: string;
-    earnedAt?: string;
-    progress: number;
-    requirementDescription: string;
-}
-
-export interface TopicPerformance {
-    tagId: number;
-    tagName: string;
-    quizzesTaken: number;
-    averageScore: number;
-    correctRate: number;
-    strength: boolean;
-}
-
-export interface UserProfileUpdateRequest {
-    username?: string;
-    profileImage?: string;
-}
-

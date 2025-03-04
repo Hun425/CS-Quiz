@@ -43,9 +43,34 @@ const initialState = {
     participants: [],
 };
 
+
 // 배틀 스토어 생성
 export const useBattleStore = create<BattleState>((set) => ({
     ...initialState,
+
+    // 안전한 참가자 업데이트
+    updateParticipantSafely: (participantId: number, updateFn: (participant: ParticipantDto) => Partial<ParticipantDto>) => {
+        set((state) => {
+            const participant = state.participants.find(p => p.id === participantId);
+            if (!participant) return state;
+
+            const updateData = updateFn(participant);
+            return {
+                participants: state.participants.map(p =>
+                    p.id === participantId ? { ...p, ...updateData } : p
+                )
+            };
+        });
+    },
+
+    // 배틀 상태 안전하게 업데이트
+    updateBattleStateSafely: (updates: Partial<BattleState>) => {
+        set(state => {
+            const newState = { ...state, ...updates };
+            // 여기서 추가 검증 로직 구현 가능
+            return newState;
+        });
+    },
 
     // 배틀룸 정보 설정
     setCurrentRoom: (room) => set({ currentRoom: room }),
@@ -81,3 +106,4 @@ export const useBattleStore = create<BattleState>((set) => ({
     // 상태 초기화
     resetState: () => set(initialState)
 }));
+

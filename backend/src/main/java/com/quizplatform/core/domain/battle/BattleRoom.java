@@ -441,5 +441,11 @@ public class BattleRoom {
         return (int) java.time.Duration.between(startTime, endDateTime).getSeconds();
     }
 
-
+    /**
+     * 부분 Setter 구현
+     * @param status
+     */
+    public void setStatus(BattleRoomStatus status) {
+        this.status = status;
+    }
 }

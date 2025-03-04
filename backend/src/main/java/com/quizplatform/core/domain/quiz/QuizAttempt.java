@@ -104,13 +104,26 @@ public class QuizAttempt {
         return (int) java.time.Duration.between(startTime, endTime).getSeconds();
     }
 
-    // 마지막 답변 이후 경과 시간 계산
     private int calculateTimeTakenSinceLastAttempt() {
-        LocalDateTime lastAttemptTime = questionAttempts.isEmpty() ?
-                startTime :
-                questionAttempts.get(questionAttempts.size() - 1).getCreatedAt();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime lastAttemptTime;
 
-        return (int) java.time.Duration.between(lastAttemptTime, LocalDateTime.now()).getSeconds();
+        if (questionAttempts.isEmpty()) {
+            lastAttemptTime = startTime;
+        } else {
+            QuestionAttempt lastAttempt = questionAttempts.get(questionAttempts.size() - 1);
+            // createdAt이 null인 경우 startTime으로 대체
+            lastAttemptTime = lastAttempt.getCreatedAt() != null ?
+                    lastAttempt.getCreatedAt() :
+                    startTime;
+        }
+
+        // 안전 장치: lastAttemptTime이 여전히 null인 경우
+        if (lastAttemptTime == null) {
+            return 0; // 유효한 시간이 없는 경우 기본값 0 반환
+        }
+
+        return (int) java.time.Duration.between(lastAttemptTime, now).getSeconds();
     }
 
     // 제한 시간 초과 여부 확인

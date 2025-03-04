@@ -23,7 +23,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-battle")
-                .setAllowedOrigins("*")  // 실제 운영 환경에서는 특정 도메인으로 제한해야 합니다
+                .setAllowedOrigins("http://localhost:5173", "http://localhost:3000")
                 .withSockJS();
     }
 }

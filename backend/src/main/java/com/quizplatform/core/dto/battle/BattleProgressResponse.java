@@ -1,5 +1,6 @@
 package com.quizplatform.core.dto.battle;
 
+import com.quizplatform.core.domain.battle.BattleRoomStatus;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -14,7 +15,7 @@ public class BattleProgressResponse {
     private int totalQuestions;
     private int remainingTimeSeconds;
     private Map<Long, ParticipantProgress> participantProgress;
-    private BattleStatus status;
+    private BattleRoomStatus status;
 
     @Getter
     @Builder

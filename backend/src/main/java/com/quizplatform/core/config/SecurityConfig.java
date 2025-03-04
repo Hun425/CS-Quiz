@@ -47,7 +47,10 @@ public class SecurityConfig {
             "/webjars/**",
             "/api/webjars/**",
             "/api/quizzes/**",
-            "/oauth2/**"
+            "/oauth2/**",
+            "/ws-battle/**",  // WebSocket 엔드포인트 추가
+            "/topic/**",      // STOMP 구독 경로
+            "/app/**"         // STOMP 메시지 발행 경로
     };
 
     @Bean

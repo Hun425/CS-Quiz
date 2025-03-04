@@ -2,7 +2,7 @@ package com.quizplatform.core.domain.battle;
 
 import com.quizplatform.core.domain.question.Question;
 import com.quizplatform.core.domain.user.User;
-import com.quizplatform.core.dto.battle.BattleStatus;
+
 import com.quizplatform.core.exception.BusinessException;
 import com.quizplatform.core.exception.ErrorCode;
 import jakarta.persistence.*;
@@ -10,6 +10,9 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -19,7 +22,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "battle_participants")
+@Table(
+        name = "battle_participants",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"battle_room_id", "user_id"})
+        }
+)
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -36,7 +44,9 @@ public class BattleParticipant {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Fetch(FetchMode.SUBSELECT)
     @OneToMany(mappedBy = "participant", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 30)
     private List<BattleAnswer> answers = new ArrayList<>();
 
     @Column(name = "current_score")
@@ -183,7 +193,7 @@ public class BattleParticipant {
     }
 
     private void validateReadyToggle() {
-        if (!battleRoom.getStatus().name().equals(BattleStatus.WAITING.name())) {
+        if (!battleRoom.getStatus().name().equals(BattleRoomStatus.WAITING.name())) {
             throw new BusinessException(ErrorCode.BATTLE_ALREADY_STARTED);
         }
         if (!isActive()) {
@@ -221,6 +231,10 @@ public class BattleParticipant {
     public void addBonusPoints(int bonusPoints) {
         // 보너스 점수를 현재 점수에 더함
         this.currentScore += bonusPoints;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     public boolean hasAllCorrectAnswers() {

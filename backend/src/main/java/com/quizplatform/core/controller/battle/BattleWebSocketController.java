@@ -120,4 +120,31 @@ public class BattleWebSocketController {
                 response
         );
     }
+
+    @MessageMapping("/battle/leave")
+    public void leaveBattle(
+            BattleLeaveRequest request,
+            @Header("simpSessionId") String sessionId
+    ) {
+        // 대결방 나가기 처리
+        BattleLeaveResponse response = battleService.leaveBattle(request, sessionId);
+
+        // 대결방의 모든 참가자에게 나가기 알림
+        messagingTemplate.convertAndSend(
+                "/topic/battle/" + request.getRoomId() + "/participants",
+                response
+        );
+
+        // 방 상태 확인
+        if (!battleService.isValidBattleRoom(request.getRoomId())) {
+            // 방이 유효하지 않으면 해당 방에 대한 상태 변경 알림
+            messagingTemplate.convertAndSend(
+                    "/topic/battle/" + request.getRoomId() + "/status",
+                    new BattleRoomStatusChangeResponse(
+                            request.getRoomId(),
+                            response.getStatus() // BattleStatus 사용
+                    )
+            );
+        }
+    }
 }

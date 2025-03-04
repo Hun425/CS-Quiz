@@ -28,6 +28,7 @@ spring:
         jdbc.batch_size: 50
         order_inserts: true
         order_updates: true
+        default_batch_fetch_size: 1000
     open-in-view: false  # OSIV ????
 
   # Redis ??

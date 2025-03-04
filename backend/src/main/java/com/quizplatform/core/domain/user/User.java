@@ -184,7 +184,12 @@ public class User {
         this.updatedAt = ZonedDateTime.now();
     }
 
-    // [두 번째 엔티티] 추가 비즈니스 메서드
+    public void updateProvider(AuthProvider provider, String providerId) {
+        this.provider = provider;
+        this.providerId = providerId;
+        this.updatedAt = ZonedDateTime.now();
+    }
+
     public void updateLastLogin() {
         this.lastLogin = ZonedDateTime.now();
     }
@@ -203,4 +208,7 @@ public class User {
     public void activate() {
         this.isActive = true;
     }
+
+
+
 }

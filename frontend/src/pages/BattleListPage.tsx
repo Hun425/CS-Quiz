@@ -57,9 +57,9 @@ const BattleListPage: React.FC = () => {
                 }
 
                 // 3. 퀴즈 목록 조회 (배틀룸 생성에 사용)
-                const quizzesResponse = await quizApi.getRecommendedQuizzes(10);
+                const quizzesResponse = await quizApi.searchQuizzes({}, 0, 10);
                 if (quizzesResponse.data.success) {
-                    setQuizzes(quizzesResponse.data.data);
+                    setQuizzes(quizzesResponse.data.data.content);
                 }
             } catch (err: any) {
                 console.error('데이터 로딩 중 오류:', err);

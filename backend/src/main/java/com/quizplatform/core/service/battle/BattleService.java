@@ -506,7 +506,7 @@ public class BattleService {
                 .totalQuestions(progress.getTotalQuestions())
                 .remainingTimeSeconds((int) progress.getRemainingTime().getSeconds())
                 .participantProgress(participantProgress)
-                .status(BattleStatus.valueOf(progress.getStatus().name()))
+                .status(BattleRoomStatus.valueOf(progress.getStatus().name()))
                 .build();
     }
 
@@ -568,4 +568,58 @@ public class BattleService {
         quiz.updateBattleStats(result);
         quizRepository.save(quiz);
     }
+
+    public BattleLeaveResponse leaveBattle(BattleLeaveRequest request, String sessionId) {
+        BattleRoom battleRoom = battleRoomRepository.findById(request.getRoomId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
+
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        BattleParticipant participant = participantRepository
+                .findByBattleRoomAndUser(battleRoom, user)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND));
+
+        // 참가자 상태 비활성화
+        participant.setActive(false);
+        participantRepository.save(participant);
+
+        // 배틀 상태가 대기 중일 때만 참가자 수 확인
+        if (battleRoom.getStatus() == BattleRoomStatus.WAITING) {
+            long activeParticipantsCount = battleRoom.getParticipants().stream()
+                    .filter(BattleParticipant::isActive)
+                    .count();
+
+            // 활성 참가자가 1명 미만이면 배틀 상태를 종료로 변경
+            if (activeParticipantsCount < 1) {
+                battleRoom.setStatus(BattleRoomStatus.FINISHED);
+                battleRoomRepository.save(battleRoom);
+            }
+        }
+
+        return new BattleLeaveResponse(
+                user.getId(),
+                battleRoom.getId(),
+                battleRoom.getStatus()
+        );
+    }
+
+
+    public boolean isValidBattleRoom(Long roomId) {
+        BattleRoom room = battleRoomRepository.findById(roomId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
+
+        // 대기 상태에서만 방 유효성 체크
+        if (room.getStatus() == BattleRoomStatus.WAITING) {
+            long activeParticipantsCount = room.getParticipants().stream()
+                    .filter(BattleParticipant::isActive)
+                    .count();
+
+            return activeParticipantsCount >= 1;
+        }
+
+        return true;
+    }
+
+
 }

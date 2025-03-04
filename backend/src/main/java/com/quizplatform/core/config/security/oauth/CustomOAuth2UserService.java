@@ -3,7 +3,6 @@ package com.quizplatform.core.config.security.oauth;
 import com.quizplatform.core.config.security.UserPrincipal;
 import com.quizplatform.core.domain.user.AuthProvider;
 import com.quizplatform.core.domain.user.User;
-import com.quizplatform.core.exception.OAuth2AuthenticationProcessingException;
 import com.quizplatform.core.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.Optional;
+import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +25,7 @@ import java.util.Optional;
 @Slf4j
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final UserRepository userRepository;
+    private final Random random = new Random();
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -32,6 +33,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             OAuth2User oauth2User = super.loadUser(userRequest);
             return processOAuth2User(userRequest, oauth2User);
         } catch (Exception ex) {
+            log.error("OAuth2 인증 처리 중 오류 발생", ex);
             throw new OAuth2AuthenticationException("Authentication failed: " + ex.getMessage());
         }
     }
@@ -79,46 +81,142 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private User updateExistingUser(User user, OAuth2UserInfo oauth2UserInfo, AuthProvider authProvider) {
-        // 제공자 검증
+        // 여기서 제공자 검증 코드를 제거
+        // 대신 현재 사용자가 다른 제공자로 등록되어 있다면 현재 제공자 정보로 업데이트
+
         if (!user.getProvider().equals(authProvider)) {
-            throw new OAuth2AuthenticationProcessingException(
-                    String.format("이미 %s 계정으로 가입된 이메일입니다. 해당 계정으로 로그인해주세요.", user.getProvider())
-            );
+            log.info("사용자 인증 제공자 업데이트: {} -> {}, 사용자: {}",
+                    user.getProvider(), authProvider, user.getEmail());
+
+            // 기존 제공자에서 새 제공자로 업데이트
+            user.updateProvider(authProvider, oauth2UserInfo.getId());
         }
 
-        // 프로필 업데이트
-        user.updateProfile(
-                oauth2UserInfo.getName(),
-                oauth2UserInfo.getImageUrl()
-        );
+        // 프로필 이미지 업데이트 (사용자명은 유지)
+        if (StringUtils.hasText(oauth2UserInfo.getImageUrl())) {
+            user.updateProfile(user.getUsername(), oauth2UserInfo.getImageUrl());
+        }
 
+        log.info("사용자 로그인 성공: {}, 제공자: {}", user.getEmail(), authProvider);
         return userRepository.save(user);
     }
 
     private User registerNewUser(OAuth2UserInfo oauth2UserInfo, AuthProvider authProvider) {
-        // 사용자명 중복 체크 및 생성
-        String username = generateUniqueUsername(oauth2UserInfo.getName());
+        // 사용자명 정규화 및 고유값 생성 로직
+        String originalName = oauth2UserInfo.getName();
+        if (!StringUtils.hasText(originalName)) {
+            originalName = oauth2UserInfo.getEmail().split("@")[0];
+        }
+
+        String normalizedName = normalizeUsername(originalName);
+        String uniqueUsername = generateUniqueUsername(normalizedName);
+
+        log.info("새 사용자 등록: {}, 제공자: {}, 사용자명: {}",
+                oauth2UserInfo.getEmail(), authProvider, uniqueUsername);
 
         User user = User.builder()
                 .provider(authProvider)
                 .providerId(oauth2UserInfo.getId())
                 .email(oauth2UserInfo.getEmail())
-                .username(username)
+                .username(uniqueUsername)
                 .profileImage(oauth2UserInfo.getImageUrl())
                 .build();
 
         return userRepository.save(user);
     }
 
-    private String generateUniqueUsername(String baseName) {
-        String username = baseName;
-        int suffix = 1;
-
-        while (userRepository.existsByUsername(username)) {
-            username = String.format("%s%d", baseName, suffix++);
+    /**
+     * 사용자명을 정규화하는 메서드
+     * 특수문자 제거 및 최대 길이 적용
+     */
+    private String normalizeUsername(String username) {
+        if (username == null) {
+            return "user";
         }
 
-        return username;
+        // 특수문자 및 공백 제거 (영문, 숫자, 한글만 허용)
+        String normalized = username.replaceAll("[^a-zA-Z0-9가-힣]", "");
+
+        // 빈 문자열이 된 경우 기본값 사용
+        if (normalized.isEmpty()) {
+            normalized = "user";
+        }
+
+        // 최대 길이 제한 (20자)
+        if (normalized.length() > 20) {
+            normalized = normalized.substring(0, 20);
+        }
+
+        return normalized;
+    }
+
+    /**
+     * 개선된 고유 사용자명 생성 메서드
+     * 다양한 전략을 사용하여 중복을 해결
+     */
+    private String generateUniqueUsername(String baseName) {
+        // 기본 이름이 이미 고유하면 그대로 사용
+        if (!userRepository.existsByUsername(baseName)) {
+            return baseName;
+        }
+
+        // 전략 1: 숫자 접미사 추가 (최대 100까지 시도)
+        for (int i = 1; i <= 100; i++) {
+            String candidateUsername = String.format("%s%d", baseName, i);
+            // 이름 길이가 20자를 초과하는 경우 자르기
+            if (candidateUsername.length() > 20) {
+                // 숫자 자릿수에 따라 적절히 자르기
+                int suffixLength = String.valueOf(i).length();
+                candidateUsername = baseName.substring(0, 20 - suffixLength) + i;
+            }
+
+            if (!userRepository.existsByUsername(candidateUsername)) {
+                return candidateUsername;
+            }
+        }
+
+        // 전략 2: 랜덤 문자열 추가
+        for (int attempt = 0; attempt < 5; attempt++) {
+            String randomSuffix = generateRandomString(4);
+            String candidateUsername = baseName;
+
+            // 이름 길이가 20자를 초과하는 경우 자르기
+            if (candidateUsername.length() + randomSuffix.length() > 20) {
+                candidateUsername = baseName.substring(0, 20 - randomSuffix.length() - 1);
+            }
+
+            candidateUsername = candidateUsername + "_" + randomSuffix;
+
+            if (!userRepository.existsByUsername(candidateUsername)) {
+                return candidateUsername;
+            }
+        }
+
+        // 최후의 수단: 타임스탬프 기반 사용자명
+        String timeBasedUsername = baseName.substring(0, Math.min(10, baseName.length()))
+                + "_" + System.currentTimeMillis() % 10000;
+
+        // 최대 길이 제한
+        if (timeBasedUsername.length() > 20) {
+            timeBasedUsername = timeBasedUsername.substring(0, 20);
+        }
+
+        return timeBasedUsername;
+    }
+
+    /**
+     * 지정된 길이의 랜덤 문자열 생성
+     */
+    private String generateRandomString(int length) {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < length; i++) {
+            int index = random.nextInt(chars.length());
+            sb.append(chars.charAt(index));
+        }
+
+        return sb.toString();
     }
 
     public UserDetails loadUserById(Long id) {

@@ -424,8 +424,8 @@ const BattleRoomPage: React.FC = () => {
                     marginBottom: '2rem',
                     boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
                 }}>
-                    <h1 style={{ margin: 0, fontSize: '1.8rem' }}>{battleRoom.quizTitle} - 대기실</h1>
-                    <p style={{ margin: '0.5rem 0 0', opacity: 0.8 }}>대결이 시작되기를 기다리는 중입니다</p>
+                    <h1 style={{margin: 0, fontSize: '1.8rem'}}>{battleRoom.quizTitle} - 대기실</h1>
+                    <p style={{margin: '0.5rem 0 0', opacity: 0.8}}>대결이 시작되기를 기다리는 중입니다</p>
                 </div>
 
                 <div className="room-info" style={{
@@ -441,28 +441,32 @@ const BattleRoomPage: React.FC = () => {
                         gap: '1rem'
                     }}>
                         <div>
-                            <p style={{ color: '#666', fontSize: '0.9rem', margin: '0 0 0.25rem' }}>방 코드</p>
-                            <p style={{ margin: 0, fontWeight: 'bold', fontSize: '1.2rem' }}>{battleRoom.roomCode}</p>
+                            <p style={{color: '#666', fontSize: '0.9rem', margin: '0 0 0.25rem'}}>방 코드</p>
+                            <p style={{margin: 0, fontWeight: 'bold', fontSize: '1.2rem'}}>{battleRoom.roomCode}</p>
                         </div>
                         <div>
-                            <p style={{ color: '#666', fontSize: '0.9rem', margin: '0 0 0.25rem' }}>참가자</p>
-                            <p style={{ margin: 0, fontWeight: 'bold', fontSize: '1.2rem' }}>
+                            <p style={{color: '#666', fontSize: '0.9rem', margin: '0 0 0.25rem'}}>참가자</p>
+                            <p style={{margin: 0, fontWeight: 'bold', fontSize: '1.2rem'}}>
                                 {battleRoom.currentParticipants}/{battleRoom.maxParticipants}
                             </p>
                         </div>
                         <div>
-                            <p style={{ color: '#666', fontSize: '0.9rem', margin: '0 0 0.25rem' }}>문제 수</p>
-                            <p style={{ margin: 0, fontWeight: 'bold', fontSize: '1.2rem' }}>{battleRoom.questionCount}문제</p>
+                            <p style={{color: '#666', fontSize: '0.9rem', margin: '0 0 0.25rem'}}>문제 수</p>
+                            <p style={{
+                                margin: 0,
+                                fontWeight: 'bold',
+                                fontSize: '1.2rem'
+                            }}>{battleRoom.questionCount}문제</p>
                         </div>
                         <div>
-                            <p style={{ color: '#666', fontSize: '0.9rem', margin: '0 0 0.25rem' }}>제한 시간</p>
-                            <p style={{ margin: 0, fontWeight: 'bold', fontSize: '1.2rem' }}>{battleRoom.timeLimit}분</p>
+                            <p style={{color: '#666', fontSize: '0.9rem', margin: '0 0 0.25rem'}}>제한 시간</p>
+                            <p style={{margin: 0, fontWeight: 'bold', fontSize: '1.2rem'}}>{battleRoom.timeLimit}분</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="participants-list" style={{ marginBottom: '2rem' }}>
-                    <h2 style={{ borderBottom: '2px solid #1976d2', paddingBottom: '0.5rem' }}>참가자 목록</h2>
+                <div className="participants-list" style={{marginBottom: '2rem'}}>
+                    <h2 style={{borderBottom: '2px solid #1976d2', paddingBottom: '0.5rem'}}>참가자 목록</h2>
                     <div style={{
                         display: 'grid',
                         gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
@@ -560,12 +564,12 @@ const BattleRoomPage: React.FC = () => {
                                     {participant.isReady ? (
                                         <>
                                             <span>준비 완료</span>
-                                            <span style={{ fontSize: '1.2rem' }}>✓</span>
+                                            <span style={{fontSize: '1.2rem'}}>✓</span>
                                         </>
                                     ) : (
                                         <>
                                             <span>대기 중</span>
-                                            <span style={{ fontSize: '1.2rem' }}>⌛</span>
+                                            <span style={{fontSize: '1.2rem'}}>⌛</span>
                                         </>
                                     )}
                                 </div>
@@ -580,12 +584,31 @@ const BattleRoomPage: React.FC = () => {
                     justifyContent: 'center',
                     marginTop: '2rem'
                 }}>
+                    {/* 준비 상태 토글 버튼 */}
                     <button
                         onClick={handleToggleReady}
                         style={{
                             padding: '1rem 2rem',
                             borderRadius: '8px',
                             backgroundColor: isReady ? '#f44336' : '#4caf50',
+                            color: 'white',
+                            border: 'none',
+                            fontSize: '1.1rem',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                        }}
+                    >
+                        {isReady ? '준비 취소' : '준비 완료'}
+                    </button>
+
+                    {/* 나가기 버튼 */}
+                    <button
+                        onClick={handleLeaveBattle}
+                        style={{
+                            padding: '1rem 2rem',
+                            borderRadius: '8px',
+                            backgroundColor: '#9e9e9e',
                             color: 'white',
                             border: 'none',
                             fontSize: '1.1rem',
@@ -620,8 +643,9 @@ const BattleRoomPage: React.FC = () => {
                         marginRight: '1rem',
                         fontWeight: 'bold',
                         fontSize: '1.2rem'
-                    }}>i</div>
-                    <p style={{ margin: 0 }}>
+                    }}>i
+                    </div>
+                    <p style={{margin: 0}}>
                         모든 참가자가 준비 완료되면 대결이 자동으로 시작됩니다. 준비 버튼을 클릭하여 대결 준비를 완료하세요!
                     </p>
                 </div>
@@ -648,7 +672,7 @@ const BattleRoomPage: React.FC = () => {
                     padding: '2rem',
                     boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
                 }}>
-                    <h1 style={{ marginBottom: '2rem', fontSize: '2rem' }}>대결 시작!</h1>
+                    <h1 style={{marginBottom: '2rem', fontSize: '2rem'}}>대결 시작!</h1>
                     <div style={{
                         width: '120px',
                         height: '120px',

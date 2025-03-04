@@ -1,260 +1,200 @@
 // src/service/BattleWebSocketService.ts
-import { client, IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import { Client, IFrame } from '@stomp/stompjs';
 import { useAuthStore } from '../store/authStore';
 
-// 이벤트 타입 정의
-type EventType = 'JOIN' | 'START' | 'PROGRESS' | 'NEXT_QUESTION' | 'END' | 'ANSWER';
-
-// 이벤트 핸들러 타입 정의
 type EventHandler<T> = (data: T) => void;
 
-// 이벤트 핸들러 맵 타입 정의
-interface EventHandlerMap {
-    [key: string]: EventHandler<any>[];
-}
-
-/**
- * 배틀 WebSocket 서비스
- *
- * 실시간 배틀 진행을 위한 WebSocket 연결을 관리합니다.
- */
 class BattleWebSocketService {
-    private client: client | null = null;
+    private client: Client | null = null;
     private roomId: number | null = null;
+    private eventHandlers: Map<string, EventHandler<any>> = new Map();
     private connected: boolean = false;
-    private eventHandlers: EventHandlerMap = {};
-    private reconnectAttempts: number = 0;
-    private readonly MAX_RECONNECT_ATTEMPTS = 5;
-    private readonly API_URL = 'http://localhost:8080'; // API 서버 URL
 
-    /**
-     * WebSocket 연결 초기화 및 연결
-     * @param roomId 배틀룸 ID
-     */
-    public async connect(roomId: number): Promise<void> {
-        if (this.connected && this.roomId === roomId) {
-            console.log('이미 연결되어 있습니다.');
+    // WebSocket 연결
+    async connect(roomId: number): Promise<void> {
+        if (this.connected) {
             return;
         }
 
         this.roomId = roomId;
 
         return new Promise((resolve, reject) => {
-            try {
-                // SockJS 및 STOMP 클라이언트 생성
-                const socket = new SockJS(`${this.API_URL}/ws`);
-                this.client = new client({
-                    webSocketFactory: () => socket,
-                    debug: function(str) {
-                        // console.log('STOMP: ' + str); // 개발 시에만 활성화
-                    },
-                    reconnectDelay: 5000, // 재연결 시도 간격 (ms)
-                    heartbeatIncoming: 4000,
-                    heartbeatOutgoing: 4000
+            // API 기본 URL을 사용하여 WebSocket 연결
+            // 환경 변수나 설정에 따라 적절히 수정해야 합니다
+            const socket = new SockJS(`http://localhost:8080/ws-battle`);
+
+            this.client = new Client({
+                webSocketFactory: () => socket,
+                debug: function (str) {
+                    console.log(str);
+                },
+                reconnectDelay: 5000,
+                heartbeatIncoming: 4000,
+                heartbeatOutgoing: 4000,
+            });
+
+            // 연결 성공 콜백
+            this.client.onConnect = (frame: IFrame) => {
+                console.log('WebSocket 연결 성공:', frame);
+                this.connected = true;
+
+                // 배틀룸 참가자 구독
+                this.client!.subscribe(`/topic/battle/${roomId}/participants`, message => {
+                    const data = JSON.parse(message.body);
+                    this.triggerEvent('JOIN', data);
                 });
 
-                // 연결 성공 핸들러
-                this.client.onConnect = (frame) => {
-                    console.log('WebSocket 연결 성공:', frame);
-                    this.connected = true;
-                    this.reconnectAttempts = 0;
+                // 배틀 시작 구독
+                this.client!.subscribe(`/topic/battle/${roomId}/start`, message => {
+                    const data = JSON.parse(message.body);
+                    this.triggerEvent('START', data);
+                });
 
-                    // 배틀룸 관련 토픽 구독
-                    this.subscribeToRoomTopics(roomId);
+                // 배틀 진행 상황 구독
+                this.client!.subscribe(`/topic/battle/${roomId}/progress`, message => {
+                    const data = JSON.parse(message.body);
+                    this.triggerEvent('PROGRESS', data);
+                });
 
-                    // 배틀룸 입장 메시지 전송
-                    this.joinBattle(roomId);
+                // 다음 문제 구독
+                this.client!.subscribe(`/topic/battle/${roomId}/question`, message => {
+                    const data = JSON.parse(message.body);
+                    this.triggerEvent('NEXT_QUESTION', data);
+                });
 
-                    resolve();
-                };
+                // 배틀 종료 구독
+                this.client!.subscribe(`/topic/battle/${roomId}/end`, message => {
+                    const data = JSON.parse(message.body);
+                    this.triggerEvent('END', data);
+                });
 
-                // 연결 오류 핸들러
-                this.client.onStompError = (frame) => {
-                    console.error('STOMP 오류:', frame);
-                    reject(new Error(`STOMP 오류: ${frame.headers.message}`));
-                };
+                // 개인 결과 구독 (현재 세션 ID를 사용하여 구독)
+                this.client!.subscribe(`/user/queue/battle/result`, message => {
+                    const data = JSON.parse(message.body);
+                    this.triggerEvent('ANSWER', data);
+                });
 
-                // 웹소켓 연결 실패 핸들러
-                socket.onerror = (error) => {
-                    console.error('WebSocket 연결 오류:', error);
-                    reject(new Error('WebSocket 연결 실패'));
-                };
+                // 배틀룸 입장 요청
+                this.joinBattle();
 
-                // 연결 종료 핸들러
-                this.client.onWebSocketClose = (event) => {
-                    console.log('WebSocket 연결 종료:', event);
-                    this.connected = false;
+                resolve();
+            };
 
-                    // 자동 재연결 시도
-                    if (this.reconnectAttempts < this.MAX_RECONNECT_ATTEMPTS) {
-                        this.reconnectAttempts++;
-                        console.log(`재연결 시도 ${this.reconnectAttempts}/${this.MAX_RECONNECT_ATTEMPTS}...`);
-                        setTimeout(() => this.connect(roomId), 3000);
-                    }
-                };
+            // 연결 실패 콜백
+            this.client.onStompError = (frame) => {
+                console.error('WebSocket 오류:', frame.headers['message']);
+                console.error('추가 상세정보:', frame.body);
+                this.connected = false;
+                reject(new Error('WebSocket 연결 오류'));
+            };
 
-                // 클라이언트 활성화 및 연결
-                this.client.activate();
-            } catch (error) {
-                console.error('WebSocket 서비스 초기화 오류:', error);
-                reject(error);
-            }
+            // WebSocket 활성화
+            this.client.activate();
         });
     }
 
-    /**
-     * 배틀룸 관련 토픽 구독
-     * @param roomId 배틀룸 ID
-     */
-    private subscribeToRoomTopics(roomId: number): void {
-        if (!this.client || !this.connected) {
-            console.error('WebSocket이 연결되지 않았습니다.');
+    // 배틀룸 참가 요청
+    private joinBattle() {
+        if (!this.client || !this.connected || !this.roomId) {
+            console.error('WebSocket 연결이 설정되지 않았거나 roomId가 없습니다');
             return;
         }
 
-        // 참가자 변경 구독
-        this.client.subscribe(`/topic/battle/${roomId}/participants`, (message) => {
-            this.handleMessage('JOIN', message);
-        });
-
-        // 배틀 시작 구독
-        this.client.subscribe(`/topic/battle/${roomId}/start`, (message) => {
-            this.handleMessage('START', message);
-        });
-
-        // 진행 상황 구독
-        this.client.subscribe(`/topic/battle/${roomId}/progress`, (message) => {
-            this.handleMessage('PROGRESS', message);
-        });
-
-        // 문제 구독
-        this.client.subscribe(`/topic/battle/${roomId}/question`, (message) => {
-            this.handleMessage('NEXT_QUESTION', message);
-        });
-
-        // 종료 알림 구독
-        this.client.subscribe(`/topic/battle/${roomId}/end`, (message) => {
-            this.handleMessage('END', message);
-        });
-
-        // 개인 결과 구독 (사용자별 큐)
-        const { getAccessToken } = useAuthStore.getState();
-        const token = getAccessToken();
-
-        if (token) {
-            this.client.subscribe(`/user/queue/battle/result`, (message) => {
-                this.handleMessage('ANSWER', message);
-            }, { 'Authorization': `Bearer ${token}` });
+        // 사용자 정보 가져오기
+        const { user } = useAuthStore.getState();
+        if (!user || !user.id) {
+            console.error('사용자 정보를 찾을 수 없습니다');
+            return;
         }
+
+        // 배틀룸 참가 메시지 전송
+        this.client.publish({
+            destination: '/app/battle/join',
+            body: JSON.stringify({
+                userId: user.id,
+                roomId: this.roomId,
+                isReady: false
+            })
+        });
     }
 
-    /**
-     * 메시지 처리
-     * @param type 이벤트 타입
-     * @param message STOMP 메시지
-     */
-    private handleMessage(type: EventType, message: IMessage): void {
-        try {
-            const data = JSON.parse(message.body);
-            console.log(`[${type}] 메시지 수신:`, data);
-
-            // 등록된 이벤트 핸들러 호출
-            const handlers = this.eventHandlers[type] || [];
-            handlers.forEach(handler => handler(data));
-        } catch (error) {
-            console.error(`메시지 처리 중 오류 (${type}):`, error);
+    // 답변 제출
+    submitAnswer(questionId: number, answer: string, timeSpentSeconds: number) {
+        if (!this.client || !this.connected || !this.roomId) {
+            console.error('WebSocket 연결이 설정되지 않았거나 roomId가 없습니다');
+            return;
         }
+
+        // 답변 제출 메시지 전송
+        this.client.publish({
+            destination: '/app/battle/answer',
+            body: JSON.stringify({
+                roomId: this.roomId,
+                questionId: questionId,
+                answer: answer,
+                timeSpentSeconds: timeSpentSeconds
+            })
+        });
     }
 
-    /**
-     * 이벤트 리스너 등록
-     * @param type 이벤트 타입
-     * @param handler 이벤트 핸들러
-     */
-    public on<T>(type: EventType, handler: EventHandler<T>): void {
-        if (!this.eventHandlers[type]) {
-            this.eventHandlers[type] = [];
-        }
-        this.eventHandlers[type].push(handler);
-    }
-
-    /**
-     * 이벤트 리스너 제거
-     * @param type 이벤트 타입
-     * @param handler 이벤트 핸들러
-     */
-    public off<T>(type: EventType, handler: EventHandler<T>): void {
-        if (!this.eventHandlers[type]) return;
-
-        this.eventHandlers[type] = this.eventHandlers[type]
-            .filter(h => h !== handler);
-    }
-
-    /**
-     * 배틀룸 입장 메시지 전송
-     * @param roomId 배틀룸 ID
-     */
-    private joinBattle(roomId: number): void {
-        if (!this.client || !this.connected) {
-            console.error('WebSocket이 연결되지 않았습니다.');
+    // 준비 상태 변경 메시지 전송 (추가 기능)
+    toggleReady() {
+        if (!this.client || !this.connected || !this.roomId) {
+            console.error('WebSocket 연결이 설정되지 않았거나 roomId가 없습니다');
             return;
         }
 
         const { user } = useAuthStore.getState();
-        if (!user) {
-            console.error('사용자 정보가 없습니다.');
+        if (!user || !user.id) {
+            console.error('사용자 정보를 찾을 수 없습니다');
             return;
         }
 
-        const joinRequest = {
-            roomId: roomId,
-            userId: user.id,
-            isReady: false
-        };
-
         this.client.publish({
-            destination: '/app/battle/join',
-            body: JSON.stringify(joinRequest)
+            destination: '/app/battle/ready',
+            body: JSON.stringify({
+                userId: user.id,
+                roomId: this.roomId
+            })
         });
     }
 
-    /**
-     * 답변 제출
-     * @param questionId 문제 ID
-     * @param answer 답변 내용
-     * @param timeSpentSeconds 소요 시간 (초)
-     */
-    public submitAnswer(questionId: number, answer: string, timeSpentSeconds: number): void {
-        if (!this.client || !this.connected || !this.roomId) {
-            console.error('WebSocket이 연결되지 않았거나 배틀룸 ID가 없습니다.');
-            return;
-        }
-
-        const answerRequest = {
-            roomId: this.roomId,
-            questionId: questionId,
-            answer: answer,
-            timeSpentSeconds: timeSpentSeconds
-        };
-
-        this.client.publish({
-            destination: '/app/battle/answer',
-            body: JSON.stringify(answerRequest)
-        });
-    }
-
-    /**
-     * WebSocket 연결 종료
-     */
-    public disconnect(): void {
+    // WebSocket 연결 종료
+    disconnect() {
         if (this.client) {
             this.client.deactivate();
             this.client = null;
         }
         this.roomId = null;
         this.connected = false;
-        this.eventHandlers = {};
+        this.eventHandlers.clear();
+        console.log('WebSocket 연결이 종료되었습니다');
+    }
+
+    // 이벤트 핸들러 등록
+    on<T>(event: string, handler: EventHandler<T>) {
+        this.eventHandlers.set(event, handler);
+    }
+
+    // 이벤트 핸들러 제거
+    off(event: string) {
+        this.eventHandlers.delete(event);
+    }
+
+    // 이벤트 트리거
+    private triggerEvent(event: string, data: any) {
+        const handler = this.eventHandlers.get(event);
+        if (handler) {
+            handler(data);
+        } else {
+            console.warn(`이벤트 '${event}'에 대한 핸들러가 없습니다.`);
+        }
+    }
+
+    // 연결 상태 확인
+    isConnected(): boolean {
+        return this.connected;
     }
 }
 
