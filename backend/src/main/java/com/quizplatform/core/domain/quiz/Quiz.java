@@ -68,7 +68,7 @@ public class Quiz {
     private LocalDateTime validUntil;
 
     @Fetch(FetchMode.SUBSELECT)
-    @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @BatchSize(size = 30)
     private List<Question> questions = new ArrayList<>();
 

@@ -45,7 +45,7 @@ public class BattleParticipant {
     private User user;
 
     @Fetch(FetchMode.SUBSELECT)
-    @OneToMany(mappedBy = "participant", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "participant", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @BatchSize(size = 30)
     private List<BattleAnswer> answers = new ArrayList<>();
 

@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { battleApi } from '../api/battleApi';
 import { quizApi } from '../api/quizApi';
-import { BattleRoomResponse, QuizSummaryResponse } from '../types/api';
+import {  QuizSummaryResponse } from '../types/api.ts';
+import {BattleRoomResponse} from '../types/battle.ts';
 import { useAuthStore } from '../store/authStore';
 
 /**
@@ -525,7 +526,7 @@ const BattleListPage: React.FC = () => {
                                                             height: '100%',
                                                             borderRadius: '50%',
                                                             objectFit: 'cover',
-                                                            border: '2px solid ' + (participant.ready ? '#4caf50' : '#e0e0e0')
+                                                            border: '2px solid ' + (participant.isReady ? '#4caf50' : '#e0e0e0')
                                                         }}
                                                     />
                                                 ) : (
@@ -538,12 +539,12 @@ const BattleListPage: React.FC = () => {
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
                                                         fontWeight: 'bold',
-                                                        border: '2px solid ' + (participant.ready ? '#4caf50' : '#e0e0e0')
+                                                        border: '2px solid ' + (participant.isReady ? '#4caf50' : '#e0e0e0')
                                                     }}>
                                                         {participant.username[0].toUpperCase()}
                                                     </div>
                                                 )}
-                                                {participant.ready && (
+                                                {participant.isReady && (
                                                     <div style={{
                                                         position: 'absolute',
                                                         bottom: '0',

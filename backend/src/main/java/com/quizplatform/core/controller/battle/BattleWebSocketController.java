@@ -3,7 +3,6 @@ package com.quizplatform.core.controller.battle;
 import com.quizplatform.core.dto.battle.*;
 import com.quizplatform.core.service.battle.BattleService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
@@ -13,11 +12,9 @@ import org.springframework.stereotype.Controller;
 
 @Controller
 @RequiredArgsConstructor
-@Slf4j
 public class BattleWebSocketController {
     private final BattleService battleService;
     private final SimpMessagingTemplate messagingTemplate;
-
 
     /**
      * 대결방 입장 처리
@@ -29,9 +26,6 @@ public class BattleWebSocketController {
             @Header("simpSessionId") String sessionId,
             SimpMessageHeaderAccessor headerAccessor
     ) {
-        log.info("대결방 입장 요청: roomId={}, userId={}, sessionId={}",
-                request.getRoomId(), request.getUserId(), sessionId);
-
         // 세션에 사용자 정보 저장
         headerAccessor.getSessionAttributes().put("userId", request.getUserId());
         headerAccessor.getSessionAttributes().put("roomId", request.getRoomId());
@@ -60,9 +54,6 @@ public class BattleWebSocketController {
             BattleAnswerRequest request,
             @Header("simpSessionId") String sessionId
     ) {
-        log.info("답변 제출: roomId={}, questionId={}, sessionId={}",
-                request.getRoomId(), request.getQuestionId(), sessionId);
-
         // 답변 처리 및 결과 계산
         BattleAnswerResponse response = battleService.processAnswer(request, sessionId);
 
@@ -90,8 +81,6 @@ public class BattleWebSocketController {
      * 다음 문제로 진행
      */
     private void moveToNextQuestion(Long roomId) {
-        log.info("다음 문제로 진행: roomId={}", roomId);
-
         BattleNextQuestionResponse response = battleService.prepareNextQuestion(roomId);
 
         if (response.isGameOver()) {
@@ -110,8 +99,6 @@ public class BattleWebSocketController {
      * 대결 시작
      */
     private void startBattle(Long roomId) {
-        log.info("대결 시작: roomId={}", roomId);
-
         BattleStartResponse response = battleService.startBattle(roomId);
 
         // 대결 시작 알림 전송
@@ -125,8 +112,6 @@ public class BattleWebSocketController {
      * 대결 종료
      */
     private void endBattle(Long roomId) {
-        log.info("대결 종료: roomId={}", roomId);
-
         BattleEndResponse response = battleService.endBattle(roomId);
 
         // 최종 결과 전송
@@ -136,18 +121,11 @@ public class BattleWebSocketController {
         );
     }
 
-    /**
-     * 대결방 나가기 처리
-     * 클라이언트: /app/battle/leave로 메시지 전송
-     */
     @MessageMapping("/battle/leave")
     public void leaveBattle(
             BattleLeaveRequest request,
             @Header("simpSessionId") String sessionId
     ) {
-        log.info("대결방 나가기: roomId={}, userId={}, sessionId={}",
-                request.getRoomId(), request.getUserId(), sessionId);
-
         // 대결방 나가기 처리
         BattleLeaveResponse response = battleService.leaveBattle(request, sessionId);
 
@@ -179,9 +157,6 @@ public class BattleWebSocketController {
             BattleReadyRequest request,
             @Header("simpSessionId") String sessionId
     ) {
-        log.info("준비 상태 토글: roomId={}, userId={}, sessionId={}",
-                request.getRoomId(), request.getUserId(), sessionId);
-
         // 준비 상태 토글 처리
         BattleReadyResponse response = battleService.toggleReadyState(request, sessionId);
 

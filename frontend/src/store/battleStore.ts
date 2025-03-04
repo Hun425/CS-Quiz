@@ -1,6 +1,6 @@
 // src/store/battleStore.ts
 import { create } from 'zustand';
-import { BattleRoomResponse, BattleStatus, ParticipantDto } from '../types/api';
+import { BattleRoomResponse, BattleStatus, ParticipantDto } from '../types/battle.ts';
 
 // 배틀 스토어 상태 타입
 interface BattleState {

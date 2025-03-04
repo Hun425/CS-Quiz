@@ -173,29 +173,7 @@ export interface BattleRoomCreateRequest {
     maxParticipants?: number;
 }
 
-export interface BattleRoomResponse {
-    id: number;
-    roomCode: string;
-    quizTitle: string;
-    quizId: number;
-    status: string;
-    maxParticipants: number;
-    currentParticipants: number;
-    participants: {
-        id: number;
-        userId: number;
-        username: string;
-        profileImage: string | null;
-        isReady: boolean;
-        level: number;
-        currentScore: number;
-    }[];
-    createdAt: string;
-    startTime?: string;
-    endTime?: string;
-    timeLimit?: number;
-    questionCount: number;
-}
+
 
 // WebSocket 메시지 응답 타입
 export interface BattleJoinResponse {

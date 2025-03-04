@@ -195,54 +195,6 @@ public class BattleService {
     }
 
     /**
-     * WebSocket을 통한 준비 상태 토글
-     */
-    @Transactional
-    public BattleReadyResponse toggleReadyState(BattleReadyRequest request, String sessionId) {
-        // 대결방 조회
-        BattleRoom room = battleRoomRepository.findByIdWithDetails(request.getRoomId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
-
-        // 사용자 조회
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        // 참가자 조회
-        BattleParticipant participant = participantRepository.findByBattleRoomAndUser(room, user)
-                .orElseThrow(() -> new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND));
-
-        // 준비 상태 토글
-        participant.toggleReady();
-        participantRepository.save(participant);
-
-        // Redis에 참가자 정보 저장
-        saveParticipantToRedis(participant, sessionId);
-
-        // 응답 생성
-        return createBattleReadyResponse(room);
-    }
-
-    /**
-     * 준비 상태 변경 응답 생성
-     */
-    private BattleReadyResponse createBattleReadyResponse(BattleRoom room) {
-        List<BattleReadyResponse.ParticipantInfo> participants = room.getParticipants().stream()
-                .map(p -> BattleReadyResponse.ParticipantInfo.builder()
-                        .userId(p.getUser().getId())
-                        .username(p.getUser().getUsername())
-                        .profileImage(p.getUser().getProfileImage())
-                        .level(p.getUser().getLevel())
-                        .isReady(p.isReady())
-                        .build())
-                .collect(Collectors.toList());
-
-        return BattleReadyResponse.builder()
-                .roomId(room.getId())
-                .participants(participants)
-                .build();
-    }
-
-    /**
      * 대결방 입장 처리 (WebSocket)
      */
     public BattleJoinResponse joinBattle(BattleJoinRequest request, String sessionId) {
@@ -254,7 +206,7 @@ public class BattleService {
         User user = userRepository.findByIdWithStats(request.getUserId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        // 참가자 조회 또는 생성
+        // 참가자 생성 및 저장
         BattleParticipant participant = room.getParticipants().stream()
                 .filter(p -> p.getUser().getId().equals(user.getId()))
                 .findFirst()
@@ -263,37 +215,9 @@ public class BattleService {
         // Redis에 참가자 정보 저장
         saveParticipantToRedis(participant, sessionId);
 
-        // 응답 생성 - 이 부분이 중요합니다
+        // 응답 생성
         return createBattleJoinResponse(room, participant);
     }
-
-    /**
-     * 배틀룸 입장 응답 생성
-     * 모든 참가자의 준비 상태를 유지합니다
-     */
-    private BattleJoinResponse createBattleJoinResponse(BattleRoom room, BattleParticipant newParticipant) {
-        List<BattleJoinResponse.ParticipantInfo> participants = room.getParticipants().stream()
-                .map(participant -> BattleJoinResponse.ParticipantInfo.builder()
-                        .userId(participant.getUser().getId())
-                        .username(participant.getUser().getUsername())
-                        .profileImage(participant.getUser().getProfileImage())
-                        .level(participant.getUser().getLevel())
-                        .isReady(participant.isReady())  // 기존 참가자의 준비 상태 유지
-                        .build())
-                .collect(Collectors.toList());
-
-        return BattleJoinResponse.builder()
-                .roomId(room.getId())
-                .userId(newParticipant.getUser().getId())
-                .username(newParticipant.getUser().getUsername())
-                .currentParticipants(room.getParticipants().size())
-                .maxParticipants(room.getMaxParticipants())
-                .participants(participants)
-                .joinedAt(LocalDateTime.now())
-                .build();
-    }
-
-
 
     /**
      * 답변 처리 (WebSocket)
@@ -446,67 +370,53 @@ public class BattleService {
         return participantRepository.save(participant);
     }
 
-    /**
-     * Redis에 참가자 정보 저장 개선
-     */
+    // Redis 관련 헬퍼 메서드들
     private void saveParticipantToRedis(BattleParticipant participant, String sessionId) {
-        if (participant == null || sessionId == null || sessionId.isEmpty()) {
-            log.warn("Redis에 참가자 정보 저장 실패: 유효하지 않은 참가자 또는 세션 ID");
-            return;
+        String participantKey = PARTICIPANT_KEY_PREFIX + sessionId;
+        redisTemplate.opsForValue().set(
+                participantKey,
+                participant.getId().toString(),
+                ROOM_EXPIRE_SECONDS,
+                TimeUnit.SECONDS
+        );
+    }
+
+    private BattleParticipant getParticipantFromRedis(String sessionId) {
+        String participantKey = PARTICIPANT_KEY_PREFIX + sessionId;
+        String participantId = redisTemplate.opsForValue().get(participantKey);
+
+        if (participantId == null) {
+            return null;
         }
 
-        try {
-            String participantKey = PARTICIPANT_KEY_PREFIX + sessionId;
-            redisTemplate.opsForValue().set(
-                    participantKey,
-                    participant.getId().toString(),
-                    ROOM_EXPIRE_SECONDS,
-                    TimeUnit.SECONDS
-            );
-
-            // 참가자 ID로 세션 ID를 역으로 매핑 (세션 검색 용이)
-            String sessionKey = "battle:participant:session:" + participant.getId();
-            redisTemplate.opsForValue().set(
-                    sessionKey,
-                    sessionId,
-                    ROOM_EXPIRE_SECONDS,
-                    TimeUnit.SECONDS
-            );
-
-            log.debug("Redis에 참가자 정보 저장 성공: participantId={}, sessionId={}",
-                    participant.getId(), sessionId);
-        } catch (Exception e) {
-            log.error("Redis에 참가자 정보 저장 중 오류 발생", e);
-        }
+        return participantRepository.findById(Long.parseLong(participantId))
+                .orElse(null);
     }
 
     /**
-     * Redis에서 참가자 정보 조회 개선
+     * 대결방 입장 응답 생성
      */
-    private BattleParticipant getParticipantFromRedis(String sessionId) {
-        if (sessionId == null || sessionId.isEmpty()) {
-            log.warn("Redis에서 참가자 정보 조회 실패: 유효하지 않은 세션 ID");
-            return null;
-        }
+    private BattleJoinResponse createBattleJoinResponse(BattleRoom room, BattleParticipant newParticipant) {
+        List<BattleJoinResponse.ParticipantInfo> participants = room.getParticipants().stream()
+                .map(participant -> BattleJoinResponse.ParticipantInfo.builder()
+                        .userId(participant.getUser().getId())
+                        .username(participant.getUser().getUsername())
+                        .profileImage(participant.getUser().getProfileImage())
+                        .level(participant.getUser().getLevel())
+                        .isReady(participant.isReady())
+                        .build())
+                .collect(Collectors.toList());
 
-        try {
-            String participantKey = PARTICIPANT_KEY_PREFIX + sessionId;
-            String participantId = redisTemplate.opsForValue().get(participantKey);
-
-            if (participantId == null) {
-                log.warn("Redis에서 참가자 ID를 찾을 수 없음: sessionId={}", sessionId);
-                return null;
-            }
-
-            return participantRepository.findById(Long.parseLong(participantId))
-                    .orElse(null);
-        } catch (Exception e) {
-            log.error("Redis에서 참가자 정보 조회 중 오류 발생", e);
-            return null;
-        }
+        return BattleJoinResponse.builder()
+                .roomId(room.getId())
+                .userId(newParticipant.getUser().getId())
+                .username(newParticipant.getUser().getUsername())
+                .currentParticipants(room.getParticipants().size())
+                .maxParticipants(room.getMaxParticipants())
+                .participants(participants)
+                .joinedAt(LocalDateTime.now())
+                .build();
     }
-
-
 
     /**
      * 답변 결과 응답 생성
@@ -712,4 +622,63 @@ public class BattleService {
     }
 
 
+    /**
+     * WebSocket을 통한 준비 상태 토글
+     */
+    @Transactional
+    public BattleReadyResponse toggleReadyState(BattleReadyRequest request, String sessionId) {
+        log.info("준비 상태 토글 요청: roomId={}, userId={}", request.getRoomId(), request.getUserId());
+
+        try {
+            // 1. 대결방 기본 정보 로드
+            BattleRoom room = battleRoomRepository.findByIdWithBasicDetails(request.getRoomId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
+
+            // 2. 사용자 조회
+            User user = userRepository.findById(request.getUserId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+            // 3. 참가자 조회
+            BattleParticipant participant = participantRepository.findByBattleRoomAndUser(room, user)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND));
+
+            // 4. 준비 상태 토글
+            participant.toggleReady();
+            participantRepository.save(participant);
+
+            // 5. Redis에 참가자 정보 저장 (세션 정보 연결)
+            saveParticipantToRedis(participant, sessionId);
+
+            log.info("준비 상태 토글 완료: roomId={}, userId={}, isReady={}",
+                    request.getRoomId(), request.getUserId(), participant.isReady());
+
+            // 6. 응답 생성 - 참가자 정보 새로 조회하여 최신 상태 반영
+            List<BattleParticipant> updatedParticipants = participantRepository.findByBattleRoom(room);
+            return createBattleReadyResponse(room, updatedParticipants);
+        } catch (Exception e) {
+            log.error("준비 상태 토글 중 오류 발생: roomId={}, userId={}",
+                    request.getRoomId(), request.getUserId(), e);
+            throw e;
+        }
+    }
+
+    /**
+     * 준비 상태 변경 응답 생성
+     */
+    private BattleReadyResponse createBattleReadyResponse(BattleRoom room, List<BattleParticipant> participants) {
+        List<BattleReadyResponse.ParticipantInfo> participantInfos = participants.stream()
+                .map(p -> BattleReadyResponse.ParticipantInfo.builder()
+                        .userId(p.getUser().getId())
+                        .username(p.getUser().getUsername())
+                        .profileImage(p.getUser().getProfileImage())
+                        .level(p.getUser().getLevel())
+                        .isReady(p.isReady())
+                        .build())
+                .collect(Collectors.toList());
+
+        return BattleReadyResponse.builder()
+                .roomId(room.getId())
+                .participants(participantInfos)
+                .build();
+    }
 }

@@ -448,4 +448,8 @@ public class BattleRoom {
     public void setStatus(BattleRoomStatus status) {
         this.status = status;
     }
+
+    public void setQuiz(Quiz quiz){
+        this.quiz = quiz;
+    }
 }
