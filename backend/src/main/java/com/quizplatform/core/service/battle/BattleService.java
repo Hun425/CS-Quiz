@@ -195,6 +195,54 @@ public class BattleService {
     }
 
     /**
+     * WebSocket을 통한 준비 상태 토글
+     */
+    @Transactional
+    public BattleReadyResponse toggleReadyState(BattleReadyRequest request, String sessionId) {
+        // 대결방 조회
+        BattleRoom room = battleRoomRepository.findByIdWithDetails(request.getRoomId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
+
+        // 사용자 조회
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // 참가자 조회
+        BattleParticipant participant = participantRepository.findByBattleRoomAndUser(room, user)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND));
+
+        // 준비 상태 토글
+        participant.toggleReady();
+        participantRepository.save(participant);
+
+        // Redis에 참가자 정보 저장
+        saveParticipantToRedis(participant, sessionId);
+
+        // 응답 생성
+        return createBattleReadyResponse(room);
+    }
+
+    /**
+     * 준비 상태 변경 응답 생성
+     */
+    private BattleReadyResponse createBattleReadyResponse(BattleRoom room) {
+        List<BattleReadyResponse.ParticipantInfo> participants = room.getParticipants().stream()
+                .map(p -> BattleReadyResponse.ParticipantInfo.builder()
+                        .userId(p.getUser().getId())
+                        .username(p.getUser().getUsername())
+                        .profileImage(p.getUser().getProfileImage())
+                        .level(p.getUser().getLevel())
+                        .isReady(p.isReady())
+                        .build())
+                .collect(Collectors.toList());
+
+        return BattleReadyResponse.builder()
+                .roomId(room.getId())
+                .participants(participants)
+                .build();
+    }
+
+    /**
      * 대결방 입장 처리 (WebSocket)
      */
     public BattleJoinResponse joinBattle(BattleJoinRequest request, String sessionId) {
@@ -206,7 +254,7 @@ public class BattleService {
         User user = userRepository.findByIdWithStats(request.getUserId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        // 참가자 생성 및 저장
+        // 참가자 조회 또는 생성
         BattleParticipant participant = room.getParticipants().stream()
                 .filter(p -> p.getUser().getId().equals(user.getId()))
                 .findFirst()
@@ -215,9 +263,37 @@ public class BattleService {
         // Redis에 참가자 정보 저장
         saveParticipantToRedis(participant, sessionId);
 
-        // 응답 생성
+        // 응답 생성 - 이 부분이 중요합니다
         return createBattleJoinResponse(room, participant);
     }
+
+    /**
+     * 배틀룸 입장 응답 생성
+     * 모든 참가자의 준비 상태를 유지합니다
+     */
+    private BattleJoinResponse createBattleJoinResponse(BattleRoom room, BattleParticipant newParticipant) {
+        List<BattleJoinResponse.ParticipantInfo> participants = room.getParticipants().stream()
+                .map(participant -> BattleJoinResponse.ParticipantInfo.builder()
+                        .userId(participant.getUser().getId())
+                        .username(participant.getUser().getUsername())
+                        .profileImage(participant.getUser().getProfileImage())
+                        .level(participant.getUser().getLevel())
+                        .isReady(participant.isReady())  // 기존 참가자의 준비 상태 유지
+                        .build())
+                .collect(Collectors.toList());
+
+        return BattleJoinResponse.builder()
+                .roomId(room.getId())
+                .userId(newParticipant.getUser().getId())
+                .username(newParticipant.getUser().getUsername())
+                .currentParticipants(room.getParticipants().size())
+                .maxParticipants(room.getMaxParticipants())
+                .participants(participants)
+                .joinedAt(LocalDateTime.now())
+                .build();
+    }
+
+
 
     /**
      * 답변 처리 (WebSocket)
@@ -393,30 +469,7 @@ public class BattleService {
                 .orElse(null);
     }
 
-    /**
-     * 대결방 입장 응답 생성
-     */
-    private BattleJoinResponse createBattleJoinResponse(BattleRoom room, BattleParticipant newParticipant) {
-        List<BattleJoinResponse.ParticipantInfo> participants = room.getParticipants().stream()
-                .map(participant -> BattleJoinResponse.ParticipantInfo.builder()
-                        .userId(participant.getUser().getId())
-                        .username(participant.getUser().getUsername())
-                        .profileImage(participant.getUser().getProfileImage())
-                        .level(participant.getUser().getLevel())
-                        .isReady(participant.isReady())
-                        .build())
-                .collect(Collectors.toList());
 
-        return BattleJoinResponse.builder()
-                .roomId(room.getId())
-                .userId(newParticipant.getUser().getId())
-                .username(newParticipant.getUser().getUsername())
-                .currentParticipants(room.getParticipants().size())
-                .maxParticipants(room.getMaxParticipants())
-                .participants(participants)
-                .joinedAt(LocalDateTime.now())
-                .build();
-    }
 
     /**
      * 답변 결과 응답 생성

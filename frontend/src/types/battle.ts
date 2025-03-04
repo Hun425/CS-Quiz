@@ -139,6 +139,24 @@ export interface BattleEndResponse {
     endTime: string;
 }
 
+export interface BattleReadyRequest {
+    userId: number;
+    roomId: number;
+}
+
+// 준비 상태 토글 응답 (WebSocket)
+export interface BattleReadyResponse {
+    roomId: number;
+    type: string;
+    participants: {
+        userId: number;
+        username: string;
+        profileImage?: string;
+        level: number;
+        isReady: boolean;
+    }[];
+}
+
 // 기존 API에 추가되는 타입들
 // src/types/api.ts에 아래 타입들을 추가해야 합니다.
 export * from './battle';

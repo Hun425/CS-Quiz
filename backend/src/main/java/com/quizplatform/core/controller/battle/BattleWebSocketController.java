@@ -147,4 +147,28 @@ public class BattleWebSocketController {
             );
         }
     }
+
+    /**
+     * 준비 상태 토글 처리
+     * 클라이언트: /app/battle/ready로 메시지 전송
+     */
+    @MessageMapping("/battle/ready")
+    public void toggleReady(
+            BattleReadyRequest request,
+            @Header("simpSessionId") String sessionId
+    ) {
+        // 준비 상태 토글 처리
+        BattleReadyResponse response = battleService.toggleReadyState(request, sessionId);
+
+        // 대결방의 모든 참가자에게 준비 상태 변경 알림
+        messagingTemplate.convertAndSend(
+                "/topic/battle/" + request.getRoomId() + "/participants",
+                response
+        );
+
+        // 대결 시작 조건 확인
+        if (battleService.isReadyToStart(request.getRoomId())) {
+            startBattle(request.getRoomId());
+        }
+    }
 }
