@@ -4,6 +4,9 @@ WORKDIR /app
 # 소스 코드 복사
 COPY . .
 
+# gradlew에 실행 권한 추가
+RUN chmod +x ./gradlew
+
 # Gradle 빌드
 RUN ./gradlew build -x test
 
