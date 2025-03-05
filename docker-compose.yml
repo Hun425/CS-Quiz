@@ -100,8 +100,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      elasticsearch:
-        condition: service_healthy
+      # elasticsearch:
+      #   condition: service_healthy
     networks:
       - quiz-network
 
@@ -122,7 +122,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
-  elasticsearch_data:
+  # elasticsearch_data:
 
 networks:
   quiz-network:

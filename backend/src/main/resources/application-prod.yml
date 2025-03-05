@@ -12,6 +12,14 @@ spring:
       connection-timeout: 20000
       max-lifetime: 1200000
 
+  # Elasticsearch 설정 비활성화
+  elasticsearch:
+    enabled: false
+    # 기존 설정들은 유지 (enabled 속성 추가)
+    uris: http://elasticsearch:9200
+    connection-timeout: 5s
+    socket-timeout: 3s
+
   # JPA 설정
   jpa:
     hibernate:
@@ -42,12 +50,6 @@ spring:
           max-idle: 8
           min-idle: 2
           max-wait: -1ms
-
-  # Elasticsearch 설정
-  elasticsearch:
-    uris: http://elasticsearch:9200
-    connection-timeout: 5s
-    socket-timeout: 3s
 
   security:
     oauth2:
