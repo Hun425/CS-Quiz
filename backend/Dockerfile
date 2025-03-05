@@ -4,8 +4,8 @@ WORKDIR /app
 # 소스 코드 복사
 COPY . .
 
-# Maven 빌드
-RUN ./mvnw clean package -DskipTests
+# Gradle 빌드
+RUN ./gradlew build -x test
 
 # 실행 환경
 FROM eclipse-temurin:17-jre
