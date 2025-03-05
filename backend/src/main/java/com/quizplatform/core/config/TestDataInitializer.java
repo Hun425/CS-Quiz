@@ -15,7 +15,7 @@ import java.nio.charset.StandardCharsets;
 
 @Component
 @Slf4j
-@Profile({"dev", "local", "test"})
+@Profile({"dev", "local", "prop"})
 public class TestDataInitializer {
 
     // Swagger 예제로 사용할 Long 값을 정적 변수로 선언
