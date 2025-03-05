@@ -31,7 +31,7 @@ const devConfig: EnvironmentConfig = {
 const prodConfig: EnvironmentConfig = {
     apiBaseUrl: 'http://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com:8080/api',
     wsBaseUrl: 'http://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com:8080/ws-battle',
-    oauthRedirectBaseUrl: 'http://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com:8080/api/oauth2/authorize',
+    oauthRedirectBaseUrl: 'http://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com/api/oauth2/authorize',
     frontendBaseUrl: 'http://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com'
 };
 
