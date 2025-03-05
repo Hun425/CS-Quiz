@@ -36,6 +36,20 @@ const BattleResultsPage: React.FC = () => {
         }
     }, [isAuthenticated, roomId, result, loading, error]);
 
+    useEffect(() => {
+        if (result) {
+            console.log("Battle result data structure:", JSON.stringify(result, null, 2));
+
+            // 데이터 구조 확인
+            if (result.results && result.results.length > 0) {
+                console.log("First participant results:", result.results[0]);
+                console.log("Question results type:", Array.isArray(result.results[0].questionResults)
+                    ? "Array"
+                    : typeof result.results[0].questionResults);
+            }
+        }
+    }, [result]);
+
     // 인증 확인
     useEffect(() => {
         if (!isAuthenticated) {
@@ -420,7 +434,7 @@ const BattleResultsPage: React.FC = () => {
             </div>
 
             {/* 문제별 결과 (선택적) */}
-            {result.results.length > 0 && result.results[0].questionResults && (
+            {result.results.length > 0 && result.results[0]?.questionResults && (
                 <div className="question-results" style={{
                     backgroundColor: 'white',
                     padding: '1.5rem',
@@ -439,8 +453,9 @@ const BattleResultsPage: React.FC = () => {
                         gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
                         gap: '1rem'
                     }}>
-                        {result.results[0].questionResults?.map((question, index) => (
-                            <div key={question.questionId} style={{
+                        {/* Map 객체를 배열로 변환하여 렌더링 */}
+                        {Object.entries(result.results[0].questionResults).map(([questionId, isCorrect], index) => (
+                            <div key={questionId} style={{
                                 backgroundColor: '#f5f5f5',
                                 padding: '1rem',
                                 borderRadius: '8px',
@@ -455,9 +470,16 @@ const BattleResultsPage: React.FC = () => {
                                     marginTop: '1rem'
                                 }}>
                                     {result.results.map(participant => {
-                                        const participantResult = participant.questionResults?.find(
-                                            q => q.questionId === question.questionId
-                                        );
+                                        // 참가자의 해당 문제 결과
+                                        const participantResult = participant.questionResults &&
+                                        participant.questionResults[questionId] !== undefined ?
+                                            {
+                                                questionId: Number(questionId),
+                                                isCorrect: participant.questionResults[questionId],
+                                                // 추가 필드는 기본값으로 설정
+                                                earnedPoints: 0,
+                                                timeSpentSeconds: 0
+                                            } : null;
 
                                         return participantResult ? (
                                             <div key={participant.userId} style={{
@@ -473,10 +495,7 @@ const BattleResultsPage: React.FC = () => {
                                                     color: participantResult.isCorrect ? '#4caf50' : '#f44336',
                                                     fontSize: '0.9rem'
                                                 }}>
-                                                    {participantResult.isCorrect ? '정답' : '오답'} • {participantResult.earnedPoints}점
-                                                </div>
-                                                <div style={{ fontSize: '0.8rem', color: '#666' }}>
-                                                    {participantResult.timeSpentSeconds}초 소요
+                                                    {participantResult.isCorrect ? '정답' : '오답'}
                                                 </div>
                                             </div>
                                         ) : null;

@@ -495,25 +495,33 @@ class BattleWebSocketService {
 
 // 이벤트 트리거 함수 강화
     // 수정된 코드
+    // 수정된 코드:
     triggerEvent(eventName: string, data: any) {
-        if (!this.eventHandlers[eventName] || this.eventHandlers[eventName].length === 0) {
+        const handler = this.eventHandlers.get(eventName);
+        if (!handler) {
             console.warn(`[WebSocket] 이벤트 '${eventName}'에 대한 핸들러가 없습니다!`);
 
-            // END_CONFIRMED나 STATUS_FINISHED_CONFIRMED 이벤트일 경우 기본 처리 로직 추가
             if (eventName === 'END_CONFIRMED' || eventName === 'STATUS_FINISHED_CONFIRMED') {
                 console.log(`[WebSocket] '${eventName}' 이벤트 기본 처리 적용`);
 
-                // 현재 방 ID 가져오기
-                const currentRoomId = this.getCurrentRoomId();
+                // sessionStorage에서 룸 ID 가져오기 시도
+                const storedRoomId = sessionStorage.getItem('lastBattleRoomId');
+                const currentRoomId = this.getCurrentRoomId() || (storedRoomId ? parseInt(storedRoomId) : null);
+
+                console.log(`[WebSocket] 현재 roomId: ${currentRoomId}, 소스: ${this.getCurrentRoomId() ? 'service' : 'sessionStorage'}`);
+
                 if (currentRoomId) {
-                    // 사용자를 결과 페이지로 리다이렉트하는 코드
                     window.location.href = `/battles/${currentRoomId}/results`;
+                } else {
+                    // roomId를 찾을 수 없는 경우 배틀 목록 페이지로 이동
+                    console.error('[WebSocket] roomId를 찾을 수 없어 배틀 목록으로 이동합니다');
+                    window.location.href = '/battles';
                 }
             }
             return;
         }
 
-        this.eventHandlers[eventName].forEach(handler => handler(data));
+        handler(data);
     }
 
     // 연결 상태 확인

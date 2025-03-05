@@ -156,7 +156,7 @@ const BattleRoomPage: React.FC = () => {
                 console.log("배틀룸 WebSocket 연결 초기화 시작");
                 setLoading(true);
 
-                // WebSocket 연결 시도 전에 이벤트 핸들러 등록 제거
+                // 기존 이벤트 핸들러 제거 (원래 코드와 동일하게 유지)
                 battleWebSocketService.off('PARTICIPANTS');
                 battleWebSocketService.off('START');
                 battleWebSocketService.off('PROGRESS');
@@ -164,8 +164,10 @@ const BattleRoomPage: React.FC = () => {
                 battleWebSocketService.off('END');
                 battleWebSocketService.off('ANSWER');
                 battleWebSocketService.off('STATUS');
-                battleWebSocketService.off('END_CONFIRMED');  // 추가된 이벤트
-                battleWebSocketService.off('STATUS_FINISHED_CONFIRMED');  // 추가된 이벤트
+
+                // 이전 등록 핸들러도 제거
+                battleWebSocketService.off('END_CONFIRMED');
+                battleWebSocketService.off('STATUS_FINISHED_CONFIRMED');
 
                 if (isMounted) {
                     // 이벤트 핸들러 등록 - 연결 전에 등록하여 첫 이벤트 놓치지 않도록
@@ -174,7 +176,7 @@ const BattleRoomPage: React.FC = () => {
                     battleWebSocketService.on<BattleProgressResponse>('PROGRESS', handleBattleProgress);
                     battleWebSocketService.on<BattleNextQuestionResponse>('NEXT_QUESTION', handleNextQuestion);
                     battleWebSocketService.on<BattleEndResponse>('END', handleBattleEnd);
-                    battleWebSocketService.on<BattleAnswerResponse>('ANSWER', handleAnswerResult);ｇ
+                    battleWebSocketService.on<BattleAnswerResponse>('ANSWER', handleAnswerResult);
                     battleWebSocketService.on<any>('STATUS', handleStatusChange);
 
                     // 명시적으로 추가된 이벤트 핸들러 등록 - 수정된 부분
@@ -233,6 +235,36 @@ const BattleRoomPage: React.FC = () => {
             }
         };
     }, [roomId, isAuthenticated]); // battleRoom 의존성 제거, 필수 의존성만 유지
+
+    // 커스텀 네비게이션 이벤트 처리
+    useEffect(() => {
+        // 타입 정의 (TypeScript)
+        interface BattleNavigateEvent extends CustomEvent {
+            detail: {
+                path: string;
+                result: any;
+            };
+        }
+
+        // 이벤트 핸들러
+        const handleNavigationEvent = (event: Event) => {
+            const customEvent = event as BattleNavigateEvent;
+            const { path, result } = customEvent.detail;
+
+            console.log(`[BattleRoom] 커스텀 이벤트로 네비게이션: ${path}`, result);
+
+            // React Router를 통한 네비게이션
+            navigate(path, { state: { result } });
+        };
+
+        // 이벤트 리스너 등록
+        window.addEventListener('battle:navigate', handleNavigationEvent);
+
+        // 컴포넌트 언마운트 시 정리
+        return () => {
+            window.removeEventListener('battle:navigate', handleNavigationEvent);
+        };
+    }, [navigate]); // navigate 함수를 의존성 배열에 추가
 
     // 타이머 설정
     useEffect(() => {
@@ -406,18 +438,28 @@ const BattleRoomPage: React.FC = () => {
         }
     };
 
-    // 배틀 종료 이벤트 핸들러도 수정
     const handleBattleEnd = (data: BattleEndResponse) => {
         console.log('배틀 종료:', data);
+
+        // 현재 roomId를 세션 스토리지에 저장
+        if (roomId) {
+            sessionStorage.setItem('lastBattleRoomId', roomId);
+        }
+
+        // 상태 변경
         setStatus('FINISHED');
         setResult(data);
 
-        // 결과 페이지로 상태와 함께 리다이렉트
-        // 1초 지연 추가 - 충분한 시간을 주어 상태 업데이트가 반영되도록 함
+        // 결과 페이지로 이동
         setTimeout(() => {
-            console.log('결과 페이지로 이동 중...');
-            navigate(`/battles/${roomId}/results`, { state: { result: data } });
-        }, 2000);
+            // 현재 roomId 또는 sessionStorage에서 가져온 roomId 사용
+            const battleRoomId = roomId || sessionStorage.getItem('lastBattleRoomId');
+            if (battleRoomId) {
+                navigate(`/battles/${battleRoomId}/results`, { state: { result: data } });
+            } else {
+                console.error('배틀룸 ID를 찾을 수 없습니다!');
+            }
+        }, 1000);
     };
 
     // 답변 결과 이벤트 핸들러
