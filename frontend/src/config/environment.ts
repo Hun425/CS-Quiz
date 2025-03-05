@@ -30,7 +30,7 @@ const devConfig: EnvironmentConfig = {
 const prodConfig: EnvironmentConfig = {
     apiBaseUrl: 'http://13.125.187.28:8080/api',
     wsBaseUrl: 'http://13.125.187.28:8080/ws-battle',
-    oauthRedirectBaseUrl: 'http://13.125.187.28:8080/api/oauth2/authorize',
+    oauthRedirectBaseUrl: 'http://13.125.187.28:8080/oauth2/authorize',
     frontendBaseUrl: 'http://13.125.187.28'
 };
 
