@@ -220,36 +220,82 @@ public class BattleService {
     }
 
     /**
-     * 답변 처리 (WebSocket)
+     * 답변 처리
+     * 답변 검증 및 처리 로직 개선
      */
+    @Transactional
     public BattleAnswerResponse processAnswer(BattleAnswerRequest request, String sessionId) {
         // Redis에서 참가자 정보 조회
         BattleParticipant participant = getParticipantFromRedis(sessionId);
         if (participant == null) {
-            throw new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND);
+            throw new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND, "세션에 연결된 참가자를 찾을 수 없습니다.");
         }
 
         // 배틀룸 상세 정보 로드
         BattleRoom battleRoom = battleRoomRepository.findByIdWithQuizQuestions(participant.getBattleRoom().getId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND, "배틀룸을 찾을 수 없습니다."));
 
-        // 현재 배틀룸의 현재 문제를 조회
-        Question currentQuestion = battleRoom.getCurrentQuestion();
+        log.info("답변 처리: roomId={}, questionId={}, userId={}",
+                request.getRoomId(), request.getQuestionId(), participant.getUser().getId());
 
-        // 요청으로 전달된 질문 ID와 현재 문제의 ID가 일치하는지 검증
-        if (currentQuestion == null || !currentQuestion.getId().equals(request.getQuestionId())) {
-            throw new BusinessException(ErrorCode.INVALID_QUESTION);
+        // 요청으로 전달된 방 ID와 참가자의 방 ID가 일치하는지 확인
+        if (!battleRoom.getId().equals(request.getRoomId())) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "요청된 방 ID가 일치하지 않습니다.");
+        }
+
+        // 배틀 상태 확인
+        if (battleRoom.getStatus() != BattleRoomStatus.IN_PROGRESS) {
+            throw new BusinessException(ErrorCode.BATTLE_NOT_IN_PROGRESS, "배틀이 진행 중이 아닙니다.");
+        }
+
+        // 현재 진행 중인 문제 정보 확인
+        int currentQuestionIndex = battleRoom.getCurrentQuestionIndex();
+
+        // 일치하는 문제를 찾고 인덱스 확인 (이전 문제인지 확인)
+        Question targetQuestion = null;
+        int questionIndex = -1;
+
+        for (int i = 0; i < battleRoom.getQuestions().size(); i++) {
+            Question q = battleRoom.getQuestions().get(i);
+            if (q.getId().equals(request.getQuestionId())) {
+                targetQuestion = q;
+                questionIndex = i;
+                break;
+            }
+        }
+
+        if (targetQuestion == null) {
+            throw new BusinessException(ErrorCode.INVALID_QUESTION, "요청한 문제를 찾을 수 없습니다.");
+        }
+
+        if (questionIndex > currentQuestionIndex) {
+            // 미래 문제인 경우만 오류 (현재 문제는 허용)
+            throw new BusinessException(ErrorCode.INVALID_QUESTION_SEQUENCE,
+                    String.format("아직 풀 수 없는 문제입니다. 현재 문제: %d, 요청 문제: %d",
+                            currentQuestionIndex, questionIndex));
+        } else if (questionIndex == currentQuestionIndex) {
+            // 현재 문제인 경우 - 허용 (validateParticipantAnswer에서 처리)
+            log.info("현재 진행 중인 문제에 대한 답변: roomId={}, 문제인덱스={}",
+                    request.getRoomId(), questionIndex);
+        }
+
+        // 이미 답변한 문제인지 확인
+        if (participant.hasAnsweredCurrentQuestion(questionIndex)) {
+            throw new BusinessException(ErrorCode.ANSWER_ALREADY_SUBMITTED, "이미 답변한 문제입니다.");
         }
 
         // 참가자 엔티티 다시 로드하여 최신 상태 확보
         participant = participantRepository.findById(participant.getId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND, "참가자를 찾을 수 없습니다."));
+
+        // 시간 검증 (제한 시간보다 오래 걸린 경우 처리)
+        int timeSpentSeconds = Math.min(request.getTimeSpentSeconds(), targetQuestion.getTimeLimitSeconds());
 
         // 답변 제출 및 점수 계산
         BattleAnswer answer = participant.submitAnswer(
-                currentQuestion,
+                targetQuestion,
                 request.getAnswer(),
-                request.getTimeSpentSeconds()
+                timeSpentSeconds
         );
 
         // 결과 저장
@@ -258,7 +304,16 @@ public class BattleService {
         // Redis에 업데이트된 참가자 정보 저장
         saveParticipantToRedis(participant, sessionId);
 
-        return createBattleAnswerResponse(answer);
+        // 응답 생성
+        return BattleAnswerResponse.builder()
+                .questionId(answer.getQuestion().getId())
+                .isCorrect(answer.isCorrect())
+                .earnedPoints(answer.getEarnedPoints())
+                .timeBonus(answer.getTimeBonus())
+                .currentScore(participant.getCurrentScore())
+                .correctAnswer(answer.getQuestion().getCorrectAnswer())
+                .explanation(answer.getQuestion().getExplanation())
+                .build();
     }
 
     /**
@@ -286,32 +341,83 @@ public class BattleService {
     }
 
     /**
-     * 다음 문제 준비
+     * 다음 문제 준비 메서드 개선
+     * 문제 인덱스 처리 순서 수정
      */
+    @Transactional
     public BattleNextQuestionResponse prepareNextQuestion(Long roomId) {
         BattleRoom room = battleRoomRepository.findByIdWithQuizQuestions(roomId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND, "배틀룸을 찾을 수 없습니다."));
 
+
+
+        if (room.getStatus() != BattleRoomStatus.IN_PROGRESS) {
+            throw new BusinessException(ErrorCode.BATTLE_NOT_IN_PROGRESS, "배틀이 진행 중이 아닙니다.");
+        }
+
+        log.info("다음 문제 준비: roomId={}, 현재문제인덱스={}, 전체문제수={}",
+                roomId, room.getCurrentQuestionIndex(), room.getQuestions().size());
+
+        // 중요: 다음 문제로 이동하기 전에 모든 참가자가 현재 문제에 답변했는지 확인
+        if (!room.allParticipantsAnswered()) {
+            log.warn("아직 모든 참가자가 답변하지 않았습니다: roomId={}", roomId);
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "아직 모든 참가자가 답변하지 않았습니다.");
+        }
+
+        // 다음 문제로 이동 - 이 메서드 내에서 currentQuestionIndex가 증가됨
         Question nextQuestion = room.startNextQuestion();
-        battleRoomRepository.save(room);
 
+        // 모든 문제를 다 풀었거나 더 이상 문제가 없는 경우
         if (nextQuestion == null) {
+            log.info("더 이상 문제가 없습니다. 게임 종료: roomId={}", roomId);
+            room.finishBattle();
+            battleRoomRepository.save(room);
+
             return BattleNextQuestionResponse.builder()
                     .isGameOver(true)
                     .build();
         }
 
-        return createNextQuestionResponse(nextQuestion, room.isLastQuestion());
+        // 문제 상세 정보 로깅
+        if (nextQuestion != null) {
+            log.info("다음 문제 상세 정보: roomId={}, questionId={}, 현재인덱스={}, 문제내용={}",
+                    roomId,
+                    nextQuestion.getId(),
+                    room.getCurrentQuestionIndex(),
+                    nextQuestion.getQuestionText().substring(0, Math.min(30, nextQuestion.getQuestionText().length())) + "..."
+            );
+        }
+
+        // 마지막 문제인지 확인 (이미 증가된 인덱스 기준)
+        boolean isLastQuestion = room.getCurrentQuestionIndex() >= room.getQuestions().size() - 1;
+
+        // 변경 사항 저장
+        battleRoomRepository.save(room);
+
+        // 다음 문제 응답 생성
+        return createNextQuestionResponse(nextQuestion, isLastQuestion);
     }
 
-    /**
-     * 모든 참가자의 답변 여부 확인
-     */
+
     public boolean allParticipantsAnswered(Long roomId) {
         BattleRoom room = battleRoomRepository.findByIdWithQuizQuestions(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
-        return room.allParticipantsAnswered();
+        log.info("모든 참가자 답변 확인 시작: roomId={}, 현재문제인덱스={}",
+                roomId, room.getCurrentQuestionIndex());
+
+        // 각 참가자별 답변 상태 로깅
+        room.getParticipants().forEach(p -> {
+            boolean answered = p.hasAnsweredCurrentQuestion(room.getCurrentQuestionIndex());
+            log.info("참가자 답변 상태: userId={}, 활성상태={}, 답변여부={}",
+                    p.getUser().getId(), p.isActive(), answered);
+        });
+
+        boolean result = room.allParticipantsAnswered();
+
+        log.info("모든 참가자 답변 확인 결과: roomId={}, 결과={}", roomId, result);
+
+        return result;
     }
 
     /**

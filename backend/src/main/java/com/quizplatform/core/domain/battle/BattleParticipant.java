@@ -10,6 +10,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -31,6 +32,7 @@ import java.util.List;
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Slf4j
 public class BattleParticipant {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -172,10 +174,14 @@ public class BattleParticipant {
     }
 
     public boolean hasAnsweredCurrentQuestion() {
+
         return answers.size() > battleRoom.getCurrentQuestionIndex();
     }
 
     public boolean hasAnsweredCurrentQuestion(int questionIndex) {
+        boolean result = answers.size() > questionIndex;
+        log.info("hasAnsweredCurrentQuestion 확인: userId={}, 문제인덱스={}, 답변수={}, 결과={}",
+                user.getId(), questionIndex, answers.size(), result);
         // 전달받은 questionIndex보다 많은 답변이 제출되었는지 확인합니다.
         return answers.size() > questionIndex;
     }

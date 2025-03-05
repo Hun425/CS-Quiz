@@ -13,7 +13,6 @@ import {
     BattleEndResponse,
     BattleAnswerResponse
 } from '../types/battle';
-import LoginPage from "./LoginPage.tsx";
 
 /**
  * 배틀룸 페이지 컴포넌트
@@ -42,6 +41,23 @@ const BattleRoomPage: React.FC = () => {
     const [countdownActive, setCountdownActive] = useState<boolean>(false);
     const [countdown, setCountdown] = useState<number>(3);
     const [isWebSocketConnected, setIsWebSocketConnected] = useState<boolean>(false);
+
+    // 배틀 상태 변경 이벤트 핸들러
+    const handleStatusChange = (data: any) => {
+        console.log('배틀 상태 변경:', data);
+
+        // 배틀 상태 업데이트
+        if (data.status) {
+            setStatus(data.status);
+        }
+
+        // 배틀이 종료된 경우
+        if (data.status === 'FINISHED') {
+            // 결과 페이지로 리다이렉트 준비
+            // 실제 리다이렉트는 END 이벤트에서 처리하므로 여기서는 상태만 업데이트
+            console.log('배틀이 종료되었습니다. 결과 대기 중...');
+        }
+    };
 
     // 인증 확인
     useEffect(() => {
@@ -94,17 +110,20 @@ const BattleRoomPage: React.FC = () => {
         fetchBattleRoom();
     }, [roomId, user]);
 
-    // WebSocket 연결 관련 useEffect
+    // WebSocket 연결 관련 useEffect - 개선된 버전
     useEffect(() => {
         if (!isAuthenticated || !roomId) return;
 
         // 마운트 여부를 추적하는 변수
         let isMounted = true;
 
-        // WebSocket 연결
-        const connectWebSocket = async () => {
+        // WebSocket 연결 및 초기화를 한 번만 실행
+        const initializeWebSocket = async () => {
             try {
-                // 기존 이벤트 핸들러 제거
+                console.log("배틀룸 WebSocket 연결 초기화 시작");
+                setLoading(true);
+
+                // WebSocket 연결 시도 전에 이벤트 핸들러 등록 제거
                 battleWebSocketService.off('PARTICIPANTS');
                 battleWebSocketService.off('START');
                 battleWebSocketService.off('PROGRESS');
@@ -113,37 +132,44 @@ const BattleRoomPage: React.FC = () => {
                 battleWebSocketService.off('ANSWER');
                 battleWebSocketService.off('STATUS');
 
-                await battleWebSocketService.connect(parseInt(roomId));
-
-                // 컴포넌트가 여전히 마운트된 상태인지 확인
                 if (isMounted) {
-                    setIsWebSocketConnected(true);
-
-                    // 각종 이벤트 핸들러 등록
+                    // 이벤트 핸들러 등록 - 연결 전에 등록하여 첫 이벤트 놓치지 않도록
                     battleWebSocketService.on<BattleJoinResponse>('PARTICIPANTS', handleParticipantJoin);
                     battleWebSocketService.on<BattleStartResponse>('START', handleBattleStart);
                     battleWebSocketService.on<BattleProgressResponse>('PROGRESS', handleBattleProgress);
                     battleWebSocketService.on<BattleNextQuestionResponse>('NEXT_QUESTION', handleNextQuestion);
                     battleWebSocketService.on<BattleEndResponse>('END', handleBattleEnd);
                     battleWebSocketService.on<BattleAnswerResponse>('ANSWER', handleAnswerResult);
+                    battleWebSocketService.on<any>('STATUS', handleStatusChange);
+                }
+
+                // WebSocket 연결 시도
+                await battleWebSocketService.connect(parseInt(roomId));
+
+                if (isMounted) {
+                    console.log("WebSocket 연결 성공");
+                    setIsWebSocketConnected(true);
+                    setLoading(false);
                 }
             } catch (err) {
-                console.error('WebSocket 연결 오류:', err);
+                console.error("WebSocket 연결 오류:", err);
                 if (isMounted) {
-                    setError('실시간 연결에 실패했습니다. 페이지를 새로고침 해주세요.');
+                    setError("실시간 연결에 실패했습니다. 페이지를 새로고침하거나 다시 시도해주세요.");
                     setIsWebSocketConnected(false);
+                    setLoading(false);
                 }
             }
         };
 
-        // 배틀룸 정보가 로드된 후 WebSocket 연결 시도
-        if (battleRoom) {
-            connectWebSocket();
-        }
+        // 초기화 함수 호출
+        initializeWebSocket();
 
-        // 컴포넌트 언마운트 시 WebSocket 연결 종료 및 정리
+        // 컴포넌트 언마운트 시 정리
         return () => {
             isMounted = false;
+            console.log("배틀룸 컴포넌트 언마운트 - WebSocket 연결 정리");
+
+            // 이벤트 핸들러 제거
             battleWebSocketService.off('PARTICIPANTS');
             battleWebSocketService.off('START');
             battleWebSocketService.off('PROGRESS');
@@ -152,18 +178,20 @@ const BattleRoomPage: React.FC = () => {
             battleWebSocketService.off('ANSWER');
             battleWebSocketService.off('STATUS');
 
+            // 타이머 정리
+            if (timerRef.current) {
+                clearInterval(timerRef.current);
+                timerRef.current = null;
+            }
+
             // 현재 이 컴포넌트에서 연결한 방과 동일한 방에 대한 연결만 종료
             if (battleWebSocketService.getCurrentRoomId() === parseInt(roomId)) {
                 battleWebSocketService.disconnect().catch(err => {
                     console.error('WebSocket 연결 종료 중 오류:', err);
                 });
             }
-
-            if (timerRef.current) {
-                clearInterval(timerRef.current);
-            }
         };
-    }, [roomId, battleRoom, isAuthenticated]);
+    }, [roomId, isAuthenticated]); // battleRoom 의존성 제거, 필수 의존성만 유지
 
     // 타이머 설정
     useEffect(() => {
