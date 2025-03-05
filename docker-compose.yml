@@ -54,7 +54,7 @@ services:
       - discovery.type=single-node
       - bootstrap.memory_lock=true
       - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms128m -Xmx256m"
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ulimits:
       memlock:
         soft: -1
@@ -70,7 +70,8 @@ services:
       retries: 5
     networks:
       - quiz-network
-      
+
+  # Spring Boot 백엔드 서비스
   backend:
     build:
       context: ./backend
@@ -80,50 +81,20 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # 데이터베이스 연결 설정
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/quiz_db
-      SPRING_DATASOURCE_USERNAME: quizuser
-      SPRING_DATASOURCE_PASSWORD: quizpass
-      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
-      
-      # JPA/Hibernate 설정
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_JPA_SHOW_SQL: "true"
-      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "true"
-      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
-      SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE: Asia/Seoul
-      SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_BATCH_SIZE: "50"
-      SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_INSERTS: "true"
-      SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_UPDATES: "true"
-      SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_BATCH_FETCH_SIZE: "1000"
-      SPRING_JPA_OPEN_IN_VIEW: "false"
-      
-      # Redis 연결 설정
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-      SPRING_DATA_REDIS_TIMEOUT: 10000
-      
-      # Elasticsearch 연결 설정
-      SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
-      SPRING_ELASTICSEARCH_CONNECTION_TIMEOUT: 5s
-      SPRING_ELASTICSEARCH_SOCKET_TIMEOUT: 3s
-      
-      # 서버 설정
-      SERVER_PORT: 8080
-      SERVER_SERVLET_CONTEXT_PATH: /api
-      
-      # 로깅 설정
-      LOGGING_LEVEL_ROOT: INFO
-      LOGGING_LEVEL_COM_QUIZPLATFORM: DEBUG
-      
-      # JWT 설정 (기본값 설정)
-      JWT_SECRET: your256bitlong32charactersecretkey
-      JWT_ACCESS_TOKEN_VALIDITY: 3600000
-      JWT_REFRESH_TOKEN_VALIDITY: 1209600000
-      
-      # 기타 환경 변수
-      SPRING_PROFILES_ACTIVE: default
+      # 프로필 설정 - 운영 환경(prod)으로 변경
+      SPRING_PROFILES_ACTIVE: prod
+      # 타임존 설정
       TZ: Asia/Seoul
+      # OAuth2 환경 변수
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
+      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
+      OAUTH2_AUTHORIZED_REDIRECT_URI: http://13.125.187.28/api/oauth2/redirect
+      # JWT 시크릿 키 설정
+      JWT_SECRET: ${JWT_SECRET:-your256bitlong32charactersecretkey}
     depends_on:
       postgres:
         condition: service_healthy
@@ -133,12 +104,6 @@ services:
         condition: service_healthy
     networks:
       - quiz-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
   # React 프론트엔드 서비스
   frontend:
