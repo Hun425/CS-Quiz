@@ -1,6 +1,8 @@
 package com.quizplatform.core.service.battle;
 
-import com.quizplatform.core.domain.battle.*;
+import com.quizplatform.core.domain.battle.BattleAnswer;
+import com.quizplatform.core.domain.battle.BattleParticipant;
+import com.quizplatform.core.domain.battle.BattleRoom;
 import com.quizplatform.core.domain.battle.BattleRoomStatus;
 import com.quizplatform.core.domain.question.Question;
 import com.quizplatform.core.domain.quiz.Quiz;
@@ -41,6 +43,7 @@ public class BattleService {
     private final RedisTemplate<String, String> redisTemplate;
     private final LevelingService levelingService;
     private final EntityMapperService entityMapperService;
+
 
     // Redis 키 접두사
     private static final String BATTLE_ROOM_KEY_PREFIX = "battle:room:";
@@ -355,6 +358,9 @@ public class BattleService {
         return createBattleStartResponse(room);
     }
 
+    /**
+     * 다음 문제 준비
+     */
     @Transactional
     public BattleNextQuestionResponse prepareNextQuestion(Long roomId) {
         BattleRoom room = battleRoomRepository.findByIdWithQuizQuestions(roomId)
@@ -384,19 +390,26 @@ public class BattleService {
             log.info("선택된 다음 문제 결과: ID={}, 새 인덱스={}",
                     nextQuestion.getId(), room.getCurrentQuestionIndex());
 
-            boolean isLastQuestion = room.getCurrentQuestionIndex() >= questions.size();
+            boolean isLastQuestion = room.getCurrentQuestionIndex() >= questions.size() - 1;
             return createNextQuestionResponse(nextQuestion, isLastQuestion);
         } else {
             // 더 이상 문제가 없는 경우 (게임 종료)
             log.info("더 이상 문제가 없음. 게임 종료: roomId={}", roomId);
+
+            // 명시적으로 게임 종료 처리 수행
             room.finishBattle();
             battleRoomRepository.save(room);
 
-            return BattleNextQuestionResponse.builder()
+            // 게임 종료 응답 생성
+            BattleNextQuestionResponse gameOverResponse = BattleNextQuestionResponse.builder()
                     .isGameOver(true)
                     .build();
+
+
+            return gameOverResponse;
         }
     }
+
 
 
     @Transactional  // 트랜잭션 추가하여 세션이 활성화된 상태에서 지연 로딩 처리
@@ -454,17 +467,24 @@ public class BattleService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
         // 대결 종료 및 결과 계산
-        room.finishBattle();
+        if (room.getStatus() != BattleRoomStatus.FINISHED) {
+            log.info("배틀룸 종료 처리 수행: roomId={}", roomId);
+            room.finishBattle();
+            battleRoomRepository.save(room);
+        } else {
+            log.info("배틀룸 이미 종료됨: roomId={}", roomId);
+        }
+
         BattleResult result = calculateBattleResult(room);
 
         // 경험치 부여 및 통계 업데이트
         awardExperiencePoints(result);
         updateStatistics(result);
 
-        // 저장
-        battleRoomRepository.save(room);
+        // 결과 응답 생성
+        BattleEndResponse response = entityMapperService.mapToBattleEndResponse(result);
 
-        return entityMapperService.mapToBattleEndResponse(result);
+        return response;
     }
 
     // 내부 도우미 메서드들

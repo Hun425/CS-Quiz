@@ -145,23 +145,39 @@ class BattleWebSocketService {
                         }
                     });
 
-                    // 다음 문제 구독
                     this.client!.subscribe(`/topic/battle/${this.roomId}/question`, message => {
                         try {
                             const data = JSON.parse(message.body);
                             console.log('[WebSocket] 다음 문제 수신:', data);
+
+                            // 게임 종료 여부 명시적으로 로깅
+                            if (data.isGameOver) {
+                                console.log('[WebSocket] 게임 종료 감지됨 (isGameOver=true)');
+                            }
+
                             this.triggerEvent('NEXT_QUESTION', data);
                         } catch (e) {
                             console.error('[WebSocket] 다음 문제 데이터 처리 오류:', e);
                         }
                     });
 
-                    // 배틀 종료 구독
+// 배틀 종료 구독
                     this.client!.subscribe(`/topic/battle/${this.roomId}/end`, message => {
                         try {
                             const data = JSON.parse(message.body);
                             console.log('[WebSocket] 배틀 종료 수신:', data);
+
+                            // 종료 이벤트 발생 시 명확한 로깅 추가
+                            console.log('[WebSocket] 배틀 종료 이벤트 발생 - 결과 페이지로 이동 예정');
+
                             this.triggerEvent('END', data);
+
+                            // 종료 이벤트가 발생했지만 처리되지 않은 경우를 대비한 안전장치 추가
+                            setTimeout(() => {
+                                console.log('[WebSocket] 배틀 종료 이벤트 추가 확인');
+                                // 여기서는 직접 페이지 이동을 하지 않고 다시 한번 이벤트를 트리거
+                                this.triggerEvent('END_CONFIRMED', data);
+                            }, 3000);
                         } catch (e) {
                             console.error('[WebSocket] 배틀 종료 데이터 처리 오류:', e);
                         }
@@ -172,7 +188,21 @@ class BattleWebSocketService {
                         try {
                             const data = JSON.parse(message.body);
                             console.log('[WebSocket] 배틀 상태 변경 수신:', data);
+
+                            // 종료 상태인 경우 명확한 로깅
+                            if (data.status === 'FINISHED') {
+                                console.log('[WebSocket] 배틀 FINISHED 상태 감지 - 결과 페이지로 이동 준비');
+                            }
+
                             this.triggerEvent('STATUS', data);
+
+                            // 종료 상태일 때 추가 종료 처리 트리거
+                            if (data.status === 'FINISHED') {
+                                setTimeout(() => {
+                                    console.log('[WebSocket] 배틀 FINISHED 상태 추가 확인');
+                                    this.triggerEvent('STATUS_FINISHED_CONFIRMED', data);
+                                }, 5000);
+                            }
                         } catch (e) {
                             console.error('[WebSocket] 상태 변경 데이터 처리 오류:', e);
                         }
@@ -463,19 +493,27 @@ class BattleWebSocketService {
         console.log(`[WebSocket] 모든 이벤트 핸들러가 제거되었습니다. (총 ${handlerCount}개)`);
     }
 
-    // 이벤트 트리거
-    private triggerEvent(event: string, data: any) {
-        const handler = this.eventHandlers.get(event);
-        if (handler) {
-            console.log(`[WebSocket] '${event}' 이벤트 트리거됨`);
-            try {
-                handler(data);
-            } catch (error) {
-                console.error(`[WebSocket] '${event}' 이벤트 핸들러 실행 중 오류:`, error);
+// 이벤트 트리거 함수 강화
+    // 수정된 코드
+    triggerEvent(eventName: string, data: any) {
+        if (!this.eventHandlers[eventName] || this.eventHandlers[eventName].length === 0) {
+            console.warn(`[WebSocket] 이벤트 '${eventName}'에 대한 핸들러가 없습니다!`);
+
+            // END_CONFIRMED나 STATUS_FINISHED_CONFIRMED 이벤트일 경우 기본 처리 로직 추가
+            if (eventName === 'END_CONFIRMED' || eventName === 'STATUS_FINISHED_CONFIRMED') {
+                console.log(`[WebSocket] '${eventName}' 이벤트 기본 처리 적용`);
+
+                // 현재 방 ID 가져오기
+                const currentRoomId = this.getCurrentRoomId();
+                if (currentRoomId) {
+                    // 사용자를 결과 페이지로 리다이렉트하는 코드
+                    window.location.href = `/battles/${currentRoomId}/results`;
+                }
             }
-        } else {
-            console.warn(`[WebSocket] 이벤트 '${event}'에 대한 핸들러가 없습니다.`);
+            return;
         }
+
+        this.eventHandlers[eventName].forEach(handler => handler(data));
     }
 
     // 연결 상태 확인

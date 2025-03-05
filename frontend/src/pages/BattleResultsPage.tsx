@@ -23,6 +23,19 @@ const BattleResultsPage: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(!location.state?.result);
     const [error, setError] = useState<string | null>(null);
 
+    // 자동 새로고침 기능 추가 - 컴포넌트 최상위에 추가
+    useEffect(() => {
+        // 결과가 없을 때만 자동 새로고침 설정
+        if (isAuthenticated && roomId && !result && !loading && !error) {
+            const intervalId = setInterval(() => {
+                console.log('자동으로 배틀 결과 새로고침 시도');
+                fetchBattleResult();
+            }, 5000); // 5초마다 새로고침
+
+            return () => clearInterval(intervalId);
+        }
+    }, [isAuthenticated, roomId, result, loading, error]);
+
     // 인증 확인
     useEffect(() => {
         if (!isAuthenticated) {
@@ -36,17 +49,56 @@ const BattleResultsPage: React.FC = () => {
         }
     }, [isAuthenticated, roomId, result]);
 
-    // API에서 배틀 결과 조회 (필요시)
+    // fetchBattleResult 함수 개선
     const fetchBattleResult = async () => {
+        if (!roomId) return;
+
         try {
             setLoading(true);
-            // 배틀 결과 API 호출 (백엔드에 이 엔드포인트가 구현되어 있어야 함)
-            const response = await battleApi.getBattleResult(parseInt(roomId!));
+            console.log('배틀 결과 불러오기 시도:', roomId);
 
-            if (response.data.success) {
-                setResult(response.data.data);
+            // 먼저 배틀룸 상태 확인
+            const roomResponse = await battleApi.getBattleRoom(parseInt(roomId));
+
+            if (roomResponse.data.success) {
+                const roomStatus = roomResponse.data.data.status;
+                console.log('배틀룸 상태:', roomStatus);
+
+                // 배틀이 아직 진행 중인 경우
+                if (roomStatus === 'IN_PROGRESS') {
+                    setError('배틀이 아직 진행 중입니다. 배틀이 종료된 후 결과를 확인할 수 있습니다.');
+                    setLoading(false);
+                    return;
+                }
+
+                // 배틀이 종료된 경우에만 결과 조회
+                if (roomStatus === 'FINISHED') {
+                    try {
+                        // 배틀 결과 API 호출
+                        const response = await battleApi.getBattleResult(parseInt(roomId));
+
+                        if (response.data.success) {
+                            setResult(response.data.data);
+                            setError(null);
+                        } else {
+                            // 결과를 찾을 수 없지만 배틀은 종료됨
+                            setError('배틀은 종료되었으나 결과 데이터를 찾을 수 없습니다. 잠시 후 다시 시도해주세요.');
+                        }
+                    } catch (err: any) {
+                        console.error('결과 로딩 중 오류:', err);
+
+                        // 더 구체적인 오류 메시지 제공
+                        if (err.response?.status === 404) {
+                            setError('결과 데이터가 아직 생성되지 않았습니다. 잠시 후 다시 시도해주세요.');
+                        } else {
+                            setError('결과를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                        }
+                    }
+                } else {
+                    setError(`예상치 못한 배틀 상태: ${roomStatus}`);
+                }
             } else {
-                setError('결과를 불러오는 데 실패했습니다: ' + response.data.message);
+                setError('배틀룸 정보를 불러오는 데 실패했습니다: ' + roomResponse.data.message);
             }
         } catch (err: any) {
             console.error('결과 로딩 중 오류:', err);
@@ -133,24 +185,65 @@ const BattleResultsPage: React.FC = () => {
                 borderRadius: '8px',
                 boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
             }}>
-                <h2 style={{ marginTop: 0 }}>결과를 찾을 수 없습니다</h2>
-                <p style={{ marginBottom: '1.5rem' }}>요청하신 배틀 결과를 찾을 수 없습니다.</p>
-                <button onClick={() => navigate('/battles')} style={{
-                    backgroundColor: '#1976d2',
-                    color: 'white',
-                    border: 'none',
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '1rem',
-                    fontWeight: 'bold',
-                    boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
-                }}>
-                    배틀 목록으로 돌아가기
-                </button>
+                <h2 style={{ marginTop: 0 }}>결과를 불러오는 중...</h2>
+                <p style={{ marginBottom: '1rem' }}>배틀 결과를 불러오고 있습니다. 잠시만 기다려주세요.</p>
+                <p style={{ marginBottom: '1.5rem', color: '#666' }}>
+                    만약 결과가 계속 표시되지 않는다면, 배틀이 아직 진행 중이거나 서버에서 결과를 처리하는 중일 수 있습니다.
+                </p>
+
+                <div style={{ marginBottom: '2rem' }}>
+                    <div style={{
+                        width: '40px',
+                        height: '40px',
+                        border: '4px solid #f3f3f3',
+                        borderTop: '4px solid #1976d2',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite',
+                        margin: '0 auto 1rem'
+                    }}></div>
+                    <p>잠시 후 자동으로 결과가 표시됩니다...</p>
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                    <button onClick={() => navigate('/battles')} style={{
+                        backgroundColor: '#f44336',
+                        color: 'white',
+                        border: 'none',
+                        padding: '0.75rem 1.5rem',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '1rem',
+                        fontWeight: 'bold',
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                    }}>
+                        배틀 목록으로 돌아가기
+                    </button>
+
+                    <button onClick={fetchBattleResult} style={{
+                        backgroundColor: '#1976d2',
+                        color: 'white',
+                        border: 'none',
+                        padding: '0.75rem 1.5rem',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '1rem',
+                        fontWeight: 'bold',
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                    }}>
+                        결과 다시 불러오기
+                    </button>
+                </div>
+
+                <style>{`
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            `}</style>
             </div>
         );
     }
+
 
     // 시간 형식 변환 (초 -> 분:초)
     const formatTime = (seconds: number) => {

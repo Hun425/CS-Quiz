@@ -1,5 +1,6 @@
 package com.quizplatform.core.controller.battle;
 
+import com.quizplatform.core.domain.battle.BattleRoomStatus;
 import com.quizplatform.core.dto.battle.*;
 import com.quizplatform.core.service.battle.BattleService;
 import lombok.RequiredArgsConstructor;
@@ -70,6 +71,48 @@ public class BattleWebSocketController {
     }
 
     /**
+     * 다음 문제로 진행
+     */
+    private void moveToNextQuestion(Long roomId) {
+        log.info("다음 문제 준비: roomId={}", roomId);
+
+        try {
+            // 1. 현재 인덱스 로깅
+            Integer currentIndex = battleService.getBattleProgress(roomId).getCurrentQuestionIndex();
+            log.info("현재 문제 인덱스: {}", currentIndex);
+
+            // 2. 다음 문제 준비
+            BattleNextQuestionResponse response = battleService.prepareNextQuestion(roomId);
+            log.info("다음 문제 준비 완료: roomId={}, isGameOver={}",
+                    roomId, response.isGameOver());
+
+            // 3. 게임 종료 확인
+            if (response.isGameOver()) {
+                log.info("게임 종료 감지 (isGameOver=true): roomId={}", roomId);
+
+                // 게임 종료 상태 메시지 전송
+                messagingTemplate.convertAndSend(
+                        "/topic/battle/" + roomId + "/status",
+                        new BattleRoomStatusChangeResponse(roomId, BattleRoomStatus.FINISHED)
+                );
+
+                // 게임이 종료되었으면 endBattle 호출
+                endBattle(roomId);
+                return;
+            }
+
+            // 4. 웹소켓을 통해 다음 문제 전송
+            messagingTemplate.convertAndSend(
+                    "/topic/battle/" + roomId + "/question",
+                    response
+            );
+            log.info("다음 문제 메시지 전송 완료: roomId={}", roomId);
+        } catch (Exception e) {
+            log.error("다음 문제 준비 중 오류 발생: roomId={}", roomId, e);
+        }
+    }
+
+    /**
      * 답변 제출 처리
      * 클라이언트: /app/battle/answer로 메시지 전송
      */
@@ -134,34 +177,7 @@ public class BattleWebSocketController {
         }
     }
 
-    /**
-     * 다음 문제로 진행
-     */
-    private void moveToNextQuestion(Long roomId) {
-        log.info("다음 문제 준비: roomId={}", roomId);
 
-        try {
-
-
-            // 1. 현재 인덱스 로깅
-            Integer currentIndex = battleService.getBattleProgress(roomId).getCurrentQuestionIndex();
-            log.info("현재 문제 인덱스: {}", currentIndex);
-
-            // 2. 다음 문제 준비
-            BattleNextQuestionResponse response = battleService.prepareNextQuestion(roomId);
-            log.info("다음 문제 준비 완료: roomId={}, questionId={}", roomId, response.getQuestionId());
-
-            // 3. 웹소켓을 통해 다음 문제 전송
-            messagingTemplate.convertAndSend(
-                    "/topic/battle/" + roomId + "/question",
-                    response
-            );
-            log.info("다음 문제 메시지 전송 완료: roomId={}", roomId);
-
-        } catch (Exception e) {
-            log.error("다음 문제 준비 중 오류 발생: roomId={}", roomId, e);
-        }
-    }
 
     /**
      * 대결 시작
@@ -191,22 +207,53 @@ public class BattleWebSocketController {
      * 대결 종료
      */
     private void endBattle(Long roomId) {
-        log.info("배틀 종료: roomId={}", roomId);
+        log.info("배틀 종료 처리 시작: roomId={}", roomId);
 
         try {
+            // 1. 상태 변경 메시지 전송
+            messagingTemplate.convertAndSend(
+                    "/topic/battle/" + roomId + "/status",
+                    new BattleRoomStatusChangeResponse(roomId, BattleRoomStatus.FINISHED)
+            );
+            log.info("배틀 종료 상태 메시지 전송 완료: roomId={}", roomId);
+
+            // 2. 배틀 종료 처리 및 결과 계산
             BattleEndResponse response = battleService.endBattle(roomId);
 
-            // 최종 결과 전송
+            // 3. 최종 결과 전송
             messagingTemplate.convertAndSend(
                     "/topic/battle/" + roomId + "/end",
                     response
             );
+            log.info("배틀 종료 결과 전송 완료: roomId={}", roomId);
 
-            // 추적 데이터 정리
+            // 4. 추적 데이터 정리
             roomQuestionIndexMap.remove(roomId);
             lastQuestionProcessingMap.remove(roomId);
+            gameSessionMap.remove(roomId);
 
-            log.info("배틀 종료 결과 전송 완료: roomId={}, 참가자수={}", roomId, response.getResults().size());
+            // 5. 안전장치: 3초 후에 한 번 더 종료 메시지 전송
+            new Thread(() -> {
+                try {
+                    Thread.sleep(3000);
+
+                    // 종료 상태 메시지 재전송
+                    messagingTemplate.convertAndSend(
+                            "/topic/battle/" + roomId + "/status",
+                            new BattleRoomStatusChangeResponse(roomId, BattleRoomStatus.FINISHED)
+                    );
+
+                    // 종료 결과 재전송
+                    messagingTemplate.convertAndSend(
+                            "/topic/battle/" + roomId + "/end",
+                            response
+                    );
+
+                    log.info("배틀 종료 메시지 재전송 완료 (안전장치): roomId={}", roomId);
+                } catch (Exception e) {
+                    log.error("배틀 종료 메시지 재전송 중 오류: roomId={}", roomId, e);
+                }
+            }).start();
         } catch (Exception e) {
             log.error("배틀 종료 처리 중 오류 발생: roomId={}", roomId, e);
         }

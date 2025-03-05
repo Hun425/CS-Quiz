@@ -42,7 +42,7 @@ const BattleRoomPage: React.FC = () => {
     const [countdown, setCountdown] = useState<number>(3);
     const [isWebSocketConnected, setIsWebSocketConnected] = useState<boolean>(false);
 
-    // 배틀 상태 변경 이벤트 핸들러
+    // 배틀 상태 변경 이벤트 핸들러도 강화
     const handleStatusChange = (data: any) => {
         console.log('배틀 상태 변경:', data);
 
@@ -53,9 +53,15 @@ const BattleRoomPage: React.FC = () => {
 
         // 배틀이 종료된 경우
         if (data.status === 'FINISHED') {
-            // 결과 페이지로 리다이렉트 준비
-            // 실제 리다이렉트는 END 이벤트에서 처리하므로 여기서는 상태만 업데이트
             console.log('배틀이 종료되었습니다. 결과 대기 중...');
+
+            // 10초 후에도 결과 페이지로 이동하지 않았다면 강제로 이동
+            setTimeout(() => {
+                if (status === 'FINISHED' && !result) {
+                    console.log('상태 변경 이벤트에 의한 결과 페이지 이동');
+                    navigate(`/battles/${roomId}/results`);
+                }
+            }, 10000);
         }
     };
 
@@ -66,6 +72,33 @@ const BattleRoomPage: React.FC = () => {
             return;
         }
     }, [isAuthenticated, navigate, roomId]);
+
+    // 글로벌 안전장치 - 컴포넌트 마운트 시 한 번만 실행
+    useEffect(() => {
+        // 일정 시간이 지난 후에도 아직 같은 페이지에 있다면 강제로 결과 페이지로 리디렉션
+        const safetyTimeout = setTimeout(() => {
+            if (roomId && status === 'IN_PROGRESS') {
+                // 백엔드에 상태 확인 요청
+                battleApi.getBattleRoom(parseInt(roomId))
+                    .then(response => {
+                        if (response.data.success) {
+                            const roomStatus = response.data.data.status;
+                            console.log('안전장치: 배틀룸 상태 확인 결과:', roomStatus);
+
+                            if (roomStatus === 'FINISHED') {
+                                console.log('안전장치: 배틀이 이미 종료됨, 결과 페이지로 이동');
+                                navigate(`/battles/${roomId}/results`);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('안전장치: 배틀룸 상태 확인 실패', error);
+                    });
+            }
+        }, 300000); // 5분 타임아웃 (게임이 정상적으로는 훨씬 더 빨리 끝날 것으로 예상)
+
+        return () => clearTimeout(safetyTimeout);
+    }, [roomId, navigate]);
 
     // 배틀룸 정보 로드
     useEffect(() => {
@@ -131,6 +164,8 @@ const BattleRoomPage: React.FC = () => {
                 battleWebSocketService.off('END');
                 battleWebSocketService.off('ANSWER');
                 battleWebSocketService.off('STATUS');
+                battleWebSocketService.off('END_CONFIRMED');  // 추가된 이벤트
+                battleWebSocketService.off('STATUS_FINISHED_CONFIRMED');  // 추가된 이벤트
 
                 if (isMounted) {
                     // 이벤트 핸들러 등록 - 연결 전에 등록하여 첫 이벤트 놓치지 않도록
@@ -139,8 +174,14 @@ const BattleRoomPage: React.FC = () => {
                     battleWebSocketService.on<BattleProgressResponse>('PROGRESS', handleBattleProgress);
                     battleWebSocketService.on<BattleNextQuestionResponse>('NEXT_QUESTION', handleNextQuestion);
                     battleWebSocketService.on<BattleEndResponse>('END', handleBattleEnd);
-                    battleWebSocketService.on<BattleAnswerResponse>('ANSWER', handleAnswerResult);
+                    battleWebSocketService.on<BattleAnswerResponse>('ANSWER', handleAnswerResult);ｇ
                     battleWebSocketService.on<any>('STATUS', handleStatusChange);
+
+                    // 명시적으로 추가된 이벤트 핸들러 등록 - 수정된 부분
+                    // 추가 이벤트 핸들러 등록
+                    // 이 부분만 주의해서 추가 (원래 코드에 없던 부분)
+                    battleWebSocketService.on<BattleEndResponse>('END_CONFIRMED', handleEndConfirmed);
+                    battleWebSocketService.on<any>('STATUS_FINISHED_CONFIRMED', handleStatusFinishedConfirmed);
                 }
 
                 // WebSocket 연결 시도
@@ -286,6 +327,48 @@ const BattleRoomPage: React.FC = () => {
         }, 3000);
     };
 
+    // 핸들러 함수 구현 확인 (기존 구현 강화)
+    const handleEndConfirmed = (data: BattleEndResponse) => {
+        console.log('배틀 종료 확인(END_CONFIRMED):', data);
+
+        // 상태 업데이트를 Promise로 감싸서 순차적으로 처리
+        Promise.resolve()
+            .then(() => {
+                setStatus('FINISHED');
+                setResult(data);
+                return new Promise(resolve => setTimeout(resolve, 100)); // 상태 업데이트 안정화를 위한 짧은 지연
+            })
+            .then(() => {
+                console.log('END_CONFIRMED에 의한 결과 페이지 이동');
+                navigate(`/battles/${roomId}/results`, { state: { result: data } });
+            })
+            .catch(err => {
+                console.error('END_CONFIRMED 처리 중 오류:', err);
+                // 오류 발생 시 직접 URL 변경으로 백업 처리
+                window.location.href = `/battles/${roomId}/results`;
+            });
+    };
+
+    const handleStatusFinishedConfirmed = (data: any) => {
+        console.log('배틀 상태 종료 확인(STATUS_FINISHED_CONFIRMED):', data);
+
+        // 상태 업데이트를 Promise로 감싸서 순차적으로 처리
+        Promise.resolve()
+            .then(() => {
+                setStatus('FINISHED');
+                return new Promise(resolve => setTimeout(resolve, 100)); // 상태 업데이트 안정화를 위한 짧은 지연
+            })
+            .then(() => {
+                console.log('STATUS_FINISHED_CONFIRMED에 의한 결과 페이지 이동');
+                navigate(`/battles/${roomId}/results`);
+            })
+            .catch(err => {
+                console.error('STATUS_FINISHED_CONFIRMED 처리 중 오류:', err);
+                // 오류 발생 시 직접 URL 변경으로 백업 처리
+                window.location.href = `/battles/${roomId}/results`;
+            });
+    };
+
     // 배틀 진행 상황 이벤트 핸들러
     const handleBattleProgress = (data: BattleProgressResponse) => {
         console.log('배틀 진행 상황:', data);
@@ -303,7 +386,17 @@ const BattleRoomPage: React.FC = () => {
 
         if (data.isGameOver) {
             // 게임 종료 시 처리
+            console.log('게임이 종료되었습니다. 결과 대기 중...');
             setStatus('FINISHED');
+
+            // 5초 후에 결과 페이지로 이동하는 타임아웃 설정
+            // 이미 END 이벤트가 발생했을 수 있으므로 여기서도 리다이렉트 추가
+            setTimeout(() => {
+                if (status === 'FINISHED' && !result) {
+                    console.log('타임아웃으로 결과 페이지 이동');
+                    navigate(`/battles/${roomId}/results`);
+                }
+            }, 5000);
         } else {
             // 새 문제 설정
             setCurrentQuestion(data);
@@ -313,16 +406,18 @@ const BattleRoomPage: React.FC = () => {
         }
     };
 
-    // 배틀 종료 이벤트 핸들러
+    // 배틀 종료 이벤트 핸들러도 수정
     const handleBattleEnd = (data: BattleEndResponse) => {
         console.log('배틀 종료:', data);
         setStatus('FINISHED');
         setResult(data);
 
         // 결과 페이지로 상태와 함께 리다이렉트
+        // 1초 지연 추가 - 충분한 시간을 주어 상태 업데이트가 반영되도록 함
         setTimeout(() => {
+            console.log('결과 페이지로 이동 중...');
             navigate(`/battles/${roomId}/results`, { state: { result: data } });
-        }, 1000); // 1초 지연 추가
+        }, 2000);
     };
 
     // 답변 결과 이벤트 핸들러

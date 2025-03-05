@@ -1,10 +1,8 @@
 package com.quizplatform.core.config.websocket;
 
 
-
 import com.quizplatform.core.dto.battle.BattleLeaveRequest;
 import com.quizplatform.core.service.battle.BattleService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -15,14 +13,13 @@ import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.stereotype.Component;
 
-import java.util.Objects;
-
 /**
  * STOMP 채널 인터셉터 - 클라이언트 연결/해제 처리
  */
 @Slf4j
 @Component
 public class StompChannelInterceptor implements ChannelInterceptor {
+
 
     private BattleService battleService;
 
