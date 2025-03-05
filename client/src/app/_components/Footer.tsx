@@ -1,0 +1,92 @@
+import Image from "next/image";
+import Link from "next/link";
+import { Github, Twitter, Linkedin } from "lucide-react";
+
+const Footer = () => {
+  return (
+    <footer className="bg-gray-100 text-gray-700 py-6 mt-10">
+      <div className="max-w-screen-full mx-auto px-4 md:px-8 lg:px-20">
+        {/* 상단: 로고 및 소개 */}
+        <div className="flex flex-col md:flex-row justify-between items-center md:items-start space-y-6 md:space-y-0">
+          {/* CRAM 로고 & 소개 */}
+          <div className="flex flex-col items-center md:items-start">
+            <Image
+              src="/images/logo.png"
+              width={40}
+              height={40}
+              alt="CRAM Logo"
+            />
+            <h2 className="text-xl font-bold text-purple-800 mt-2">CRAM</h2>
+            <p className="text-sm text-gray-600 text-center md:text-left mt-1">
+              컴퓨터 과학 지식을 테스트하고 향상하세요.
+            </p>
+          </div>
+
+          {/* 퀵 링크 */}
+          <nav className="flex flex-col items-center md:items-start space-y-2">
+            <h3 className="text-lg font-semibold text-gray-800">퀵 링크</h3>
+            <Link href="/" className="hover:text-blue-600 transition">
+              홈
+            </Link>
+            <Link href="/quiz" className="hover:text-blue-600 transition">
+              퀴즈 목록
+            </Link>
+            <Link href="/today-quiz" className="hover:text-blue-600 transition">
+              오늘의 퀴즈
+            </Link>
+            <Link
+              href="/recommended"
+              className="hover:text-blue-600 transition"
+            >
+              추천 퀴즈
+            </Link>
+            <Link
+              href="/live-battle"
+              className="text-red-600 font-bold hover:text-red-700 transition"
+            >
+              실시간 퀴즈 대결
+            </Link>
+          </nav>
+
+          {/* 소셜 미디어 */}
+          <div className="flex flex-col items-center md:items-start space-y-2">
+            <h3 className="text-lg font-semibold text-gray-800">소셜 미디어</h3>
+            <div className="flex space-x-4">
+              <a
+                href="https://github.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-gray-900 transition"
+              >
+                <Github size={20} />
+              </a>
+              <a
+                href="https://twitter.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-blue-500 transition"
+              >
+                <Twitter size={20} />
+              </a>
+              <a
+                href="https://linkedin.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-blue-700 transition"
+              >
+                <Linkedin size={20} />
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* 하단 저작권 정보 */}
+        <div className="mt-6 border-t border-gray-300 pt-4 text-center text-sm text-gray-600">
+          © {new Date().getFullYear()} CRAM. All rights reserved.
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+export default Footer;

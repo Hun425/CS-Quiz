@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+/* 🌞 Light Mode */
+[data-theme="light"] {
+  --background: #ffffff;
+  --foreground: #171717;
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --secondary: #facc15;
+  --secondary-hover: #eab308;
+  --success: #22c55e;
+  --success-light: #d1fae5;
+  --warning: #facc15;
+  --warning-light: #fefcbf;
+  --danger: #ef4444;
+  --danger-light: #fecaca;
+  --neutral: #6b7280;
+  --border: #e5e7eb;
+}
+
+/* 🌙 Dark Mode */
+[data-theme="dark"] {
+  --background: #0a0a0a;
+  --foreground: #f5f5f5;
+  --primary: #818cf8;
+  --primary-hover: #6366f1;
+  --secondary: #facc15;
+  --secondary-hover: #eab308;
+  --success: #4ade80;
+  --success-light: #14532d;
+  --warning: #facc15;
+  --warning-light: #854d0e;
+  --danger: #f87171;
+  --danger-light: #7f1d1d;
+  --neutral: #d1d5db;
+  --border: #4a5568;
+}
+
+/* 🎨 추가 테마 (사용자 정의) */
+[data-theme="ocean"] {
+  --primary: #aab9ff;
+}
+[data-theme="rainforest"] {
+  --primary: #56d0a0;
+}
+[data-theme="candy"] {
+  --primary: #f9a8d4;
+}
+
+/* ✅ Tailwind 기본 스타일 확장 */
+@layer base {
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: Arial, Helvetica, sans-serif;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  h1 {
+    @apply text-3xl font-bold;
+  }
+  h2 {
+    @apply text-2xl font-semibold;
+  }
+  p {
+    @apply text-base;
+  }
+}
+
+/* ✅ Tailwind 유틸리티 클래스 추가 */
+@layer utilities {
+  .text-primary {
+    color: var(--primary);
+  }
+  .bg-primary {
+    background-color: var(--primary);
+  }
+  .hover\:bg-primary-hover:hover {
+    background-color: var(--primary-hover);
+  }
+
+  .correct {
+    color: var(--success);
+    background-color: var(--success-light);
+    border: 1px solid var(--success);
+  }
+
+  .mid {
+    color: var(--warning);
+    background-color: var(--warning-light);
+    border: 1px solid var(--warning);
+  }
+
+  .wrong {
+    color: var(--danger);
+    background-color: var(--danger-light);
+    border: 1px solid var(--danger);
+  }
+}
+
+/* ✅ Tailwind 컴포넌트 스타일 정의 */
+@layer components {
+  .btn-primary {
+    @apply text-white py-2 px-4 rounded-lg shadow-md;
+    background-color: var(--primary);
+  }
+  .btn-primary:hover {
+    background-color: var(--primary-hover);
+  }
+}
+
+/* ✅ 애니메이션 */
+@layer utilities {
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .animate-fadeIn {
+    animation: fadeIn 0.5s ease-in;
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
