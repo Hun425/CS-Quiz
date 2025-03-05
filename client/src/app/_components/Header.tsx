@@ -17,22 +17,23 @@ const Header = () => {
       }}
       className="w-full h-[60px] fixed top-0 left-0 right-0 z-50"
     >
-      <div className="max-w-screen-lg mx-auto flex items-center justify-between h-full px-4 md:px-6 lg:px-8">
+      <div className="max-w-screen-2xl mx-auto flex items-center justify-between h-full px-4 md:px-6 lg:px-8">
         {/* 로고 */}
         <div className="flex items-center space-x-2">
           <Image
             src="/images/logo.png"
-            width={40}
-            height={40}
+            width={35}
+            height={35}
             alt="CRAM Logo"
             className="rounded-full"
           />
           <h1
             style={{ color: "var(--primary)" }}
-            className="text-2xl font-bold"
+            className="text-2xl font-bold tracking-tight"
           >
             CRAM
           </h1>
+          <ThemeToggle />
         </div>
 
         {/* 메뉴 & 검색 */}
@@ -74,20 +75,12 @@ const Header = () => {
 
         {/* 다크 모드 버튼 & 로그인 */}
         <div className="flex items-center space-x-2">
-          <ThemeToggle />
           <Link
             href="/login"
             className="px-3 py-1 rounded-lg shadow-md hover:scale-105 transition-all"
             style={{ backgroundColor: "var(--primary)", color: "white" }}
           >
             로그인
-          </Link>
-          <Link
-            href="/signup"
-            className="px-3 py-1 rounded-lg shadow-md hover:scale-105 transition-all"
-            style={{ backgroundColor: "var(--primary)", color: "white" }}
-          >
-            회원가입
           </Link>
         </div>
       </div>

@@ -1,6 +1,19 @@
 "use client";
-import { Book, Brain, Rocket, Star, ChevronRight } from "lucide-react";
-import { Gamepad2, BarChart, CheckCircle, Code } from "lucide-react";
+import {
+  Book,
+  Brain,
+  Rocket,
+  Star,
+  ChevronRight,
+  Sparkles,
+} from "lucide-react";
+import {
+  Gamepad2,
+  BarChart,
+  CheckCircle,
+  Code,
+  CalendarDays,
+} from "lucide-react";
 import Button from "./_components/Button";
 
 const CramMainPage = () => {
@@ -57,33 +70,32 @@ const CramMainPage = () => {
   ];
 
   return (
-    <div className="min-h-screen px-4 md:px-8 lg:px-20">
-      {/* 개선된 소개 섹션 */}
-      <section className="max-w-screen-lg mx-auto bg-linear-to-r/oklch from-indigo-500 to-teal-400 text-white p-8 md:p-12 rounded-xl shadow-lg mb-6 flex flex-col items-center text-center animate-fadeIn">
-        <Star className="text-warning text-4xl mb-4 animate-pulse" />{" "}
-        {/* 별 모양 아이콘 추가, 경쾌한 애니메이션 */}
-        <h1 className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-md">
-          CS 퀴즈 플랫폼, Cram
+    <div className="min-h-screen max-w-screen-full px-4 md:px-8 lg:px-20">
+      <section className="max-w-screen-2xl mx-auto bg-warning-light text-foreground p-12 rounded-xl shadow-lg flex flex-col items-center text-center animate-fadeIn">
+        <h1 className="text-5xl font-bold mb-4 text-primary drop-shadow-md">
+          쉽고 재미있는 CS 퀴즈 학습
         </h1>
-        <p className="text-xl md:text-2xl mb-8 leading-relaxed">
-          벼락치기처럼 빠르고 재미있게 컴퓨터 과학 지식을 마스터하세요!
-          실시간으로 다른 사용자와 경쟁하며 실력을 폭발적으로 향상시켜 보세요.
-          지금 시작!
+        <p className="text-xl text-neutral max-w-3xl leading-relaxed">
+          단순한 문제 풀이가 아닙니다. <strong>실시간 경쟁</strong>과{" "}
+          <strong>퀴즈 챌린지</strong>로 CS 지식을 쌓아보세요. <br />
+          재미있게 배우고, 빠르게 성장하세요.
         </p>
         <Button
           variant="primary"
           size="large"
-          onClick={() => console.log("Login clicked!")}
+          className="mt-6 px-6 py-3 text-lg font-semibold rounded-lg shadow-md hover:bg-primary-hover transition"
+          onClick={() => console.log("Start Cram!")}
         >
-          로그인하고 시작하기
+          로그인하고 시작하기 🚀
         </Button>
       </section>
 
-      <section className="max-w-screen-lg mx-auto my-16 px-4">
-        <h2 className="text-3xl font-bold text-center text-foreground mb-8">
-          Cram의 특별한 벼락치기 특징
-        </h2>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <section className="max-w-screen-2xl mx-auto my-16 ">
+        <h1 className="text-3xl font-bold text-center text-foreground mb-8">
+          <strong className="text-primary">CRAM</strong>의 특별한 학습법
+        </h1>
+
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 text-default">
           {features.map((feature, index) => (
             <div
               key={index}
@@ -93,10 +105,8 @@ const CramMainPage = () => {
                 <div className="bg-white p-3 rounded-full shadow-md">
                   {feature.icon}
                 </div>
-                <h3 className="text-lg font-semibold text-foreground">
-                  {feature.name}
-                </h3>
-                <p className="text-sm text-neutral text-center leading-relaxed">
+                <h3 className="text-lg font-semibold ">{feature.name}</h3>
+                <p className="text-sm text-center leading-relaxed">
                   {feature.description}
                 </p>
               </div>
@@ -106,41 +116,47 @@ const CramMainPage = () => {
       </section>
 
       {/* 오늘의 퀴즈 & 추천 퀴즈 */}
-      <section className="max-w-screen-lg mx-auto mb-6 flex flex-col md:flex-row gap-4">
-        <div className="flex-1 bg-background/10 p-4 rounded-lg shadow-md text-center">
-          <h2 className="text-lg font-semibold text-foreground mb-2">
-            오늘의 벼락치기 퀴즈
+      <section className="max-w-screen-xl min-h-[250px] mx-auto mb-6 flex flex-col md:flex-row gap-4">
+        {/* 오늘의 퀴즈 */}
+        <div className="flex-1 bg-card border border-card-border p-5 rounded-xl shadow-md hover:shadow-lg transition text-center flex flex-col justify-center">
+          <CalendarDays size={28} className="text-primary mx-auto mb-3" />
+          <h2 className="text-lg font-semibold text-foreground mb-3">
+            오늘의 퀴즈
           </h2>
-          <p className="text-sm md:text-base">
-            오늘의 퀴즈가 아직 준비되지 않았습니다. 잠시 후 다시 확인해주세요.
+          <p className="text-sm md:text-base text-neutral">
+            오늘의 퀴즈가 아직 준비되지 않았습니다.
+            <br />
+            잠시 후 다시 확인해주세요.
           </p>
         </div>
-        <div className="flex-1 bg-background/10 p-4 rounded-lg shadow-md text-center">
-          <h2 className="text-lg font-semibold text-foreground mb-2">
-            추천 벼락치기 퀴즈
+
+        {/* 추천 퀴즈 */}
+        <div className="flex-1 bg-card border border-card-border p-5 rounded-xl shadow-md hover:shadow-lg transition text-center flex flex-col justify-center">
+          <Sparkles size={28} className="text-secondary mx-auto mb-3" />
+          <h2 className="text-lg font-semibold text-foreground mb-3">
+            추천 퀴즈
           </h2>
-          <p className="text-sm md:text-base">
+          <p className="text-sm md:text-base text-neutral">
             로그인하면 맞춤형 퀴즈를 추천해드립니다.
           </p>
         </div>
       </section>
 
-      {/* 학습 카테고리 */}
-      <section className="max-w-screen-lg mx-auto mb-6">
-        <h2 className="text-lg font-semibold text-foreground mb-4">
-          벼락치기 학습 카테고리
+      <section className="max-w-screen-xl mx-auto mb-8">
+        <h2 className="text-xl font-semibold text-foreground mb-6 text-center">
+          📚 학습 카테고리
         </h2>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {categories.map((category, index) => (
             <div
               key={index}
-              className={`${category.color} p-3 md:p-4 rounded-xl shadow-md flex items-center justify-between hover:scale-105 transition-transform`}
+              className={`${category.color} p-4 rounded-lg shadow-md flex items-center justify-between hover:scale-105 hover:bg-opacity-30 hover:shadow-lg transition-transform border border-neutral`}
             >
-              <div className="flex items-center space-x-2 md:space-x-3">
-                {category.icon}
-                <span className="text-sm md:text-base font-medium">
-                  {category.name}
-                </span>
+              <div className="flex items-center space-x-3">
+                <div className="bg-white p-2 rounded-full shadow">
+                  {category.icon}
+                </div>
+                <span className="text-md font-semibold">{category.name}</span>
               </div>
               <ChevronRight className="text-neutral" />
             </div>

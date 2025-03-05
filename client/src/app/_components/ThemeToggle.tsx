@@ -35,10 +35,11 @@ const ThemeToggle: React.FC = () => {
   return (
     <button
       onClick={toggleTheme}
-      className="p-2 rounded-full transition-all hover:scale-105"
+      className="p-1.5 rounded-xl transition-all hover:scale-105"
       style={{
         backgroundColor: "var(--background)",
         color: "var(--foreground)",
+        border: "2px solid var(--border)",
       }}
     >
       {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
