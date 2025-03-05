@@ -60,7 +60,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
                     // 프론트엔드 주소에 맞게 수정
-                    config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
+                    config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000",    "http://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com","http://13.125.187.28"));
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     config.setAllowedHeaders(List.of("*"));
                     config.setAllowCredentials(true);
