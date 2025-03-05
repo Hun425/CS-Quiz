@@ -17,6 +17,12 @@ public interface BattleRoomRepository extends JpaRepository<BattleRoom, Long> {
     // 상태별 대결방 조회
     List<BattleRoom> findByStatus(BattleRoomStatus status);
 
+    @Query("SELECT DISTINCT br FROM BattleRoom br " +
+            "LEFT JOIN FETCH br.quiz q " +
+            "LEFT JOIN FETCH q.questions " +
+            "WHERE br.id = :id")
+    Optional<BattleRoom> findByIdWithQuizQuestionsEagerly(@Param("id") Long id);
+
     // 사용자별 활성 대결방 조회
     @Query("SELECT br FROM BattleRoom br JOIN br.participants p WHERE p.user = :user AND br.status = :status")
     Optional<BattleRoom> findActiveRoomByUser(@Param("user") User user, @Param("status") BattleRoomStatus status);

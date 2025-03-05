@@ -179,11 +179,44 @@ public class BattleParticipant {
     }
 
     public boolean hasAnsweredCurrentQuestion(int questionIndex) {
-        boolean result = answers.size() > questionIndex;
-        log.info("hasAnsweredCurrentQuestion 확인: userId={}, 문제인덱스={}, 답변수={}, 결과={}",
-                user.getId(), questionIndex, answers.size(), result);
-        // 전달받은 questionIndex보다 많은 답변이 제출되었는지 확인합니다.
-        return answers.size() > questionIndex;
+        // 일시적 해결책: 마지막 문제(전체 문제 수 - 1)와 첫 문제(0) 구분
+        int totalQuestions = battleRoom.getQuiz().getQuestions().size();
+
+        // 문제 번호 로그 개선 (0-based 인덱스 -> 1-based 문제 번호)
+        int questionNumber = questionIndex + 1;
+
+        log.info("답변 여부 확인: userId={}, 문제번호={}/{}, 인덱스={}, 답변수={}",
+                user.getId(), questionNumber, totalQuestions, questionIndex, answers.size());
+
+        // 배틀이 완료되고 새로 시작한 경우 (첫 문제인데 답변이 이미 많은 경우)
+        if (questionIndex == 0 && answers.size() >= totalQuestions) {
+            log.info("새 게임 시작 감지: userId={}, 기존 답변수={}, 전체문제수={}",
+                    user.getId(), answers.size(), totalQuestions);
+
+            // 기존 답변 목록 초기화 (선택적)
+            // answers.clear();
+
+            return false; // 새 게임이므로 답변 허용
+        }
+
+        // 일반적인 경우: 답변 여부 확인
+        boolean result = false;
+
+        // 인덱스 오류 방지를 위한 안전 확인
+        if (questionIndex >= 0 && questionIndex < answers.size()) {
+            // 특정 인덱스 위치에 답변이 있는지 구체적으로 확인
+            // (이 방식은 답변이 순서대로 저장되어 있다고 가정합니다)
+            result = true;
+            log.info("이미 답변한 문제 확인: userId={}, 문제번호={}, 인덱스={}, 답변ID={}",
+                    user.getId(), questionNumber, questionIndex, answers.get(questionIndex).getId());
+        } else {
+            // 일반적인 체크: 답변 수가 인덱스보다 많으면 이미 답변한 것
+            result = answers.size() > questionIndex;
+            log.info("답변 여부 결과: 인덱스={}, 답변수={}, 결과={}",
+                    questionIndex, answers.size(), result);
+        }
+
+        return result;
     }
 
     public int getCorrectAnswersCount() {

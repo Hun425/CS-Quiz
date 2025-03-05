@@ -174,40 +174,31 @@ public class BattleRoom {
         startNextQuestion();
     }
 
-    /**
-     * 다음 문제로 진행
-     * 중복 호출 방지 및 정확한 상태 검증 추가
-     */
     public Question startNextQuestion() {
         if (status != BattleRoomStatus.IN_PROGRESS) {
-            throw new BusinessException(ErrorCode.BATTLE_NOT_IN_PROGRESS, "배틀이 진행 중이 아닙니다.");
+            throw new BusinessException(ErrorCode.BATTLE_NOT_IN_PROGRESS);
         }
 
         List<Question> questions = getQuestions();
-        if (questions.isEmpty()) {
-            throw new BusinessException(ErrorCode.INVALID_BATTLE_SETTINGS, "퀴즈에 문제가 없습니다.");
-        }
 
-        // 문제 인덱스 유효성 검사 추가
-        if (currentQuestionIndex < 0) {
-            throw new BusinessException(ErrorCode.INVALID_QUESTION_SEQUENCE, "잘못된 문제 순서입니다: " + currentQuestionIndex);
-        }
+        log.info("startNextQuestion 호출 - 현재 인덱스: {}, 문제 목록 크기: {}", currentQuestionIndex, questions.size());
 
-        // 인덱스가 범위를 벗어나는지 검사
-        if (currentQuestionIndex >= questions.size()) {
-            // 이미 마지막 문제까지 진행된 경우 게임 종료 처리
-            finishBattle();
+        // 먼저 다음 문제가 존재하는지 확인
+        if (currentQuestionIndex + 1 >= questions.size()) {
+            log.info("더 이상 문제가 없습니다. 게임 종료");
             return null;
         }
 
-        // 다음 문제 가져오기 (인덱스는 startNextQuestion 호출 시점에 증가)
-        Question nextQuestion = questions.get(currentQuestionIndex);
-
-        // 문제 시작 시간 기록
-        this.currentQuestionStartTime = LocalDateTime.now();
-
-        // 문제 인덱스 증가 (현재 문제를 처리한 후에 인덱스 증가)
+        // 인덱스 증가
         currentQuestionIndex++;
+        log.info("인덱스 증가: {} -> {}", currentQuestionIndex - 1, currentQuestionIndex);
+
+        // 새 인덱스로 문제 가져오기
+        Question nextQuestion = questions.get(currentQuestionIndex);
+        log.info("다음 문제 선택: 인덱스={}, ID={}", currentQuestionIndex, nextQuestion.getId());
+
+        // 문제 시작 시간 업데이트
+        this.currentQuestionStartTime = LocalDateTime.now();
 
         return nextQuestion;
     }
@@ -267,8 +258,23 @@ public class BattleRoom {
             return false;
         }
 
-        /// 수정된 부분: 각 참가자가 최소 currentQuestionIndex만큼 답변했는지 확인
-        // 즉, 첫 번째 문제(인덱스 0)면 최소 1개, 두 번째 문제(인덱스 1)면 최소 1개의 답변이 필요
+        // 마지막 문제인 경우 특별 처리 추가
+        boolean isLastQuestion = currentQuestionIndex >= getQuestions().size() - 1;
+        if (isLastQuestion) {
+            log.info("마지막 문제 참가자 답변 여부 확인: roomId={}, 현재인덱스={}", this.getId(), currentQuestionIndex);
+
+            // 마지막 문제니까 질문 인덱스는 마지막 인덱스(size-1)가 됨
+            int questionIndex = getQuestions().size() - 1;
+
+            boolean result = participants.stream()
+                    .filter(BattleParticipant::isActive)
+                    .allMatch(p -> p.hasAnsweredCurrentQuestion(questionIndex));
+
+            log.info("마지막 문제 참가자 답변 여부 결과: roomId={}, 결과={}", this.getId(), result);
+            return result;
+        }
+
+        // 일반 문제의 경우 원래 로직 유지
         boolean result = participants.stream()
                 .filter(BattleParticipant::isActive)
                 .allMatch(p -> p.getAnswers().size() >= currentQuestionIndex);
