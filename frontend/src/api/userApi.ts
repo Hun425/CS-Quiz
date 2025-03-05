@@ -2,11 +2,10 @@
 import axios from 'axios';
 import { UserProfile, UserStatistics, TopicPerformance, Achievement, RecentActivity } from '../types/user';
 import { getAuthHeader } from '../utils/auth';
-
-const BASE_URL = 'http://localhost:8080/api';
+import config from '../config/environment';
 
 const apiClient = axios.create({
-    baseURL: BASE_URL,
+    baseURL: config.apiBaseUrl,
     headers: {
         'Content-Type': 'application/json',
     },

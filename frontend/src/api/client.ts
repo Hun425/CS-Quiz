@@ -8,18 +8,16 @@ import axios, {
 } from 'axios';
 import { useAuthStore } from '../store/authStore';
 import { refreshAccessToken } from '../utils/authUtils';
+import config from '../config/environment';
 
 // 요청 구성 확장 타입
 interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
     _retry?: boolean;
 }
 
-// 백엔드 API 기본 URL 설정
-const BASE_URL = 'http://localhost:8080/api';
-
 // 기본 API 클라이언트 설정
 const apiClient: AxiosInstance = axios.create({
-    baseURL: BASE_URL,
+    baseURL: config.apiBaseUrl,
     headers: {
         'Content-Type': 'application/json',
     },

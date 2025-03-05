@@ -2,11 +2,10 @@
 import axios, {AxiosHeaders} from 'axios';
 import { TagResponse, PageResponse } from '../types/api';
 import { getAuthHeader } from '../utils/auth';
-
-const BASE_URL = 'http://localhost:8080/api';
+import config from '../config/environment';
 
 const apiClient = axios.create({
-    baseURL: BASE_URL,
+    baseURL: config.apiBaseUrl,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -63,5 +62,20 @@ export const tagApi = {
     // 자식 태그 조회
     getChildTags: async (parentId: number) => {
         return apiClient.get<{ success: boolean, data: TagResponse[] }>(`/tags/${parentId}/children`);
+    },
+
+    // 태그 생성 (추가됨)
+    createTag: async (tagData: any) => {
+        return apiClient.post<{ success: boolean, data: TagResponse }>('/tags', tagData);
+    },
+
+    // 태그 수정 (추가됨)
+    updateTag: async (tagId: number, tagData: any) => {
+        return apiClient.put<{ success: boolean, data: TagResponse }>(`/tags/${tagId}`, tagData);
+    },
+
+    // 태그 삭제 (추가됨)
+    deleteTag: async (tagId: number) => {
+        return apiClient.delete<{ success: boolean, data: any }>(`/tags/${tagId}`);
     }
 };

@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import config from '../config/environment';
 
 // 소셜 로그인 제공자 타입
 type Provider = 'google' | 'github' | 'kakao';
@@ -46,8 +47,8 @@ const LoginPage: React.FC = () => {
         const from = location.state?.from || '/';
         localStorage.setItem('authRedirect', from);
 
-        // OAuth2 인증 URL로 리다이렉트 - 백엔드 설정과 일치하도록 수정
-        const redirectUrl = `http://localhost:8080/api/oauth2/authorize/${provider.toLowerCase()}`;
+        // OAuth2 인증 URL로 리다이렉트 - 환경 설정에서 URL 가져오기
+        const redirectUrl = `${config.oauthRedirectBaseUrl}/${provider.toLowerCase()}`;
         window.location.href = redirectUrl;
     };
 

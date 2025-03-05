@@ -1,11 +1,10 @@
 // src/api/authApi.ts - 인증 관련 API 연동
 import axios from 'axios';
 import { AuthResponse } from '../types/api';
-
-const BASE_URL = 'http://localhost:8080/api';
+import config from '../config/environment';
 
 const apiClient = axios.create({
-    baseURL: BASE_URL,
+    baseURL: config.apiBaseUrl,
     headers: {
         'Content-Type': 'application/json',
     },

@@ -3,6 +3,7 @@
 import SockJS from 'sockjs-client';
 import { Client, IFrame } from '@stomp/stompjs';
 import { useAuthStore } from '../store/authStore';
+import config from '../config/environment';
 
 type EventHandler<T> = (data: T) => void;
 
@@ -76,8 +77,8 @@ class BattleWebSocketService {
                     this.handleConnectionFailure(reject);
                 }, 10000);
 
-                // API 기본 URL을 사용하여 WebSocket 연결
-                const socket = new SockJS(`http://localhost:8080/ws-battle`);
+                // 환경 설정에서 WebSocket URL 사용
+                const socket = new SockJS(config.wsBaseUrl);
 
                 this.client = new Client({
                     webSocketFactory: () => socket,

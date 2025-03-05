@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import config from '../config/environment';
 
 const OAuth2CallbackPage: React.FC = () => {
     const { provider } = useParams<{ provider: string }>();
@@ -31,7 +32,7 @@ const OAuth2CallbackPage: React.FC = () => {
                 }
 
                 // 사용자 정보 가져오기 (백엔드 API 호출)
-                const response = await fetch('http://localhost:8080/api/users/me/profile', {
+                const response = await fetch(`${config.apiBaseUrl}/users/me/profile`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -60,8 +61,10 @@ const OAuth2CallbackPage: React.FC = () => {
                         expiresIn
                     );
 
-                    // 항상 홈("/")으로 리다이렉션
-                    navigate('/');
+                    // 저장된 리디렉션 경로가 있으면 사용, 없으면 홈으로
+                    const redirectPath = localStorage.getItem('authRedirect') || '/';
+                    localStorage.removeItem('authRedirect'); // 사용 후 제거
+                    navigate(redirectPath);
                 } else {
                     setError('사용자 정보를 가져오는데 실패했습니다.');
                     setProcessing(false);
