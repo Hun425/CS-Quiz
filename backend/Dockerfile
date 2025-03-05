@@ -1,13 +1,10 @@
-FROM eclipse-temurin:17-jdk AS build
+FROM gradle:8.5-jdk17 AS build
 WORKDIR /app
-
-# Gradle 설치
-RUN apt-get update && apt-get install -y gradle
 
 # 소스 코드 복사
 COPY . .
 
-# Gradle 사용하여 빌드 (wrapper 대신 시스템 Gradle 사용)
+# Gradle 빌드
 RUN gradle build -x test
 
 # 실행 환경
@@ -16,9 +13,6 @@ WORKDIR /app
 
 # 빌드 단계에서 생성된 JAR 파일 복사
 COPY --from=build /app/build/libs/*.jar app.jar
-
-# 헬스체크를 위한 curl 설치
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # 애플리케이션 실행
 ENTRYPOINT ["java", "-jar", "app.jar"]
