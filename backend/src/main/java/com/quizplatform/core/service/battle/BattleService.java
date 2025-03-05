@@ -275,11 +275,27 @@ public class BattleService {
         // 게임이 끝나고 다시 시작한 경우 (첫 문제인데 currentQuestionIndex가 0로 리셋된 경우)
         boolean isNewGame = battleRoom.getCurrentQuestionIndex() == 0 && questionIndex == 0;
 
-        // 이미 답변한 문제인지 확인 - 새 게임인 경우 예외 처리
-        if (!isNewGame && participant.hasAnsweredCurrentQuestion(questionIndex)) {
+        // 마지막 문제인지 확인 (중요: 이 부분이 추가되었습니다)
+        boolean isLastQuestion = questionIndex == battleRoom.getQuestions().size() - 1;
+
+        // 이미 답변한 문제인지 확인 - 새 게임이거나 마지막 문제의 경우 특별 처리
+        if (!isNewGame && !isLastQuestion && participant.hasAnsweredCurrentQuestion(questionIndex)) {
             log.warn("이미 답변한 문제: roomId={}, questionId={}, userId={}, 인덱스={}",
                     request.getRoomId(), request.getQuestionId(), participant.getUser().getId(), questionIndex);
             throw new BusinessException(ErrorCode.ANSWER_ALREADY_SUBMITTED, "이미 답변을 제출했습니다.");
+        }
+
+        // 마지막 문제인 경우 중복 제출 체크를 조금 더 정확하게 함 (중요: 추가된 부분)
+        if (isLastQuestion) {
+            Question finalTargetQuestion = targetQuestion;
+            boolean alreadyAnswered = participant.getAnswers().stream()
+                    .anyMatch(a -> a.getQuestion().getId().equals(finalTargetQuestion.getId()));
+
+            if (alreadyAnswered) {
+                log.warn("마지막 문제 중복 제출: roomId={}, questionId={}, userId={}",
+                        request.getRoomId(), request.getQuestionId(), participant.getUser().getId());
+                throw new BusinessException(ErrorCode.ANSWER_ALREADY_SUBMITTED, "이미 답변을 제출했습니다.");
+            }
         }
 
         // 참가자 엔티티 다시 로드하여 최신 상태 확보
@@ -382,6 +398,7 @@ public class BattleService {
     }
 
 
+    @Transactional  // 트랜잭션 추가하여 세션이 활성화된 상태에서 지연 로딩 처리
     public boolean allParticipantsAnswered(Long roomId) {
         BattleRoom room = battleRoomRepository.findByIdWithQuizQuestions(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
@@ -389,18 +406,32 @@ public class BattleService {
         log.info("모든 참가자 답변 확인 시작: roomId={}, 현재문제인덱스={}",
                 roomId, room.getCurrentQuestionIndex());
 
-        // 각 참가자별 답변 상태 로깅
-        room.getParticipants().forEach(p -> {
-            boolean answered = p.hasAnsweredCurrentQuestion(room.getCurrentQuestionIndex());
-            log.info("참가자 답변 상태: userId={}, 활성상태={}, 답변여부={}",
-                    p.getUser().getId(), p.isActive(), answered);
-        });
+        // 1. 현재 필요한 답변 수 계산
+        int requiredAnswers = room.getCurrentQuestionIndex() + 1;
 
-        boolean result = room.allParticipantsAnswered();
+        // 2. 참가자별 답변 상태 로깅 (안전하게 참가자 ID와 필요 값만 미리 가져오기)
+        for (BattleParticipant p : room.getParticipants()) {
+            if (p.isActive()) {
+                // 지연 로딩으로 인한 예외 방지를 위해 명시적으로 초기화
+                int answersCount = participantRepository.findByIdWithAnswers(p.getId())
+                        .map(loaded -> loaded.getAnswers().size())
+                        .orElse(0);
 
-        log.info("모든 참가자 답변 확인 결과: roomId={}, 결과={}", roomId, result);
+                boolean answered = answersCount >= requiredAnswers;
+                log.info("참가자 답변 상태: userId={}, 활성상태={}, 답변여부={}, 답변수={}, 필요답변수={}",
+                        p.getUser().getId(), p.isActive(), answered, answersCount, requiredAnswers);
 
-        return result;
+                // 한 명이라도 아직 답변하지 않았으면 빠르게 결과 반환
+                if (!answered) {
+                    log.info("참가자 미답변 발견: userId={}", p.getUser().getId());
+                    return false;
+                }
+            }
+        }
+
+        // 모든 참가자가 답변한 경우
+        log.info("모든 참가자 답변 완료 확인: roomId={}", roomId);
+        return true;
     }
 
     /**

@@ -78,8 +78,6 @@ public class BattleWebSocketController {
         log.info("답변 제출 요청: roomId={}, questionId={}, sessionId={}",
                 request.getRoomId(), request.getQuestionId(), sessionId);
 
-
-
         try {
             // 답변 처리 및 결과 계산
             BattleAnswerResponse response = battleService.processAnswer(request, sessionId);
@@ -114,6 +112,21 @@ public class BattleWebSocketController {
 
                 // 다음 문제로 이동
                 moveToNextQuestion(request.getRoomId());
+            } else {
+                // 중요: 추가된 부분 - 답변이 완료되지 않았는데 문제가 넘어가지 않는 상황 디버깅
+                log.info("아직 모든 참가자가 답변하지 않았습니다. 다음 문제로 넘어가지 않습니다.");
+
+                // 안전하게 참가자 정보만 로깅 (지연 로딩 컬렉션 접근 없이)
+                try {
+                    progress = battleService.getBattleProgress(request.getRoomId());
+                    progress.getParticipantProgress().forEach((id, p) -> {
+                        log.info("참가자 진행 상황: userId={}, 점수={}, 정답수={}, 현재답변여부={}",
+                                p.getUserId(), p.getCurrentScore(), p.getCorrectAnswers(),
+                                p.isHasAnsweredCurrent());
+                    });
+                } catch (Exception e) {
+                    log.warn("참가자 상세 정보 로깅 중 오류: {}", e.getMessage());
+                }
             }
         } catch (Exception e) {
             log.error("답변 제출 처리 중 오류 발생: roomId={}, questionId={}",

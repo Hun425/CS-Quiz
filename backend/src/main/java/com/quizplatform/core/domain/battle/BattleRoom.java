@@ -168,10 +168,17 @@ public class BattleRoom {
             throw new BusinessException(ErrorCode.NOT_READY_TO_START);
         }
 
+        // 중요: 인덱스를 -1로 명확하게 초기화 (첫 startNextQuestion 호출 시 0이 됨)
+        this.currentQuestionIndex = -1;
         this.status = BattleRoomStatus.IN_PROGRESS;
         this.startTime = LocalDateTime.now();
         this.currentQuestionStartTime = this.startTime;
-        startNextQuestion();
+
+        // 첫 번째 문제로 이동 (인덱스가 0이 됨)
+        Question firstQuestion = startNextQuestion();
+
+        // 로그 추가
+        log.info("배틀 시작됨: roomId={}, 첫 문제 인덱스={}", this.getId(), currentQuestionIndex);
     }
 
     public Question startNextQuestion() {
@@ -181,21 +188,24 @@ public class BattleRoom {
 
         List<Question> questions = getQuestions();
 
-        log.info("startNextQuestion 호출 - 현재 인덱스: {}, 문제 목록 크기: {}", currentQuestionIndex, questions.size());
+        // 현재 인덱스 로깅
+        log.info("startNextQuestion 호출 - 시작: roomId={}, 현재 인덱스={}, 문제 목록 크기={}",
+                this.getId(), currentQuestionIndex, questions.size());
 
-        // 먼저 다음 문제가 존재하는지 확인
+        // 다음 문제가 존재하는지 확인
         if (currentQuestionIndex + 1 >= questions.size()) {
-            log.info("더 이상 문제가 없습니다. 게임 종료");
+            log.info("더 이상 문제가 없습니다. 게임 종료: roomId={}", this.getId());
             return null;
         }
 
-        // 인덱스 증가
+        // 인덱스 증가 (중요: 이 부분이 문제였을 수 있음)
         currentQuestionIndex++;
         log.info("인덱스 증가: {} -> {}", currentQuestionIndex - 1, currentQuestionIndex);
 
         // 새 인덱스로 문제 가져오기
         Question nextQuestion = questions.get(currentQuestionIndex);
-        log.info("다음 문제 선택: 인덱스={}, ID={}", currentQuestionIndex, nextQuestion.getId());
+        log.info("다음 문제 선택: roomId={}, 인덱스={}, ID={}",
+                this.getId(), currentQuestionIndex, nextQuestion.getId());
 
         // 문제 시작 시간 업데이트
         this.currentQuestionStartTime = LocalDateTime.now();
@@ -258,26 +268,28 @@ public class BattleRoom {
             return false;
         }
 
-        // 마지막 문제인 경우 특별 처리 추가
+        // 마지막 문제인 경우 특별 처리 개선
         boolean isLastQuestion = currentQuestionIndex >= getQuestions().size() - 1;
         if (isLastQuestion) {
             log.info("마지막 문제 참가자 답변 여부 확인: roomId={}, 현재인덱스={}", this.getId(), currentQuestionIndex);
 
-            // 마지막 문제니까 질문 인덱스는 마지막 인덱스(size-1)가 됨
-            int questionIndex = getQuestions().size() - 1;
+            // 마지막 문제 ID 가져오기
+            Long lastQuestionId = getQuestions().get(getQuestions().size() - 1).getId();
 
+            // 각 참가자가 마지막 문제 ID에 대한 답변이 있는지 확인
             boolean result = participants.stream()
                     .filter(BattleParticipant::isActive)
-                    .allMatch(p -> p.hasAnsweredCurrentQuestion(questionIndex));
+                    .allMatch(p -> p.getAnswers().stream()
+                            .anyMatch(a -> a.getQuestion().getId().equals(lastQuestionId)));
 
             log.info("마지막 문제 참가자 답변 여부 결과: roomId={}, 결과={}", this.getId(), result);
             return result;
         }
 
-        // 일반 문제의 경우 원래 로직 유지
+        // 일반 문제의 경우 - 중요: > 에서 >= 로 변경했습니다
         boolean result = participants.stream()
                 .filter(BattleParticipant::isActive)
-                .allMatch(p -> p.getAnswers().size() >= currentQuestionIndex);
+                .allMatch(p -> p.getAnswers().size() >= currentQuestionIndex + 1);
 
         log.info("모든 참가자 답변 여부: 결과={}, 현재문제인덱스={}, 참가자수={}, 답변상태={}",
                 result, currentQuestionIndex, activeParticipants,

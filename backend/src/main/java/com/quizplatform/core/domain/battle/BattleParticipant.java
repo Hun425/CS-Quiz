@@ -2,10 +2,10 @@ package com.quizplatform.core.domain.battle;
 
 import com.quizplatform.core.domain.question.Question;
 import com.quizplatform.core.domain.user.User;
-
 import com.quizplatform.core.exception.BusinessException;
 import com.quizplatform.core.exception.ErrorCode;
 import jakarta.persistence.*;
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -178,47 +178,6 @@ public class BattleParticipant {
         return answers.size() > battleRoom.getCurrentQuestionIndex();
     }
 
-    public boolean hasAnsweredCurrentQuestion(int questionIndex) {
-        // 일시적 해결책: 마지막 문제(전체 문제 수 - 1)와 첫 문제(0) 구분
-        int totalQuestions = battleRoom.getQuiz().getQuestions().size();
-
-        // 문제 번호 로그 개선 (0-based 인덱스 -> 1-based 문제 번호)
-        int questionNumber = questionIndex + 1;
-
-        log.info("답변 여부 확인: userId={}, 문제번호={}/{}, 인덱스={}, 답변수={}",
-                user.getId(), questionNumber, totalQuestions, questionIndex, answers.size());
-
-        // 배틀이 완료되고 새로 시작한 경우 (첫 문제인데 답변이 이미 많은 경우)
-        if (questionIndex == 0 && answers.size() >= totalQuestions) {
-            log.info("새 게임 시작 감지: userId={}, 기존 답변수={}, 전체문제수={}",
-                    user.getId(), answers.size(), totalQuestions);
-
-            // 기존 답변 목록 초기화 (선택적)
-            // answers.clear();
-
-            return false; // 새 게임이므로 답변 허용
-        }
-
-        // 일반적인 경우: 답변 여부 확인
-        boolean result = false;
-
-        // 인덱스 오류 방지를 위한 안전 확인
-        if (questionIndex >= 0 && questionIndex < answers.size()) {
-            // 특정 인덱스 위치에 답변이 있는지 구체적으로 확인
-            // (이 방식은 답변이 순서대로 저장되어 있다고 가정합니다)
-            result = true;
-            log.info("이미 답변한 문제 확인: userId={}, 문제번호={}, 인덱스={}, 답변ID={}",
-                    user.getId(), questionNumber, questionIndex, answers.get(questionIndex).getId());
-        } else {
-            // 일반적인 체크: 답변 수가 인덱스보다 많으면 이미 답변한 것
-            result = answers.size() > questionIndex;
-            log.info("답변 여부 결과: 인덱스={}, 답변수={}, 결과={}",
-                    questionIndex, answers.size(), result);
-        }
-
-        return result;
-    }
-
     public int getCorrectAnswersCount() {
         return (int) answers.stream()
                 .filter(BattleAnswer::isCorrect)
@@ -279,5 +238,64 @@ public class BattleParticipant {
     public boolean hasAllCorrectAnswers() {
         // 참가자의 답변이 존재하고 모두 정답이면 true 반환
         return !answers.isEmpty() && answers.stream().allMatch(BattleAnswer::isCorrect);
+    }
+
+    /**
+     * 현재 참가자가 특정 인덱스의 문제에 답변했는지 안전하게 확인합니다.
+     * 이 메서드는 LazyInitializationException을 방지합니다.
+     */
+    @Transactional
+    public boolean hasAnsweredCurrentQuestion(int questionIndex) {
+        try {
+            // 문제 번호 로그 (0-based 인덱스 -> 1-based 문제 번호)
+            int questionNumber = questionIndex + 1;
+            int totalQuestions = battleRoom.getQuiz().getQuestions().size();
+
+            log.info("답변 여부 확인: userId={}, 문제번호={}/{}, 인덱스={}",
+                    user.getId(), questionNumber, totalQuestions, questionIndex);
+
+            // 마지막 문제인지 확인
+            boolean isLastQuestion = questionIndex == totalQuestions - 1;
+
+            // 중요: 안전하게 answers 컬렉션 크기 접근
+            int answersCount = getAnswersCount();
+            log.info("답변 수: userId={}, 답변수={}", user.getId(), answersCount);
+
+            // 배틀이 완료되고 새로 시작한 경우 (첫 문제인데 답변이 이미 많은 경우)
+            if (questionIndex == 0 && answersCount >= totalQuestions) {
+                log.info("새 게임 시작 감지: userId={}, 기존 답변수={}, 전체문제수={}",
+                        user.getId(), answersCount, totalQuestions);
+                return false; // 새 게임이므로 답변 허용
+            }
+
+            // 마지막 문제에 대한 특별 처리
+            if (isLastQuestion) {
+                // 로직은 유지하되, 명시적으로 컬렉션 접근 없이 인덱스 기반으로 처리
+                return questionIndex < answersCount;
+            }
+
+            // 일반적인 경우: 요구되는 답변 수 비교 (인덱스+1)과 비교
+            boolean result = answersCount >= questionIndex + 1;
+            log.info("답변 여부 결과: 인덱스={}, 답변수={}, 필요답변수={}, 결과={}",
+                    questionIndex, answersCount, questionIndex + 1, result);
+
+            return result;
+        } catch (Exception e) {
+            log.error("답변 확인 중 오류: {}", e.getMessage());
+            // 기본값은 안전하게 false 반환 (아직 답변 안함)
+            return false;
+        }
+    }
+
+    /**
+     * 안전하게 answers 컬렉션의 크기를 반환합니다.
+     */
+    private int getAnswersCount() {
+        try {
+            return answers.size();
+        } catch (Exception e) {
+            log.warn("answers 컬렉션 접근 오류: {}", e.getMessage());
+            return 0;
+        }
     }
 }
