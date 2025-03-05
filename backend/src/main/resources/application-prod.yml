@@ -23,7 +23,7 @@ spring:
   # JPA 설정
   jpa:
     hibernate:
-      ddl-auto: validate  # 검증만 수행
+      ddl-auto: update  # 검증만 수행
     show-sql: false
     properties:
       hibernate:
