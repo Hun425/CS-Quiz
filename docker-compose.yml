@@ -80,6 +80,8 @@ services:
     restart: always
     ports:
       - "8080:8080"
+
+    env_file: .env
     environment:
       # 프로필 설정 - 운영 환경(prod)으로 변경
       SPRING_PROFILES_ACTIVE: prod
@@ -94,7 +96,7 @@ services:
       KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
       OAUTH2_AUTHORIZED_REDIRECT_URI: http://13.125.187.28/api/oauth2/redirect
       # JWT 시크릿 키 설정
-      JWT_SECRET: ${JWT_SECRET:-your256bitlong32charactersecretkey}
+      JWT_SECRET: ${JWT_SECRET:AbCdEfGhIjKlMnOpQrStUvWxYz1234567890AbCdEfGhIjKlMnOpQrStUvWxYz}
     depends_on:
       postgres:
         condition: service_healthy

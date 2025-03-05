@@ -121,7 +121,7 @@ logging:
 
 # JWT 설정
 jwt:
-  secret: ${JWT_SECRET:your256bitlong32charactersecretkey}
+  secret: ${JWT_SECRET:AbCdEfGhIjKlMnOpQrStUvWxYz1234567890AbCdEfGhIjKlMnOpQrStUvWxYz}
   access-token-validity: 3600000  # 1시간
   refresh-token-validity: 1209600000  # 2주
 
