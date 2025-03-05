@@ -1,6 +1,5 @@
 package com.quizplatform.core.domain.battle;
 
-
 import com.quizplatform.core.domain.question.Question;
 import com.quizplatform.core.domain.quiz.Quiz;
 import com.quizplatform.core.domain.user.User;
@@ -93,46 +92,32 @@ public class BattleRoom {
      * 참가자의 답변 유효성 검증 개선
      */
     public boolean validateParticipantAnswer(BattleParticipant participant, Question question, int questionIndex) {
-        // 참가자가 이 방의 참가자인지 확인
         if (!this.participants.contains(participant)) {
             return false;
         }
-
-        // 게임이 진행 중인지 확인
         if (status != BattleRoomStatus.IN_PROGRESS) {
             return false;
         }
-
-        // 답변하려는 문제가 이전 문제인지 확인 (0번부터 currentQuestionIndex-1번까지가 가능)
         if (questionIndex < 0 || questionIndex >= currentQuestionIndex) {
             return false;
         }
-
-        // 이미 답변했는지 확인
         if (participant.hasAnsweredCurrentQuestion(questionIndex)) {
             return false;
         }
-
         return true;
     }
-
 
     // 참가자 추가 메서드
     public BattleParticipant addParticipant(User user) {
         validateParticipantAddition(user);
-
         BattleParticipant participant = BattleParticipant.builder()
                 .battleRoom(this)
                 .user(user)
                 .build();
-
         participants.add(participant);
-
-        // 참가자가 다 모였고 모두 준비 상태라면 게임 시작
         if (isReadyToStart()) {
             startBattle();
         }
-
         return participant;
     }
 
@@ -141,11 +126,9 @@ public class BattleRoom {
         if (status != BattleRoomStatus.WAITING) {
             throw new BusinessException(ErrorCode.BATTLE_ALREADY_STARTED);
         }
-
         if (isParticipantLimitReached()) {
             throw new BusinessException(ErrorCode.BATTLE_ROOM_FULL);
         }
-
         if (hasParticipant(user)) {
             throw new BusinessException(ErrorCode.ALREADY_PARTICIPATING);
         }
@@ -163,21 +146,14 @@ public class BattleRoom {
         if (status != BattleRoomStatus.WAITING) {
             throw new BusinessException(ErrorCode.BATTLE_ALREADY_STARTED);
         }
-
         if (!isReadyToStart()) {
             throw new BusinessException(ErrorCode.NOT_READY_TO_START);
         }
-
-        // 중요: 인덱스를 -1로 명확하게 초기화 (첫 startNextQuestion 호출 시 0이 됨)
-        this.currentQuestionIndex = -1;
+        this.currentQuestionIndex = -1; // 인덱스 초기화
         this.status = BattleRoomStatus.IN_PROGRESS;
         this.startTime = LocalDateTime.now();
         this.currentQuestionStartTime = this.startTime;
-
-        // 첫 번째 문제로 이동 (인덱스가 0이 됨)
         Question firstQuestion = startNextQuestion();
-
-        // 로그 추가
         log.info("배틀 시작됨: roomId={}, 첫 문제 인덱스={}", this.getId(), currentQuestionIndex);
     }
 
@@ -185,31 +161,19 @@ public class BattleRoom {
         if (status != BattleRoomStatus.IN_PROGRESS) {
             throw new BusinessException(ErrorCode.BATTLE_NOT_IN_PROGRESS);
         }
-
         List<Question> questions = getQuestions();
-
-        // 현재 인덱스 로깅
         log.info("startNextQuestion 호출 - 시작: roomId={}, 현재 인덱스={}, 문제 목록 크기={}",
                 this.getId(), currentQuestionIndex, questions.size());
-
-        // 다음 문제가 존재하는지 확인
         if (currentQuestionIndex + 1 >= questions.size()) {
             log.info("더 이상 문제가 없습니다. 게임 종료: roomId={}", this.getId());
             return null;
         }
-
-        // 인덱스 증가 (중요: 이 부분이 문제였을 수 있음)
         currentQuestionIndex++;
         log.info("인덱스 증가: {} -> {}", currentQuestionIndex - 1, currentQuestionIndex);
-
-        // 새 인덱스로 문제 가져오기
         Question nextQuestion = questions.get(currentQuestionIndex);
         log.info("다음 문제 선택: roomId={}, 인덱스={}, ID={}",
                 this.getId(), currentQuestionIndex, nextQuestion.getId());
-
-        // 문제 시작 시간 업데이트
         this.currentQuestionStartTime = LocalDateTime.now();
-
         return nextQuestion;
     }
 
@@ -218,14 +182,11 @@ public class BattleRoom {
         if (status != BattleRoomStatus.IN_PROGRESS || currentQuestionStartTime == null) {
             return Duration.ZERO;
         }
-
         Question currentQuestion = getCurrentQuestion();
         if (currentQuestion == null) {
             return Duration.ZERO;
         }
-
-        LocalDateTime deadline = currentQuestionStartTime
-                .plusSeconds(currentQuestion.getTimeLimitSeconds());
+        LocalDateTime deadline = currentQuestionStartTime.plusSeconds(currentQuestion.getTimeLimitSeconds());
         return Duration.between(LocalDateTime.now(), deadline);
     }
 
@@ -234,7 +195,6 @@ public class BattleRoom {
         if (status != BattleRoomStatus.IN_PROGRESS || currentQuestionStartTime == null) {
             return true;
         }
-
         Question currentQuestion = getCurrentQuestion();
         return currentQuestion != null &&
                 currentQuestion.isTimeExpired(currentQuestionStartTime);
@@ -242,62 +202,43 @@ public class BattleRoom {
 
     /**
      * 모든 참가자의 답변 완료 여부 확인
-     * 현재 문제(아직 인덱스가 증가하지 않은)에 대한 답변 확인 로직 수정
      */
     public boolean allParticipantsAnswered() {
         if (status != BattleRoomStatus.IN_PROGRESS) {
             return false;
         }
-
-        // 문제가 진행되지 않은 경우
         if (currentQuestionIndex < 0) {
             return false;
         }
-
-        // 참가자 수가 0인 경우 체크
         if (participants.isEmpty()) {
             return false;
         }
-
-        // 활성 참가자만 고려
         long activeParticipants = participants.stream()
                 .filter(BattleParticipant::isActive)
                 .count();
-
         if (activeParticipants == 0) {
             return false;
         }
-
-        // 마지막 문제인 경우 특별 처리 개선
         boolean isLastQuestion = currentQuestionIndex >= getQuestions().size() - 1;
         if (isLastQuestion) {
             log.info("마지막 문제 참가자 답변 여부 확인: roomId={}, 현재인덱스={}", this.getId(), currentQuestionIndex);
-
-            // 마지막 문제 ID 가져오기
             Long lastQuestionId = getQuestions().get(getQuestions().size() - 1).getId();
-
-            // 각 참가자가 마지막 문제 ID에 대한 답변이 있는지 확인
             boolean result = participants.stream()
                     .filter(BattleParticipant::isActive)
                     .allMatch(p -> p.getAnswers().stream()
                             .anyMatch(a -> a.getQuestion().getId().equals(lastQuestionId)));
-
             log.info("마지막 문제 참가자 답변 여부 결과: roomId={}, 결과={}", this.getId(), result);
             return result;
         }
-
-        // 일반 문제의 경우 - 중요: > 에서 >= 로 변경했습니다
         boolean result = participants.stream()
                 .filter(BattleParticipant::isActive)
                 .allMatch(p -> p.getAnswers().size() >= currentQuestionIndex + 1);
-
         log.info("모든 참가자 답변 여부: 결과={}, 현재문제인덱스={}, 참가자수={}, 답변상태={}",
                 result, currentQuestionIndex, activeParticipants,
                 participants.stream()
                         .filter(BattleParticipant::isActive)
                         .map(p -> p.getUser().getId() + ":" + p.getAnswers().size())
                         .collect(Collectors.joining(", ")));
-
         return result;
     }
 
@@ -306,11 +247,8 @@ public class BattleRoom {
         if (status != BattleRoomStatus.IN_PROGRESS) {
             throw new BusinessException(ErrorCode.BATTLE_NOT_IN_PROGRESS);
         }
-
         this.status = BattleRoomStatus.FINISHED;
         this.endTime = LocalDateTime.now();
-
-        // 승자 결정 및 보상 처리
         determineWinnerAndRewards();
     }
 
@@ -319,28 +257,20 @@ public class BattleRoom {
         BattleParticipant winner = participants.stream()
                 .max(Comparator.comparingInt(BattleParticipant::getCurrentScore))
                 .orElseThrow(() -> new BusinessException(ErrorCode.NO_PARTICIPANTS));
-
-        // 승자에게 추가 보상 점수 부여
         int bonusPoints = calculateWinnerBonus(winner);
         winner.addBonusPoints(bonusPoints);
     }
 
     // 승자 보너스 점수 계산
     private int calculateWinnerBonus(BattleParticipant winner) {
-        // 기본 승리 보너스
         int bonus = 50;
-
-        // 완벽한 승리 보너스 (모든 문제 정답)
         if (winner.hasAllCorrectAnswers()) {
             bonus += 30;
         }
-
-        // 빠른 답변 보너스
         Duration avgAnswerTime = winner.getAverageAnswerTime();
         if (avgAnswerTime.getSeconds() < 30) {
             bonus += 20;
         }
-
         return bonus;
     }
 
@@ -374,19 +304,19 @@ public class BattleRoom {
                 ));
     }
 
-    // 특정 인덱스의 문제 시작 시간 계산
+    /**
+     * 특정 인덱스의 문제 시작 시간 계산
+     */
     public LocalDateTime getQuestionStartTimeForIndex(int questionIndex) {
-        if (questionIndex < 0 || questionIndex >= quiz.getQuestions().size()) {
+        List<Question> questionsList = getQuestions();
+        if (questionIndex < 0 || questionIndex >= questionsList.size()) {
             throw new BusinessException(ErrorCode.INVALID_QUESTION_SEQUENCE);
         }
-
         LocalDateTime baseTime = startTime;
-        // 해당 문제 이전까지의 모든 문제의 시간 제한을 합산
         for (int i = 0; i < questionIndex; i++) {
-            Question question = quiz.getQuestions().get(i);
+            Question question = questionsList.get(i);
             baseTime = baseTime.plusSeconds(question.getTimeLimitSeconds());
         }
-
         return baseTime;
     }
 
@@ -395,130 +325,62 @@ public class BattleRoom {
         if (quiz == null) {
             throw new BusinessException(ErrorCode.INVALID_BATTLE_SETTINGS, "퀴즈가 설정되지 않았습니다.");
         }
-
         if (maxParticipants < MIN_PARTICIPANTS) {
             throw new BusinessException(ErrorCode.INVALID_PARTICIPANT_COUNT,
                     String.format("최소 %d명의 참가자가 필요합니다.", MIN_PARTICIPANTS));
         }
-
-        if (quiz.getQuestions().isEmpty()) {
+        if (quiz.getQuestions().isEmpty()) {  // Set이므로 isEmpty() 그대로 사용 가능
             throw new BusinessException(ErrorCode.INVALID_BATTLE_SETTINGS, "퀴즈에 문제가 없습니다.");
         }
     }
 
-        /**
-         * 현재 진행 중인 문제를 반환합니다.
-         * 이 메서드는 다음과 같은 경우들을 처리합니다:
-         * 1. 배틀이 시작되지 않은 경우
-         * 2. 모든 문제가 끝난 경우
-         * 3. 정상적으로 진행 중인 경우
-         *
-         * @return 현재 문제 객체, 또는 해당되는 문제가 없는 경우 null
-         * @throws BusinessException 배틀룸의 상태가 유효하지 않은 경우
-         */
     /**
-     * 현재 문제 검색 메서드 개선
-     * 안전하게 현재 문제를 반환
+     * 현재 진행 중인 문제를 반환합니다.
      */
     public Question getCurrentQuestion() {
-        // 배틀이 진행 중이 아닌 경우
         if (status != BattleRoomStatus.IN_PROGRESS) {
             return null;
         }
-
-        // 퀴즈가 없는 경우 체크
         if (quiz == null || quiz.getQuestions() == null) {
             throw new BusinessException(ErrorCode.INVALID_BATTLE_SETTINGS, "퀴즈가 설정되지 않았습니다.");
         }
-
-        List<Question> questions = quiz.getQuestions();
-
-        // 인덱스가 범위를 벗어나는지 확인
+        List<Question> questions = getQuestions();
         if (currentQuestionIndex < 0) {
             throw new BusinessException(ErrorCode.INVALID_QUESTION_SEQUENCE, "잘못된 문제 순서입니다: " + currentQuestionIndex);
         }
-
-        // 모든 문제를 이미 다 풀었는지 확인
         if (currentQuestionIndex >= questions.size()) {
             return null;
         }
-
         return questions.get(currentQuestionIndex);
     }
 
-        /**
-         * 특정 인덱스의 문제를 반환합니다.
-         * 이 메서드는 주로 이전 문제를 참조하거나 다음 문제를 미리 확인할 때 사용됩니다.
-         *
-         * @param index 조회할 문제의 인덱스
-         * @return 해당 인덱스의 문제 객체
-         * @throws BusinessException 유효하지 않은 인덱스인 경우
-         */
-        public Question getQuestionByIndex(int index) {
-            if (quiz == null || quiz.getQuestions() == null) {
-                throw new BusinessException(ErrorCode.INVALID_BATTLE_SETTINGS, "퀴즈가 설정되지 않았습니다.");
-            }
-
-            List<Question> questions = quiz.getQuestions();
-
-            if (index < 0 || index >= questions.size()) {
-                throw new BusinessException(ErrorCode.INVALID_QUESTION_SEQUENCE,
-                        String.format("잘못된 문제 인덱스입니다: %d, 전체 문제 수: %d", index, questions.size()));
-            }
-
-            return questions.get(index);
+    /**
+     * 특정 인덱스의 문제를 반환합니다.
+     */
+    public Question getQuestionByIndex(int index) {
+        if (quiz == null || quiz.getQuestions() == null) {
+            throw new BusinessException(ErrorCode.INVALID_BATTLE_SETTINGS, "퀴즈가 설정되지 않았습니다.");
         }
-
-        /**
-         * 다음 문제가 있는지 확인합니다.
-         *
-         * @return 다음 문제 존재 여부
-         */
-        public boolean hasNextQuestion() {
-            return quiz != null &&
-                    quiz.getQuestions() != null &&
-                    currentQuestionIndex < quiz.getQuestions().size() - 1;
+        List<Question> questions = getQuestions();
+        if (index < 0 || index >= questions.size()) {
+            throw new BusinessException(ErrorCode.INVALID_QUESTION_SEQUENCE,
+                    String.format("잘못된 문제 인덱스입니다: %d, 전체 문제 수: %d", index, questions.size()));
         }
-
-        /**
-         * 이전 문제가 있는지 확인합니다.
-         *
-         * @return 이전 문제 존재 여부
-         */
-        public boolean hasPreviousQuestion() {
-            return currentQuestionIndex > 0;
-        }
-
-        /**
-         * 현재 문제의 시간 제한을 반환합니다.
-         *
-         * @return 현재 문제의 시간 제한 (초 단위)
-         * @throws BusinessException 현재 문제를 찾을 수 없는 경우
-         */
-        public int getCurrentQuestionTimeLimit() {
-            Question currentQuestion = getCurrentQuestion();
-            if (currentQuestion == null) {
-                throw new BusinessException(ErrorCode.INVALID_QUESTION_SEQUENCE, "현재 진행 중인 문제가 없습니다.");
-            }
-            return currentQuestion.getTimeLimitSeconds();
-        }
+        return questions.get(index);
+    }
 
     /**
-     * 이미 풀었던 특정 인덱스의 문제 조회
-     * 중요: currentQuestionIndex는 다음에 풀 문제의 인덱스를 가리킴
+     * 이전 문제를 반환합니다.
      */
     public Question getPreviousQuestion(int completedIndex) {
         if (quiz == null || quiz.getQuestions() == null) {
             throw new BusinessException(ErrorCode.INVALID_BATTLE_SETTINGS, "퀴즈가 설정되지 않았습니다.");
         }
-
-        List<Question> questions = quiz.getQuestions();
-
+        List<Question> questions = getQuestions();
         if (completedIndex < 0 || completedIndex >= questions.size()) {
             throw new BusinessException(ErrorCode.INVALID_QUESTION_SEQUENCE,
                     String.format("잘못된 문제 인덱스입니다: %d, 전체 문제 수: %d", completedIndex, questions.size()));
         }
-
         return questions.get(completedIndex);
     }
 
@@ -526,9 +388,8 @@ public class BattleRoom {
      * 현재 문제가 마지막 문제인지 확인합니다.
      */
     public boolean isLastQuestion() {
-        return currentQuestionIndex == quiz.getQuestions().size() - 1;
+        return currentQuestionIndex == getQuestions().size() - 1;
     }
-
 
     /**
      * 남은 시간(초)을 계산합니다.
@@ -537,27 +398,24 @@ public class BattleRoom {
         if (status != BattleRoomStatus.IN_PROGRESS || currentQuestionStartTime == null) {
             return 0;
         }
-
         Question currentQuestion = getCurrentQuestion();
         if (currentQuestion == null) {
             return 0;
         }
-
-        long remainingSeconds = java.time.Duration.between(
+        long remainingSeconds = Duration.between(
                 LocalDateTime.now(),
                 currentQuestionStartTime.plusSeconds(currentQuestion.getTimeLimitSeconds())
         ).getSeconds();
-
         return (int) Math.max(0, remainingSeconds);
     }
 
     /**
      * 모든 문제 목록을 반환합니다.
+     * 기존에는 List로 반환했으나, Quiz의 questions가 Set이므로 List로 변환합니다.
      */
     public List<Question> getQuestions() {
-        return quiz.getQuestions();
+        return new ArrayList<>(quiz.getQuestions());
     }
-
 
     /**
      * 총 소요 시간(초)을 계산합니다.
@@ -567,12 +425,11 @@ public class BattleRoom {
             return 0;
         }
         LocalDateTime endDateTime = endTime != null ? endTime : LocalDateTime.now();
-        return (int) java.time.Duration.between(startTime, endDateTime).getSeconds();
+        return (int) Duration.between(startTime, endDateTime).getSeconds();
     }
 
     /**
      * 부분 Setter 구현
-     * @param status
      */
     public void setStatus(BattleRoomStatus status) {
         this.status = status;
@@ -580,5 +437,13 @@ public class BattleRoom {
 
     public void setQuiz(Quiz quiz){
         this.quiz = quiz;
+    }
+
+    public int getCurrentQuestionTimeLimit() {
+        Question currentQuestion = getCurrentQuestion();
+        if (currentQuestion == null) {
+            throw new BusinessException(ErrorCode.INVALID_QUESTION_SEQUENCE, "현재 진행 중인 문제가 없습니다.");
+        }
+        return currentQuestion.getTimeLimitSeconds();
     }
 }

@@ -40,7 +40,7 @@ public class QQuiz extends EntityPathBase<Quiz> {
 
     public final NumberPath<Integer> questionCount = createNumber("questionCount", Integer.class);
 
-    public final ListPath<com.quizplatform.core.domain.question.Question, com.quizplatform.core.domain.question.QQuestion> questions = this.<com.quizplatform.core.domain.question.Question, com.quizplatform.core.domain.question.QQuestion>createList("questions", com.quizplatform.core.domain.question.Question.class, com.quizplatform.core.domain.question.QQuestion.class, PathInits.DIRECT2);
+    public final SetPath<com.quizplatform.core.domain.question.Question, com.quizplatform.core.domain.question.QQuestion> questions = this.<com.quizplatform.core.domain.question.Question, com.quizplatform.core.domain.question.QQuestion>createSet("questions", com.quizplatform.core.domain.question.Question.class, com.quizplatform.core.domain.question.QQuestion.class, PathInits.DIRECT2);
 
     public final EnumPath<QuizType> quizType = createEnum("quizType", QuizType.class);
 

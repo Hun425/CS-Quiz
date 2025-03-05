@@ -52,7 +52,7 @@ public class BattleService {
      */
     public BattleRoomResponse createBattleRoom(User creator, Long quizId, Integer maxParticipants) {
         // 퀴즈 조회 (with FETCH JOIN)
-        Quiz quiz = quizRepository.findByIdWithAllDetails(quizId)
+        Quiz quiz = quizRepository.findByIdWithDetails(quizId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND, "퀴즈를 찾을 수 없습니다."));
 
         // 대결방 생성
@@ -249,14 +249,13 @@ public class BattleService {
             throw new BusinessException(ErrorCode.BATTLE_NOT_IN_PROGRESS);
         }
 
-        // 현재 진행 중인 문제 정보 확인
-        int currentQuestionIndex = battleRoom.getCurrentQuestionIndex();
-
+        // 문제를 찾기
+        List<Question> questions = battleRoom.getQuestions();
         Question targetQuestion = null;
         int questionIndex = -1;
 
-        for (int i = 0; i < battleRoom.getQuestions().size(); i++) {
-            Question q = battleRoom.getQuestions().get(i);
+        for (int i = 0; i < questions.size(); i++) {
+            Question q = questions.get(i);
             if (q.getId().equals(request.getQuestionId())) {
                 targetQuestion = q;
                 questionIndex = i;
@@ -272,30 +271,32 @@ public class BattleService {
                 request.getRoomId(), questionIndex + 1, battleRoom.getQuestions().size(),
                 questionIndex, battleRoom.getCurrentQuestionIndex(), participant.getUser().getId());
 
-        // 게임이 끝나고 다시 시작한 경우 (첫 문제인데 currentQuestionIndex가 0로 리셋된 경우)
-        boolean isNewGame = battleRoom.getCurrentQuestionIndex() == 0 && questionIndex == 0;
+        // 현재 진행중인 문제와 요청한 문제 ID가 일치하는지 확인
+        // 이 부분을 수정하여 인덱스가 아닌 문제 ID로 검증
+        boolean isCurrentQuestion = false;
+        Question currentQuestion = battleRoom.getCurrentQuestion();
 
-        // 마지막 문제인지 확인 (중요: 이 부분이 추가되었습니다)
-        boolean isLastQuestion = questionIndex == battleRoom.getQuestions().size() - 1;
+        if (currentQuestion != null && currentQuestion.getId().equals(request.getQuestionId())) {
+            isCurrentQuestion = true;
+        }
 
-        // 이미 답변한 문제인지 확인 - 새 게임이거나 마지막 문제의 경우 특별 처리
-        if (!isNewGame && !isLastQuestion && participant.hasAnsweredCurrentQuestion(questionIndex)) {
+        // 현재 진행 중인 문제가 아니라면 답변할 수 없음
+        if (!isCurrentQuestion) {
+            throw new BusinessException(ErrorCode.INVALID_QUESTION_SEQUENCE,
+                    String.format("현재 진행 중인 문제가 아닙니다. 요청ID: %d, 현재ID: %d",
+                            request.getQuestionId(),
+                            currentQuestion != null ? currentQuestion.getId() : -1)
+            );
+        }
+
+        // 이미 답변한 문제인지 확인 - ID 기반으로 검사
+        boolean alreadyAnswered = participant.getAnswers().stream()
+                .anyMatch(a -> a.getQuestion().getId().equals(request.getQuestionId()));
+
+        if (alreadyAnswered) {
             log.warn("이미 답변한 문제: roomId={}, questionId={}, userId={}, 인덱스={}",
                     request.getRoomId(), request.getQuestionId(), participant.getUser().getId(), questionIndex);
             throw new BusinessException(ErrorCode.ANSWER_ALREADY_SUBMITTED, "이미 답변을 제출했습니다.");
-        }
-
-        // 마지막 문제인 경우 중복 제출 체크를 조금 더 정확하게 함 (중요: 추가된 부분)
-        if (isLastQuestion) {
-            Question finalTargetQuestion = targetQuestion;
-            boolean alreadyAnswered = participant.getAnswers().stream()
-                    .anyMatch(a -> a.getQuestion().getId().equals(finalTargetQuestion.getId()));
-
-            if (alreadyAnswered) {
-                log.warn("마지막 문제 중복 제출: roomId={}, questionId={}, userId={}",
-                        request.getRoomId(), request.getQuestionId(), participant.getUser().getId());
-                throw new BusinessException(ErrorCode.ANSWER_ALREADY_SUBMITTED, "이미 답변을 제출했습니다.");
-            }
         }
 
         // 참가자 엔티티 다시 로드하여 최신 상태 확보

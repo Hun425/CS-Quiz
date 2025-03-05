@@ -320,7 +320,9 @@ const BattleRoomPage: React.FC = () => {
         setResult(data);
 
         // 결과 페이지로 상태와 함께 리다이렉트
-        navigate(`/battles/${roomId}/results`, { state: { result: data } });
+        setTimeout(() => {
+            navigate(`/battles/${roomId}/results`, { state: { result: data } });
+        }, 1000); // 1초 지연 추가
     };
 
     // 답변 결과 이벤트 핸들러

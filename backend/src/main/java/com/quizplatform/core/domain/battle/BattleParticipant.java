@@ -85,6 +85,103 @@ public class BattleParticipant {
         validateParticipant(battleRoom, user);
     }
 
+    /**
+     * 현재 참가자가 특정 질문에 답변했는지 확인합니다.
+     * 이 메서드는 인덱스가 아닌 질문 ID를 기반으로 체크합니다.
+     *
+     * @param questionId 확인할 질문의 ID
+     * @return 해당 질문에 답변했으면 true, 아니면 false
+     */
+    @Transactional
+    public boolean hasAnsweredQuestion(Long questionId) {
+        try {
+            log.info("질문 ID로 답변 여부 확인: userId={}, questionId={}",
+                    user.getId(), questionId);
+
+            if (questionId == null) {
+                return false;
+            }
+
+            // 안전하게 answers 컬렉션에 접근
+            int answersCount = getAnswersCount();
+            log.info("답변 수: userId={}, 답변수={}", user.getId(), answersCount);
+
+            if (answersCount == 0) {
+                return false;
+            }
+
+            // stream을 사용하여 해당 ID의 질문에 대한 답변이 있는지 확인
+            boolean hasAnswered = answers.stream()
+                    .anyMatch(answer -> answer.getQuestion().getId().equals(questionId));
+
+            log.info("질문 ID 기반 답변 여부 결과: questionId={}, 결과={}",
+                    questionId, hasAnswered);
+
+            return hasAnswered;
+        } catch (Exception e) {
+            log.error("답변 확인 중 오류: {}", e.getMessage());
+            // 기본값은 안전하게 false 반환 (아직 답변 안함)
+            return false;
+        }
+    }
+
+    /**
+     * 현재 참가자가 특정 인덱스의 문제에 답변했는지 안전하게 확인합니다.
+     * 이 메서드는 LazyInitializationException을 방지합니다.
+     *
+     * @param questionIndex 확인할 문제의 인덱스
+     * @return 해당 인덱스의 문제에 답변했으면 true, 아니면 false
+     */
+    @Transactional
+    public boolean hasAnsweredCurrentQuestion(int questionIndex) {
+        try {
+            // 문제 번호 로그 (0-based 인덱스 -> 1-based 문제 번호)
+            int questionNumber = questionIndex + 1;
+            int totalQuestions = battleRoom.getQuiz().getQuestions().size();
+
+            log.info("답변 여부 확인: userId={}, 문제번호={}/{}, 인덱스={}",
+                    user.getId(), questionNumber, totalQuestions, questionIndex);
+
+            // 마지막 문제인지 확인
+            boolean isLastQuestion = questionIndex == totalQuestions - 1;
+
+            // 중요: 안전하게 answers 컬렉션 크기 접근
+            int answersCount = getAnswersCount();
+            log.info("답변 수: userId={}, 답변수={}", user.getId(), answersCount);
+
+            // 배틀이 완료되고 새로 시작한 경우 (첫 문제인데 답변이 이미 많은 경우)
+            if (questionIndex == 0 && answersCount >= totalQuestions) {
+                log.info("새 게임 시작 감지: userId={}, 기존 답변수={}, 전체문제수={}",
+                        user.getId(), answersCount, totalQuestions);
+                return false; // 새 게임이므로 답변 허용
+            }
+
+            // 마지막 문제에 대한 특별 처리
+            if (isLastQuestion) {
+                // 로직은 유지하되, 명시적으로 컬렉션 접근 없이 인덱스 기반으로 처리
+                return questionIndex < answersCount;
+            }
+
+            // 일반적인 경우: 요구되는 답변 수 비교 (인덱스+1)과 비교
+            boolean result = answersCount >= questionIndex + 1;
+            log.info("답변 여부 결과: 인덱스={}, 답변수={}, 필요답변수={}, 결과={}",
+                    questionIndex, answersCount, questionIndex + 1, result);
+
+            return result;
+        } catch (Exception e) {
+            log.error("답변 확인 중 오류: {}", e.getMessage());
+            // 기본값은 안전하게 false 반환 (아직 답변 안함)
+            return false;
+        }
+    }
+
+    /**
+     * 현재 진행 중인 문제에 답변했는지 확인합니다.
+     */
+    public boolean hasAnsweredCurrentQuestion() {
+        return answers.size() > battleRoom.getCurrentQuestionIndex();
+    }
+
     private void validateParticipant(BattleRoom battleRoom, User user) {
         if (battleRoom == null) {
             throw new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND);
@@ -173,10 +270,6 @@ public class BattleParticipant {
         return 0;
     }
 
-    public boolean hasAnsweredCurrentQuestion() {
-
-        return answers.size() > battleRoom.getCurrentQuestionIndex();
-    }
 
     public int getCorrectAnswersCount() {
         return (int) answers.stream()
@@ -240,52 +333,6 @@ public class BattleParticipant {
         return !answers.isEmpty() && answers.stream().allMatch(BattleAnswer::isCorrect);
     }
 
-    /**
-     * 현재 참가자가 특정 인덱스의 문제에 답변했는지 안전하게 확인합니다.
-     * 이 메서드는 LazyInitializationException을 방지합니다.
-     */
-    @Transactional
-    public boolean hasAnsweredCurrentQuestion(int questionIndex) {
-        try {
-            // 문제 번호 로그 (0-based 인덱스 -> 1-based 문제 번호)
-            int questionNumber = questionIndex + 1;
-            int totalQuestions = battleRoom.getQuiz().getQuestions().size();
-
-            log.info("답변 여부 확인: userId={}, 문제번호={}/{}, 인덱스={}",
-                    user.getId(), questionNumber, totalQuestions, questionIndex);
-
-            // 마지막 문제인지 확인
-            boolean isLastQuestion = questionIndex == totalQuestions - 1;
-
-            // 중요: 안전하게 answers 컬렉션 크기 접근
-            int answersCount = getAnswersCount();
-            log.info("답변 수: userId={}, 답변수={}", user.getId(), answersCount);
-
-            // 배틀이 완료되고 새로 시작한 경우 (첫 문제인데 답변이 이미 많은 경우)
-            if (questionIndex == 0 && answersCount >= totalQuestions) {
-                log.info("새 게임 시작 감지: userId={}, 기존 답변수={}, 전체문제수={}",
-                        user.getId(), answersCount, totalQuestions);
-                return false; // 새 게임이므로 답변 허용
-            }
-
-            // 마지막 문제에 대한 특별 처리
-            if (isLastQuestion) {
-                // 로직은 유지하되, 명시적으로 컬렉션 접근 없이 인덱스 기반으로 처리
-                return questionIndex < answersCount;
-            }
-
-            // 일반적인 경우: 요구되는 답변 수 비교 (인덱스+1)과 비교
-            boolean result = answersCount >= questionIndex + 1;
-            log.info("답변 여부 결과: 인덱스={}, 답변수={}, 필요답변수={}, 결과={}",
-                    questionIndex, answersCount, questionIndex + 1, result);
-
-            return result;
-        } catch (Exception e) {
-            log.error("답변 확인 중 오류: {}", e.getMessage());
-            // 기본값은 안전하게 false 반환 (아직 답변 안함)
-            return false;
-        }
-    }
 
     /**
      * 안전하게 answers 컬렉션의 크기를 반환합니다.

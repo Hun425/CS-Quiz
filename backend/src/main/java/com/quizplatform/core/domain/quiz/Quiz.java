@@ -70,7 +70,8 @@ public class Quiz {
     @Fetch(FetchMode.SUBSELECT)
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @BatchSize(size = 30)
-    private List<Question> questions = new ArrayList<>();
+    @OrderBy("id ASC")
+    private Set<Question> questions = new LinkedHashSet<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "quiz_tags", joinColumns = @JoinColumn(name = "quiz_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))

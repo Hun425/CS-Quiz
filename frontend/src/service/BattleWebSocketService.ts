@@ -299,6 +299,7 @@ class BattleWebSocketService {
     }
 
     // 답변 제출
+    // 답변 제출
     submitAnswer(questionId: number, answer: string, timeSpentSeconds: number) {
         if (!this.client || !this.connected || !this.roomId) {
             console.error('[WebSocket] 답변 제출 실패: 연결이 설정되지 않았거나 roomId가 없습니다');
@@ -315,11 +316,17 @@ class BattleWebSocketService {
         try {
             console.log('[WebSocket] 답변 제출:', { questionId, answer, timeSpentSeconds });
 
+            // 문제 ID에 대한 유효성 검사 추가
+            if (!questionId) {
+                console.error('[WebSocket] 답변 제출 실패: 문제 ID가 없습니다');
+                return;
+            }
+
             this.client.publish({
                 destination: '/app/battle/answer',
                 body: JSON.stringify({
                     roomId: this.roomId,
-                    questionId: questionId,
+                    questionId: questionId,  // 문제 ID를 정확히 전달
                     answer: answer,
                     timeSpentSeconds: timeSpentSeconds
                 })
