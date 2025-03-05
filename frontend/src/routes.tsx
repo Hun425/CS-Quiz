@@ -44,6 +44,7 @@ const router = createBrowserRouter([
             },
             { path: 'login', element: <LoginPage /> },
             { path: 'api/oauth2/redirect', element: <OAuth2CallbackPage /> },
+            { path: 'oauth2/redirect', element: <OAuth2CallbackPage /> },
             {
                 path: 'profile',
                 element: (
