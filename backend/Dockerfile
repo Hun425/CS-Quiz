@@ -1,21 +1,21 @@
 FROM eclipse-temurin:17-jdk AS build
 WORKDIR /app
 
+# Gradle 설치
+RUN apt-get update && apt-get install -y gradle
+
 # 소스 코드 복사
 COPY . .
 
-# gradlew에 실행 권한 추가
-RUN chmod +x ./gradlew
-
-# Gradle 빌드
-RUN ./gradlew build -x test
+# Gradle 사용하여 빌드 (wrapper 대신 시스템 Gradle 사용)
+RUN gradle build -x test
 
 # 실행 환경
 FROM eclipse-temurin:17-jre
 WORKDIR /app
 
 # 빌드 단계에서 생성된 JAR 파일 복사
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/build/libs/*.jar app.jar
 
 # 헬스체크를 위한 curl 설치
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
