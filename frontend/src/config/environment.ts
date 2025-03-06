@@ -29,13 +29,11 @@ const devConfig: EnvironmentConfig = {
 
 // Production environment (EC2)
 const prodConfig: EnvironmentConfig = {
-    // Docker 내부에서 통신할 때는 backend 서비스명(컨테이너 이름)을 직접 사용
-    apiBaseUrl: 'http://backend:8080/api',
-    wsBaseUrl: 'http://backend:8080/ws-battle',
-    oauthRedirectBaseUrl: 'http://backend:8080/api/oauth2/authorize',
+    apiBaseUrl: '/api',  // 상대 경로 사용
+    wsBaseUrl: '/ws-battle',  // 상대 경로 사용
+    oauthRedirectBaseUrl: '/api/oauth2/authorize',  // 상대 경로 사용
     frontendBaseUrl: 'http://13.125.187.28'  // 외부에서 접근하는 주소
 };
-
 
 // Use production config when in production mode
 const isProduction = import.meta.env.PROD || window.location.hostname !== 'localhost';
