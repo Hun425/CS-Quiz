@@ -136,6 +136,9 @@ public class QuizService {
      * 주어진 조건에 맞는 퀴즈 목록을 검색합니다.
      */
     public Page<QuizSummaryResponse> searchQuizzesDto(QuizSearchCondition condition, Pageable pageable) {
+        // 조건 유효성 검사 추가
+        condition.validate();
+
         Page<Quiz> quizzes = quizRepository.search(condition, pageable);
         // 트랜잭션 내에서 DTO로 변환
         return quizzes.map(entityMapperService::mapToQuizSummaryResponse);

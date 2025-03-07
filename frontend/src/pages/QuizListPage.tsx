@@ -32,10 +32,12 @@ const QuizListPage: React.FC = () => {
         fetchQuizzes();
     }, []);
 
-    // 필터링 적용 시 퀴즈 다시 로드
+    // 페이지나 필터가 변경될 때 자동으로 데이터 로드
     useEffect(() => {
-        fetchQuizzes();
-    }, [page, size, selectedDifficulty, selectedQuizType, selectedTags]);
+        if (selectedDifficulty || selectedQuizType) {
+            fetchQuizzes();
+        }
+    }, [selectedDifficulty, selectedQuizType]);
 
     // 태그 데이터 가져오기
     const fetchTags = async () => {
@@ -63,16 +65,11 @@ const QuizListPage: React.FC = () => {
         }
     };
 
-    // 검색 버튼 클릭 시 호출되는 함수
-    const handleSearch = () => {
-        setPage(0); // 검색 시 첫 페이지로 리셋
-        fetchQuizzes();
-    };
-
     // 퀴즈 데이터 가져오기
     const fetchQuizzes = async () => {
         try {
             setLoading(true);
+            setError(null);
 
             // 검색 파라미터 구성
             const searchParams = {
@@ -82,26 +79,49 @@ const QuizListPage: React.FC = () => {
                 tagIds: selectedTags.length > 0 ? selectedTags : undefined
             };
 
+            console.log('검색 요청 파라미터:', searchParams);
+
+            console.log(`API 요청 - 태그 IDs: ${selectedTags.join(', ')}`);
             const response = await quizApi.searchQuizzes(searchParams, page, size);
 
             if (response.data.success) {
                 const pageData: PageResponse<QuizSummaryResponse> = response.data.data;
                 setQuizzes(pageData.content);
                 setTotalPages(pageData.totalPages);
+                console.log('퀴즈 데이터 로드 성공:', pageData);
+                console.log('불러온 퀴즈 제목:', pageData.content.map(quiz => quiz.title));
             } else {
                 setError('퀴즈 데이터를 불러오는 데 실패했습니다.');
+                console.error('API 응답 실패:', response.data.message);
             }
         } catch (err: any) {
             console.error('퀴즈 로딩 중 오류:', err);
-            setError('퀴즈 데이터를 불러오는 중 오류가 발생했습니다.');
+            setError('퀴즈 데이터를 불러오는 중 오류가 발생했습니다: ' + (err.message || '알 수 없는 오류'));
         } finally {
             setLoading(false);
         }
     };
 
+    // 검색 버튼 클릭 시 호출되는 함수
+    const handleSearch = () => {
+        setPage(0);  // 검색 시 첫 페이지로 리셋
+        fetchQuizzes();
+    };
+
     // 페이지 변경 핸들러
     const handlePageChange = (newPage: number) => {
         setPage(newPage);
+        fetchQuizzes();  // 페이지 변경 시 데이터 다시 불러오기
+    };
+
+    // 태그 선택 변경 핸들러
+    const handleTagChange = (tagIds: number[]) => {
+        setSelectedTags(tagIds);
+        setPage(0); // 페이지를 첫 페이지로 리셋
+        // 태그 변경 시 자동으로 검색 실행
+        setTimeout(() => {
+            fetchQuizzes();
+        }, 0);
     };
 
     return (
@@ -140,6 +160,7 @@ const QuizListPage: React.FC = () => {
                                 borderRadius: '4px',
                                 border: '1px solid #ccc'
                             }}
+                            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                         />
                     </div>
 
@@ -195,7 +216,7 @@ const QuizListPage: React.FC = () => {
                 <div style={{ marginBottom: '1rem' }}>
                     <TagSelector
                         selectedTagIds={selectedTags}
-                        onChange={setSelectedTags}
+                        onChange={handleTagChange}
                         label="태그로 필터링"
                     />
                 </div>
@@ -210,11 +231,19 @@ const QuizListPage: React.FC = () => {
                             <button
                                 key={tag.id}
                                 onClick={() => {
+                                    let newSelectedTags;
                                     if (selectedTags.includes(tag.id)) {
-                                        setSelectedTags(selectedTags.filter(id => id !== tag.id));
+                                        newSelectedTags = selectedTags.filter(id => id !== tag.id);
                                     } else {
-                                        setSelectedTags([...selectedTags, tag.id]);
+                                        newSelectedTags = [...selectedTags, tag.id];
                                     }
+                                    setSelectedTags(newSelectedTags);
+                                    setPage(0); // 페이지를 첫 페이지로 리셋
+
+                                    // 태그 변경 후 자동으로 검색 실행
+                                    setTimeout(() => {
+                                        fetchQuizzes();
+                                    }, 0);
                                 }}
                                 style={{
                                     padding: '0.3rem 0.6rem',

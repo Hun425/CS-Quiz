@@ -20,13 +20,24 @@ export const quizApi = {
         if (searchParams.title) params.append('title', searchParams.title);
         if (searchParams.difficultyLevel) params.append('difficultyLevel', searchParams.difficultyLevel);
         if (searchParams.quizType) params.append('quizType', searchParams.quizType);
+
+        // 태그 처리 방식 변경
         if (searchParams.tagIds && searchParams.tagIds.length > 0) {
-            searchParams.tagIds.forEach((tagId: number) => params.append('tagIds', tagId.toString()));
+            // 방법 1: 쉼표로 구분된 문자열로 변환
+            params.append('tagIds', searchParams.tagIds.join(','));
+
+            // 또는 방법 2: 여러 개의 tagIds 파라미터 사용 (현재 사용 중인 방식)
+            // searchParams.tagIds.forEach((tagId: number) => {
+            //     params.append('tagIds', tagId.toString());
+            // });
         }
 
         // 페이지네이션 파라미터
         params.append('page', page.toString());
         params.append('size', size.toString());
+
+        // 디버깅용 로그 추가
+        console.log('검색 파라미터:', Object.fromEntries(params.entries()));
 
         return api.get<CommonApiResponse<PageResponse<QuizSummaryResponse>>>(`/quizzes/search?${params.toString()}`);
     },

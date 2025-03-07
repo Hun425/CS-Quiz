@@ -1,7 +1,6 @@
 package com.quizplatform.core.controller.quiz;
 
 import com.quizplatform.core.config.security.UserPrincipal;
-import com.quizplatform.core.domain.quiz.Quiz;
 import com.quizplatform.core.dto.common.CommonApiResponse;
 import com.quizplatform.core.dto.common.PageResponse;
 import com.quizplatform.core.dto.quiz.*;
@@ -13,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +27,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Validated
 @Tag(name = "Quiz Controller", description = "퀴즈 관련 API를 제공합니다.")
+@Slf4j
 public class QuizController {
     private final QuizService quizService;
 
@@ -81,6 +82,11 @@ public class QuizController {
     public ResponseEntity<CommonApiResponse<PageResponse<QuizSummaryResponse>>> searchQuizzes(
             @ModelAttribute QuizSearchRequest request,
             Pageable pageable) {
+
+        // 디버깅 로그 추가
+        log.debug("받은 검색 요청: {}", request);
+        log.debug("태그 IDs: {}", request.getTagIds());
+
         Page<QuizSummaryResponse> quizzesDto = quizService.searchQuizzesDto(request.toCondition(), pageable);
         return ResponseEntity.ok(CommonApiResponse.success(PageResponse.of(quizzesDto)));
     }
