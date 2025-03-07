@@ -10,6 +10,7 @@ import com.quizplatform.core.domain.quiz.QQuiz;
 import com.quizplatform.core.domain.quiz.Quiz;
 import com.quizplatform.core.domain.tag.QTag;
 import com.quizplatform.core.domain.tag.Tag;
+import com.quizplatform.core.repository.tag.TagRepository;
 import com.quizplatform.core.service.quiz.QuizSearchCondition;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.util.StringUtils;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -26,6 +28,7 @@ import java.util.Set;
 @Slf4j
 public class CustomQuizRepositoryImpl implements CustomQuizRepository {
     private final JPAQueryFactory queryFactory;
+    private final TagRepository tagRepository;
 
     @Override
     public Page<Quiz> search(QuizSearchCondition condition, Pageable pageable) {
@@ -56,9 +59,11 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
             builder.and(quiz.quizType.eq(condition.getQuizType()));
         }
 
-        // 태그 필터
+        // 태그 필터 (계층 구조 고려하여 수정)
         if (condition.getTagIds() != null && !condition.getTagIds().isEmpty()) {
-            builder.and(quiz.tags.any().id.in(condition.getTagIds()));
+            // 선택된 태그와 그 하위 태그 모두 포함
+            Set<Long> expandedTagIds = expandTagIds(condition.getTagIds());
+            builder.and(quiz.tags.any().id.in(expandedTagIds));
         }
 
         // 문제 수 범위 필터
@@ -69,7 +74,7 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
             builder.and(quiz.questionCount.loe(condition.getMaxQuestions()));
         }
 
-        // 디버그 로깅 추가
+        // 디버깅 로깅 추가
         log.debug("검색 조건: {}", condition.toString());
         log.debug("생성된 쿼리 조건: {}", builder.toString());
 
@@ -100,7 +105,37 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
         return new PageImpl<>(content, pageable, total);
     }
 
+    private Set<Long> expandTagIds(List<Long> tagIds) {
+        Set<Long> expandedIds = new HashSet<>(tagIds);
 
+        // 각 태그 ID에 대해 하위 태그 추가
+        for (Long tagId : tagIds) {
+            // 직접 쿼리로 하위 태그 조회
+            List<Tag> childTags = tagRepository.findByParentId(tagId);
+            for (Tag childTag : childTags) {
+                expandedIds.add(childTag.getId());
+                // 재귀적으로 더 깊은 수준의 하위 태그도 추가 (선택적)
+                expandedIds.addAll(findAllChildTagIds(childTag.getId()));
+            }
+        }
+
+        log.debug("태그 ID 확장: {} -> {}", tagIds, expandedIds);
+        return expandedIds;
+    }
+
+    // 3. 재귀적으로 모든 하위 태그 ID 조회 메서드
+    private Set<Long> findAllChildTagIds(Long parentId) {
+        Set<Long> childIds = new HashSet<>();
+        List<Tag> childTags = tagRepository.findByParentId(parentId);
+
+        for (Tag childTag : childTags) {
+            childIds.add(childTag.getId());
+            // 재귀 호출: 더 깊은 레벨의 하위 태그도 포함
+            childIds.addAll(findAllChildTagIds(childTag.getId()));
+        }
+
+        return childIds;
+    }
     @Override
     public List<Quiz> findRecommendedQuizzes(Set<Tag> tags, DifficultyLevel difficulty, int limit) {
         QQuiz quiz = QQuiz.quiz;

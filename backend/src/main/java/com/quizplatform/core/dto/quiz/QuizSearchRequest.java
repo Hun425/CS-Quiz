@@ -6,6 +6,7 @@ import com.quizplatform.core.service.quiz.QuizSearchCondition;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -43,9 +44,17 @@ public class QuizSearchRequest {
     // 태그 ID를 문자열로 받아서 Long 리스트로 변환
     public void setTagIds(String tagIdsStr) {
         if (tagIdsStr != null && !tagIdsStr.isEmpty()) {
-            this.tagIds = Arrays.stream(tagIdsStr.split(","))
-                    .map(Long::parseLong)
-                    .collect(Collectors.toList());
+            try {
+                this.tagIds = Arrays.stream(tagIdsStr.split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .map(Long::parseLong)
+                        .collect(Collectors.toList());
+
+
+            } catch (NumberFormatException e) {
+                this.tagIds = new ArrayList<>(); // 오류 발생 시 빈 리스트로 초기화
+            }
         }
     }
 

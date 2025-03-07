@@ -76,4 +76,11 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
      */
     @Query("SELECT DISTINCT t FROM Tag t LEFT JOIN FETCH t.children c LEFT JOIN FETCH c.children WHERE t.parent IS NULL")
     List<Tag> findAllWithHierarchy();
+
+    // 부모 ID로 직계 자식 태그 조회
+    List<Tag> findByParentId(Long parentId);
+
+    // 해당 태그와 모든 하위 태그 조회 (JPQL로 구현)
+    @Query("SELECT t FROM Tag t WHERE t.id = :tagId OR t.parent.id = :tagId OR t.parent.parent.id = :tagId")
+    List<Tag> findTagAndAllDescendants(@Param("tagId") Long tagId);
 }
