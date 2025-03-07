@@ -4,6 +4,7 @@ import com.quizplatform.core.domain.quiz.DifficultyLevel;
 import com.quizplatform.core.domain.quiz.QuizType;
 import com.quizplatform.core.service.quiz.QuizSearchCondition;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Getter
+@Setter // Setter 어노테이션 추가
 public class QuizSearchRequest {
     private String title;
     private DifficultyLevel difficultyLevel;
@@ -20,7 +22,7 @@ public class QuizSearchRequest {
     private Integer maxQuestions;
     private String orderBy;
 
-    // 2. QuizSearchRequest.java의 toCondition 메서드 수정
+    // QuizSearchRequest.java의 toCondition 메서드
     public QuizSearchCondition toCondition() {
         QuizSearchCondition condition = QuizSearchCondition.builder()
                 .title(title)
@@ -38,11 +40,34 @@ public class QuizSearchRequest {
         return condition;
     }
 
+    // 태그 ID를 문자열로 받아서 Long 리스트로 변환
     public void setTagIds(String tagIdsStr) {
         if (tagIdsStr != null && !tagIdsStr.isEmpty()) {
             this.tagIds = Arrays.stream(tagIdsStr.split(","))
                     .map(Long::parseLong)
                     .collect(Collectors.toList());
+        }
+    }
+
+    // 문자열로 받은 난이도 값을 enum으로 변환
+    public void setDifficultyLevel(String difficultyLevelStr) {
+        if (difficultyLevelStr != null && !difficultyLevelStr.isEmpty()) {
+            try {
+                this.difficultyLevel = DifficultyLevel.valueOf(difficultyLevelStr.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // 잘못된 값은 무시
+            }
+        }
+    }
+
+    // 문자열로 받은 퀴즈 타입 값을 enum으로 변환
+    public void setQuizType(String quizTypeStr) {
+        if (quizTypeStr != null && !quizTypeStr.isEmpty()) {
+            try {
+                this.quizType = QuizType.valueOf(quizTypeStr.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // 잘못된 값은 무시
+            }
         }
     }
 }

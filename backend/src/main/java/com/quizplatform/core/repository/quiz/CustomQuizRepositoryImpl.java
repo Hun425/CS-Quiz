@@ -12,6 +12,7 @@ import com.quizplatform.core.domain.tag.QTag;
 import com.quizplatform.core.domain.tag.Tag;
 import com.quizplatform.core.service.quiz.QuizSearchCondition;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -22,11 +23,11 @@ import java.util.Set;
 
 // 커스텀 레포지토리 구현
 @RequiredArgsConstructor
+@Slf4j
 public class CustomQuizRepositoryImpl implements CustomQuizRepository {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    // search 메서드에서 태그 필터 처리 부분 수정
     public Page<Quiz> search(QuizSearchCondition condition, Pageable pageable) {
         QQuiz quiz = QQuiz.quiz;
         QTag tag = QTag.tag;
@@ -68,6 +69,10 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
             builder.and(quiz.questionCount.loe(condition.getMaxQuestions()));
         }
 
+        // 디버그 로깅 추가
+        log.debug("검색 조건: {}", condition.toString());
+        log.debug("생성된 쿼리 조건: {}", builder.toString());
+
         // 쿼리 실행 최적화: fetchJoin 추가
         JPAQuery<Quiz> query = queryFactory
                 .selectFrom(quiz)
@@ -89,6 +94,8 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
 
         // 결과 추출
         List<Quiz> content = query.fetch();
+
+        log.debug("검색 결과 수: {}", content.size());
 
         return new PageImpl<>(content, pageable, total);
     }

@@ -39,7 +39,7 @@ public class TestDataInitializer {
 
         if (!dataExists) {
             // 데이터가 없는 경우에만 스크립트 실행
-            executeSqlScript("classpath:dummy_data.sql");
+            executeSqlScript("classpath:dummy_data_real.sql");
             log.info("더미 데이터가 성공적으로 로드되었습니다.");
         } else {
             log.info("데이터가 이미 존재합니다. 스크립트 실행을 건너뜁니다.");

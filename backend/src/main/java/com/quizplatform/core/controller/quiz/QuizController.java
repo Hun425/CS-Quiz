@@ -4,6 +4,7 @@ import com.quizplatform.core.config.security.UserPrincipal;
 import com.quizplatform.core.dto.common.CommonApiResponse;
 import com.quizplatform.core.dto.common.PageResponse;
 import com.quizplatform.core.dto.quiz.*;
+import com.quizplatform.core.service.quiz.QuizSearchCondition;
 import com.quizplatform.core.service.quiz.QuizService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -85,9 +86,16 @@ public class QuizController {
 
         // 디버깅 로그 추가
         log.debug("받은 검색 요청: {}", request);
+        log.debug("제목: {}", request.getTitle());
+        log.debug("난이도: {}", request.getDifficultyLevel());
+        log.debug("퀴즈 타입: {}", request.getQuizType());
         log.debug("태그 IDs: {}", request.getTagIds());
+        log.debug("최소 문제 수: {}", request.getMinQuestions());
+        log.debug("최대 문제 수: {}", request.getMaxQuestions());
+        log.debug("정렬 기준: {}", request.getOrderBy());
 
-        Page<QuizSummaryResponse> quizzesDto = quizService.searchQuizzesDto(request.toCondition(), pageable);
+        QuizSearchCondition condition = request.toCondition();
+        Page<QuizSummaryResponse> quizzesDto = quizService.searchQuizzesDto(condition, pageable);
         return ResponseEntity.ok(CommonApiResponse.success(PageResponse.of(quizzesDto)));
     }
 
