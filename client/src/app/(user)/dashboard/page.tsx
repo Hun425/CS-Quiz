@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { Calendar, BarChart, Award, BookOpen } from "lucide-react";
+import { Calendar, Award, BookOpen } from "lucide-react";
 
 const DashboardPage: React.FC = () => {
   return (
