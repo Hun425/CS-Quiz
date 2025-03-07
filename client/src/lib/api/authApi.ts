@@ -1,18 +1,8 @@
-// src/api/authApi.ts - 인증 관련 API 연동
-import axios from "axios";
+// 인증 관련 API
+import apiClient from "@/lib/api/apiClient";
 import { AuthResponse } from "@/types/api";
 
-const BASE_URL = "http://localhost:8080/api";
-
-const apiClient = axios.create({
-  baseURL: BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
 export const authApi = {
-  // 인증 정보 확인
   getAuthInfo: async (token: string) => {
     return apiClient.get<{ success: boolean; data: any }>("/auth/verify", {
       headers: {
@@ -37,12 +27,19 @@ export const authApi = {
   // 로그아웃
   logout: async () => {
     const token = localStorage.getItem("auth_token");
-    if (!token) return Promise.resolve();
+    if (!token) {
+      localStorage.removeItem("auth_token");
+      return Promise.resolve();
+    }
 
-    return apiClient.post("/auth/logout", null, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    try {
+      await apiClient.post("/auth/logout", null, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch (error) {
+      console.error("로그아웃 요청 실패:", error);
+    }
+
+    localStorage.removeItem("auth_token");
   },
 };

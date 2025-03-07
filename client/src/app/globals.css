@@ -28,6 +28,8 @@
   --card-background: rgba(255, 255, 255, 0.9);
   --card-border: #e5e7eb;
   --card-hover: rgba(0, 0, 0, 0.05);
+  --tertiary: #a855f7;
+  --muted: #6b7280;
 }
 
 /* 🌙 Dark Mode */
@@ -50,6 +52,8 @@
   --card-background: rgba(20, 20, 20, 0.8);
   --card-border: #4a5568;
   --card-hover: rgba(255, 255, 255, 0.08);
+  --tertiary: #c084fc;
+  --muted: #9ca3af;
 }
 
 /* 🎨 추가 테마 (사용자 정의) */

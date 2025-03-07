@@ -13,6 +13,7 @@
     "@tailwindcss/cli": "^4.0.9",
     "@tanstack/react-query": "^5.67.1",
     "@tanstack/react-query-devtools": "^5.67.1",
+    "axios": "^1.8.1",
     "lucide": "^0.477.0",
     "lucide-react": "^0.477.0",
     "next": "15.2.1",

@@ -20,7 +20,7 @@ export default function RootLayout({
       <QueryProvider>
         <body className={`antialiased`}>
           <Header />
-          <main className="pt-16 pb-16">{children}</main>
+          <main className="pt-16 pb-16 min-h-screen">{children}</main>
           <BottomNav />
           <Footer />
         </body>

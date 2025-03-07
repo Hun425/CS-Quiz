@@ -19,7 +19,7 @@ const Header = () => {
     >
       <div className="max-w-screen-2xl mx-auto flex items-center justify-between h-full px-4 md:px-6 lg:px-8">
         {/* 로고 */}
-        <div className="flex items-center space-x-2">
+        <Link href={"/"} className="flex items-center space-x-2">
           <Image
             src="/images/logo.png"
             width={35}
@@ -34,7 +34,7 @@ const Header = () => {
             CRAM
           </h1>
           <ThemeToggle />
-        </div>
+        </Link>
 
         {/* 메뉴 & 검색 */}
         <div className="hidden md:flex items-center space-x-4 flex-1 justify-center">
@@ -57,14 +57,14 @@ const Header = () => {
           {/* 메뉴 */}
           <nav className="space-x-4">
             <Link
-              href="/quiz"
+              href="/quizzes"
               className="transition-colors"
               style={{ color: "var(--foreground)" }}
             >
               퀴즈
             </Link>
             <Link
-              href="/live-battle"
+              href="/battles"
               className="font-semibold transition-colors"
               style={{ color: "var(--danger)" }}
             >

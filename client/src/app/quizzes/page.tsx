@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import TagSelector from "./components/TagSelector";
-import QuizCard from "./components/QuizCard";
+import TagSelector from "./_components/TagSelector";
+import QuizCard from "./_components/QuizCard";
 
 const QuizListPage: React.FC = () => {
   // 상태 관리

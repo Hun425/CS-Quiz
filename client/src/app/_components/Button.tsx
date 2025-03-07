@@ -1,11 +1,16 @@
 "use client";
 import React, { ButtonHTMLAttributes } from "react";
 
-type ButtonVariant = "primary" | "secondary" | "danger" | "outline";
+type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "danger"
+  | "outline"
+  | "success"
+  | "warning";
 
 type ButtonSize = "small" | "medium" | "large";
 
-// 버튼 props 타입
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
   variant?: ButtonVariant;
@@ -34,8 +39,14 @@ const Button: React.FC<ButtonProps> = ({
     secondary:
       "bg-secondary text-white hover:bg-secondary-hover hover:scale-105",
     danger: "bg-danger text-white hover:bg-danger-light hover:scale-105",
+    success: "bg-success text-white hover:bg-success-light hover:scale-105",
+    warning: "bg-warning text-white hover:bg-warning-light hover:scale-105",
     outline:
-      "bg-transparent border border-primary text-primary hover:bg-primary hover:text-white hover:scale-105",
+      "border border-primary text-primary hover:bg-primary hover:text-white hover:scale-105",
+    ghost: "text-neutral hover:bg-gray-100 hover:scale-105",
+    rounded:
+      "bg-primary text-white rounded-full px-6 py-3 hover:bg-primary-hover hover:scale-110",
+    icon: "p-2 rounded-full hover:bg-gray-200 transition-all",
   };
 
   const sizeStyles = {
