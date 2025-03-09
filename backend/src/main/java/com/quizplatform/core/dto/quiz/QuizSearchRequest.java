@@ -5,6 +5,7 @@ import com.quizplatform.core.domain.quiz.QuizType;
 import com.quizplatform.core.service.quiz.QuizSearchCondition;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,7 +14,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Getter
-@Setter // Setter 어노테이션 추가
+@Setter
+@Slf4j
 public class QuizSearchRequest {
     private String title;
     private DifficultyLevel difficultyLevel;
@@ -38,6 +40,11 @@ public class QuizSearchRequest {
         // 검색 조건 유효성 검사 호출
         condition.validate();
 
+        // 디버깅 로그 추가
+        if (tagIds != null && !tagIds.isEmpty()) {
+            log.debug("태그 검색 요청: tagIds={}", tagIds);
+        }
+
         return condition;
     }
 
@@ -51,10 +58,13 @@ public class QuizSearchRequest {
                         .map(Long::parseLong)
                         .collect(Collectors.toList());
 
-
+                log.debug("문자열에서 변환된 태그 ID 목록: {}", this.tagIds);
             } catch (NumberFormatException e) {
+                log.error("태그 ID 변환 중 오류 발생: {}", e.getMessage());
                 this.tagIds = new ArrayList<>(); // 오류 발생 시 빈 리스트로 초기화
             }
+        } else {
+            this.tagIds = new ArrayList<>();
         }
     }
 
@@ -63,7 +73,9 @@ public class QuizSearchRequest {
         if (difficultyLevelStr != null && !difficultyLevelStr.isEmpty()) {
             try {
                 this.difficultyLevel = DifficultyLevel.valueOf(difficultyLevelStr.toUpperCase());
+                log.debug("난이도 설정: {}", this.difficultyLevel);
             } catch (IllegalArgumentException e) {
+                log.warn("잘못된 난이도 값: {}", difficultyLevelStr);
                 // 잘못된 값은 무시
             }
         }
@@ -74,9 +86,24 @@ public class QuizSearchRequest {
         if (quizTypeStr != null && !quizTypeStr.isEmpty()) {
             try {
                 this.quizType = QuizType.valueOf(quizTypeStr.toUpperCase());
+                log.debug("퀴즈 타입 설정: {}", this.quizType);
             } catch (IllegalArgumentException e) {
+                log.warn("잘못된 퀴즈 타입 값: {}", quizTypeStr);
                 // 잘못된 값은 무시
             }
         }
+    }
+
+    @Override
+    public String toString() {
+        return "QuizSearchRequest{" +
+                "title='" + title + '\'' +
+                ", difficultyLevel=" + difficultyLevel +
+                ", quizType=" + quizType +
+                ", tagIds=" + tagIds +
+                ", minQuestions=" + minQuestions +
+                ", maxQuestions=" + maxQuestions +
+                ", orderBy='" + orderBy + '\'' +
+                '}';
     }
 }

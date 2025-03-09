@@ -2,7 +2,9 @@ package com.quizplatform.core.repository.quiz;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.quizplatform.core.domain.quiz.DifficultyLevel;
@@ -19,6 +21,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -61,9 +64,8 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
 
         // 태그 필터 (계층 구조 고려하여 수정)
         if (condition.getTagIds() != null && !condition.getTagIds().isEmpty()) {
-            // 선택된 태그와 그 하위 태그 모두 포함
-            Set<Long> expandedTagIds = expandTagIds(condition.getTagIds());
-            builder.and(quiz.tags.any().id.in(expandedTagIds));
+            // 복수 태그 검색 개선
+            handleMultipleTagSearch(builder, quiz, condition.getTagIds());
         }
 
         // 문제 수 범위 필터
@@ -105,25 +107,58 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
         return new PageImpl<>(content, pageable, total);
     }
 
+    // 복수 태그 검색을 처리하는 새로운 메서드
+    private void handleMultipleTagSearch(BooleanBuilder builder, QQuiz quiz, List<Long> tagIds) {
+        QTag tag = QTag.tag;
+
+        if (tagIds.size() == 1) {
+            // 단일 태그 검색: 기존 방식 유지 (태그와 그 하위 태그 포함)
+            Set<Long> expandedIds = expandTagIds(tagIds);
+            builder.and(quiz.tags.any().id.in(expandedIds));
+        } else {
+            // 복수 태그 검색: 모든 태그를 포함하는 퀴즈만 선택
+            for (Long tagId : tagIds) {
+                // 각 태그 ID와 하위 태그 ID 확장
+                Set<Long> expandedIds = expandSingleTagId(tagId);
+
+                // 이 태그(또는 하위 태그) 중 하나를 포함해야 함
+                BooleanExpression tagCondition = quiz.tags.any().id.in(expandedIds);
+
+                // 각 태그에 대한 조건을 AND로 연결
+                builder.and(tagCondition);
+            }
+        }
+    }
+
     private Set<Long> expandTagIds(List<Long> tagIds) {
         Set<Long> expandedIds = new HashSet<>(tagIds);
 
         // 각 태그 ID에 대해 하위 태그 추가
         for (Long tagId : tagIds) {
-            // 직접 쿼리로 하위 태그 조회
-            List<Tag> childTags = tagRepository.findByParentId(tagId);
-            for (Tag childTag : childTags) {
-                expandedIds.add(childTag.getId());
-                // 재귀적으로 더 깊은 수준의 하위 태그도 추가 (선택적)
-                expandedIds.addAll(findAllChildTagIds(childTag.getId()));
-            }
+            expandedIds.addAll(expandSingleTagId(tagId));
         }
 
         log.debug("태그 ID 확장: {} -> {}", tagIds, expandedIds);
         return expandedIds;
     }
 
-    // 3. 재귀적으로 모든 하위 태그 ID 조회 메서드
+    // 단일 태그 ID에 대한 확장 (이 태그와 모든 하위 태그)
+    private Set<Long> expandSingleTagId(Long parentId) {
+        Set<Long> expandedIds = new HashSet<>();
+        expandedIds.add(parentId); // 현재 태그 ID 추가
+
+        // 직접 쿼리로 하위 태그 조회
+        List<Tag> childTags = tagRepository.findByParentId(parentId);
+        for (Tag childTag : childTags) {
+            expandedIds.add(childTag.getId());
+            // 재귀적으로 더 깊은 수준의 하위 태그도 추가
+            expandedIds.addAll(findAllChildTagIds(childTag.getId()));
+        }
+
+        return expandedIds;
+    }
+
+    // 재귀적으로 모든 하위 태그 ID 조회 메서드
     private Set<Long> findAllChildTagIds(Long parentId) {
         Set<Long> childIds = new HashSet<>();
         List<Tag> childTags = tagRepository.findByParentId(parentId);
@@ -136,6 +171,7 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
 
         return childIds;
     }
+
     @Override
     public List<Quiz> findRecommendedQuizzes(Set<Tag> tags, DifficultyLevel difficulty, int limit) {
         QQuiz quiz = QQuiz.quiz;
