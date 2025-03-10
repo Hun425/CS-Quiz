@@ -4,7 +4,7 @@ import { Github, Twitter, Linkedin } from "lucide-react";
 
 const Footer = () => {
   return (
-    <footer className="bg-(--footer) text-(--foreground) py-8 mt-10">
+    <footer className="bg-footer text-foreground py-8 mt-10">
       <div className="max-w-screen-2xl mx-auto px-6 md:px-8 lg:px-12">
         <div className="flex flex-col md:flex-row justify-center md:justify-between items-center md:items-start gap-y-6">
           {/* CRAM 로고 & 소개 */}
@@ -38,7 +38,7 @@ const Footer = () => {
             </Link>
             <Link
               href="/live-battle"
-              className="text-red-600 font-bold hover:text-red-700 transition"
+              className="text-primary font-bold hover:text-red-700 transition"
             >
               실시간 퀴즈 대결
             </Link>

@@ -38,7 +38,7 @@ const LoginPage: React.FC = () => {
     <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-6">
       <div className="bg-card border border-card-border w-full max-w-xl rounded-2xl shadow-xl p-8 text-center">
         {/* 로고 & 서비스명 */}
-        <div className="mb-8 flex flex-col items-center">
+        <div className="mb-8 flex flex-col items-center ">
           <Image
             src="/icons/logo.svg"
             alt="Cram Logo"
@@ -60,6 +60,7 @@ const LoginPage: React.FC = () => {
                           py-4 px-6 rounded-lg text-base font-semibold
                           transition-all duration-200
                           disabled:opacity-50 disabled:cursor-not-allowed
+                          cursor-pointer
                           ${
                             loggingIn && loggingIn !== provider
                               ? "opacity-50"
@@ -68,8 +69,7 @@ const LoginPage: React.FC = () => {
               style={{
                 backgroundColor: providerStyles[provider].bg,
                 color: providerStyles[provider].color,
-                border:
-                  provider === "google" ? "1px solid var(--border)" : "none",
+                border: provider === "google" ? "1px solid #757575" : "none",
               }}
             >
               {loggingIn === provider && (

@@ -6,17 +6,18 @@ import { Sun, Moon } from "lucide-react";
 const ThemeToggle: React.FC = () => {
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
-  // ✅ 초기 로딩 시 localStorage에서 테마 확인
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") as "light" | "dark";
     if (savedTheme) {
       setTheme(savedTheme);
       document.documentElement.setAttribute("data-theme", savedTheme);
+      console.log("localstorage theme 확인용: saveTheme :", savedTheme);
     } else {
-      // 사용자의 OS 기본 설정 확인
       const prefersDark = window.matchMedia(
         "(prefers-color-scheme: dark)"
       ).matches;
+      console.log("시스템 theme 확인용: prefersDark :", prefersDark);
+
       setTheme(prefersDark ? "dark" : "light");
       document.documentElement.setAttribute(
         "data-theme",
@@ -30,17 +31,13 @@ const ThemeToggle: React.FC = () => {
     setTheme(newTheme);
     document.documentElement.setAttribute("data-theme", newTheme);
     localStorage.setItem("theme", newTheme);
+    console.log("theme 변경 확인용: newTheme :", newTheme);
   };
 
   return (
     <button
       onClick={toggleTheme}
-      className="p-1.5 rounded-xl transition-all hover:scale-105"
-      style={{
-        backgroundColor: "var(--background)",
-        color: "var(--foreground)",
-        border: "2px solid var(--border)",
-      }}
+      className="bg-background border-solid border border-border rounded-lg p-2"
     >
       {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
     </button>

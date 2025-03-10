@@ -1,25 +1,21 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Search } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
+import SearchBar from "./SearchBar"; // ✅ 새로 만든 컴포넌트 import
+import Button from "./Button";
 
 const Header = () => {
-  const [searchTerm, setSearchTerm] = useState("");
+  const router = useRouter();
 
   return (
-    <header
-      style={{
-        backgroundColor: "var(--background)",
-        boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-      }}
-      className="w-full h-[60px] fixed top-0 left-0 right-0 z-50"
-    >
+    <header className="w-full h-[60px] fixed top-0 left-0 right-0 z-50 bg-background shadow-md border-b border-border">
       <div className="max-w-screen-2xl mx-auto flex items-center justify-between h-full px-4 md:px-6 lg:px-8">
         {/* 로고 */}
-        <Link href={"/"} className="flex items-center space-x-2">
+        <Link href={"/"} className="flex items-center space-x-2 mr-4">
           <Image
             src="/images/logo.png"
             width={35}
@@ -27,46 +23,26 @@ const Header = () => {
             alt="CRAM Logo"
             className="rounded-full"
           />
-          <h1
-            style={{ color: "var(--primary)" }}
-            className="text-2xl font-bold tracking-tight"
-          >
+          <h1 className="font-primary text-2xl font-bold tracking-tight">
             CRAM
           </h1>
-          <ThemeToggle />
         </Link>
+        <ThemeToggle />
 
         {/* 메뉴 & 검색 */}
         <div className="hidden md:flex items-center space-x-4 flex-1 justify-center">
-          <div className="relative w-full max-w-md">
-            <input
-              type="text"
-              placeholder="어떤 CS 주제를 벼락치기 할까요?"
-              style={{ backgroundColor: "white", color: "var(--foreground)" }}
-              className="w-full p-2 pl-8 rounded-full shadow-md focus:outline-none focus:ring-2"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <Search
-              className="absolute left-2 top-1/2 transform -translate-y-1/2"
-              size={16}
-              style={{ color: "var(--neutral)" }}
-            />
-          </div>
-
+          <SearchBar />
           {/* 메뉴 */}
           <nav className="space-x-4">
             <Link
               href="/quizzes"
-              className="transition-colors"
-              style={{ color: "var(--foreground)" }}
+              className="text-foreground font-semibold hover:scale-105"
             >
               퀴즈
             </Link>
             <Link
               href="/battles"
-              className="font-semibold transition-colors"
-              style={{ color: "var(--danger)" }}
+              className="text-primary font-semibold hover:scale-105"
             >
               실시간 퀴즈 대결
             </Link>
@@ -75,13 +51,9 @@ const Header = () => {
 
         {/* 다크 모드 버튼 & 로그인 */}
         <div className="flex items-center space-x-2">
-          <Link
-            href="/login"
-            className="px-3 py-1 rounded-lg shadow-md hover:scale-105 transition-all"
-            style={{ backgroundColor: "var(--primary)", color: "white" }}
-          >
+          <Button onClick={() => router.push("/login")} variant="primary">
             로그인
-          </Link>
+          </Button>
         </div>
       </div>
     </header>
