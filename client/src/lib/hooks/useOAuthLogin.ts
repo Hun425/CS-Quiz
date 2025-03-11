@@ -5,13 +5,13 @@ import { Provider } from "../types/auth";
  * - 소셜 로그인 버튼 클릭 시, 백엔드에 로그인 요청을 보내는 함수
  * - 로그인 중인지 여부를 상태로 관리
  * - 서비스 로직에 집중하고, UI 로직을 분리하여 관리
- * @returns {loggingIn, loginWithProvider}
+ * @returns {loginWithProvider}
  */
-// src/hooks/useOAuthLogin.ts
 
 export const useOAuthLogin = () => {
   const loginWithProvider = (provider: Provider) => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    console.log("api 요청경로:", apiUrl);
     window.location.href = `${apiUrl}/api/oauth2/authorize/${provider}`;
   };
 

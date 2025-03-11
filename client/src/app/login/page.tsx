@@ -6,9 +6,9 @@ const providerStyles: Record<
   Provider,
   { bg: string; color: string; text: string }
 > = {
-  google: { bg: "#ffffff", color: "#757575", text: "Google로 로그인" },
-  github: { bg: "#333333", color: "#ffffff", text: "GitHub로 로그인" },
-  kakao: { bg: "#FEE500", color: "#000000", text: "Kakao로 로그인" },
+  google: { bg: "#ffffff", color: "#757575", text: "Google 로그인" },
+  github: { bg: "#333333", color: "#ffffff", text: "GitHub 로그인" },
+  kakao: { bg: "#FEE500", color: "#000000", text: "Kakao 로그인" },
 };
 
 const LoginPage: React.FC = () => {

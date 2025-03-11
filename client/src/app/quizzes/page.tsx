@@ -2,13 +2,8 @@
 
 import { useState } from "react";
 import { QuizSummaryResponse } from "@/lib/types/api";
-import {
-  Search,
-  ChevronDown,
-  BookOpenCheck,
-  Briefcase,
-  ListOrdered,
-} from "lucide-react";
+import QuizCard from "@/app/quizzes/_components/QuizCard"; // ✅ QuizCard 사용
+import { Search, BookOpenCheck, Briefcase, ListOrdered } from "lucide-react";
 
 const QuizListPage: React.FC = () => {
   // 상태 관리
@@ -55,8 +50,8 @@ const QuizListPage: React.FC = () => {
   ];
 
   return (
-    <div className="bg-sub-background min-h-100vh">
-      <div className=" max-w-screen-xl mx-auto py-6 px-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="bg-sub-background min-h-screen">
+      <div className="max-w-screen-xl mx-auto py-6 px-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* ✅ 왼쪽 필터 섹션 */}
         <div className="bg-card border border-border p-6 rounded-lg shadow-md">
           <h2 className="text-lg font-semibold mb-4">🔎 문제 검색</h2>
@@ -76,9 +71,7 @@ const QuizListPage: React.FC = () => {
             <select
               value={selectedDifficulty}
               onChange={(e) => setSelectedDifficulty(e.target.value)}
-              className={`w-full p-2 border border-border rounded-md bg-background text-foreground ${
-                selectedDifficulty ? "ring-2 ring-primary" : ""
-              }`}
+              className="w-full p-2 border border-border rounded-md bg-background text-foreground"
             >
               <option value="">난이도 선택</option>
               <option value="BEGINNER">Lv. 1</option>
@@ -108,43 +101,19 @@ const QuizListPage: React.FC = () => {
             </select>
           </div>
           {/* ✅ 문제 개수 표시 */}
-          <ListOrdered className="w-4 h-4 text-muted mr-1" />{" "}
-          {dummyQuizzes.length} 문제
+          <div className="flex items-center text-sm">
+            <ListOrdered className="w-4 h-4 text-muted mr-1" />
+            {dummyQuizzes.length} 문제
+          </div>
         </div>
 
         {/* ✅ 중앙 문제 리스트 */}
-        <div className="col-span-2">
-          <table className="w-full border-collapse border border-border bg-card rounded-lg overflow-hidden">
-            <thead>
-              <tr className="bg-gray-100 text-sm">
-                <th className="border border-border p-2 text-left w-1/2">
-                  제목
-                </th>
-                <th className="border border-border p-2">난이도</th>
-                <th className="border border-border p-2">완료한 사람</th>
-                <th className="border border-border p-2">정답률</th>
-              </tr>
-            </thead>
-            <tbody>
-              {dummyQuizzes.map((quiz) => (
-                <tr key={quiz.id} className="hover:bg-gray-50">
-                  <td className="border border-border p-2">{quiz.title}</td>
-                  <td className="border border-border p-2 text-primary">
-                    Lv.{" "}
-                    {quiz.difficultyLevel === "BEGINNER"
-                      ? "1"
-                      : quiz.difficultyLevel === "INTERMEDIATE"
-                      ? "2"
-                      : "3+"}
-                  </td>
-                  <td className="border border-border p-2">
-                    {quiz.attemptCount}명
-                  </td>
-                  <td className="border border-border p-2">{quiz.avgScore}%</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="lg:col-span-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {dummyQuizzes.map((quiz) => (
+              <QuizCard key={quiz.id} quiz={quiz} />
+            ))}
+          </div>
         </div>
 
         {/* ✅ 오른쪽 추천 영역 */}
@@ -156,8 +125,8 @@ const QuizListPage: React.FC = () => {
             로그인
           </button>
 
-          <h3 className="text-md font-semibold mt-6 mb-3">
-            <BookOpenCheck className="w-5 h-5 mr-2" /> 내 실력 향상을 위한 추천
+          <h3 className="text-md font-semibold mt-6 mb-3 flex items-center">
+            <BookOpenCheck className="w-5 h-5 mr-2" />내 실력 향상을 위한 추천
             코스
           </h3>
           <div className="bg-gray-100 p-3 rounded-md text-sm mb-2">
@@ -170,9 +139,9 @@ const QuizListPage: React.FC = () => {
             🔹 데이터 엔지니어링
           </div>
 
-          <h3 className="text-md font-semibold mt-6 mb-3">
-            {" "}
-            <Briefcase className="w-5 h-5 mr-2" /> 추천 포지션
+          <h3 className="text-md font-semibold mt-6 mb-3 flex items-center">
+            <Briefcase className="w-5 h-5 mr-2" />
+            추천 포지션
           </h3>
           <div className="bg-gray-100 p-3 rounded-md text-sm mb-2">
             💼 미들급 백엔드 개발자

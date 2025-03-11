@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { QuizSummaryResponse } from "@/lib/types/api";
 import classNames from "classnames";
-
+import Tag from "@/app/_components/Tag";
 interface QuizCardProps {
   quiz: QuizSummaryResponse;
 }
@@ -47,6 +47,7 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz }) => {
         {/* 퀴즈 메타정보 */}
         <div className="flex flex-wrap gap-2 mb-4">
           {/* 난이도 */}
+          <Tag tag={difficultyClasses[quiz.difficultyLevel]} />
           <span
             className={classNames(
               "px-2 py-1 rounded text-sm",
