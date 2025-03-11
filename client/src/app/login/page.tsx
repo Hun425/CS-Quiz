@@ -1,6 +1,7 @@
 "use client";
 import { useOAuthLogin } from "@/lib/hooks/useOAuthLogin";
 import { Provider } from "@/lib/types/auth";
+import { useSearchParams } from "next/navigation";
 
 const providerStyles: Record<
   Provider,
@@ -13,14 +14,23 @@ const providerStyles: Record<
 
 const LoginPage: React.FC = () => {
   const { loginWithProvider } = useOAuthLogin();
+  const searchParams = useSearchParams();
+  const error = searchParams.get("error");
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="bg-card border border-card-border w-full max-w-xl rounded-2xl shadow-xl p-8 text-center">
-        <h1 className="text-3xl font-bold text-foreground mb-6">CRAM</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-3">CRAM</h1>
+        {error && (
+          <p className="text-red-500 ">
+            {error === "invalid_token"
+              ? "⛔ 로그인 인증에 실패했습니다. 다시 시도해주세요."
+              : "알 수 없는 오류가 발생했습니다."}
+          </p>
+        )}
 
         {/* ✅ 로그인 버튼 리스트 */}
-        <div className="space-y-4">
+        <div className="space-y-4 mt-6">
           {(Object.keys(providerStyles) as Provider[]).map((provider) => (
             <button
               key={provider}

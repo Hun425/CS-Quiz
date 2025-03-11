@@ -5,6 +5,7 @@ import axios from "axios";
 
 const httpClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080",
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
@@ -13,10 +14,7 @@ const httpClient = axios.create({
 //요청 인터셉터
 httpClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    console.log("🔹 요청 인터셉터 실행됨!", config);
     return config;
   },
   (error) => Promise.reject(error)
@@ -35,7 +33,5 @@ httpClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-//응답 인터셉터
 
 export default httpClient;

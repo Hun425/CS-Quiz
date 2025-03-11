@@ -6,8 +6,6 @@ import { authApi } from "@/lib/api/authApi";
 interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
-  token: string | null;
-  refreshToken: string | null;
   expiresAt: number | null;
   login: (
     token: string,
@@ -25,8 +23,6 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       isAuthenticated: false,
       user: null,
-      token: null,
-      refreshToken: null,
       expiresAt: null,
 
       login: (token, refreshToken, user, expiresIn) => {
@@ -38,8 +34,6 @@ export const useAuthStore = create<AuthState>()(
         set({
           isAuthenticated: true,
           user,
-          token,
-          refreshToken,
           expiresAt,
         });
       },
@@ -59,8 +53,6 @@ export const useAuthStore = create<AuthState>()(
           set({
             isAuthenticated: false,
             user: null,
-            token: null,
-            refreshToken: null,
             expiresAt: null,
           });
         }

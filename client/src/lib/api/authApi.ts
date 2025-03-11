@@ -1,30 +1,12 @@
 // 인증 관련 API //API 비즈니스 로직 분리
 import httpClient from "./httpClient";
-import AuthResponse from "../types/auth";
+import { AuthResponse } from "../types/auth";
 
 export const authApi = {
   /**
    * 🔹 OAuth2 로그인 요청의 경우 page redirect 방식을 적용하기 때문에 별도의 fetch 요청 필요없음
- 
-  */
-  /**
-   * 🔹 인증 정보 확인 (토큰 검증)
-   * @param token - JWT 액세스 토큰
    */
-  getAuthInfo: async (token: string) => {
-    try {
-      const response = await httpClient.get<{
-        success: boolean;
-        data: AuthResponse;
-      }>("/auth/verify", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      return response.data;
-    } catch (error) {
-      console.error("🔴 인증 정보 조회 실패:", error);
-      throw error;
-    }
-  },
+  /**
 
   /**
    * 🔹 토큰 갱신 (Refresh Token 사용)
