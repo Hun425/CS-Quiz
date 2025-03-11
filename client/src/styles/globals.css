@@ -15,7 +15,7 @@
     /* 기본값(light 테마) 정의 */
     --theme-color-default: rgb(37, 37, 37);
     --theme-color-background: #ffffff;
-    --theme-color-sub-background: rgb(228, 228, 228);
+    --theme-color-sub-background: rgb(240, 240, 240);
     --theme-color-foreground: rgb(20, 20, 20);
     --theme-color-primary: #6366f1;
     --theme-color-primary-hover: #4f46e5;
