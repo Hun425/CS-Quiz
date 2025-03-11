@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import QuizCard from "@/app/quizzes/_components/QuizCard";
 import "@/styles/globals.css";
-import { QuizSummaryResponse } from "@/types/api";
-import { TagResponse } from "@/types/api";
+import { QuizSummaryResponse } from "@/lib/types/api";
+import { TagResponse } from "@/lib/types/api";
 
 type DifficultyLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
 type QuizType = "DAILY" | "TAG_BASED" | "TOPIC_BASED" | "CUSTOM";

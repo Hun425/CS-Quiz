@@ -8,7 +8,7 @@ import {
   RecentActivity,
 } from "../types/user";
 
-import apiClient from "./apiClient";
+import apiClient from "./httpClient";
 
 export const userApi = {
   // 사용자 프로필 조회

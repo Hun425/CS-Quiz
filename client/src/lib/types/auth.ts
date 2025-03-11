@@ -1,5 +1,7 @@
 // src/types/auth.ts
 
+export type Provider = "google" | "github" | "kakao";
+
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;

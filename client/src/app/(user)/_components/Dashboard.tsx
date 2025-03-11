@@ -2,7 +2,7 @@
 import React from "react";
 import { Calendar, Award, BookOpen } from "lucide-react";
 
-const DashboardPage: React.FC = () => {
+const Dashboard: React.FC = () => {
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-6">
       {/* 학습 진행 상황 */}
@@ -83,4 +83,4 @@ const DashboardPage: React.FC = () => {
   );
 };
 
-export default DashboardPage;
+export default Dashboard;

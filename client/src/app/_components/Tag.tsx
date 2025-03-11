@@ -2,7 +2,7 @@
 
 import React from "react";
 import classNames from "classnames";
-import { TagResponse } from "@/types/api";
+import { TagResponse } from "@/lib/types/api";
 
 interface TagProps {
   tag: TagResponse;

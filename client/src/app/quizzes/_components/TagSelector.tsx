@@ -1,7 +1,7 @@
 // src/components/tag/TagSelector.tsx
 import React, { useEffect, useState } from "react";
 // import { tagApi } from "@/lib/api/tagApi";
-import { TagResponse } from "@/types/api";
+import { TagResponse } from "@/lib/types/api";
 
 interface TagSelectorProps {
   selectedTagIds: number[];

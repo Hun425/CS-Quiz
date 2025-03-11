@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { QuizSummaryResponse } from "@/types/api";
+import { QuizSummaryResponse } from "@/lib/types/api";
 import classNames from "classnames";
 
 interface QuizCardProps {

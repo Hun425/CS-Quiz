@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { QuizSummaryResponse } from "@/types/api";
+import { QuizSummaryResponse } from "@/lib/types/api";
 import {
   Search,
   ChevronDown,

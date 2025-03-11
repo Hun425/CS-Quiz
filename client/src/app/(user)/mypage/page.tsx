@@ -2,6 +2,8 @@
 import React from "react";
 import Button from "@/app/_components/Button";
 import Image from "next/image";
+import DailyQuizHeatmap from "../_components/DailyQizHeatmap";
+import Dashboard from "../_components/Dashboard";
 import { Edit } from "lucide-react";
 
 const MyPage: React.FC = () => {
@@ -37,13 +39,8 @@ const MyPage: React.FC = () => {
 
       {/* 대시보드 접근 */}
       <div className="bg-card p-6 rounded-lg shadow-md">
-        <h2 className="text-xl font-bold border-b-2 border-primary pb-2 mb-4">
-          대시보드
-        </h2>
-        <p className="text-neutral">학습 현황 및 통계를 확인하세요.</p>
-        <Button variant="primary" size="medium" className="mt-4">
-          대시보드로 이동
-        </Button>
+        <DailyQuizHeatmap />
+        <Dashboard />
       </div>
     </div>
   );
