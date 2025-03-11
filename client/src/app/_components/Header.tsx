@@ -12,7 +12,7 @@ const Header = () => {
   const router = useRouter();
 
   return (
-    <header className="w-full h-[60px] fixed top-0 left-0 right-0 z-50 bg-background shadow-md border-b border-border">
+    <header className="w-full h-[64px] fixed top-0 left-0 right-0 z-50 bg-background  border-b border-border">
       <div className="max-w-screen-2xl mx-auto flex items-center justify-between h-full px-4 md:px-6 lg:px-8">
         {/* 로고 */}
         <Link href={"/"} className="flex items-center space-x-2 mr-4">

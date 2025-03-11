@@ -37,7 +37,7 @@ const ThemeToggle: React.FC = () => {
   return (
     <button
       onClick={toggleTheme}
-      className="bg-background border-solid border border-border rounded-lg p-2"
+      className="bg-background border border-border rounded-lg p-2"
     >
       {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
     </button>

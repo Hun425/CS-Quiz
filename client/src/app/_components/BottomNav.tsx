@@ -9,7 +9,7 @@ const BottomNav = () => {
         {/* 퀴즈 */}
         <Link
           href={"/quizzes"}
-          className="flex flex-col items-center text-neutral hover:text-primary transition"
+          className="flex flex-col items-center text-default hover:text-primary transition"
         >
           <ClipboardList size={22} />
           <span className="text-xs">퀴즈</span>
@@ -18,7 +18,7 @@ const BottomNav = () => {
         {/* 배틀 */}
         <Link
           href="/battles"
-          className="flex flex-col items-center text-neutral hover:text-primary transition"
+          className="flex flex-col items-center text-default hover:text-primary transition"
         >
           <Sword size={22} />
           <span className="text-xs">배틀</span>
@@ -27,7 +27,7 @@ const BottomNav = () => {
         {/* 마이페이지 */}
         <Link
           href="/mypage"
-          className="flex flex-col items-center text-neutral hover:text-primary transition"
+          className="flex flex-col items-center text-default hover:text-primary transition"
         >
           <User size={22} />
           <span className="text-xs">마이페이지</span>

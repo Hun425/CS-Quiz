@@ -58,7 +58,7 @@ export interface QuizCreateRequest {
   difficultyLevel: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
   timeLimit: number;
   tagIds: number[];
-  questions: QuestionCreateRequest[];
+  questions: QuizCreateRequest[];
 }
 
 export interface QuizSearchRequest {

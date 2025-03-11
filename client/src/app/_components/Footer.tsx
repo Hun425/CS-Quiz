@@ -4,7 +4,7 @@ import { Github, Twitter, Linkedin } from "lucide-react";
 
 const Footer = () => {
   return (
-    <footer className="bg-footer text-foreground py-8 mt-10">
+    <footer className="bg-footer  py-8 mt-10">
       <div className="max-w-screen-2xl mx-auto px-6 md:px-8 lg:px-12">
         <div className="flex flex-col md:flex-row justify-center md:justify-between items-center md:items-start gap-y-6">
           {/* CRAM 로고 & 소개 */}
@@ -22,8 +22,8 @@ const Footer = () => {
           </div>
 
           {/* 퀵 링크 */}
-          <nav className="flex-1 flex flex-col items-center md:items-start space-y-2">
-            <h3 className="text-lg font-semibold ">퀵 링크</h3>
+          <nav className="flex-1 flex flex-col items-center text-foreground md:items-start space-y-2">
+            <h3 className="text-lg font-semibold text-foreground">퀵 링크</h3>
             <Link href="/" className="hover:text-primary transition">
               홈
             </Link>
@@ -77,7 +77,7 @@ const Footer = () => {
         </div>
 
         {/* 하단 저작권 정보 */}
-        <div className="mt-8 border-t border-gray-300 pt-4 text-center text-sm text-gray-600">
+        <div className="mt-8 border-t border-gray-300 pt-4 text-center text-sm text-foreground">
           © {new Date().getFullYear()} CRAM. All rights reserved.
         </div>
       </div>

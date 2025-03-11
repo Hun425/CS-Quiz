@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @font-face {
   font-family: "Pretendard";
@@ -8,38 +10,13 @@
   src: url("/fonts/PretendardVariable.woff2") format("woff2");
 }
 
-@theme {
-  --color-default: #1f2937;
-  --color-primary: var(--theme-color-primary);
-  --color-primary-hover: var(--theme-color-primary-hover);
-  --color-secondary: var(--theme-color-secondary);
-  --color-secondary-hover: var(--theme-color-secondary-hover);
-  --color-background: var(--theme-color-background);
-  --color-foreground: var(--theme-color-foreground);
-
-  --color-success: var(--theme-color-success);
-  --color-success-light: var(--theme-color-success-light);
-  --color-warning: var(--theme-color-warning);
-  --color-warning-light: var(--theme-color-warning-light);
-  --color-danger: var(--theme-color-danger);
-  --color-danger-light: var(--theme-color-danger-light);
-
-  --color-neutral: var(--theme-color-neutral);
-  --color-border: var(--theme-color-border);
-  --color-footer: var(--theme-color-footer);
-
-  --color-card-background: var(--theme-color-card-background);
-  --color-card-border: var(--theme-color-card-border);
-  --color-card-hover: var(--theme-color-card-hover);
-
-  --color-tertiary: var(--theme-color-tertiary);
-  --color-muted: var(--theme-color-muted);
-}
-
 @layer base {
-  [data-theme="light"] {
+  :root {
+    /* 기본값(light 테마) 정의 */
+    --theme-color-default: rgb(37, 37, 37);
     --theme-color-background: #ffffff;
-    --theme-color-foreground: #171717;
+    --theme-color-sub-background: rgb(228, 228, 228);
+    --theme-color-foreground: rgb(20, 20, 20);
     --theme-color-primary: #6366f1;
     --theme-color-primary-hover: #4f46e5;
     --theme-color-secondary: #facc15;
@@ -52,7 +29,7 @@
     --theme-color-danger-light: #fecaca;
 
     --theme-color-neutral: rgb(125, 133, 150);
-    --theme-color-border: #e5e7eb;
+    --theme-color-border: rgb(211, 211, 211);
     --theme-color-footer: #f3f4f6;
 
     --theme-color-card-background: rgba(255, 255, 255, 0.9);
@@ -65,7 +42,8 @@
   /* 🌙 Dark Mode */
   [data-theme="dark"] {
     --theme-color-background: #0a0a0a;
-    --theme-color-foreground: rgb(233, 231, 231);
+    --theme-color-sub-background: #1c1917;
+    --theme-color-foreground: rgb(238, 238, 238);
     --theme-color-primary: #818cf8;
     --theme-color-primary-hover: #6366f1;
     --theme-color-secondary: #facc15;
@@ -87,25 +65,22 @@
     --theme-color-tertiary: #c084fc;
     --theme-color-muted: #9ca3af;
   }
-}
 
-@layer base {
-  :root {
-    --default: #1f2937;
-  }
   body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
+    @apply bg-background font-sans text-foreground;
     font-family: "Pretendard", sans-serif;
     box-sizing: border-box;
+    color: var(--theme-color-foreground);
   }
 
   h1 {
     @apply text-3xl font-bold text-primary;
   }
+
   h2 {
     @apply text-2xl font-semibold text-secondary;
   }
+
   p {
     @apply text-base text-muted;
   }

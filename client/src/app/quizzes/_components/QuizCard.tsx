@@ -1,134 +1,77 @@
 import Link from "next/link";
 import { QuizSummaryResponse } from "@/types/api";
+import classNames from "classnames";
 
 interface QuizCardProps {
   quiz: QuizSummaryResponse;
 }
 
 const QuizCard: React.FC<QuizCardProps> = ({ quiz }) => {
-  // 난이도에 따른 색상 및 라벨
-  const getDifficultyColor = (level: string) => {
-    switch (level) {
-      case "BEGINNER":
-        return "#4caf50"; // 초록색
-      case "INTERMEDIATE":
-        return "#ff9800"; // 주황색
-      case "ADVANCED":
-        return "#f44336"; // 빨간색
-      default:
-        return "#9e9e9e"; // 회색
-    }
+  // 난이도별 Tailwind 배경색 설정
+  const difficultyClasses: Record<
+    QuizSummaryResponse["difficultyLevel"],
+    string
+  > = {
+    BEGINNER: "bg-success text-white",
+    INTERMEDIATE: "bg-warning text-white",
+    ADVANCED: "bg-danger text-white",
   };
 
-  const getDifficultyLabel = (level: string) => {
-    switch (level) {
-      case "BEGINNER":
-        return "입문";
-      case "INTERMEDIATE":
-        return "중급";
-      case "ADVANCED":
-        return "고급";
-      default:
-        return "알 수 없음";
-    }
+  // 난이도 한글 라벨
+  const difficultyLabels: Record<
+    QuizSummaryResponse["difficultyLevel"],
+    string
+  > = {
+    BEGINNER: "입문",
+    INTERMEDIATE: "중급",
+    ADVANCED: "고급",
   };
 
-  // 퀴즈 타입 한글 표시
-  const getQuizTypeLabel = (type: string) => {
-    switch (type) {
-      case "DAILY":
-        return "데일리 퀴즈";
-      case "TAG_BASED":
-        return "태그 기반";
-      case "TOPIC_BASED":
-        return "주제 기반";
-      case "CUSTOM":
-        return "커스텀";
-      default:
-        return "알 수 없음";
-    }
+  // 퀴즈 유형 한글 라벨
+  const quizTypeLabels: Record<QuizSummaryResponse["quizType"], string> = {
+    DAILY: "데일리 퀴즈",
+    TAG_BASED: "태그 기반",
+    TOPIC_BASED: "주제 기반",
+    CUSTOM: "커스텀",
   };
-
-  // 날짜 포맷팅
-  //   const formatDate = (dateString: string) => {
-  //     const date = new Date(dateString);
-  //     return new Intl.DateTimeFormat("ko-KR", {
-  //       year: "numeric",
-  //       month: "long",
-  //       day: "numeric",
-  //     }).format(date);
-  //   };
 
   return (
-    <div
-      className="quiz-card"
-      style={{
-        border: "1px solid #e0e0e0",
-        borderRadius: "8px",
-        padding: "1.5rem",
-        backgroundColor: "white",
-        transition: "transform 0.2s, box-shadow 0.2s",
-        cursor: "pointer",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-      }}
-    >
+    <div className="border border-border rounded-lg p-6 bg-card-background shadow-md transition-transform duration-200 hover:scale-105">
       <Link
         href={`/quizzes/${quiz.id}`}
-        style={{
-          textDecoration: "none",
-          color: "inherit",
-          display: "flex",
-          flexDirection: "column",
-          height: "100%",
-        }}
+        className="flex flex-col h-full text-foreground no-underline"
       >
-        <h3
-          style={{ margin: "0 0 0.5rem", fontSize: "1.2rem", color: "#1976d2" }}
-        >
-          {quiz.title}
-        </h3>
+        {/* 퀴즈 제목 */}
+        <h3 className="text-lg font-bold text-primary mb-2">{quiz.title}</h3>
 
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "0.5rem",
-            marginBottom: "1rem",
-          }}
-        >
+        {/* 퀴즈 메타정보 */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {/* 난이도 */}
           <span
-            style={{
-              backgroundColor: getDifficultyColor(quiz.difficultyLevel),
-              color: "white",
-              padding: "0.25rem 0.5rem",
-              borderRadius: "4px",
-              fontSize: "0.75rem",
-            }}
+            className={classNames(
+              "px-2 py-1 rounded text-sm",
+              difficultyClasses[quiz.difficultyLevel]
+            )}
           >
-            {getDifficultyLabel(quiz.difficultyLevel)}
+            {difficultyLabels[quiz.difficultyLevel]}
           </span>
-          <span
-            style={{
-              backgroundColor: "#e0e0e0",
-              padding: "0.25rem 0.5rem",
-              borderRadius: "4px",
-              fontSize: "0.75rem",
-            }}
-          >
-            {getQuizTypeLabel(quiz.quizType)}
+
+          {/* 퀴즈 유형 */}
+          <span className="bg-muted text-foreground px-2 py-1 rounded text-sm">
+            {quizTypeLabels[quiz.quizType]}
           </span>
-          <span
-            style={{
-              backgroundColor: "#e0e0e0",
-              padding: "0.25rem 0.5rem",
-              borderRadius: "4px",
-              fontSize: "0.75rem",
-            }}
-          >
+
+          {/* 문제 개수 */}
+          <span className="bg-muted text-foreground px-2 py-1 rounded text-sm">
             {quiz.questionCount}문제
+          </span>
+        </div>
+
+        {/* 시도 횟수 & 평균 점수 */}
+        <div className="text-sm text-muted">
+          <span>
+            🔥 {quiz.attemptCount}회 도전 | 📊 평균 점수:{" "}
+            {quiz.avgScore.toFixed(1)}
           </span>
         </div>
       </Link>

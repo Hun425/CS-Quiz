@@ -94,7 +94,7 @@ const CramMainPage = () => {
         <Button
           variant="primary"
           size="large"
-          className="cursor-pointer bg-primary-hover text-background  mt-6 px-6 py-3 text-lg font-semibold rounded-lg shadow-md  transition"
+          className="mt-6 px-6 py-3 font-semibold "
           onClick={() => router.push("/login")}
         >
           로그인하고 시작하기 🚀
@@ -102,7 +102,7 @@ const CramMainPage = () => {
       </section>
 
       <section className="max-w-screen-2xl mx-auto my-16 ">
-        <h1 className="text-3xl font-bold text-center text-foreground mb-8">
+        <h1 className="text-3xl font-bold text-center mb-8">
           <strong className="text-primary">CRAM</strong>의 특별한 학습법
         </h1>
 

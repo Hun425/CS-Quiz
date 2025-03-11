@@ -1,215 +1,187 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import TagSelector from "./_components/TagSelector";
-import QuizCard from "./_components/QuizCard";
+import { QuizSummaryResponse } from "@/types/api";
+import {
+  Search,
+  ChevronDown,
+  BookOpenCheck,
+  Briefcase,
+  ListOrdered,
+} from "lucide-react";
 
 const QuizListPage: React.FC = () => {
   // 상태 관리
   const [searchTitle, setSearchTitle] = useState<string>("");
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("");
-  const [selectedQuizType, setSelectedQuizType] = useState<string>("");
-  const [selectedTags, setSelectedTags] = useState<number[]>([]);
-  const [page, setPage] = useState<number>(0);
-  const [size, _setSize] = useState<number>(9);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
 
-  // 더미 태그 데이터
-  const dummyTags = [
-    { id: 1, name: "JavaScript", quizCount: 12 },
-    { id: 2, name: "React", quizCount: 8 },
-    { id: 3, name: "TypeScript", quizCount: 5 },
+  // ✅ 더미 퀴즈 데이터
+  const dummyQuizzes: QuizSummaryResponse[] = [
+    {
+      id: 1,
+      title: "문자열과 알파벳과 쿼리",
+      difficultyLevel: "ADVANCED",
+      quizType: "TOPIC_BASED",
+      questionCount: 10,
+      attemptCount: 5,
+      avgScore: 80,
+      tags: [],
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: 2,
+      title: "눈사람 만들기",
+      difficultyLevel: "ADVANCED",
+      quizType: "TAG_BASED",
+      questionCount: 12,
+      attemptCount: 3,
+      avgScore: 75,
+      tags: [],
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: 3,
+      title: "격자 뒤집기 미로",
+      difficultyLevel: "INTERMEDIATE",
+      quizType: "DAILY",
+      questionCount: 15,
+      attemptCount: 8,
+      avgScore: 90,
+      tags: [],
+      createdAt: new Date().toISOString(),
+    },
   ];
 
-  // 더미 퀴즈 데이터
-  const dummyQuizzes = {
-    content: [
-      { id: 1, title: "React 기본 개념", difficulty: "BEGINNER" },
-      { id: 2, title: "TypeScript 기초", difficulty: "INTERMEDIATE" },
-      { id: 3, title: "JavaScript 심화", difficulty: "ADVANCED" },
-    ],
-    totalPages: 1,
-  };
-
-  // 태그 데이터 가져오기 (API 연결 X → 더미 데이터 사용)
-  const { data: tags = dummyTags } = useQuery({
-    queryKey: ["tags"],
-    queryFn: async () => {
-      throw new Error("API 연결 실패");
-    },
-    enabled: false, // API 요청을 막음
-  });
-
-  // 인기 태그 가져오기 (API 연결 X → 더미 데이터 사용)
-  const { data: popularTags = dummyTags } = useQuery({
-    queryKey: ["popularTags"],
-    queryFn: async () => {
-      throw new Error("API 연결 실패");
-    },
-    enabled: false,
-  });
-
-  // 퀴즈 목록 가져오기 (API 연결 X → 더미 데이터 사용)
-  const {
-    data: quizData = dummyQuizzes,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: [
-      "quizzes",
-      page,
-      selectedDifficulty,
-      selectedQuizType,
-      selectedTags,
-    ],
-    queryFn: async () => {
-      throw new Error("API 연결 실패");
-    },
-    enabled: false,
-  });
-
   return (
-    <div className="max-w-screen-xl mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold text-center mb-6 text-[var(--foreground)]">
-        퀴즈 목록
-      </h1>
-
-      {/* 필터 섹션 */}
-      <div className="bg-card border border-card-border p-6 rounded-lg shadow-md mb-6">
-        <h2 className="text-lg font-semibold mb-4">필터 및 검색</h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          {/* 제목 검색 */}
-          <input
-            type="text"
-            value={searchTitle}
-            onChange={(e) => setSearchTitle(e.target.value)}
-            placeholder="퀴즈 제목 검색..."
-            className="w-full p-2 border border-border rounded-md"
-          />
-
-          {/* 난이도 필터 */}
-          <select
-            value={selectedDifficulty}
-            onChange={(e) => setSelectedDifficulty(e.target.value)}
-            className="w-full p-2 border border-border rounded-md"
-          >
-            <option value="">모든 난이도</option>
-            <option value="BEGINNER">입문</option>
-            <option value="INTERMEDIATE">중급</option>
-            <option value="ADVANCED">고급</option>
-          </select>
-
-          {/* 퀴즈 유형 필터 */}
-          <select
-            value={selectedQuizType}
-            onChange={(e) => setSelectedQuizType(e.target.value)}
-            className="w-full p-2 border border-border rounded-md"
-          >
-            <option value="">모든 유형</option>
-            <option value="DAILY">데일리 퀴즈</option>
-            <option value="TAG_BASED">태그 기반</option>
-            <option value="TOPIC_BASED">주제 기반</option>
-            <option value="CUSTOM">커스텀</option>
-          </select>
-        </div>
-
-        {/* 태그 필터 */}
-        <TagSelector selectedTagIds={selectedTags} onChange={setSelectedTags} />
-
-        {/* 인기 태그 */}
-        <div className="flex flex-wrap gap-2 mt-4">
-          {popularTags?.map((tag) => (
-            <button
-              key={tag.id}
-              onClick={() =>
-                setSelectedTags((prev) =>
-                  prev.includes(tag.id)
-                    ? prev.filter((id) => id !== tag.id)
-                    : [...prev, tag.id]
-                )
-              }
-              className={`px-3 py-1 rounded-md border text-sm ${
-                selectedTags.includes(tag.id)
-                  ? "bg-primary text-white"
-                  : "border-border text-neutral"
+    <div className="bg-sub-background min-h-100vh">
+      <div className=" max-w-screen-xl mx-auto py-6 px-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* ✅ 왼쪽 필터 섹션 */}
+        <div className="bg-card border border-border p-6 rounded-lg shadow-md">
+          <h2 className="text-lg font-semibold mb-4">🔎 문제 검색</h2>
+          {/* 🔍 검색 입력 */}
+          <div className="relative mb-4">
+            <input
+              type="text"
+              value={searchTitle}
+              onChange={(e) => setSearchTitle(e.target.value)}
+              placeholder="풀고 싶은 문제 제목, 기출문제 검색"
+              className="w-full p-2 border border-border rounded-md pl-10 bg-background text-foreground"
+            />
+            <Search className="absolute left-3 top-3 w-4 h-4 text-neutral" />
+          </div>
+          {/* 🔽 필터 드롭다운 */}
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            <select
+              value={selectedDifficulty}
+              onChange={(e) => setSelectedDifficulty(e.target.value)}
+              className={`w-full p-2 border border-border rounded-md bg-background text-foreground ${
+                selectedDifficulty ? "ring-2 ring-primary" : ""
               }`}
             >
-              {tag.name} ({tag.quizCount})
-            </button>
-          ))}
+              <option value="">난이도 선택</option>
+              <option value="BEGINNER">Lv. 1</option>
+              <option value="INTERMEDIATE">Lv. 2</option>
+              <option value="ADVANCED">Lv. 3+</option>
+            </select>
+
+            <select
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value)}
+              className="w-full p-2 border border-border rounded-md bg-background text-foreground"
+            >
+              <option value="">언어</option>
+              <option value="JS">JavaScript</option>
+              <option value="TS">TypeScript</option>
+              <option value="Python">Python</option>
+            </select>
+
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full p-2 border border-border rounded-md bg-background text-foreground"
+            >
+              <option value="">기출문제 모음</option>
+              <option value="DAILY">데일리</option>
+              <option value="TOPIC">주제 기반</option>
+            </select>
+          </div>
+          {/* ✅ 문제 개수 표시 */}
+          <ListOrdered className="w-4 h-4 text-muted mr-1" />{" "}
+          {dummyQuizzes.length} 문제
         </div>
 
-        {/* 검색 버튼 */}
-        <button
-          onClick={() => refetch()}
-          className="mt-4 w-full py-2 bg-primary text-white rounded-md"
-        >
-          검색
-        </button>
-      </div>
+        {/* ✅ 중앙 문제 리스트 */}
+        <div className="col-span-2">
+          <table className="w-full border-collapse border border-border bg-card rounded-lg overflow-hidden">
+            <thead>
+              <tr className="bg-gray-100 text-sm">
+                <th className="border border-border p-2 text-left w-1/2">
+                  제목
+                </th>
+                <th className="border border-border p-2">난이도</th>
+                <th className="border border-border p-2">완료한 사람</th>
+                <th className="border border-border p-2">정답률</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dummyQuizzes.map((quiz) => (
+                <tr key={quiz.id} className="hover:bg-gray-50">
+                  <td className="border border-border p-2">{quiz.title}</td>
+                  <td className="border border-border p-2 text-primary">
+                    Lv.{" "}
+                    {quiz.difficultyLevel === "BEGINNER"
+                      ? "1"
+                      : quiz.difficultyLevel === "INTERMEDIATE"
+                      ? "2"
+                      : "3+"}
+                  </td>
+                  <td className="border border-border p-2">
+                    {quiz.attemptCount}명
+                  </td>
+                  <td className="border border-border p-2">{quiz.avgScore}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-      {/* 로딩 및 에러 처리 */}
-      {isLoading ? (
-        <div className="text-center py-8">퀴즈를 불러오는 중...</div>
-      ) : isError ? (
-        <div className="text-center py-8 text-danger">
-          ⚠️ 퀴즈 데이터를 불러올 수 없습니다.
-          <button
-            onClick={() => refetch()}
-            className="block mx-auto mt-4 bg-warning text-white px-4 py-2 rounded-md"
-          >
-            다시 시도
+        {/* ✅ 오른쪽 추천 영역 */}
+        <div className="hidden lg:block bg-card border border-border p-6 rounded-lg shadow-md">
+          <h2 className="text-lg font-semibold mb-4">
+            📢 로그인하고 연습을 시작하세요!
+          </h2>
+          <button className="w-full py-2 bg-primary text-white rounded-md">
+            로그인
           </button>
-        </div>
-      ) : (
-        <>
-          {/* 퀴즈 목록 */}
-          {quizData?.content.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {quizData.content.map((quiz) => (
-                <QuizCard key={quiz.id} quiz={quiz} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 bg-background/10 p-6 rounded-md">
-              검색 조건에 맞는 퀴즈가 없습니다.
-            </div>
-          )}
 
-          {/* 페이지네이션 */}
-          {quizData?.totalPages > 1 && (
-            <div className="flex justify-center mt-6">
-              <button
-                onClick={() => setPage(page - 1)}
-                disabled={page === 0}
-                className="px-4 py-2 border border-border rounded-md mr-2 disabled:opacity-50"
-              >
-                이전
-              </button>
-              {[...Array(quizData.totalPages)].map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setPage(index)}
-                  className={`px-4 py-2 border border-border rounded-md mx-1 ${
-                    page === index ? "bg-primary text-white" : "text-neutral"
-                  }`}
-                >
-                  {index + 1}
-                </button>
-              ))}
-              <button
-                onClick={() => setPage(page + 1)}
-                disabled={page === quizData.totalPages - 1}
-                className="px-4 py-2 border border-border rounded-md ml-2 disabled:opacity-50"
-              >
-                다음
-              </button>
-            </div>
-          )}
-        </>
-      )}
+          <h3 className="text-md font-semibold mt-6 mb-3">
+            <BookOpenCheck className="w-5 h-5 mr-2" /> 내 실력 향상을 위한 추천
+            코스
+          </h3>
+          <div className="bg-gray-100 p-3 rounded-md text-sm mb-2">
+            🔹 AI 백엔드 개발
+          </div>
+          <div className="bg-gray-100 p-3 rounded-md text-sm mb-2">
+            🔹 자바 중급
+          </div>
+          <div className="bg-gray-100 p-3 rounded-md text-sm">
+            🔹 데이터 엔지니어링
+          </div>
+
+          <h3 className="text-md font-semibold mt-6 mb-3">
+            {" "}
+            <Briefcase className="w-5 h-5 mr-2" /> 추천 포지션
+          </h3>
+          <div className="bg-gray-100 p-3 rounded-md text-sm mb-2">
+            💼 미들급 백엔드 개발자
+          </div>
+          <div className="bg-gray-100 p-3 rounded-md text-sm">
+            💼 웹 프론트엔드/백엔드 개발자
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
