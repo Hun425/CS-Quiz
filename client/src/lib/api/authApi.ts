@@ -1,53 +1,35 @@
-// 인증 관련 API //API 비즈니스 로직 분리
+// 인증 관련 API
 import httpClient from "./httpClient";
-import { AuthResponse } from "../types/auth";
+import { useAuthStore } from "@/store/authStore";
 
+/**
+ * 🔹 OAuth2 로그인 요청의 경우 page redirect 방식이므로 별도의 API 요청 필요 없음
+ */
 export const authApi = {
   /**
-   * 🔹 OAuth2 로그인 요청의 경우 page redirect 방식을 적용하기 때문에 별도의 fetch 요청 필요없음
-   */
-  /**
-
-  /**
    * 🔹 토큰 갱신 (Refresh Token 사용)
-   * @param refreshToken - 갱신할 Refresh Token
+   * - `httpOnly` 쿠키 기반 인증이므로 Authorization 헤더 불필요
    */
-  refreshToken: async (refreshToken: string) => {
-    try {
-      const response = await httpClient.post<{
-        success: boolean;
-        data: AuthResponse;
-      }>("/api/oauth2/refresh", null, {
-        headers: {
-          Authorization: `Bearer ${refreshToken}`,
-        },
-      });
-      return response.data;
-    } catch (error) {
-      console.error("🔴 토큰 갱신 실패:", error);
-      throw error;
-    }
-  },
+  // refreshToken: async () => {
+  //   try {
+  //     const response = await httpClient.post("/api/oauth2/refresh");
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error("🔴 토큰 갱신 실패:", error);
+  //     throw error;
+  //   }
+  // },
 
   /**
-   * 🔹 로그아웃 (토큰 삭제)
+   * 🔹 로그아웃
    */
   logout: async () => {
-    const token = localStorage.getItem("auth_token");
-
-    if (!token) {
-      console.warn("⚠️ 로그아웃: 저장된 토큰이 없음");
-      return;
-    }
-
     try {
-      await httpClient.post("/auth/logout", null, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await httpClient.post("/auth/logout", null);
+      useAuthStore.getState().logout();
+      window.location.href = "/";
     } catch (error) {
       console.error("🔴 로그아웃 요청 실패:", error);
-    } finally {
-      localStorage.removeItem("auth_token"); // ✅ 최종적으로 제거
     }
   },
 };

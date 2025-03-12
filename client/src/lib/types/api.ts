@@ -1,11 +1,4 @@
 // src/types/api.ts
-export interface CommonApiResponse<T> {
-  success: boolean;
-  data: T;
-  message?: string;
-  timestamp: string;
-  code: string;
-}
 
 export interface PageResponse<T> {
   content: T[];

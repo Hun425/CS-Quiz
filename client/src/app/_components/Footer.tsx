@@ -4,7 +4,7 @@ import { Github, Twitter, Linkedin } from "lucide-react";
 
 const Footer = () => {
   return (
-    <footer className="bg-footer  py-8 mt-10">
+    <footer className="bg-footer py-8">
       <div className="max-w-screen-2xl mx-auto px-6 md:px-8 lg:px-12">
         <div className="flex flex-col md:flex-row justify-center md:justify-between items-center md:items-start gap-y-6">
           {/* CRAM 로고 & 소개 */}

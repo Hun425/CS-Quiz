@@ -81,7 +81,7 @@ const CramMainPage = () => {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen max-w-screen-full px-4 md:px-8 lg:px-20 mt-8">
+    <div className="min-h-screen max-w-screen-full px-4 md:px-8 lg:px-20 pt-16">
       <section className="bg-background border border-card-border shadow-sm max-w-screen-2xl mx-auto text-foreground p-12 rounded-xl shadow-lg flex flex-col items-center text-center">
         <h1 className="text-5xl font-bold mb-4 text-primary drop-shadow-md">
           쉽고 재미있는 CS 퀴즈 학습

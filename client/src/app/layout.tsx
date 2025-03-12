@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import QueryProvider from "@/providers/QueryProvider";
+import { ToastProvider } from "@/providers/ToastProvider";
 import Header from "./_components/Header";
 import Footer from "./_components/Footer";
 import BottomNav from "./_components/BottomNav";
@@ -16,15 +17,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <QueryProvider>
-      <html lang="ko">
-        <body className={`antialiased`}>
-          <Header />
-          <main className="pt-16 pb-16 min-h-screen">{children}</main>
-          <BottomNav />
-          <Footer />
-        </body>
-      </html>
-    </QueryProvider>
+    <html lang="en">
+      <body className={`antialiased`}>
+        <QueryProvider>
+          <ToastProvider>
+            <Header />
+            <main className="my-16">{children}</main>
+            <BottomNav />
+            <Footer />
+          </ToastProvider>
+        </QueryProvider>
+        <div id="toast-root" />
+      </body>
+    </html>
   );
 }

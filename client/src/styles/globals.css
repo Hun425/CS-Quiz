@@ -9,63 +9,62 @@
   font-display: swap;
   src: url("/fonts/PretendardVariable.woff2") format("woff2");
 }
-
 @layer base {
   :root {
-    /* 기본값(light 테마) 정의 */
     --theme-color-default: rgb(37, 37, 37);
     --theme-color-background: #ffffff;
-    --theme-color-sub-background: rgb(240, 240, 240);
-    --theme-color-foreground: rgb(20, 20, 20);
-    --theme-color-primary: #6366f1;
-    --theme-color-primary-hover: #4f46e5;
+    --theme-color-sub-background: #f5f5f5;
+    --theme-color-foreground: #1e1e1e;
+    --theme-color-primary: #4f46e5; /* 기존 primary보다 살짝 어둡게 */
+    --theme-color-primary-hover: #4338ca;
     --theme-color-secondary: #facc15;
     --theme-color-secondary-hover: #eab308;
-    --theme-color-success: #22c55e;
-    --theme-color-success-light: #d1fae5;
-    --theme-color-warning: #facc15;
-    --theme-color-warning-light: #fefcbf;
-    --theme-color-danger: #ef4444;
+    --theme-color-success: #16a34a;
+    --theme-color-success-light: #bbf7d0;
+    --theme-color-warning: #f97316;
+    --theme-color-warning-light: #fed7aa;
+    --theme-color-danger: #dc2626;
     --theme-color-danger-light: #fecaca;
 
-    --theme-color-neutral: rgb(125, 133, 150);
-    --theme-color-border: rgb(211, 211, 211);
+    --theme-color-neutral: #4b5563;
+    --theme-color-border: #d1d5db;
     --theme-color-footer: #f3f4f6;
 
-    --theme-color-card-background: rgba(255, 255, 255, 0.9);
-    --theme-color-card-border: #e5e7eb;
-    --theme-color-card-hover: rgba(0, 0, 0, 0.05);
-    --theme-color-tertiary: #a855f7;
+    --theme-color-card-background: #f8fafc;
+    --theme-color-card-border: rgb(207, 212, 218);
+    --theme-color-card-hover: #e2e8f0;
+    --theme-color-tertiary: #9333ea;
     --theme-color-muted: #6b7280;
   }
 
-  /* 🌙 Dark Mode */
+  /* 🌙 ✅ 다크 모드 대비 증가 */
   [data-theme="dark"] {
-    --theme-color-background: #0a0a0a;
-    --theme-color-sub-background: #1c1917;
-    --theme-color-foreground: rgb(238, 238, 238);
+    --theme-color-background: #0f0f0f;
+    --theme-color-sub-background: #1a1a1a;
+    --theme-color-foreground: #e5e7eb;
     --theme-color-primary: #818cf8;
     --theme-color-primary-hover: #6366f1;
     --theme-color-secondary: #facc15;
     --theme-color-secondary-hover: #eab308;
-    --theme-color-success: #4ade80;
+    --theme-color-success: #22c55e;
     --theme-color-success-light: #14532d;
-    --theme-color-warning: #facc15;
-    --theme-color-warning-light: #854d0e;
-    --theme-color-danger: #f87171;
+    --theme-color-warning: #f59e0b;
+    --theme-color-warning-light: #78350f;
+    --theme-color-danger: #ef4444;
     --theme-color-danger-light: #7f1d1d;
 
-    --theme-color-neutral: #d1d5db;
+    --theme-color-neutral: #a1a1aa;
     --theme-color-border: #4a5568;
     --theme-color-footer: rgba(100, 100, 100, 0.66);
 
-    --theme-color-card-background: rgba(20, 20, 20, 0.8);
-    --theme-color-card-border: #4a5568;
+    --theme-color-card-background: #1e1e1e;
+    --theme-color-card-border: #374151;
     --theme-color-card-hover: rgba(255, 255, 255, 0.08);
     --theme-color-tertiary: #c084fc;
     --theme-color-muted: #9ca3af;
   }
 
+  /* ✅ 기본 텍스트 색상 */
   body {
     @apply bg-background font-sans text-foreground;
     font-family: "Pretendard", sans-serif;
@@ -83,5 +82,30 @@
 
   p {
     @apply text-base text-muted;
+  }
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  90% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@layer utilities {
+  .animate-fade-in-out {
+    animation: fadeInOut 3s ease-in-out forwards;
   }
 }

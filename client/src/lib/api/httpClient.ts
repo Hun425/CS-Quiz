@@ -1,32 +1,40 @@
 import axios from "axios";
+import { useAuthStore } from "@/store/authStore";
 
-// const BASE_URL =
-//   "http://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com";
+const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL
+  ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/api`
+  : "http://localhost:8080/api";
 
 const httpClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080",
-  withCredentials: true,
+  baseURL,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-//요청 인터셉터
+// 요청 인터셉터: JWT를 요청 헤더에 추가
 httpClient.interceptors.request.use(
   (config) => {
-    console.log("🔹 요청 인터셉터 실행됨!", config);
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => Promise.reject(error)
 );
 
+// 응답 인터셉터: 401 Unauthorized 처리
 httpClient.interceptors.response.use(
-  (response) => response.data,
+  (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // 인증 실패 시 로그아웃 처리 또는 로그인 페이지로 리다이렉트
-      localStorage.removeItem("token");
+      console.warn("🔴 인증 만료됨. 로그아웃 처리");
+      useAuthStore.getState().logout();
       if (typeof window !== "undefined") {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("expires_in");
         window.location.href = "/login";
       }
     }
