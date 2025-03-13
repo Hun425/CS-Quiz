@@ -3,6 +3,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { useToastStore } from "@/store/toastStore";
+import { useEffect, useState } from "react";
 
 const typeStyles = {
   success: "bg-success text-white border-success-light",
@@ -28,10 +29,13 @@ export const Toast: React.FC<{
 // 🔹 Portal을 활용한 Toast 리스트 컴포넌트
 export const ToastContainer: React.FC = () => {
   const { toasts } = useToastStore();
-  const toastRoot = document.getElementById("toast-root"); // ✅ 바로 가져오기
+  const [toastRoot, setToastRoot] = useState<HTMLElement | null>(null);
 
-  if (!toastRoot) return null; // 만약 예상치 못하게 없으면 렌더링 안 함
+  useEffect(() => {
+    setToastRoot(document.getElementById("toast-root"));
+  }, []);
 
+  if (!toastRoot) return null;
   return createPortal(
     <div className="fixed top-5 right-5 z-50 flex flex-col gap-2">
       {toasts.map(({ id, message, type }) => (

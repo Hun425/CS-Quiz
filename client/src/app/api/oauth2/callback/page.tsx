@@ -23,17 +23,21 @@ export default function AuthCallbackPage() {
 
       // ✅ 인증 상태 변경
       setAuthenticated(true);
-
-      // ✅ 리다이렉트
-      router.replace("/quizzes");
     } else {
       console.warn("🔴 잘못된 로그인 응답. 로그인 페이지로 이동.");
       router.replace("/login");
     }
-  }, [searchParams, router, setAuthenticated]);
+  }, [searchParams, setAuthenticated, router]);
 
   // ✅ 인증 상태가 true일 때만 내 프로필 조회
-  const { isLoading } = useMyProfile();
+  const { isLoading, data: userProfile } = useMyProfile();
+
+  // ✅ 프로필이 성공적으로 로드되면 리다이렉트 실행
+  useEffect(() => {
+    if (!isLoading && userProfile) {
+      router.replace("/quizzes");
+    }
+  }, [isLoading, userProfile, router]);
 
   return (
     <div className="flex flex-col items-center justify-center h-screen space-y-4">

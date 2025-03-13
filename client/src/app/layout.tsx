@@ -21,7 +21,7 @@ export default function RootLayout({
       <body className={`antialiased`}>
         <QueryProvider>
           <Header />
-          <main className="my-16">{children}</main>
+          <main className="mt-16 min-w-full">{children}</main>
           <BottomNav />
           <Footer />
         </QueryProvider>

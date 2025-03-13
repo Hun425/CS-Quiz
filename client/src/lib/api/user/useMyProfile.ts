@@ -6,26 +6,26 @@ import { useToastStore } from "@/store/toastStore";
 
 // ✅ 내 프로필 조회 API
 const fetchMyProfile = async () => {
+  console.log("내 프로필 조회");
   const response = await httpClient.get<{
     success: boolean;
     data: UserProfile;
   }>("/users/me/profile");
+
   return response.data;
 };
 
-// ✅ 내 프로필 조회 훅 (localStorage 활용)
 export const useMyProfile = () => {
   const { showToast } = useToastStore.getState();
 
   return useQuery({
     queryKey: ["myProfile"],
     queryFn: async () => {
-      const storedUser = localStorage.getItem("userProfile");
-      if (storedUser) return JSON.parse(storedUser); // ✅ localStorage 활용
+      const storedUser = useProfileStore.getState().userProfile;
+      if (storedUser) return storedUser;
 
       const response = await fetchMyProfile();
       if (response.success) {
-        localStorage.setItem("userProfile", JSON.stringify(response.data));
         useProfileStore.getState().setUserProfile(response.data);
         showToast("프로필 조회 성공", "success");
         return response.data;
