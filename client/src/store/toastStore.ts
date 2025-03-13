@@ -1,8 +1,8 @@
 import { create } from "zustand";
 // 🔹 Toast 메시지 타입
-type ToastErrorType = "success" | "warning" | "error" | "info";
+export type ToastErrorType = "success" | "warning" | "error" | "info";
 
-interface ToastItem {
+export interface ToastItem {
   id: number;
   message: string;
   type: ToastErrorType;

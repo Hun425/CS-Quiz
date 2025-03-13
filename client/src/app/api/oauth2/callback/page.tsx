@@ -2,13 +2,14 @@
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getUserProfile } from "@/lib/api/userApi";
+import { useMyProfile } from "@/lib/api/user/useMyProfile";
 
 export default function AuthCallbackPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const setAuthenticated = useAuthStore((state) => state.setAuthenticated);
+  const { setAuthenticated } = useAuthStore();
 
+  // ✅ 로그인 토큰 저장 및 인증 상태 업데이트
   useEffect(() => {
     const token = searchParams.get("token");
     const refreshToken = searchParams.get("refreshToken");
@@ -22,20 +23,24 @@ export default function AuthCallbackPage() {
 
       // ✅ 인증 상태 변경
       setAuthenticated(true);
-      getUserProfile();
 
-      // ✅리다이렉트
+      // ✅ 리다이렉트
       router.replace("/quizzes");
     } else {
       console.warn("🔴 잘못된 로그인 응답. 로그인 페이지로 이동.");
-      router.replace("/login?error=invalid_token");
+      router.replace("/login");
     }
   }, [searchParams, router, setAuthenticated]);
+
+  // ✅ 인증 상태가 true일 때만 내 프로필 조회
+  const { isLoading } = useMyProfile();
 
   return (
     <div className="flex flex-col items-center justify-center h-screen space-y-4">
       <div className="w-12 h-12 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
-      <p className="text-lg text-gray-600 animate-pulse">로그인 처리 중...</p>
+      <p className="text-lg text-gray-600 animate-pulse">
+        {isLoading ? "프로필 불러오는 중..." : "로그인 처리 중..."}
+      </p>
     </div>
   );
 }

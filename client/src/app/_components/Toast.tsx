@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { createPortal } from "react-dom";
 import { useToastStore } from "@/store/toastStore";
 
 const typeStyles = {
@@ -24,15 +25,19 @@ export const Toast: React.FC<{
   );
 };
 
-// 🔹 Toast 리스트 컴포넌트
+// 🔹 Portal을 활용한 Toast 리스트 컴포넌트
 export const ToastContainer: React.FC = () => {
   const { toasts } = useToastStore();
+  const toastRoot = document.getElementById("toast-root"); // ✅ 바로 가져오기
 
-  return (
-    <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2">
+  if (!toastRoot) return null; // 만약 예상치 못하게 없으면 렌더링 안 함
+
+  return createPortal(
+    <div className="fixed top-5 right-5 z-50 flex flex-col gap-2">
       {toasts.map(({ id, message, type }) => (
         <Toast key={id} message={message} type={type} />
       ))}
-    </div>
+    </div>,
+    toastRoot
   );
 };

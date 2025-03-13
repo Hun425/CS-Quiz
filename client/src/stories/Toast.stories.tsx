@@ -1,5 +1,6 @@
 import React from "react";
 import { Meta, StoryFn } from "@storybook/react";
+import { ToastItem } from "@/store/toastStore";
 import { Toast } from "@/app/_components/Toast";
 
 export default {
