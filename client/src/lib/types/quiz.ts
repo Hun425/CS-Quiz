@@ -1,40 +1,25 @@
-import { QuestionResponse } from "./question";
+import { QuestionResponse, QuestionCreateRequest } from "./question";
 import { TagResponse } from "./tag";
 
-// ✅ 문제 관련 타입
-export interface QuestionResponse {
-  id: number;
-  questionType:
-    | "MULTIPLE_CHOICE"
-    | "TRUE_FALSE"
-    | "SHORT_ANSWER"
-    | "CODE_ANALYSIS"
-    | "DIAGRAM_BASED";
-  questionText: string;
-  codeSnippet?: string;
-  diagramData?: string;
-  options?: string[];
-  explanation: string;
-  points: number;
-  difficultyLevel: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
-  timeLimitSeconds: number;
+export enum QuizType {
+  DAILY = "DAILY",
+  TAG_BASED = "TAG_BASED",
+  TOPIC_BASED = "TOPIC_BASED",
+  CUSTOM = "CUSTOM",
 }
 
-export interface QuestionCreateRequest {
-  questionType:
-    | "MULTIPLE_CHOICE"
-    | "TRUE_FALSE"
-    | "SHORT_ANSWER"
-    | "CODE_ANALYSIS"
-    | "DIAGRAM_BASED";
-  questionText: string;
-  codeSnippet?: string;
-  diagramData?: string;
-  options?: string[];
-  correctAnswer: string;
-  explanation: string;
-  points: number;
-  difficultyLevel: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
+export enum QuizDifficultyType {
+  BEGINNER = "BEGINNER",
+  INTERMEDIATE = "INTERMEDIATE",
+  ADVANCED = "ADVANCED",
+}
+
+export interface QuestionStatistics {
+  questionId: number;
+  correctAnswers: number;
+  totalAttempts: number;
+  correctRate: number;
+  averageTimeSeconds: number;
 }
 
 // ✅ 퀴즈 상세 조회 타입
@@ -42,11 +27,11 @@ export interface QuizDetailResponse {
   id: number;
   title: string;
   description: string;
-  quizType: "DAILY" | "TAG_BASED" | "TOPIC_BASED" | "CUSTOM";
-  difficultyLevel: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
+  quizType: QuizType;
+  difficultyLevel: QuizDifficultyType;
   timeLimit: number;
   questionCount: number;
-  tags: TagResponse[]; // ✅ 태그 필드 추가
+  tags: TagResponse[];
   creator: {
     id: number;
     username: string;
@@ -60,13 +45,7 @@ export interface QuizDetailResponse {
     completionRate: number;
     averageTimeSeconds: number;
     difficultyDistribution: Record<string, number>;
-    questionStatistics?: {
-      questionId: number;
-      correctAnswers: number;
-      totalAttempts: number;
-      correctRate: number;
-      averageTimeSeconds: number;
-    }[];
+    questionStatistics?: QuestionStatistics[];
   };
   createdAt: string;
 }
@@ -81,8 +60,8 @@ export interface QuizResponse extends QuizDetailResponse {
 export interface QuizSummaryResponse {
   id: number;
   title: string;
-  quizType: "DAILY" | "TAG_BASED" | "TOPIC_BASED" | "CUSTOM";
-  difficultyLevel: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
+  quizType: QuizType;
+  difficultyLevel: QuizDifficultyType;
   questionCount: number;
   attemptCount: number;
   avgScore: number;
@@ -90,12 +69,18 @@ export interface QuizSummaryResponse {
   createdAt: string;
 }
 
+export enum QuizCreateType {
+  TAG_BASED = "TAG_BASED",
+  TOPIC_BASED = "TOPIC_BASED",
+  CUSTOM = "CUSTOM",
+}
+
 // ✅ 퀴즈 생성 요청 타입
 export interface QuizCreateRequest {
   title: string;
   description: string;
-  quizType: "TAG_BASED" | "TOPIC_BASED" | "CUSTOM"; // ✅ DAILY 제외
-  difficultyLevel: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
+  quizType: QuizCreateType;
+  difficultyLevel: QuizDifficultyType;
   timeLimit: number;
   tagIds: number[];
   questions: QuestionCreateRequest[];
@@ -104,8 +89,8 @@ export interface QuizCreateRequest {
 // ✅ 퀴즈 검색 요청 타입
 export interface QuizSearchRequest {
   title?: string;
-  difficultyLevel?: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
-  quizType?: "DAILY" | "TAG_BASED" | "TOPIC_BASED" | "CUSTOM";
+  difficultyLevel?: QuizCreateType;
+  quizType?: QuizDifficultyType;
   tagIds?: number[];
   minQuestions?: number;
   maxQuestions?: number;

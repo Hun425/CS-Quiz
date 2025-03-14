@@ -28,7 +28,9 @@ const LoginButton = () => {
     </div>
   ) : (
     <Link href="/login">
-      <Button variant="primary">로그인</Button>
+      <Button variant="primary" className="text-white">
+        로그인
+      </Button>
     </Link>
   );
 };

@@ -34,7 +34,8 @@
     --theme-color-card-border: rgb(207, 212, 218);
     --theme-color-card-hover: #e2e8f0;
     --theme-color-tertiary: #9333ea;
-    --theme-color-muted: #6b7280;
+    --theme-color-muted: rgb(83, 88, 99);
+    --theme-color-default-muted: rgb(54, 58, 65);
   }
 
   /* 🌙 ✅ 다크 모드 대비 증가 */
@@ -61,14 +62,13 @@
     --theme-color-card-border: #374151;
     --theme-color-card-hover: rgba(255, 255, 255, 0.08);
     --theme-color-tertiary: #c084fc;
-    --theme-color-muted: #9ca3af;
+    --theme-color-muted: rgb(83, 88, 99);
   }
 
   /* ✅ 기본 텍스트 색상 */
   body {
     @apply bg-background font-sans text-foreground;
     font-family: "Pretendard", sans-serif;
-    box-sizing: border-box;
     color: var(--theme-color-foreground);
   }
 
@@ -77,11 +77,11 @@
   }
 
   h2 {
-    @apply text-2xl font-semibold text-secondary;
+    @apply text-2xl font-semibold text-primary;
   }
 
   p {
-    @apply text-base text-muted;
+    @apply text-base text-default-muted;
   }
 }
 

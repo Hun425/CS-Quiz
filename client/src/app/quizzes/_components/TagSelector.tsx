@@ -1,4 +1,5 @@
-// src/components/tag/TagSelector.tsx
+"use client";
+
 import React, { useEffect, useState } from "react";
 // import { tagApi } from "@/lib/api/tagApi";
 import { TagResponse } from "@/lib/types/api";

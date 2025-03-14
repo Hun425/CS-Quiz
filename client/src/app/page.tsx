@@ -94,7 +94,7 @@ const CramMainPage = () => {
         <Button
           variant="primary"
           size="large"
-          className="mt-6 px-6 py-3 font-semibold "
+          className="mt-6 px-6 py-3 font-semibold text-white"
           onClick={() => router.push("/login")}
         >
           로그인하고 시작하기 🚀

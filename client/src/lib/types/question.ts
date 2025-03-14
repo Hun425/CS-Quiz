@@ -1,28 +1,28 @@
+import { QuizDifficultyType } from "./quiz";
+
+export enum QuestionType {
+  MULTIPLE_CHOICE = "MULTIPLE_CHOICE",
+  TRUE_FALSE = "TRUE_FALSE",
+  SHORT_ANSWER = "SHORT_ANSWER",
+  CODE_ANALYSIS = "CODE_ANALYSIS",
+  DIAGRAM_BASED = "DIAGRAM_BASED",
+}
+
 export interface QuestionResponse {
   id: number;
-  questionType:
-    | "MULTIPLE_CHOICE"
-    | "TRUE_FALSE"
-    | "SHORT_ANSWER"
-    | "CODE_ANALYSIS"
-    | "DIAGRAM_BASED";
+  questionType: QuestionType;
   questionText: string;
   codeSnippet?: string;
   diagramData?: string;
   options: string[];
   explanation: string;
   points: number;
-  difficultyLevel: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
+  difficultyLevel: QuizDifficultyType;
   timeLimitSeconds: number;
 }
 
 export interface QuestionCreateRequest {
-  questionType:
-    | "MULTIPLE_CHOICE"
-    | "TRUE_FALSE"
-    | "SHORT_ANSWER"
-    | "CODE_ANALYSIS"
-    | "DIAGRAM_BASED";
+  questionType: QuestionType;
   questionText: string;
   codeSnippet?: string;
   diagramData?: string;
@@ -30,5 +30,5 @@ export interface QuestionCreateRequest {
   correctAnswer: string;
   explanation: string;
   points: number;
-  difficultyLevel: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
+  difficultyLevel: QuizDifficultyType;
 }

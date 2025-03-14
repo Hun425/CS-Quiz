@@ -1,5 +1,5 @@
 // 인증 관련 API
-import httpClient from "../httpClient";
+import httpClient from "./httpClient";
 import { useAuthStore } from "@/store/authStore";
 
 /**

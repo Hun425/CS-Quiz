@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import Tag from "@/app/_components/Tag";
+import Tag from "@/app/quizzes/_components/Tag";
 import "@/styles/globals.css";
 import { TagResponse } from "@/lib/types/api";
 

@@ -9,7 +9,7 @@ const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL
 const httpClient = axios.create({
   baseURL,
   headers: {
-    "Content-Type": "application/json charset=utf-8",
+    "Content-Type": "application/json",
   },
 });
 
