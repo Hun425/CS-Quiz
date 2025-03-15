@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMyProfile } from "@/lib/api/user/useMyProfile";
+import { useGetMyProfile } from "@/lib/api/user/useGetMyProfile";
 
 export default function AuthCallbackPage() {
   const searchParams = useSearchParams();
@@ -30,7 +30,7 @@ export default function AuthCallbackPage() {
   }, [searchParams, setAuthenticated, router]);
 
   // ✅ 인증 상태가 true일 때만 내 프로필 조회
-  const { isLoading, data: userProfile } = useMyProfile();
+  const { isLoading, data: userProfile } = useGetMyProfile();
 
   // ✅ 프로필이 성공적으로 로드되면 리다이렉트 실행
   useEffect(() => {

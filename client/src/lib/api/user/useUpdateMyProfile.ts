@@ -7,22 +7,22 @@ const updateProfile = async (userData: {
   username?: string;
   profileImage?: string;
 }) => {
-  const response = await httpClient.put<{
-    success: boolean;
-    data: UserProfile;
-  }>("/users/me/profile", userData);
-  return response.data;
+  const response = await httpClient.put<CommonApiResponse<UserProfile>>(
+    "/users/me/profile",
+    userData
+  );
+  return response.data.data;
 };
 
 // ✅ 사용자 프로필 업데이트 훅
-export const useUpdateProfile = () => {
+export const useUpdateMyProfile = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: updateProfile,
     onSuccess: (updatedProfile) => {
       localStorage.setItem("userProfile", JSON.stringify(updatedProfile));
-      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
       queryClient.invalidateQueries({ queryKey: ["userStatistics"] });
     },
   });

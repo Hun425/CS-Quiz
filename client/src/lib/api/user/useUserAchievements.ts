@@ -11,14 +11,15 @@ const fetchAchievements = async (userId?: number) => {
     success: boolean;
     data: Achievement[];
   }>(endpoint);
-  return response.data;
+  return response.data.data;
 };
 
 // ✅ 사용자 업적 조회 훅 (useQuery)
-export const useAchievements = (userId?: number) => {
+export const useUserAchievements = (userId?: number) => {
   return useQuery({
     queryKey: ["achievements", userId],
     queryFn: () => fetchAchievements(userId),
     staleTime: userId ? 0 : 1000 * 60 * 10,
+    refetchOnWindowFocus: true,
   });
 };

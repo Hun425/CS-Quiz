@@ -7,11 +7,10 @@ const fetchUserStatistics = async (userId?: number) => {
   const endpoint = userId
     ? `/users/${userId}/statistics`
     : "/users/me/statistics";
-  const response = await httpClient.get<{
-    success: boolean;
-    data: UserStatistics;
-  }>(endpoint);
-  return response.data;
+  const response = await httpClient.get<CommonApiResponse<UserStatistics>>(
+    endpoint
+  );
+  return response.data.data;
 };
 
 // ✅ 사용자 통계 조회 훅 (useQuery)

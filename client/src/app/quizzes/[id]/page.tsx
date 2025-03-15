@@ -1,26 +1,15 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useGetQuizDetail } from "@/lib/api/quiz/useGetQuizDetail";
 import { useAuthStore } from "@/store/authStore";
-import { mockQuizDetail } from "@/lib/mockQuizDetail";
 import Tag from "../_components/Tag";
 
 const QuizDetailPage: React.FC = () => {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const quizId = searchParams.get("quizId");
+  const quizId = useParams().id;
   const { isAuthenticated } = useAuthStore();
-
-  // ✅ 환경 변수 확인 후 더미 데이터 적용
-  const useMockData = process.env.NEXT_PUBLIC_USE_MOCK_DATA === "true";
-  const {
-    isLoading,
-    error,
-    data: quiz,
-  } = useMockData
-    ? { isLoading: false, error: null, data: mockQuizDetail }
-    : useGetQuizDetail(Number(quizId));
+  const { isLoading, error, data: quiz } = useGetQuizDetail(Number(quizId));
 
   const handleStartQuiz = () => {
     if (!isAuthenticated) {

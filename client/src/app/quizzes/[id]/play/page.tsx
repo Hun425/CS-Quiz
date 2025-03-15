@@ -1,27 +1,21 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
-import { mockQuizPlay } from "@/lib/mockQuizPlay";
-import { getPlayableQuiz } from "@/lib/api/quiz/getPlayableQuiz";
+import { useGetPlayableQuiz } from "@/lib/api/quiz/useGetPlayableQuiz";
+
 import { format } from "date-fns"; // ✅ date-fns 사용
 
 const QuizPlayPage: React.FC = () => {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const quizId = searchParams.get("quizId");
+  const quizId = useParams().id;
+  console.log(quizId, "quizId//play");
   const { isAuthenticated } = useAuthStore();
 
-  // ✅ 환경 변수 확인 후 더미 데이터 적용
-  const useMockData = process.env.NEXT_PUBLIC_USE_MOCK_DATA === "true";
-  const {
-    isLoading,
-    error,
-    data: quiz,
-  } = useMockData
-    ? { isLoading: false, error: null, data: mockQuizPlay }
-    : getPlayableQuiz(Number(quizId));
+  const { isLoading, error, data: quiz } = useGetPlayableQuiz(Number(quizId));
+
+  console.log(quiz, "data//play");
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});

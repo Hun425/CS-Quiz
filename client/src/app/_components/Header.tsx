@@ -13,8 +13,8 @@ const Header: React.FC = () => {
           <Link href={"/"} className="flex items-center space-x-2">
             <Image
               src="/images/logo.png"
-              width={35}
-              height={35}
+              width={30}
+              height={30}
               alt="CRAM Logo"
               className="rounded-full"
             />
@@ -26,10 +26,14 @@ const Header: React.FC = () => {
         </div>
 
         {/* 메뉴 & 검색 */}
-        <div className="hidden md:flex items-center space-x-4 flex-1 justify-center">
-          <SearchBar />
+        <div className=" flex items-center space-x-4 flex-1 justify-center ">
+          {/* 검색 */}
+          <div className="hidden sm:flex w-full sm:max-w-sm md:max-w-md lg:max-w-lg">
+            <SearchBar />
+          </div>
+
           {/* 메뉴 */}
-          <nav className="space-x-4">
+          <nav className="hidden lg:flex space-x-4">
             <Link
               href="/quizzes"
               className="text-foreground font-semibold hover:scale-105"
