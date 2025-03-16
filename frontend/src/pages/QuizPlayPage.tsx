@@ -202,37 +202,85 @@ const QuizPlayPage: React.FC = () => {
         switch (question.questionType) {
             // MULTIPLE_CHOICE 부분만 수정
             case 'MULTIPLE_CHOICE':
-                return (
-                    <div className="multiple-choice-options">
-                        {question.options.map((option, index) => (
-                            <div
-                                key={index}
-                                className="option"
-                                style={{
-                                    padding: '1rem',
-                                    marginBottom: '0.5rem',
-                                    border: `1px solid ${answers[question.id] === option.key ? '#1976d2' : '#e0e0e0'}`,
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    backgroundColor: answers[question.id] === option.key ? '#e3f2fd' : 'white'
-                                }}
-                                onClick={() => handleAnswerSelect(question.id, option.key)}
-                            >
-                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                    <input
-                                        type="radio"
-                                        name={`question-${question.id}`}
-                                        value={option.key}
-                                        checked={answers[question.id] === option.key}
-                                        onChange={() => handleAnswerSelect(question.id, option.key)}
-                                        style={{ marginRight: '0.5rem' }}
-                                    />
-                                    {option.value}
-                                </label>
+                console.log('Question:', question);
+                console.log('Options 타입:', typeof question.options);
+                console.log('Options 배열 여부:', Array.isArray(question.options));
+                console.log('Options 값:', question.options);
+                // 옵션 구조가 배열인지 확인
+                if (Array.isArray(question.options)) {
+                    // 객체 배열인 경우 (현재 코드 가정)
+                    if (typeof question.options[0] === 'object' && question.options[0] !== null) {
+                        return (
+                            <div className="multiple-choice-options">
+                                {question.options.map((option, index) => (
+                                    <div
+                                        key={index}
+                                        className="option"
+                                        style={{
+                                            padding: '1rem',
+                                            marginBottom: '0.5rem',
+                                            border: `1px solid ${answers[question.id] === option.key ? '#1976d2' : '#e0e0e0'}`,
+                                            borderRadius: '4px',
+                                            cursor: 'pointer',
+                                            backgroundColor: answers[question.id] === option.key ? '#e3f2fd' : 'white'
+                                        }}
+                                        onClick={() => handleAnswerSelect(question.id, option.key)}
+                                    >
+                                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                            <input
+                                                type="radio"
+                                                name={`question-${question.id}`}
+                                                value={option.key}
+                                                checked={answers[question.id] === option.key}
+                                                onChange={() => handleAnswerSelect(question.id, option.key)}
+                                                style={{ marginRight: '0.5rem' }}
+                                            />
+                                            {option.value}
+                                        </label>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                );
+                        );
+                    }
+                    // 문자열 배열인 경우
+                    else {
+                        return (
+                            <div className="multiple-choice-options">
+                                {question.options.map((option, index) => (
+                                    <div
+                                        key={index}
+                                        className="option"
+                                        style={{
+                                            padding: '1rem',
+                                            marginBottom: '0.5rem',
+                                            border: `1px solid ${answers[question.id] === String(index) ? '#1976d2' : '#e0e0e0'}`,
+                                            borderRadius: '4px',
+                                            cursor: 'pointer',
+                                            backgroundColor: answers[question.id] === String(index) ? '#e3f2fd' : 'white'
+                                        }}
+                                        onClick={() => handleAnswerSelect(question.id, String(index))}
+                                    >
+                                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                            <input
+                                                type="radio"
+                                                name={`question-${question.id}`}
+                                                value={String(index)}
+                                                checked={answers[question.id] === String(index)}
+                                                onChange={() => handleAnswerSelect(question.id, String(index))}
+                                                style={{ marginRight: '0.5rem' }}
+                                            />
+                                            {option}
+                                        </label>
+                                    </div>
+                                ))}
+                            </div>
+                        );
+                    }
+                }
+                // 옵션이 없거나 다른 형태일 경우
+                else {
+                    return <p>문제 옵션을 불러올 수 없습니다.</p>;
+                }
 
             case 'TRUE_FALSE':
                 // 서버에서 options이 제공되는 경우

@@ -1,9 +1,11 @@
 package com.quizplatform.core.domain.question;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quizplatform.core.domain.quiz.DifficultyLevel;
 import com.quizplatform.core.domain.quiz.Quiz;
+import com.quizplatform.core.dto.question.OptionDto;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -14,6 +16,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -106,13 +109,34 @@ public class Question {
         }
     }
 
-    // 객관식 옵션 조회
+    // 기존 메서드 유지
     public List<String> getOptionList() {
         if (options == null) {
             return Collections.emptyList();
         }
         try {
             ObjectMapper objectMapper = new ObjectMapper();
+            // 먼저 JSON 노드로 파싱
+            JsonNode jsonNode = objectMapper.readTree(options);
+
+            // 배열인 경우
+            if (jsonNode.isArray()) {
+                List<String> result = new ArrayList<>();
+
+                // 객체 배열({key, value} 형태)인지 확인
+                if (jsonNode.size() > 0 && jsonNode.get(0).isObject() &&
+                        jsonNode.get(0).has("value")) {
+                    // {key, value} 객체에서 value만 추출
+                    for (JsonNode node : jsonNode) {
+                        result.add(node.get("value").asText());
+                    }
+                } else {
+                    // 단순 문자열 배열인 경우
+                    return objectMapper.readValue(options, new TypeReference<List<String>>() {});
+                }
+                return result;
+            }
+            // 기본 처리
             return objectMapper.readValue(options, new TypeReference<List<String>>() {});
         } catch (Exception e) {
             return Collections.emptyList();
@@ -138,6 +162,43 @@ public class Question {
 
         return copiedQuestion;
     }
+    // OptionDto 리스트로 변환하는 메서드 (추가)
+    public List<OptionDto> getOptionDtoList() {
+        if (options == null) {
+            return Collections.emptyList();
+        }
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            // 먼저 {key, value} 형태로 직접 파싱 시도
+            try {
+                return objectMapper.readValue(options,
+                        objectMapper.getTypeFactory().constructCollectionType(List.class, OptionDto.class));
+            } catch (Exception e) {
+                // 실패하면 문자열 리스트로 파싱 후 변환
+                List<String> stringOptions = getOptionList();
+                List<OptionDto> result = new ArrayList<>();
+
+                for (int i = 0; i < stringOptions.size(); i++) {
+                    // a, b, c, d... 형태로 키를 생성
+                    String key = String.valueOf((char)('a' + i));
+                    result.add(new OptionDto(key, stringOptions.get(i)));
+                }
+
+                return result;
+            }
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
+    }
+
+
+    // 원본 options JSON 문자열을 직접 반환 (추가)
+    public String getOptions() {
+        return this.options;
+    }
+
 
     // 정답 확인
     public boolean isCorrectAnswer(String answer) {
