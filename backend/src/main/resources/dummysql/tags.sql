@@ -50,6 +50,10 @@ WHERE NOT EXISTS (
     SELECT 1 FROM public.tags WHERE name = 'Java'
 );
 
+-- Java 태그 ID 가져오기 CTE 추가
+WITH java_tag AS (
+    SELECT id FROM public.tags WHERE name = 'Java'
+)
 -- Java 태그 동의어 추가
 INSERT INTO public.tag_synonyms (tag_id, synonym)
 SELECT id, synonym

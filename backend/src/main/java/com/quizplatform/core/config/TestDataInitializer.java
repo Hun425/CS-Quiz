@@ -63,7 +63,9 @@ public class TestDataInitializer {
 
             if (!dataExists) {
                 // 데이터가 없는 경우에만 스크립트 실행
-                executeSqlFiles();
+                executeSqlFile(            "classpath:/duymm_sql.sql");
+
+                // executeSqlFiles();
                 log.info("더미 데이터가 성공적으로 로드되었습니다.");
             } else {
                 log.info("데이터가 이미 존재합니다. 스크립트 실행을 건너뜁니다.");
@@ -89,16 +91,18 @@ public class TestDataInitializer {
 
     private void executeSqlFiles() {
         // 각 SQL 파일을 순서대로 실행
-        for (String sqlFilePath : SQL_FILES) {
-            try {
-                log.info("SQL 파일 실행 중: {}", sqlFilePath);
-                executeSqlFile(sqlFilePath);
-                log.info("SQL 파일 실행 완료: {}", sqlFilePath);
-            } catch (Exception e) {
-                log.error("SQL 파일 '{}' 실행 중 오류 발생: {}", sqlFilePath, e.getMessage(), e);
-                throw new RuntimeException("SQL 파일 실행 중 오류 발생: " + sqlFilePath, e);
-            }
-        }
+        // for (String sqlFilePath : SQL_FILES) {
+        //     try {
+        //         log.info("SQL 파일 실행 중: {}", sqlFilePath);
+        //         executeSqlFile(sqlFilePath);
+        //         log.info("SQL 파일 실행 완료: {}", sqlFilePath);
+        //     } catch (Exception e) {
+        //         log.error("SQL 파일 '{}' 실행 중 오류 발생: {}", sqlFilePath, e.getMessage(), e);
+        //         throw new RuntimeException("SQL 파일 실행 중 오류 발생: " + sqlFilePath, e);
+        //     }
+        // }
+
+
     }
 
     private void executeSqlFile(String resourcePath) throws IOException {

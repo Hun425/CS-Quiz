@@ -299,10 +299,6 @@ public class QuizService {
             question.setCodeSnippet(request.getCodeSnippet());
         }
 
-        if (request.getDiagramData() != null) {
-            question.setDiagramData(request.getDiagramData());
-        }
-
         if (request.getOptions() != null) {
             question.setOptions(request.getOptions());
         }
