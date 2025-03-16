@@ -29,7 +29,6 @@ public class QuestionResponse {
                 .questionType(question.getQuestionType())
                 .questionText(question.getQuestionText())
                 .codeSnippet(question.getCodeSnippet())
-                .diagramData(question.getDiagramData())
                 .options(question.getOptionList())
                 .explanation(question.getExplanation())
                 .points(question.getPoints())

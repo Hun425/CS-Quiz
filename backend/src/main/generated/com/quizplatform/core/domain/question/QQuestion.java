@@ -28,8 +28,6 @@ public class QQuestion extends EntityPathBase<Question> {
 
     public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
 
-    public final StringPath diagramData = createString("diagramData");
-
     public final EnumPath<com.quizplatform.core.domain.quiz.DifficultyLevel> difficultyLevel = createEnum("difficultyLevel", com.quizplatform.core.domain.quiz.DifficultyLevel.class);
 
     public final StringPath explanation = createString("explanation");

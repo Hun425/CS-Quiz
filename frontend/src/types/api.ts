@@ -50,7 +50,7 @@ export interface QuestionResponse {
     questionText: string;
     codeSnippet?: string;
     diagramData?: string;
-    options: string[];
+    options: { key: string; value: string }[]; // 여기를 수정: 객체 배열 타입으로 변경
     explanation: string;
     points: number;
     difficultyLevel: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
@@ -209,7 +209,7 @@ export interface BattleNextQuestionResponse {
     questionId: number;
     questionText: string;
     questionType: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'CODE_ANALYSIS' | 'DIAGRAM_BASED';
-    options?: string[];
+    options?: { key: string; value: string }[]; // string[]에서 변경
     timeLimit: number;
     points: number;
     isGameOver: boolean;

@@ -49,9 +49,6 @@ public class Question {
     @Column(name = "code_snippet", columnDefinition = "TEXT")
     private String codeSnippet;
 
-    @Column(name = "diagram_data", columnDefinition = "TEXT")
-    private String diagramData;
-
     @Column(columnDefinition = "jsonb")
     private String options;
 
@@ -98,10 +95,6 @@ public class Question {
         this.codeSnippet = codeSnippet;
     }
 
-    // 다이어그램 데이터 설정
-    public void setDiagramData(String diagramData) {
-        this.diagramData = diagramData;
-    }
 
     // 객관식 옵션 설정
     public void setOptions(List<String> optionList) {
@@ -138,7 +131,6 @@ public class Question {
                 .build();
 
         copiedQuestion.setCodeSnippet(this.codeSnippet);
-        copiedQuestion.setDiagramData(this.diagramData);
         if (this.options != null) {
             copiedQuestion.setOptions(this.getOptionList());
         }

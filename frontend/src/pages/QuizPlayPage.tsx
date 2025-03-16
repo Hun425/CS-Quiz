@@ -200,6 +200,7 @@ const QuizPlayPage: React.FC = () => {
     // 답변 옵션 렌더링
     const renderAnswerOptions = (question: QuestionResponse) => {
         switch (question.questionType) {
+            // MULTIPLE_CHOICE 부분만 수정
             case 'MULTIPLE_CHOICE':
                 return (
                     <div className="multiple-choice-options">
@@ -210,23 +211,23 @@ const QuizPlayPage: React.FC = () => {
                                 style={{
                                     padding: '1rem',
                                     marginBottom: '0.5rem',
-                                    border: `1px solid ${answers[question.id] === option ? '#1976d2' : '#e0e0e0'}`,
+                                    border: `1px solid ${answers[question.id] === option.key ? '#1976d2' : '#e0e0e0'}`,
                                     borderRadius: '4px',
                                     cursor: 'pointer',
-                                    backgroundColor: answers[question.id] === option ? '#e3f2fd' : 'white'
+                                    backgroundColor: answers[question.id] === option.key ? '#e3f2fd' : 'white'
                                 }}
-                                onClick={() => handleAnswerSelect(question.id, option)}
+                                onClick={() => handleAnswerSelect(question.id, option.key)}
                             >
                                 <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                                     <input
                                         type="radio"
                                         name={`question-${question.id}`}
-                                        value={option}
-                                        checked={answers[question.id] === option}
-                                        onChange={() => handleAnswerSelect(question.id, option)}
+                                        value={option.key}
+                                        checked={answers[question.id] === option.key}
+                                        onChange={() => handleAnswerSelect(question.id, option.key)}
                                         style={{ marginRight: '0.5rem' }}
                                     />
-                                    {option}
+                                    {option.value}
                                 </label>
                             </div>
                         ))}
@@ -234,37 +235,73 @@ const QuizPlayPage: React.FC = () => {
                 );
 
             case 'TRUE_FALSE':
-                return (
-                    <div className="true-false-options">
-                        {['True', 'False'].map((option) => (
-                            <div
-                                key={option}
-                                className="option"
-                                style={{
-                                    padding: '1rem',
-                                    marginBottom: '0.5rem',
-                                    border: `1px solid ${answers[question.id] === option ? '#1976d2' : '#e0e0e0'}`,
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    backgroundColor: answers[question.id] === option ? '#e3f2fd' : 'white'
-                                }}
-                                onClick={() => handleAnswerSelect(question.id, option)}
-                            >
-                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                    <input
-                                        type="radio"
-                                        name={`question-${question.id}`}
-                                        value={option}
-                                        checked={answers[question.id] === option}
-                                        onChange={() => handleAnswerSelect(question.id, option)}
-                                        style={{ marginRight: '0.5rem' }}
-                                    />
-                                    {option}
-                                </label>
-                            </div>
-                        ))}
-                    </div>
-                );
+                // 서버에서 options이 제공되는 경우
+                if (question.options && question.options.length > 0) {
+                    return (
+                        <div className="true-false-options">
+                            {question.options.map((option, index) => (
+                                <div
+                                    key={index}
+                                    className="option"
+                                    style={{
+                                        padding: '1rem',
+                                        marginBottom: '0.5rem',
+                                        border: `1px solid ${answers[question.id] === option.key ? '#1976d2' : '#e0e0e0'}`,
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        backgroundColor: answers[question.id] === option.key ? '#e3f2fd' : 'white'
+                                    }}
+                                    onClick={() => handleAnswerSelect(question.id, option.key)}
+                                >
+                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                        <input
+                                            type="radio"
+                                            name={`question-${question.id}`}
+                                            value={option.key}
+                                            checked={answers[question.id] === option.key}
+                                            onChange={() => handleAnswerSelect(question.id, option.key)}
+                                            style={{ marginRight: '0.5rem' }}
+                                        />
+                                        {option.value}
+                                    </label>
+                                </div>
+                            ))}
+                        </div>
+                    );
+                } else {
+                    // 서버에서 options이 제공되지 않는 경우, 기본값 사용
+                    return (
+                        <div className="true-false-options">
+                            {[{key: 'true', value: 'True'}, {key: 'false', value: 'False'}].map((option) => (
+                                <div
+                                    key={option.key}
+                                    className="option"
+                                    style={{
+                                        padding: '1rem',
+                                        marginBottom: '0.5rem',
+                                        border: `1px solid ${answers[question.id] === option.key ? '#1976d2' : '#e0e0e0'}`,
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        backgroundColor: answers[question.id] === option.key ? '#e3f2fd' : 'white'
+                                    }}
+                                    onClick={() => handleAnswerSelect(question.id, option.key)}
+                                >
+                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                        <input
+                                            type="radio"
+                                            name={`question-${question.id}`}
+                                            value={option.key}
+                                            checked={answers[question.id] === option.key}
+                                            onChange={() => handleAnswerSelect(question.id, option.key)}
+                                            style={{ marginRight: '0.5rem' }}
+                                        />
+                                        {option.value}
+                                    </label>
+                                </div>
+                            ))}
+                        </div>
+                    );
+                }
 
             case 'SHORT_ANSWER':
                 return (
