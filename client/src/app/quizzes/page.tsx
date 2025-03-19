@@ -19,7 +19,7 @@ const QuizListPage: React.FC = () => {
   // 🔹 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(0);
 
-  // ✅ 검색 API 호출 (쿼리 실행 조건 추가)
+  // ✅ 검색 API 호출
   const { data, isLoading, error } = useSearchQuizzes(
     searchParams,
     currentPage,

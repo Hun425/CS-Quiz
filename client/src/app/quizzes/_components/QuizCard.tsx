@@ -14,7 +14,7 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz }) => {
         className="flex flex-col h-full text-foreground no-underline"
       >
         {/* 퀴즈 제목 */}
-        <h3 className="text-lg font-bold text-primary mb-2">{quiz.title}</h3>
+        <h2 className="text-xl font-bold text-primary mb-2">{quiz.title}</h2>
 
         {/* 퀴즈 메타정보 */}
         <div className="flex flex-wrap gap-2 mb-4">
@@ -31,14 +31,13 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz }) => {
         {/* 태그 목록 */}
         <div className="flex flex-wrap gap-2 mb-2">
           {(quiz.tags || []).map((tag) => (
-            <Tag key={tag.id} tag={tag} />
+            <Tag key={tag.id} tag={tag} size="small" />
           ))}
         </div>
 
         {/* 시도 횟수 & 평균 점수 */}
         <div className="text-sm text-muted">
-          🔥 {quiz.attemptCount}회 도전 | 📊 평균 점수:{" "}
-          {quiz.avgScore.toFixed(1)}
+          📊 {quiz.attemptCount}회 도전 | 평균 점수: {quiz.avgScore.toFixed(1)}
         </div>
       </Link>
     </div>

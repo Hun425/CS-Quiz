@@ -5,7 +5,6 @@ import httpClient from "../httpClient";
 
 /**
  * @returns 태그 전체 목록을 조회하는 API
-
  */
 
 const getAllTags = async () => {
@@ -19,6 +18,6 @@ export const useGetAllTags = () => {
   return useQuery<CommonApiResponse<TagResponse[]>, Error>({
     queryKey: ["allTags"],
     queryFn: getAllTags,
-    staleTime: 1000 * 60 * 60 * 24, // ✅ 24시간 이후 만료
+    refetchOnWindowFocus: true,
   });
 };

@@ -3,7 +3,9 @@
 import { useRouter, useParams } from "next/navigation";
 import { useGetQuizDetail } from "@/lib/api/quiz/useGetQuizDetail";
 import { useAuthStore } from "@/store/authStore";
+import Image from "next/image";
 import Tag from "../_components/Tag";
+// import { Bar } from "react-chartjs-2";
 
 const QuizDetailPage: React.FC = () => {
   const router = useRouter();
@@ -52,18 +54,47 @@ const QuizDetailPage: React.FC = () => {
         <h1 className="text-3xl font-bold text-primary">{quiz.title}</h1>
         <p className="text-foreground mt-2">{quiz.description}</p>
 
+        {/* 태그 및 정보 */}
         <div className="mt-4 flex flex-wrap gap-3">
           <Tag difficultyLevel={quiz.difficultyLevel} />
           <Tag quizType={quiz.quizType} />
           <Tag questionCount={quiz.questionCount} />
         </div>
 
+        {/* 태그 목록 */}
         <div className="mt-4 flex flex-wrap gap-2">
           {quiz.tags.map((tag) => (
             <Tag key={tag.id} tag={tag} />
           ))}
         </div>
 
+        {/* 제작자 정보 */}
+        <div className="flex items-center gap-4 mt-6 border-t border-border pt-4">
+          {quiz.creator.profileImage ? (
+            <Image
+              src={quiz.creator.profileImage}
+              alt="프로필 이미지"
+              width={50}
+              height={50}
+              className="rounded-full border border-border"
+            />
+          ) : (
+            <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-lg font-semibold">
+              {quiz.creator.username.charAt(0)}
+            </div>
+          )}
+          <div>
+            <p className="text-lg font-semibold text-primary">
+              {quiz.creator.username}
+            </p>
+            <p className="text-sm text-muted">
+              레벨 {quiz.creator.level} ・ 가입일:{" "}
+              {new Date(quiz.creator.joinedAt).toLocaleDateString()}
+            </p>
+          </div>
+        </div>
+
+        {/* 퀴즈 시작 버튼 */}
         <button
           onClick={handleStartQuiz}
           className="mt-6 w-full bg-primary hover:bg-primary-hover text-white py-3 rounded-lg font-semibold text-lg transition-all"
@@ -96,6 +127,16 @@ const QuizDetailPage: React.FC = () => {
               )}분 ${quiz.statistics.averageTimeSeconds % 60}초`}
             />
           </div>
+
+          {/* 난이도 분포 차트 */}
+          {quiz.statistics.difficultyDistribution && (
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-primary">
+                📈 난이도 분포
+              </h3>
+              {/* <DifficultyChart data={quiz.statistics.difficultyDistribution} /> */}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -111,5 +152,23 @@ const StatCard = ({ title, value }: { title: string; value: string }) => {
     </div>
   );
 };
+
+// // ✅ 난이도 분포 차트 컴포넌트
+// const DifficultyChart = ({ data }: { data: Record<string, number> }) => {
+//   const chartData = {
+//     labels: Object.keys(data),
+//     datasets: [
+//       {
+//         label: "문제 수",
+//         data: Object.values(data),
+//         backgroundColor: ["#34D399", "#FACC15", "#F87171"], // 초록, 노랑, 빨강
+//         borderColor: "#E5E7EB",
+//         borderWidth: 1,
+//       },
+//     ],
+//   };
+
+//   return <Bar data={chartData} />;
+// };
 
 export default QuizDetailPage;

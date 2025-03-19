@@ -21,6 +21,14 @@ export enum QuizDifficultyType {
   INTERMEDIATE = "INTERMEDIATE",
   ADVANCED = "ADVANCED",
 }
+/**
+ * ✅ 퀴즈 응답 타입 (QuizResponse)
+ * - 퀴즈의 전체 데이터를 포함 (문제 포함)
+ */
+export interface QuizResponse extends QuizDetailResponse {
+  questions: QuestionResponse[];
+  quizAttemptId?: number;
+}
 
 /**
  * ✅ 퀴즈 검색 요청 타입 (QuizSearchRequest)
@@ -77,15 +85,6 @@ export interface QuizDetailResponse {
     questionStatistics?: QuestionStatistics[];
   };
   createdAt: string;
-}
-
-/**
- * ✅ 퀴즈 응답 타입 (QuizResponse)
- * - 퀴즈의 전체 데이터를 포함 (문제 포함)
- */
-export interface QuizResponse extends QuizDetailResponse {
-  questions: QuestionResponse[];
-  quizAttemptId?: number;
 }
 
 /**

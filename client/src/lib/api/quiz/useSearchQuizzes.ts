@@ -54,7 +54,7 @@ const searchQuizzes = async (
 };
 
 /**
- * ✅ React Query로 퀴즈 검색 (페이징 지원)
+ * ✅ React Query로 퀴즈 검색
  */
 export const useSearchQuizzes = (
   searchParams: SearchParams = {},

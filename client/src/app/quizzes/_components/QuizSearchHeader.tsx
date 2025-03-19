@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { QuizDifficultyType, QuizType } from "@/lib/types/quiz";
+import { RefreshCw } from "lucide-react";
 import Button from "@/app/_components/Button";
-import TagSelector from "./TagSelector";
+import Tag from "./Tag";
+
+import { useGetAllTags } from "@/lib/api/tag/useGetTags";
+import { TagResponse } from "@/lib/types/tag";
 
 interface Props {
   onSearch: (params: {
@@ -18,30 +22,83 @@ interface Props {
 const QuizSearchHeader: React.FC<Props> = ({ onSearch }) => {
   // 🔹 검색 필터 상태 관리
   const [title, setTitle] = useState("");
+  const [allTags, setTags] = useState<TagResponse[]>([]);
   const [selectedDifficulty, setSelectedDifficulty] = useState<
     QuizDifficultyType | ""
   >("");
   const [selectedCategory, setSelectedCategory] = useState<QuizType | "">("");
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
 
-  return (
-    <div className="bg-card border border-border p-6 rounded-lg shadow-md mb-6">
-      <h2 className="text-lg font-semibold mb-4">🔎 문제 검색</h2>
+  // 🔹 태그 목록 가져오기
+  const { data: tags } = useGetAllTags();
+  console.log(tags);
 
+  console.log(
+    "검색 필터 상태",
+    title,
+    allTags,
+    selectedDifficulty,
+    selectedCategory,
+    selectedTagIds
+  );
+
+  useEffect(() => {
+    if (tags?.data) {
+      setTags(tags.data);
+    }
+  }, [tags?.data]);
+
+  // 🔹 태그 선택 핸들러
+  const handleTagToggle = (tagId: number) => {
+    setSelectedTagIds(
+      (prev) =>
+        prev.includes(tagId)
+          ? prev.filter((id) => id !== tagId) // 이미 선택된 태그면 제거
+          : [...prev, tagId] // 선택되지 않았다면 추가
+    );
+  };
+
+  // 🔹 검색 필터 초기화 후 검색 재실행
+  const handleReset = () => {
+    setTitle("");
+    setSelectedDifficulty("");
+    setSelectedCategory("");
+    setSelectedTagIds([]);
+
+    onSearch({
+      title: "",
+      difficultyLevel: "",
+      quizType: "",
+      tagIds: [],
+    });
+  };
+
+  return (
+    <div className="bg-background border border-border p-6 rounded-lg shadow-md mb-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold ">🔎 문제 검색</h2>
+        <div
+          className="flex items-center justify-between  cursor-pointer"
+          onClick={() => handleReset()}
+        >
+          <span>초기화</span>
+          <RefreshCw size={15} className="ml-2" />
+        </div>
+      </div>
       {/* 🔹 검색어 입력 */}
       <div className="relative w-full mb-4">
         <input
-          type="text"
+          type="search"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="문제 제목 검색"
+          placeholder="제목을 검색하세요"
           className="w-full p-3 border border-border rounded-md pl-10 bg-background text-foreground"
         />
         <Search className="absolute left-3 top-3 w-5 h-5 text-muted" />
       </div>
 
       {/* 🔹 필터 선택 */}
-      <div className="grid grid-cols-3 gap-4 mb-4">
+      <div className="grid grid-cols-2 gap-4 mb-4">
         <select
           value={selectedDifficulty}
           onChange={(e) =>
@@ -68,10 +125,33 @@ const QuizSearchHeader: React.FC<Props> = ({ onSearch }) => {
         </select>
       </div>
 
-      <TagSelector
-        selectedTagIds={selectedTagIds}
-        onChange={setSelectedTagIds}
-      />
+      {/* 🔹 태그 선택 */}
+      <div className="mb-4">
+        <div className="flex items-center align-center mb-4">
+          <h3 className="text-md font-semibold">
+            🏷️ 태그 선택 ({selectedTagIds.length}개 선택됨)
+          </h3>
+          <Button
+            variant="secondary"
+            size="small"
+            onClick={() => setSelectedTagIds([])}
+            className="ml-2"
+          >
+            태그 초기화
+          </Button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {allTags.map((tag) => (
+            <Tag
+              key={tag.id}
+              tag={tag}
+              isSelected={selectedTagIds.includes(tag.id)}
+              onClick={() => handleTagToggle(tag.id)}
+              size="small"
+            />
+          ))}
+        </div>
+      </div>
 
       {/* 🔹 검색 버튼 */}
       <div className="flex justify-center mt-4">
