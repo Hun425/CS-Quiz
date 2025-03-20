@@ -33,12 +33,15 @@ const QuizListPage: React.FC = () => {
     quizType?: QuizType | "";
     tagIds?: number[];
   }) => {
-    setSearchParams({
+    console.log("검색 실행 함수", newParams);
+    setSearchParams((prev) => ({
+      ...prev,
       title: newParams.title ?? "",
       difficultyLevel: newParams.difficultyLevel ?? "",
       quizType: newParams.quizType ?? "",
       tagIds: newParams.tagIds ?? [],
-    });
+    }));
+    setCurrentPage(0);
   };
 
   return (

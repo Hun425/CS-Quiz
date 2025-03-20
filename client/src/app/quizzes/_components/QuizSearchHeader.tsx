@@ -31,16 +31,6 @@ const QuizSearchHeader: React.FC<Props> = ({ onSearch }) => {
 
   // 🔹 태그 목록 가져오기
   const { data: tags } = useGetAllTags();
-  console.log(tags);
-
-  console.log(
-    "검색 필터 상태",
-    title,
-    allTags,
-    selectedDifficulty,
-    selectedCategory,
-    selectedTagIds
-  );
 
   useEffect(() => {
     if (tags?.data) {

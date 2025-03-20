@@ -17,7 +17,13 @@ export default function MyPageLayout({
             href="/mypage/dashboard"
             className="w-full px-4 py-2 text-left text-sm font-semibold text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
           >
-            내 활동 기록
+            활동 기록
+          </Link>
+          <Link
+            href="/mypage/dashboard"
+            className="w-full px-4 py-2 text-left text-sm font-semibold text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
+          >
+            퀴즈 생성하기
           </Link>
           <Link
             href="/mypage/settings"

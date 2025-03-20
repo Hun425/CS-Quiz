@@ -1,19 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { useGetMyProfile } from "@/lib/api/user/useGetMyProfile";
 import Button from "@/app/_components/Button";
-import { Edit } from "lucide-react";
 
 export default function Profile() {
-  const router = useRouter();
   const { data: userProfile, isLoading, error, refetch } = useGetMyProfile();
-
-  const onEditClick = () => {
-    router.push("/profile/edit");
-  };
 
   if (isLoading) {
     return <p className="text-center">프로필 정보를 불러오는 중...</p>;
@@ -79,10 +72,6 @@ export default function Profile() {
             {userProfile.totalPoints ?? 0} P
           </span>
         </div>
-        {/* ✅ 프로필 수정 버튼 */}
-        <Button onClick={onEditClick} className="text-sm p-1 rounded-full">
-          <Edit className="w-4 h-4 text-white" />
-        </Button>
       </div>
 
       {/* ✅ 레벨 & 경험치 */}

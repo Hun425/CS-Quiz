@@ -92,7 +92,7 @@ const dummyQuiz: QuizResponse = {
       id: 103,
       questionType: QuestionType.MULTIPLE_CHOICE,
       questionText: "다음 다이어그램은 어떤 디자인 패턴을 나타내는가?",
-      diagramData: "https://example.com/design-pattern-diagram.png", // ✅ 예제 다이어그램 URL 추가
+      diagramData: "https://example.com/design-pattern-diagram.png",
       options: ["싱글톤 패턴", "팩토리 패턴", "옵저버 패턴", "데코레이터 패턴"],
       explanation: `"팩토리 패턴"은 객체 생성을 캡슐화하여 클라이언트 코드가 직접 객체 생성을 하지 않도록 합니다.`,
       points: 10,

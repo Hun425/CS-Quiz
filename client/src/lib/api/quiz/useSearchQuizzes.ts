@@ -62,10 +62,18 @@ export const useSearchQuizzes = (
   size: number = 10
 ) => {
   return useQuery({
-    queryKey: ["searchQuizzes", searchParams, page, size],
+    queryKey: [
+      "searchQuizzes",
+      searchParams.title,
+      searchParams.difficultyLevel,
+      searchParams.quizType,
+      searchParams.tagIds,
+      page,
+      size,
+    ],
     queryFn: () => searchQuizzes(searchParams, page, size),
     placeholderData: keepPreviousData,
     enabled: true,
-    staleTime: 1000 * 60 * 5, // 5분 동안 데이터 캐싱
+    staleTime: 0,
   });
 };
