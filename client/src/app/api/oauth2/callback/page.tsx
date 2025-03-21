@@ -7,7 +7,7 @@ import { useGetMyProfile } from "@/lib/api/user/useGetMyProfile";
 export default function AuthCallbackPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { setAuthenticated } = useAuthStore();
+  const { isAuthenticated, setToken } = useAuthStore();
 
   // ✅ 로그인 토큰 저장 및 인증 상태 업데이트
   useEffect(() => {
@@ -15,29 +15,26 @@ export default function AuthCallbackPage() {
     const refreshToken = searchParams.get("refreshToken");
     const expiresIn = searchParams.get("expiresIn");
 
-    if (token && refreshToken) {
-      // ✅ JWT를 localStorage에 저장
-      localStorage.setItem("access_token", token);
-      localStorage.setItem("refresh_token", refreshToken);
-      localStorage.setItem("expires_in", expiresIn || "3600");
+    if (token && refreshToken && expiresIn) {
+      const expiresAt = Date.now() + Number(expiresIn) * 1000;
 
-      // ✅ 인증 상태 변경
-      setAuthenticated(true);
+      // ✅ Zustand 상태에 저장 (localStorage도 자동 반영됨)
+      setToken(token, refreshToken, expiresAt);
     } else {
       console.warn("🔴 잘못된 로그인 응답. 로그인 페이지로 이동.");
       router.replace("/login");
     }
-  }, [searchParams, setAuthenticated, router]);
+  }, [searchParams, setToken, router]);
 
   // ✅ 인증 상태가 true일 때만 내 프로필 조회
   const { isLoading, data: userProfile } = useGetMyProfile();
 
   // ✅ 프로필이 성공적으로 로드되면 리다이렉트 실행
   useEffect(() => {
-    if (!isLoading && userProfile) {
+    if (isAuthenticated && userProfile) {
       router.replace("/quizzes");
     }
-  }, [isLoading, userProfile, router]);
+  }, [isAuthenticated, userProfile, router]);
 
   return (
     <div className="flex flex-col items-center justify-center h-screen space-y-4">

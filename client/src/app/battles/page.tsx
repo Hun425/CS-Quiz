@@ -1,48 +1,63 @@
 "use client";
+import { useState } from "react";
+import { useGetActiveBattleRooms } from "@/lib/api/battle/useGetActiveBattleRooms";
+import { useGetMyActiveBattleRoom } from "@/lib/api/battle/useGetMyActiveBattleRoom";
+import CreateBattleRoomModal from "./_components/CreateBattleRoomModal";
+import ParticipantList from "./_components/ParticipantList";
+import BattleRoomCard from "./_components/BattleRoomCard";
 import Button from "../_components/Button";
 
+/** ✅ 메인 배틀 페이지 */
 const BattlesPage: React.FC = () => {
-  const activeBattles = Array.from({ length: 4 }); // 예제 데이터
+  const {
+    data: activeRoomsData,
+    isLoading: isActiveRoomsLoading,
+    refetch,
+  } = useGetActiveBattleRooms();
+  const { data: myBattleRoomData, isLoading: isMyBattleRoomLoading } =
+    useGetMyActiveBattleRoom();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
-    <div className="bg-sub-background max-w-screen-full space-y-6">
-      <div className="max-w-screen-xl mx-auto py-16">
+    <div className="bg-sub-background min-h-screen px-4 py-6 sm:px-6 lg:px-8">
+      <div className="max-w-screen-lg mx-auto space-y-6">
         {/* 헤더 */}
-        <div className="bg-primary text-white p-6 rounded-lg shadow-md flex justify-between items-center mx-auto">
-          <div>
+        <div className="bg-primary text-white p-6 rounded-lg shadow-md flex flex-col sm:flex-row justify-between items-center">
+          <div className="text-center sm:text-left">
             <h2 className="text-2xl font-bold">퀴즈 대결</h2>
-            <p className="text-foreground text-md mt-2">
-              빠른 문제 풀이와 정답률을 겨루며 승리를 차지하세요! 실시간으로
-              퀴즈를 풀며 경쟁해보세요!
+            <p className="text-md mt-2">
+              빠르게 문제를 풀고 승리를 차지하세요!
             </p>
           </div>
-          <Button variant="danger" size="medium">
+          <Button
+            variant="danger"
+            size="medium"
+            className="mt-4 sm:mt-0"
+            onClick={() => setIsModalOpen(true)}
+          >
             새 대결 만들기
           </Button>
         </div>
-        {/* 대결 방법 */}
-        <div className="bg-card rounded-lg shadow-md">
+
+        {/* 내 활성 배틀룸 */}
+        <div className="bg-card p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-bold border-b-2 border-primary pb-2">
-            대결 방법
+            내 진행 중인 배틀
           </h2>
-          <ul className="list-disc list-inside text-neutral space-y-2 mt-4">
-            <li>
-              <strong>대결 참가:</strong> 위 목록에서 참가하려는 대결을
-              선택하거나 새로운 대결을 만듭니다.
-            </li>
-            <li>
-              <strong>준비 완료:</strong> 대결방에 입장하면{" "}
-              <strong>준비완료</strong> 버튼을 클릭하여 준비 상태로 변경합니다.
-            </li>
-            <li>
-              <strong>대결 시작:</strong> 모든 참가자가 준비 완료되면 대결이
-              자동으로 시작됩니다.
-            </li>
-            <li>
-              <strong>정답 제출:</strong> 문제를 풀어 빠르고 정확하게 답변을
-              제출하세요. 정답률과 응답 시간에 따라 점수가 부여됩니다.
-            </li>
-          </ul>
+          {isMyBattleRoomLoading ? (
+            <p className="text-center py-4 text-gray-500">로딩 중...</p>
+          ) : myBattleRoomData?.data ? (
+            <>
+              <BattleRoomCard room={myBattleRoomData.data} />
+              <ParticipantList
+                participants={myBattleRoomData.data.participants}
+              />
+            </>
+          ) : (
+            <p className="text-center py-4 text-gray-500">
+              현재 진행 중인 배틀이 없습니다.
+            </p>
+          )}
         </div>
 
         {/* 활성화된 배틀룸 목록 */}
@@ -51,41 +66,33 @@ const BattlesPage: React.FC = () => {
             <h2 className="text-xl font-bold border-b-2 border-primary pb-2">
               활성화된 대결
             </h2>
-            <Button variant="outline" size="small">
+            <Button variant="outline" size="small" onClick={refetch}>
               새로고침
             </Button>
           </div>
-          {activeBattles.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {activeBattles.map((_, index) => (
-                <div
-                  key={index}
-                  className="bg-white p-4 rounded-lg shadow-md flex flex-col"
-                >
-                  <h3 className="text-lg font-semibold">배틀룸 {index + 1}</h3>
-                  <p className="text-neutral text-sm">
-                    문제 수: {10 + index}개
-                  </p>
-                  <div className="flex justify-between mt-2">
-                    <p className="text-neutral text-sm">
-                      참가자: {index + 1}/4
-                    </p>
-                    <Button variant="primary" size="small">
-                      참가하기
-                    </Button>
-                  </div>
-                </div>
+
+          {isActiveRoomsLoading ? (
+            <p className="text-center py-4 text-gray-500">로딩 중...</p>
+          ) : activeRoomsData?.data?.length ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {activeRoomsData.data.map((room) => (
+                <BattleRoomCard key={room.id} room={room} />
               ))}
             </div>
           ) : (
-            <div className="text-center text-neutral py-6">
-              <p className="text-lg font-semibold">
-                현재 활성화된 대결이 없습니다.
-              </p>
-            </div>
+            <p className="text-center py-4 text-gray-500">
+              현재 활성화된 대결이 없습니다.
+            </p>
           )}
         </div>
       </div>
+
+      {/* 🔹 배틀룸 생성 모달 추가 */}
+      <CreateBattleRoomModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={refetch}
+      />
     </div>
   );
 };

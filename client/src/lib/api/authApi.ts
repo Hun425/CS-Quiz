@@ -7,20 +7,6 @@ import { useAuthStore } from "@/store/authStore";
  */
 export const authApi = {
   /**
-   * 🔹 토큰 갱신 (Refresh Token 사용)
-   * - `httpOnly` 쿠키 기반 인증이므로 Authorization 헤더 불필요
-   */
-  // refreshToken: async () => {
-  //   try {
-  //     const response = await httpClient.post("/api/oauth2/refresh");
-  //     return response.data;
-  //   } catch (error) {
-  //     console.error("🔴 토큰 갱신 실패:", error);
-  //     throw error;
-  //   }
-  // },
-
-  /**
    * 🔹 로그아웃
    */
   logout: async () => {

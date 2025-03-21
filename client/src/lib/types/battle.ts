@@ -32,7 +32,9 @@ export interface Participant {
 
 /**
  * ✅ 배틀 진행 상태
- * - 배틀의 현재 상태를 나타내는 ENUM
+ * - Waiting: 대기 중
+ * - In Progress: 진행 중
+ * - Finished: 종료됨
  */
 export enum BattleStatus {
   WAITING = "WAITING", // 대기 중
