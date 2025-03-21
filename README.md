@@ -1,45 +1,48 @@
-## CS 퀴즈 플랫폼
+# 🧠 CS 퀴즈 플랫폼
 
-대중교통 이용 시간을 효율적으로 활용할 수 있는 CS(Computer Science) 학습 퀴즈 플랫폼입니다. 짧은 시간에 CS 지식을 테스트하고 향상시킬 수 있는 기회를 제공합니다.
+대중교통 이용 시간을 효율적으로 활용할 수 있는 **CS(Computer Science) 학습 퀴즈 플랫폼**입니다.  
+짧은 시간에 CS 지식을 테스트하고 향상시킬 수 있는 기회를 제공합니다.
+
 ## 💡 프로젝트 소개
-본 프로젝트는 컴퓨터 과학 관련 지식을 퀴즈 형태로 학습할 수 있는 웹 애플리케이션입니다. 사용자들은 다양한 주제와 난이도의 퀴즈를 풀면서 지식을 쌓고, 실시간으로 다른 사용자들과 경쟁할 수 있습니다.
+본 프로젝트는 **컴퓨터 과학 관련 지식**을 퀴즈 형태로 학습할 수 있는 **웹 애플리케이션**입니다.  
+사용자들은 다양한 **주제와 난이도**의 퀴즈를 풀면서 지식을 쌓고, **실시간으로 다른 사용자들과 경쟁**할 수 있습니다.
 
 ## 팀원
-
-| **채기훈** |
-| :------: |
-| [<img src="https://avatars.githubusercontent.com/Hun425?v=4" height=150 width=150><br/> @Hun425](https://github.com/Hun425) |
-
+| **채기훈** | **박보람** |
+| :------: | :------: |
+| **백엔드** | **프론트엔드** |
+| [<img src="https://avatars.githubusercontent.com/Hun425?v=4" height=150 width=150><br/> @Hun425](https://github.com/Hun425) | [<img src="https://github.com/gittidev.png" height=150 width=150><br/> @gittidev](https://github.com/gittidev) | [<img src="https://github.com/example.png" height=150 width=150><br/> @example](https://github.com/example) |
 
 ## 주요 기능
 
-다양한 주제별 CS 퀴즈
-실시간 대결 모드로 다른 사용자와 경쟁
-개인 학습 성취도 및 통계 트래킹
-맞춤형 퀴즈 추천 시스템
-소셜 로그인(Google, GitHub, Kakao)
-데일리 퀴즈 챌린지
-업적 및 레벨 시스템
+✅ **다양한 주제별 CS 퀴즈**  
+✅ **실시간 대결 모드 (WebSocket 기반)**  
+✅ **개인 학습 성취도 및 통계 트래킹**  
+✅ **맞춤형 퀴즈 추천 시스템**  
+✅ **소셜 로그인 (Google, GitHub, Kakao)**  
+✅ **데일리 퀴즈 챌린지**  
+✅ **업적 및 레벨 시스템**  
+
 
 ## 🛠 기술 스택
-### 백엔드
+### 🔹 **백엔드**
+- Java 17  
+- Spring Boot 3.x  
+- Spring Security  
+- Spring Data JPA & QueryDSL  
+- PostgreSQL  
+- Redis  
+- Elasticsearch  
+- WebSocket  
 
-Java 17
-Spring Boot 3.x
-Spring Security
-Spring Data JPA & QueryDSL
-PostgreSQL
-Redis
-Elasticsearch
-WebSocket
-
-### 프론트엔드
-
-React
-TypeScript
-React Router
-상태 관리: Zustand
-CSS-in-JS
+### 🔹 **프론트엔드** React => Next.js
+- Next.js (App Router)  
+- TypeScript  
+- React Query  
+- Zustand (상태 관리)  
+- TailwindCSS  
+- WebSocket (STOMP + SockJS)  
+- Storybook  
 
 ### 인프라
 
@@ -48,28 +51,61 @@ GitHub Actions
 AWS (예정)
 
 ## 📋 프로젝트 구조
+
+### **📌 구조**
+```bash
+📦 backend/
+ ├── src/main/java/com/quizplatform/
+ │   ├── core/                          # 핵심 도메인 모델 및 서비스
+ │   │   ├── config/                    # 애플리케이션 설정
+ │   │   ├── controller/                # API 엔드포인트
+ │   │   ├── domain/                    # 도메인 모델
+ │   │   ├── dto/                       # 데이터 전송 객체
+ │   │   ├── exception/                 # 예외 처리
+ │   │   ├── repository/                # 데이터 접근 계층
+ │   │   └── service/                   # 비즈니스 로직
+ │   └── modules/                       # 기능별 모듈
+ └── resources/                         # 설정 파일
+
+📦 client/                               # 프론트엔드 (Next.js 기반)
+ ├── 📂 src/                             # Next.js 기반 소스 코드
+ │   ├── 📂 app/                         # Next.js App Router 기반 페이지 구성
+ │   │   ├── 📂 _components/             # 재사용 UI 컴포넌트
+ │   │   ├── 📂 api/oauth2/              # OAuth2 인증 관련 API
+ │   │   ├── 📂 battles/                 # 실시간 배틀 페이지
+ │   │   ├── 📂 login/                   # 로그인 페이지
+ │   │   ├── 📂 quizzes/                 # 퀴즈 관련 페이지
+ │   │   ├── 📝 layout.tsx               # 공통 레이아웃 컴포넌트
+ │   │   ├── 📝 loading.tsx              # 로딩 화면 컴포넌트
+ │   │   ├── 📝 page.tsx                 # 메인 페이지
+ │
+ │   ├── 📂 asset/                       # 이미지, 아이콘 등 정적 리소스
+ │   ├── 📂 lib/                         # API 연동, 서비스 로직, 유틸리티 함수
+ │   │   ├── 📂 api/                     # API 요청 관리 (React Query 기반)
+ │   │   ├── 📂 hooks/                   # 커스텀 훅 모음
+ │   │   ├── 📂 services/                # WebSocket 및 인증 관련 서비스
+ │   │   ├── 📂 types/                   # 타입 정의
+ │
+ │   ├── 📂 store/                       # Zustand 상태 관리
+ │   │   ├── 📝 authStore.ts             # 인증 상태 관리
+ │   │   ├── 📝 profileStore.ts          # 프로필 관리
+ │   │   ├── 📝 quizStore.ts             # 퀴즈 상태 관리
+ │
+ │   ├── 📂 providers/                   # 글로벌 컨텍스트 프로바이더
+ │   ├── 📂 stories/                     # Storybook 컴포넌트 테스트
+ │   ├── 📂 styles/                      # 글로벌 스타일 정의
+ │   │   ├── 📝 globals.css              # Tailwind 글로벌 스타일
+ │
+ │   ├── 📂 utils/                       # 유틸리티 함수
+ │   │   ├── 📝 global.d.ts              # 글로벌 타입 선언
+ │   │   ├── 📝 middleware.ts            # Next.js 미들웨어
+ │
+ │   ├── 📝 .env.local                    # 환경 변수 (로컬)
+ │   ├── 📝 .env.production               # 환경 변수 (프로덕션)
+ │   ├── 📝 .gitignore                    # Git 관리 제외 파일 설정
+
 ```
-├── backend/
-│   ├── src/main/java/com/quizplatform/
-│   │   ├── core/                          # 핵심 도메인 모델 및 서비스
-│   │   │   ├── config/                    # 애플리케이션 설정
-│   │   │   ├── controller/                # API 엔드포인트
-│   │   │   ├── domain/                    # 도메인 모델
-│   │   │   ├── dto/                       # 데이터 전송 객체
-│   │   │   ├── exception/                 # 예외 처리
-│   │   │   ├── repository/                # 데이터 접근 계층
-│   │   │   └── service/                   # 비즈니스 로직
-│   │   └── modules/                       # 기능별 모듈
-│   └── resources/                         # 설정 파일
-└── frontend/
-    ├── src/
-    │   ├── api/                           # API 연동
-    │   ├── components/                    # 재사용 컴포넌트
-    │   ├── pages/                         # 페이지 컴포넌트
-    │   ├── store/                         # 상태 관리
-    │   └── types/                         # 타입 정의
-    └── public/                            # 정적 파일
-```
+
 ## 📱 주요 화면
 ### 홈 화면
 
