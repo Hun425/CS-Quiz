@@ -60,7 +60,7 @@ const features = [
     description: "자신의 성과를 추적하고 시간에 따른 향상도를 확인하세요.",
     icon: <BarChart size={36} className="text-secondary" />,
     color: "from-yellow-50 to-yellow-100",
-    href: "/dashboard",
+    href: "/mypage",
   },
   {
     name: "맞춤형 추천",

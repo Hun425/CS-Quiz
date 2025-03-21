@@ -11,7 +11,7 @@ const fetchRecentActivities = async (userId?: number, limit: number = 10) => {
     endpoint
   );
 
-  return response.data.data;
+  return response.data.data ?? [];
 };
 
 // ✅ 최근 활동 조회 훅 (useQuery)

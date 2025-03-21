@@ -11,7 +11,7 @@ const SettingPage = () => {
   const [profileImage, setProfileImage] = useState(
     "https://via.placeholder.com/100"
   ); // 기본값 (기본 프로필 이미지)
-  const { mutate, isLoading } = useUpdateMyProfile();
+  const { mutate, isPending } = useUpdateMyProfile();
 
   const handleSave = () => {
     mutate(
@@ -67,10 +67,10 @@ const SettingPage = () => {
           <div className="flex space-x-2">
             <Button
               onClick={handleSave}
-              disabled={isLoading}
+              disabled={isPending}
               className="flex-1"
             >
-              {isLoading ? (
+              {isPending ? (
                 <Loader2 className="animate-spin w-5 h-5" />
               ) : (
                 <Check size={16} />

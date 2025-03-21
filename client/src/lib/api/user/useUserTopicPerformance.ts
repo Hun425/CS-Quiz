@@ -11,13 +11,13 @@ const fetchTopicPerformance = async (userId?: number) => {
     endpoint
   );
 
-  return response.data.data;
+  return response.data.data ?? [];
 };
 
 // ✅ 주제별 성과 조회 훅 (useQuery)
 export const useUserTopicPerformance = (userId?: number) => {
   return useQuery({
-    queryKey: ["topicPerformance", userId],
+    queryKey: ["topicPerformance", userId ?? null],
     queryFn: () => fetchTopicPerformance(userId),
     staleTime: userId ? 0 : 1000 * 60 * 10, // ✅ 내 데이터는 10분 캐싱, 남의 데이터는 매번 새로 패칭
     enabled: true,

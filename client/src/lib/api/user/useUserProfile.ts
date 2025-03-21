@@ -14,7 +14,7 @@ const fetchUserProfile = async (userId: number) => {
 // ✅ 특정 사용자 프로필 조회 훅 (캐싱 O)
 export const useUserProfile = (userId: number) => {
   return useQuery({
-    queryKey: ["userProfile", userId],
+    queryKey: ["userProfile", userId ?? null],
     queryFn: () => fetchUserProfile(userId),
     staleTime: 0,
     refetchOnWindowFocus: true,
