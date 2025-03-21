@@ -10,7 +10,7 @@ import { QuizResponse } from "@/lib/types/quiz";
  */
 const getPlayableQuiz = async (quizId: number) => {
   const response = await httpClient.get<CommonApiResponse<QuizResponse>>(
-    `/quiz/${quizId}/playable`
+    `/quizzes/${quizId}/play`
   );
   console.log(quizId);
   return response.data.data;
