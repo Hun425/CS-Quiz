@@ -66,7 +66,7 @@ const QuizPlayPage: React.FC = () => {
 
     setQuizCompleted(true);
     stopTimer();
-    router.push(`/quizzes/${quizId}/results`);
+    router.push(`/quizzes/${quizId}/results?attemptId=${attemptId}`);
   };
 
   if (isLoading) {

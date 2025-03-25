@@ -14,7 +14,7 @@ const getQuizResult = async (quizAttemptId: number, quizid: number) => {
     `/quizzes/${quizid}/results/${quizAttemptId}`
   );
 
-  return response.data;
+  return response.data.data;
 };
 
 /**
