@@ -15,7 +15,7 @@ export const useGetQuizStatistics = (quizId: number) => {
       const response = await httpClient.get<
         CommonApiResponse<QuizStatisticsResponse>
       >(`/quizzes/${quizId}/statistics`);
-      return response.data;
+      return response.data.data;
     },
     enabled: !!quizId, // quizId가 존재할 때만 실행
     staleTime: 1000 * 60 * 10, // 10분 동안 캐싱된 데이터 유지

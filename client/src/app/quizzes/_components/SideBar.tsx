@@ -5,6 +5,7 @@ import { useProfileStore } from "@/store/profileStore";
 import { useToastStore } from "@/store/toastStore";
 import Image from "next/image";
 import Progress from "@/app/_components/Progress";
+import Link from "next/link";
 
 const Sidebar: React.FC = () => {
   const router = useRouter();
@@ -70,63 +71,78 @@ const Sidebar: React.FC = () => {
   return (
     <aside className="hidden lg:block w-1/4 bg-background border border-border p-6 rounded-md shadow-sm">
       {/* 🔹 사용자 프로필 정보 */}
-      <div className="flex items-center space-x-4">
-        {userProfile.profileImage ? (
-          <Image
-            src={userProfile.profileImage}
-            alt="프로필 이미지"
-            width={50}
-            height={50}
-            className="rounded-full border border-border"
-          />
-        ) : (
-          <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-lg font-semibold">
-            {userProfile.username.charAt(0)}
+      <section className="space-y-4 mb-6">
+        <div className="flex items-center space-x-4">
+          {userProfile.profileImage ? (
+            <Image
+              src={userProfile.profileImage}
+              alt="프로필 이미지"
+              width={50}
+              height={50}
+              className="rounded-full border border-border"
+            />
+          ) : (
+            <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-lg font-semibold">
+              {userProfile.username.charAt(0)}
+            </div>
+          )}
+          <div>
+            <p className="text-lg font-semibold text-primary">
+              {userProfile.username}님 <br></br> 환영합니다!
+            </p>
+            <p className="text-sm text-muted">Lv. {userProfile.level}</p>
           </div>
-        )}
-        <div>
-          <p className="text-lg font-semibold text-primary">
-            {userProfile.username}님 <br></br> 환영합니다!
-          </p>
-          <p className="text-sm text-muted">Lv. {userProfile.level}</p>
         </div>
-      </div>
+        {/* 🔹 경험치 진행 바 */}
+        <div className="mt-4">
+          <p className="text-xs text-muted">
+            경험치: {userProfile.experience} / {userProfile.requiredExperience}
+          </p>
+          <Progress value={expPercentage} />
+        </div>
 
-      {/* 🔹 경험치 진행 바 */}
-      <div className="mt-4">
-        <p className="text-xs text-muted">
-          경험치: {userProfile.experience} / {userProfile.requiredExperience}
-        </p>
-        <Progress value={expPercentage} />
-      </div>
+        {/* 🔹 총 포인트 & 마지막 로그인 정보 */}
+        <div className="mt-4 text-sm text-foreground">
+          <p>🌟 총 포인트: {userProfile.totalPoints.toLocaleString()} P</p>
+          <p>
+            ⏳ 마지막 로그인:{" "}
+            {new Date(userProfile.lastLogin).toLocaleDateString()}
+          </p>
+        </div>
+      </section>
+      <section>
+        <Link
+          href={"/quizzes/recommended"}
+          className="text-md font-semibold bg-card mt-6 mb-3 block"
+        >
+          오늘의 퀴즈
+        </Link>
+        <Link
+          href={"/quizzes/recommended"}
+          className="text-md font-semibold bg-card mt-6 mb-3  block"
+        >
+          추천 퀴즈
+        </Link>
+        {/* 🔹 추천 학습  */}
+        <h3 className="text-md font-semibold bg-card mt-6 mb-3">
+          📚 추천 학습 태그
+        </h3>
 
-      {/* 🔹 총 포인트 & 마지막 로그인 정보 */}
-      <div className="mt-4 text-sm text-foreground">
-        <p>🌟 총 포인트: {userProfile.totalPoints.toLocaleString()} P</p>
-        <p>
-          ⏳ 마지막 로그인:{" "}
-          {new Date(userProfile.lastLogin).toLocaleDateString()}
-        </p>
-      </div>
+        <ul className="space-y-2 text-sm">
+          <li className="p-2 bg-card rounded-md">🔹 백엔드 개발</li>
+          <li className="p-2 bg-card rounded-md">🔹 자바 중급</li>
+          <li className="p-2 bg-card rounded-md">🔹 데이터 엔지니어링</li>
+        </ul>
 
-      {/* 🔹 추천 학습 코스 */}
-      <h3 className="text-md font-semibold bg-card mt-6 mb-3">
-        📚 추천 학습 코스
-      </h3>
-      <ul className="space-y-2 text-sm">
-        <li className="p-2 bg-card rounded-md">🔹 백엔드 개발</li>
-        <li className="p-2 bg-card rounded-md">🔹 자바 중급</li>
-        <li className="p-2 bg-card rounded-md">🔹 데이터 엔지니어링</li>
-      </ul>
-
-      {/* 🔹 추천 포지션 */}
-      <h3 className="text-md font-semibold mt-6 mb-3">💼 추천 포지션</h3>
-      <ul className="space-y-2 text-sm">
-        <li className="p-2 bg-card rounded-md">💼 미들급 백엔드 개발자</li>
-        <li className="p-2 bg-card rounded-md">
-          💼 웹 프론트엔드/백엔드 개발자
-        </li>
-      </ul>
+        {/* 🔹 추천 포지션 */}
+        <h3 className="text-md font-semibold mt-6 mb-3">💼 추천 포지션</h3>
+        <ul className="space-y-2 text-sm">
+          <li className="p-2 bg-card rounded-md">💼 미들급 백엔드 개발자</li>
+          <li className="p-2 bg-card rounded-md">
+            💼 웹 프론트엔드/백엔드 개발자
+          </li>
+        </ul>
+      </section>
     </aside>
   );
 };

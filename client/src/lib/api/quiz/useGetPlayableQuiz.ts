@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import httpClient from "../httpClient";
 import { CommonApiResponse } from "@/lib/types/common";
-import { QuizResponse } from "@/lib/types/quiz";
+import { QuizPlayResponse } from "@/lib/types/quiz";
 
 /**
  *  퀴즈 플레이 가능 여부 조회 API
@@ -9,10 +9,11 @@ import { QuizResponse } from "@/lib/types/quiz";
  * @returns `QuizResponse` 타입의 데이터
  */
 const getPlayableQuiz = async (quizId: number) => {
-  const response = await httpClient.get<CommonApiResponse<QuizResponse>>(
+  const response = await httpClient.get<CommonApiResponse<QuizPlayResponse>>(
     `/quizzes/${quizId}/play`
   );
-  console.log(quizId);
+
+  console.log("플레이 가능 퀴즈 조회", response.data.data);
   return response.data.data;
 };
 
@@ -21,6 +22,6 @@ export const useGetPlayableQuiz = (quizId: number) => {
     queryKey: ["playableQuiz", quizId],
     queryFn: () => getPlayableQuiz(quizId),
     enabled: !!quizId, // quizId가 있을 때만 실행
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 15,
   });
 };

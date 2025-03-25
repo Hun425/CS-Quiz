@@ -31,7 +31,6 @@ const ThemeToggle: React.FC = () => {
     setTheme(newTheme);
     document.documentElement.setAttribute("data-theme", newTheme);
     localStorage.setItem("theme", newTheme);
-    console.log("theme 변경 확인용: newTheme :", newTheme);
   };
 
   return (

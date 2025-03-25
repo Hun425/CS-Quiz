@@ -16,6 +16,8 @@ const submitQuiz = async (quizId: number, submitData: QuizSubmitRequest) => {
     `/quizzes/${quizId}/results`,
     submitData
   );
+
+  console.log(submitData, "submitData");
   return response.data;
 };
 

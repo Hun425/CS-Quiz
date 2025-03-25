@@ -21,13 +21,15 @@ export enum QuizDifficultyType {
   INTERMEDIATE = "INTERMEDIATE",
   ADVANCED = "ADVANCED",
 }
+
 /**
- * ✅ 퀴즈 응답 타입 (QuizResponse)
- * - 퀴즈의 전체 데이터를 포함 (문제 포함)
+ * ✅ 퀴즈 생성 유형 (QuizCreateType)
+ * - 퀴즈 생성 시 사용되는 유형 구분
  */
-export interface QuizResponse extends QuizDetailResponse {
-  questions: QuestionResponse[];
-  quizAttemptId?: number;
+export enum QuizCreateType {
+  TAG_BASED = "TAG_BASED",
+  TOPIC_BASED = "TOPIC_BASED",
+  CUSTOM = "CUSTOM",
 }
 
 /**
@@ -36,24 +38,23 @@ export interface QuizResponse extends QuizDetailResponse {
  */
 export interface QuizSearchRequest {
   title?: string;
-  difficultyLevel?: QuizCreateType;
-  quizType?: QuizDifficultyType;
+  difficultyLevel?: QuizDifficultyType;
+  quizType?: QuizType;
   tagIds?: number[];
   minQuestions?: number;
   maxQuestions?: number;
   orderBy?: "title" | "difficultyLevel" | "quizType" | "createdAt"; // ✅ 안전한 값만 허용
 }
 
+//--------------------- 퀴즈 문제 풀이 관련 타입--------------------------------------------
+
 /**
- * ✅ 개별 문제 통계 (QuestionStatistics)
- * - 각 문제별 정답률 및 시도 횟수 등의 통계 정보
+ * ✅ 퀴즈 응답 타입 (QuizResponse)
+ * - 퀴즈의 전체 데이터를 포함 (문제 포함)
  */
-export interface QuestionStatistics {
-  questionId: number;
-  correctAnswers: number;
-  totalAttempts: number;
-  correctRate: number;
-  averageTimeSeconds: number;
+export interface QuizPlayResponse extends QuizDetailResponse {
+  questions: QuestionResponse[];
+  quizAttemptId?: number;
 }
 
 /**
@@ -69,22 +70,52 @@ export interface QuizDetailResponse {
   timeLimit: number;
   questionCount: number;
   tags: TagResponse[];
-  creator: {
-    id: number;
-    username: string;
-    profileImage: string | null;
-    level: number;
-    joinedAt: string;
-  };
-  statistics?: {
-    totalAttempts: number;
-    averageScore: number;
-    completionRate: number;
-    averageTimeSeconds: number;
-    difficultyDistribution: Record<string, number>;
-    questionStatistics?: QuestionStatistics[];
-  };
+  creator: Creator;
+  statistics?: QuizStatisticsResponse;
   createdAt: string;
+}
+
+/**
+ * ✅ 개별 문제 통계 (QuestionStatistics)
+ * - 각 문제별 정답률 및 시도 횟수 등의 통계 정보
+ */
+export interface QuestionStatistics {
+  questionId: number;
+  correctAnswers: number;
+  totalAttempts: number;
+  correctRate: number;
+  averageTimeSeconds: number;
+}
+
+/**
+ * ✅ 퀴즈 생성자
+ * - 퀴즈를 생성한 사용자 정보
+ */
+export interface Creator {
+  id: number;
+  username: string;
+  profileImage: string | null;
+  level: number;
+  joinedAt: string;
+}
+
+/**
+ * ✅ 퀴즈 통계 응답 타입 (QuizStatisticsResponse)
+ * - 특정 퀴즈 또는 전체 퀴즈에 대한 통계 정보를 포함
+ * - `totalAttempts`: 전체 시도 횟수
+ * - `averageScore`: 평균 점수
+ * - `completionRate`: 퀴즈 완료율 (0~100%)
+ * - `averageTimeSeconds`: 평균 소요 시간 (초)
+ * - `difficultyDistribution`: 난이도별 분포 (키-값 형태)
+ * - `questionStatistics`: 개별 문제에 대한 통계 정보
+ */
+export interface QuizStatisticsResponse {
+  totalAttempts: number;
+  averageScore: number;
+  completionRate: number;
+  averageTimeSeconds: number;
+  difficultyDistribution: Partial<Record<QuizDifficultyType, number>>;
+  questionStatistics: QuestionStatistics[];
 }
 
 /**
@@ -101,16 +132,6 @@ export interface QuizSummaryResponse {
   avgScore: number;
   tags: TagResponse[];
   createdAt: string;
-}
-
-/**
- * ✅ 퀴즈 생성 유형 (QuizCreateType)
- * - 퀴즈 생성 시 사용되는 유형 구분
- */
-export enum QuizCreateType {
-  TAG_BASED = "TAG_BASED",
-  TOPIC_BASED = "TOPIC_BASED",
-  CUSTOM = "CUSTOM",
 }
 
 /**
@@ -133,7 +154,7 @@ export interface QuizCreateRequest {
  */
 export interface QuizSubmitRequest {
   quizAttemptId: number;
-  answers: Record<number, string>; // ✅ 문제 ID별 사용자의 응답 저장
+  answers: Record<number, string>;
   timeTaken?: number;
 }
 
@@ -161,23 +182,4 @@ export interface QuizResultResponse {
     explanation: string;
     points: number;
   }[];
-}
-
-/**
- * ✅ 퀴즈 통계 응답 타입 (QuizStatisticsResponse)
- * - 특정 퀴즈 또는 전체 퀴즈에 대한 통계 정보를 포함
- * - `totalAttempts`: 전체 시도 횟수
- * - `averageScore`: 평균 점수
- * - `completionRate`: 퀴즈 완료율 (0~100%)
- * - `averageTimeSeconds`: 평균 소요 시간 (초)
- * - `difficultyDistribution`: 난이도별 분포 (키-값 형태)
- * - `questionStatistics`: 개별 문제에 대한 통계 정보
- */
-export interface QuizStatisticsResponse {
-  totalAttempts: number;
-  averageScore: number;
-  completionRate: number;
-  averageTimeSeconds: number;
-  difficultyDistribution: Record<string, number>;
-  questionStatistics: QuestionStatistics[];
 }

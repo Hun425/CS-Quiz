@@ -11,7 +11,6 @@ export const useGetQuizDetail = (quizId: number) => {
   return useQuery({
     queryKey: ["quizDetail", quizId],
     queryFn: async () => {
-      console.log("quizId", quizId);
       const response = await httpClient.get<
         CommonApiResponse<QuizDetailResponse>
       >(`/quizzes/${quizId}`);

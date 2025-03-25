@@ -9,7 +9,7 @@ const CramMainPage = () => {
       {/* 🔥 로그인 여부에 따른 렌더링 최적화 (CSR 적용) */}
       <AuthSection />
 
-      <section className="max-w-screen-2xl mx-auto my-16">
+      <section className="max-w-screen-xl mx-auto my-16">
         <h1 className="text-3xl font-bold text-center mb-8">
           <strong className="text-primary">CRAM</strong>의 특별한 학습법
         </h1>

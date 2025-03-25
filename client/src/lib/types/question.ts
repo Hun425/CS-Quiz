@@ -22,7 +22,7 @@ export interface QuestionResponse {
   questionText: string;
   codeSnippet?: string;
   diagramData?: string;
-  options: string[];
+  options: { key: string; value: string }[];
   explanation: string;
   points: number;
   difficultyLevel: QuizDifficultyType;
@@ -39,7 +39,7 @@ export interface QuestionCreateRequest {
   questionText: string;
   codeSnippet?: string;
   diagramData?: string;
-  options?: string[];
+  options?: { key: string; value: string }[];
   correctAnswer: string;
   explanation: string;
   points: number;
