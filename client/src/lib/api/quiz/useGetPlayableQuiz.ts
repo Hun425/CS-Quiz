@@ -12,8 +12,6 @@ const getPlayableQuiz = async (quizId: number) => {
   const response = await httpClient.get<CommonApiResponse<QuizPlayResponse>>(
     `/quizzes/${quizId}/play`
   );
-
-  console.log("플레이 가능 퀴즈 조회", response.data.data);
   return response.data.data;
 };
 
@@ -22,6 +20,6 @@ export const useGetPlayableQuiz = (quizId: number) => {
     queryKey: ["playableQuiz", quizId],
     queryFn: () => getPlayableQuiz(quizId),
     enabled: !!quizId, // quizId가 있을 때만 실행
-    staleTime: 1000 * 60 * 15,
+    staleTime: 1000 * 60 * 5,
   });
 };

@@ -54,7 +54,7 @@ export interface QuizSearchRequest {
  */
 export interface QuizPlayResponse extends QuizDetailResponse {
   questions: QuestionResponse[];
-  quizAttemptId?: number;
+  quizAttemptId: number;
 }
 
 /**

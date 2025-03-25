@@ -2,7 +2,7 @@
 
 import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
-
+import { useAuthStore } from "@/store/authStore";
 import { useQuizTimer } from "@/providers/QuizTimeProvider";
 import { useGetPlayableQuiz } from "@/lib/api/quiz/useGetPlayableQuiz";
 import Button from "@/app/_components/Button";
@@ -12,6 +12,8 @@ import Timer from "./_components/Timer";
 const QuizPlayPage: React.FC = () => {
   const router = useRouter();
   const quizId = useParams().id;
+  const { isAuthenticated } = useAuthStore();
+  const [authChecked, setAuthChecked] = useState(false);
   const { isLoading, data: quizPlayData } = useGetPlayableQuiz(Number(quizId));
   const attemptId = quizPlayData?.quizAttemptId;
   const submitQuizMutation = useSubmitQuiz();

@@ -37,7 +37,7 @@ export const ToastContainer: React.FC = () => {
 
   if (!toastRoot) return null;
   return createPortal(
-    <div className="fixed top-5 right-5 z-50 flex flex-col gap-2">
+    <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2">
       {toasts.map(({ id, message, type }) => (
         <Toast key={id} message={message} type={type} />
       ))}
