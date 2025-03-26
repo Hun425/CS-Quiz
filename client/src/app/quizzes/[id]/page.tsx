@@ -53,7 +53,7 @@ const QuizDetailPage: React.FC = () => {
 
   if (error || !quiz) {
     return (
-      <div className="max-w-4xl bg-danger-light min-h-screen mx-auto p-6 flex items-center justify-center">
+      <div className="max-w-full bg-danger-light min-h-screen mx-auto p-6 flex items-center justify-center">
         <div className="text-danger p-4 rounded-md text-center">
           <p className="text-xl font-semibold">
             ❌ 퀴즈 정보를 불러오는 데 실패했습니다.

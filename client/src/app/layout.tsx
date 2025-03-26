@@ -5,7 +5,6 @@ import Footer from "./_components/Footer";
 import BottomNav from "./_components/BottomNav";
 import { ToastContainer } from "./_components/Toast";
 import "@/styles/globals.css";
-import TokenExpirationPopup from "@/app/_components/TokenExpirationPopup";
 
 export const metadata: Metadata = {
   title: "Cram",
@@ -28,7 +27,6 @@ export default function RootLayout({
         </QueryProvider>
         <div id="toast-root" />
         <ToastContainer />
-        {/* <TokenExpirationPopup /> */}
       </body>
     </html>
   );

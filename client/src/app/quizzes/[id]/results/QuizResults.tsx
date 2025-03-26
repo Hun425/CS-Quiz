@@ -1,138 +1,151 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-import useGetQuizResult from "@/lib/api/quiz/useGetQuizResult";
+import { useSearchParams, useParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useGetQuizResult } from "@/lib/api/quiz/useGetQuizResult";
 import Button from "@/app/_components/Button";
 
-const QuizResultsPage: React.FC = () => {
-  const params = useSearchParams();
-  const attemptId = params.get("attemptId");
-  const quizId = params.get("quizId");
+const QuizResultPage: React.FC = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const quizId = Number(useParams().id);
+  const attemptId = searchParams.get("attemptId");
 
-  // ✅ 퀴즈 결과 데이터 가져오기
-  const { isLoading, data: resultData } = useGetQuizResult(
-    Number(attemptId),
-    Number(quizId)
-  );
+  useEffect(() => {
+    if (!attemptId) {
+      alert("잘못된 접근입니다.");
+      router.replace("/quizzes");
+    }
+  }, [attemptId, router]);
 
-  // ✅ attemptId 또는 quizId가 없으면 접근 제한
-  if (!attemptId || !quizId) {
-    return (
-      <div className="flex justify-center items-center py-12 text-xl min-h-screen text-danger">
-        ❌ 잘못된 접근입니다.
-      </div>
-    );
-  }
+  // ✅ 퀴즈 결과 조회
+  const {
+    data: quizResult,
+    isLoading,
+    error,
+  } = useGetQuizResult(quizId, Number(attemptId));
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center py-12 text-xl min-h-screen">
-        🔄 퀴즈 결과를 불러오는 중...
+      <div className="flex justify-center items-center min-h-screen">
+        🔄 결과 불러오는 중...
       </div>
     );
   }
 
-  if (!resultData) {
+  if (error || !quizResult) {
     return (
-      <div className="flex justify-center items-center py-12 text-xl min-h-screen text-danger">
-        ❌ 퀴즈 결과 데이터를 불러오는 데 실패했습니다.
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <p className="text-red-500">❌ 결과를 불러오는 중 오류 발생</p>
+        <Button variant="secondary" onClick={() => router.push("/quizzes")}>
+          메인으로 돌아가기
+        </Button>
       </div>
     );
   }
+
+  const {
+    title,
+    totalQuestions,
+    correctAnswers,
+    score,
+    totalPossibleScore,
+    timeTaken,
+    experienceGained,
+    newTotalExperience, // ✅ 총 경험치
+    questions,
+  } = quizResult;
+
+  // ✅ 정답률 계산
+  const correctPercentage = (correctAnswers / totalQuestions) * 100;
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-sub-background py-10">
-      {/* ✅ 퀴즈 결과 요약 */}
-      <div className="bg-background shadow-lg rounded-xl p-6 w-full max-w-2xl">
-        <h1 className="text-2xl font-bold text-primary text-center">
-          🎉 퀴즈 결과 🎉
-        </h1>
-        <p className="text-lg text-center text-foreground mt-2">
-          {resultData.title}
-        </p>
+    <div className="min-w-xl max-w-3xl mx-auto p-6 ">
+      {/* ✅ 퀴즈 요약 (한 줄 정리) */}
+      <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 border border-border items-center text-sm text-foreground bg-background p-2 rounded-md">
+        <span className="font-semibold text-primary">{title}</span>
+        <span>
+          📊 점수: <b>{score}</b> / {totalPossibleScore}
+        </span>
+        <span>
+          ✅ 정답: <b>{correctAnswers}</b> / {totalQuestions}
+        </span>
+        <span>
+          ⏳ 시간: <b>{timeTaken}</b>초
+        </span>
+        <span>
+          🎖️ 경험치: <b>{experienceGained}</b> (총 {newTotalExperience})
+        </span>
+      </div>
 
-        {/* ✅ 결과 통계 */}
-        <div className="grid grid-cols-2 gap-4 mt-6">
-          <div className="p-4 bg-gray-100 rounded-lg text-center">
-            <p className="text-xl font-semibold text-primary">
-              {resultData.correctAnswers} / {resultData.totalQuestions}
-            </p>
-            <p className="text-sm text-gray-600">정답 개수</p>
-          </div>
-          <div className="p-4 bg-gray-100 rounded-lg text-center">
-            <p className="text-xl font-semibold text-primary">
-              {resultData.score} / {resultData.totalPossibleScore}
-            </p>
-            <p className="text-sm text-gray-600">획득 점수</p>
-          </div>
-          <div className="p-4 bg-gray-100 rounded-lg text-center">
-            <p className="text-xl font-semibold text-primary">
-              {resultData.timeTaken}초
-            </p>
-            <p className="text-sm text-gray-600">소요 시간</p>
-          </div>
-          <div className="p-4 bg-gray-100 rounded-lg text-center">
-            <p className="text-xl font-semibold text-primary">
-              +{resultData.experienceGained} XP
-            </p>
-            <p className="text-sm text-gray-600">획득 경험치</p>
-          </div>
+      {/* ✅ 정답률 Progress Bar */}
+      <div className="mt-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-lg font-semibold">정답률</h2>
+          <p className="text-center text-sm mt-1">
+            {correctPercentage.toFixed(1)}%
+          </p>
         </div>
-
-        {/* ✅ 다시 도전하기 버튼 */}
-        <div className="mt-6 flex justify-center">
-          <Button
-            variant="primary"
-            onClick={() => (window.location.href = `/quizzes/${quizId}/play`)}
-          >
-            🔄 다시 도전하기
-          </Button>
+        <div className="w-full bg-gray-300 h-4 rounded-md mt-2">
+          <div
+            className={`h-4 rounded-md transition-all ${
+              correctPercentage >= 50 ? "bg-green-500" : "bg-red-500"
+            }`}
+            style={{ width: `${correctPercentage}%` }}
+          />
         </div>
       </div>
 
-      {/* ✅ 문제별 정답 분석 */}
-      <div className="w-full max-w-2xl mt-10">
-        <h2 className="text-xl font-bold text-primary mb-4">📋 문제별 분석</h2>
-        <div className="space-y-4">
-          {resultData.questions.map((question) => (
+      {/* ✅ 질문별 결과 */}
+      <div className="mt-6 space-y-4">
+        <h2 className="text-lg font-semibold">📋 문제별 정답 확인</h2>
+        {questions.map((q, index) => {
+          const isCorrect = q.isCorrect;
+          const isNoAnswer = !q.yourAnswer;
+          const answerIcon = isCorrect ? "🟢" : isNoAnswer ? "⏳" : "🔴";
+
+          return (
             <div
-              key={question.id}
-              className={`p-4 rounded-lg shadow-md transition-all ${
-                question.isCorrect
-                  ? "bg-green-100 border-l-4 border-green-500"
-                  : "bg-red-100 border-l-4 border-red-500"
+              key={q.id}
+              className={`p-4 border rounded-lg ${
+                isCorrect
+                  ? "border-green-500 bg-green-100"
+                  : "border-red-500 bg-red-100"
               }`}
             >
-              <p className="text-lg font-medium">{question.questionText}</p>
-              <p className="text-sm mt-1">
-                <span className="font-semibold text-gray-600">당신의 답:</span>{" "}
-                <span
-                  className={`font-semibold ${
-                    question.isCorrect ? "text-green-600" : "text-red-600"
-                  }`}
-                >
-                  {question.yourAnswer || "❌ 미응답"}
-                </span>
+              <p className="font-semibold">
+                {index + 1}. {q.questionText}
               </p>
               <p className="text-sm">
-                <span className="font-semibold text-gray-600">정답:</span>{" "}
-                <span className="text-primary font-semibold">
-                  {question.correctAnswer}
+                <span className="font-bold text-green-700">
+                  ✅ 정답: {q.correctAnswer}
                 </span>
               </p>
-
-              {/* ✅ 설명 추가 */}
-              {question.explanation && (
-                <p className="text-sm text-gray-700 mt-2">
-                  📖 {question.explanation}
-                </p>
-              )}
+              <p className="text-sm flex items-center gap-1">
+                <span className="font-bold text-red-700">
+                  {answerIcon} 당신의 답: {q.yourAnswer || "미응답"}
+                </span>
+              </p>
+              <p className="text-sm text-gray-600">💡 설명: {q.explanation}</p>
             </div>
-          ))}
-        </div>
+          );
+        })}
+      </div>
+
+      {/* ✅ 다시 풀기 / 홈으로 이동 버튼 */}
+      <div className="flex justify-center gap-4 flex-wrap mt-6">
+        <Button variant="secondary" onClick={() => router.push("/quizzes")}>
+          🔙 퀴즈 목록으로
+        </Button>
+        <Button
+          variant="primary"
+          onClick={() => router.push(`/quizzes/${quizId}/play`)}
+        >
+          🔄 다시 풀기
+        </Button>
       </div>
     </div>
   );
 };
 
-export default QuizResultsPage;
+export default QuizResultPage;

@@ -44,7 +44,7 @@ const BattlesPage: React.FC = () => {
         {/* 내 활성 배틀룸 */}
         <div className="bg-card p-6 rounded-lg shadow-lg border border-card-border hover:bg-card-hover transition-all">
           <h2 className="text-xl font-bold border-b-2 border-primary pb-2">
-            🏆 내 진행 중인 배틀
+            🏆 참여 중인 배틀
           </h2>
           {isMyBattleRoomLoading ? (
             <p className="text-center py-4 text-muted animate-fade-in-out">

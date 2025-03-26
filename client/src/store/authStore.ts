@@ -19,12 +19,8 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       expiresAt: null,
 
-      // ✅ 로그인 성공 시 상태 및 로컬 스토리지에 저장
+      // ✅ 로그인 성공 시 상태 업데이트 (localStorage 조작 X)
       setToken: (token, refreshToken, expiresAt) => {
-        localStorage.setItem("access_token", token);
-        localStorage.setItem("refresh_token", refreshToken);
-        localStorage.setItem("expires_in", expiresAt.toString());
-
         set({
           isAuthenticated: true,
           token,
@@ -33,12 +29,9 @@ export const useAuthStore = create<AuthState>()(
         });
       },
 
-      // ✅ 로그아웃 시 상태 및 로컬 스토리지 정리
+      // ✅ 로그아웃 시 상태 초기화 및 페이지 이동
       logout: () => {
         useProfileStore.getState().clearProfile();
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        localStorage.removeItem("expires_in");
 
         set({
           isAuthenticated: false,
@@ -46,10 +39,17 @@ export const useAuthStore = create<AuthState>()(
           refreshToken: null,
           expiresAt: null,
         });
+
+        alert("로그아웃 되었습니다."); // ✅ 알림 띄우기
+
+        // ✅ 로그인 페이지로 이동
+        if (typeof window !== "undefined") {
+          window.location.href = "/login"; // 🚀 Next.js에서는 window.location.href 사용
+        }
       },
     }),
     {
-      name: "auth",
+      name: "auth", // ✅ persist에 저장되는 key 값
     }
   )
 );

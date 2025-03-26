@@ -2,7 +2,6 @@ import QuizCard from "./QuizCard";
 import { QuizSummaryResponse } from "@/lib/types/quiz";
 import { PageResponse } from "@/lib/types/common";
 import { mockQuizzes } from "@/lib/mockQuizzes";
-// import Pagination from "@/app/_components/Pagination";
 
 interface Props {
   data?: PageResponse<QuizSummaryResponse>;
@@ -53,39 +52,48 @@ const QuizSearchList: React.FC<Props> = ({
       )}
 
       {/* 페이지네이션 */}
-      {data && data.totalPages > 1 && (
-        <div className="flex justify-center mt-4 gap-2">
+      {data && data.totalPages > 0 && (
+        <div className="flex justify-center mt-6 space-x-2">
+          {/* 이전 버튼 */}
           <button
-            className="px-4 py-2 border rounded-md bg-gray-100 disabled:opacity-50"
+            className={`px-5 py-2 rounded-lg border bg-gray-200 text-gray-600 hover:bg-gray-300 transition ${
+              currentPage === 0 ? "opacity-50" : ""
+            }`}
             onClick={() => setCurrentPage(currentPage - 1)}
             disabled={currentPage === 0}
           >
-            이전
+            ⬅ 이전
           </button>
 
-          {[...Array(data.totalPages)].map((_, index) => (
-            <button
-              key={index}
-              className={`px-4 py-2 border rounded-md ${
-                currentPage === index ? "bg-blue-500 text-white" : "bg-gray-100"
-              }`}
-              onClick={() => setCurrentPage(index)}
-            >
-              {index + 1}
-            </button>
-          ))}
+          {/* 페이지 숫자 버튼 */}
+          <div className="flex space-x-2">
+            {[...Array(data.totalPages)].map((_, index) => (
+              <button
+                key={index}
+                className={`px-4 py-2 rounded-lg border transition ${
+                  currentPage === index
+                    ? "bg-primary text-white font-bold"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+                onClick={() => setCurrentPage(index)}
+              >
+                {index + 1}
+              </button>
+            ))}
+          </div>
 
+          {/* 다음 버튼 */}
           <button
-            className="px-4 py-2 border rounded-md bg-gray-100 disabled:opacity-50"
+            className={`px-5 py-2 rounded-lg border bg-gray-200 text-gray-600 hover:bg-gray-300 transition ${
+              currentPage === data.totalPages - 1 ? "opacity-50" : ""
+            }`}
             onClick={() => setCurrentPage(currentPage + 1)}
             disabled={currentPage === data.totalPages - 1}
           >
-            다음
+            다음 ➡
           </button>
         </div>
       )}
-
-      {/* <Pagination /> */}
     </div>
   );
 };

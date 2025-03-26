@@ -6,7 +6,7 @@ import LoginButton from "./LoginButton";
 
 const Header: React.FC = () => {
   return (
-    <header className="w-full h-[64px] fixed top-0 left-0 right-0 z-50 bg-background  border-b border-border">
+    <header className="w-full h-[64px] fixed top-0 left-0 right-0 z-50 bg-background border-b border-border">
       <div className="max-w-screen-2xl mx-auto flex items-center justify-between h-full px-4 md:px-6 lg:px-8">
         {/* 로고 */}
         <div className="flex space-x-2">
@@ -26,9 +26,9 @@ const Header: React.FC = () => {
         </div>
 
         {/* 메뉴 & 검색 */}
-        <div className=" flex items-center space-x-4 flex-1 justify-center ">
+        <div className="flex items-center space-x-4 flex-1 justify-center">
           {/* 검색 */}
-          <div className="hidden sm:flex w-full sm:max-w-sm md:max-w-md lg:max-w-lg">
+          <div className="hidden sm:flex w-full min-w-[200px] max-w-lg ml-2">
             <SearchBar />
           </div>
 
@@ -48,7 +48,9 @@ const Header: React.FC = () => {
             </Link>
           </nav>
         </div>
-        <LoginButton />
+        <div className="flex items-center justify-end min-w-[220px] max-w-[300px]">
+          <LoginButton />
+        </div>
       </div>
     </header>
   );

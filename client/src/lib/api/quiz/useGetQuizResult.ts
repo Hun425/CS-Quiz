@@ -9,11 +9,11 @@ import { QuizResultResponse } from "@/lib/types/quiz";
  * - `quizAttemptId`: 퀴즈 응시 ID
  * - 응답 타입: `CommonApiResponse<QuizResultResponse>`
  */
-const getQuizResult = async (quizAttemptId: number, quizid: number) => {
+const getQuizResult = async (quizid: number, quizAttemptId: number) => {
   const response = await httpClient.get<CommonApiResponse<QuizResultResponse>>(
     `/quizzes/${quizid}/results/${quizAttemptId}`
   );
-
+  console.log(response.data.data);
   return response.data.data;
 };
 
@@ -25,10 +25,7 @@ const getQuizResult = async (quizAttemptId: number, quizid: number) => {
  * - `queryKey`: ["quizResult", quizAttemptId, quizid]
  * - `staleTime`: 0 (항상 최신 데이터를 가져오기 위해 캐싱 없이 즉시 refetch)
  */
-export default function useGetQuizResult(
-  quizAttemptId: number,
-  quizid: number
-) {
+export function useGetQuizResult(quizAttemptId: number, quizid: number) {
   return useQuery({
     queryKey: ["quizResult", quizAttemptId, quizid],
     queryFn: () => getQuizResult(quizAttemptId, quizid),

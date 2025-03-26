@@ -2,6 +2,7 @@
 import { useOAuthLogin } from "@/lib/hooks/useOAuthLogin";
 import { Provider } from "@/lib/types/auth";
 import { useSearchParams } from "next/navigation";
+import Image from "next/image";
 
 const providerStyles: Record<
   Provider,
@@ -20,9 +21,15 @@ const LoginPage: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="bg-card border border-card-border w-full max-w-xl rounded-2xl shadow-xl p-8 text-center">
-        <h1 className="text-3xl font-bold text-foreground mb-3">CRAM</h1>
+        {/* ✅ 로고와 타이틀을 수직 정렬 */}
+        <div className="flex flex-col items-center justify-center gap-2 mb-4">
+          <Image src={"/images/logo.png"} width={50} height={50} alt="logo" />
+          <h1 className="text-3xl font-bold text-foreground">CRAM</h1>
+        </div>
+
+        {/* ✅ 오류 메시지 */}
         {error && (
-          <p className="text-red-500 ">
+          <p className="text-red-500 mb-4">
             {error === "invalid_token"
               ? "⛔ 로그인 인증에 실패했습니다. 다시 시도해주세요."
               : "알 수 없는 오류가 발생했습니다."}

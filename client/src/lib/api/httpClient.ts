@@ -15,38 +15,31 @@ const httpClient = axios.create({
 
 // ✅ 리프레시 토큰을 이용한 액세스 토큰 갱신 함수
 const refreshAccessToken = async () => {
+  const { refreshToken, setToken, logout } = useAuthStore.getState();
   try {
-    const refreshToken = localStorage.getItem("refresh_token");
-    if (!refreshToken) throw new Error("No refresh token found");
+    if (!refreshToken) {
+      throw new Error("No refresh token found");
+    }
 
     const response = await axios.post(`${baseURL}/oauth2/refresh`, {
       refreshToken,
     });
 
     if (response.data?.accessToken) {
-      // ✅ 새 토큰 저장
-      localStorage.setItem("access_token", response.data.accessToken);
-      localStorage.setItem("refresh_token", response.data.refreshToken);
-      localStorage.setItem(
-        "expires_in",
-        (Date.now() + response.data.expiresIn * 1000).toString()
-      );
+      const newAccessToken = response.data.accessToken;
+      const newRefreshToken = response.data.refreshToken;
+      const expiresAt = Date.now() + response.data.expiresIn;
 
       // ✅ Zustand 스토어 업데이트
-      useAuthStore
-        .getState()
-        .setToken(
-          response.data.accessToken,
-          response.data.refreshToken,
-          Date.now() + response.data.expiresIn * 1000
-        );
+      setToken(newAccessToken, newRefreshToken, expiresAt);
 
-      return response.data.accessToken;
+      return newAccessToken;
     } else {
       throw new Error("Invalid refresh response");
     }
   } catch (error) {
     console.error("❌ 토큰 갱신 실패:", error);
+    logout(); // ✅ 갱신 실패 시 로그아웃
     return null;
   }
 };
@@ -54,7 +47,7 @@ const refreshAccessToken = async () => {
 // ✅ 요청 인터셉터: JWT를 요청 헤더에 추가
 httpClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("access_token");
+    const { token } = useAuthStore.getState();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -79,6 +72,7 @@ httpClient.interceptors.response.use(
 
   async (error) => {
     const showToast = useToastStore.getState().showToast;
+    const { logout } = useAuthStore.getState();
 
     // ✅ 401 Unauthorized 에러 처리
     if (error.response?.status === 401) {
@@ -92,10 +86,7 @@ httpClient.interceptors.response.use(
       }
 
       console.warn("🚨 토큰 갱신 실패. 로그아웃 처리");
-      useAuthStore.getState().logout();
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
-      localStorage.removeItem("expires_in");
+      logout();
 
       if (typeof window !== "undefined") {
         window.location.href = "/login";

@@ -3,6 +3,8 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import { useProfileStore } from "@/store/profileStore";
 import { useToastStore } from "@/store/toastStore";
+import { useGetDailyQuizzes } from "@/lib/api/quiz/useGetDailyQuizzes";
+import { useGetRecommendedQuizzes } from "@/lib/api/quiz/useGetRecommendedQuizzes";
 import Image from "next/image";
 import Progress from "@/app/_components/Progress";
 import Link from "next/link";
@@ -13,6 +15,13 @@ const Sidebar: React.FC = () => {
   const { showToast } = useToastStore();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const userProfile = useProfileStore((state) => state.userProfile);
+
+  // ✅ 오늘의 퀴즈 데이터 가져오기
+  const { data: dailyQuiz, isLoading: isLoadingDaily } = useGetDailyQuizzes();
+
+  // ✅ 추천 퀴즈 데이터 가져오기
+  const { data: recommendedQuizzes, isLoading: isLoadingRecommended } =
+    useGetRecommendedQuizzes({ limit: 3 });
 
   useEffect(() => {
     if (isAuthenticated && !userProfile) {
@@ -115,38 +124,49 @@ const Sidebar: React.FC = () => {
           </p>
         </div>
       </section>
-      <section>
-        <Link
-          href={"/quizzes/recommended"}
-          className="text-md font-semibold bg-card mt-6 mb-3 block"
-        >
-          오늘의 퀴즈
-        </Link>
-        <Link
-          href={"/quizzes/recommended"}
-          className="text-md font-semibold bg-card mt-6 mb-3  block"
-        >
-          추천 퀴즈
-        </Link>
-        {/* 🔹 추천 학습  */}
-        <h3 className="text-md font-semibold bg-card mt-6 mb-3">
-          📚 추천 학습 태그
-        </h3>
 
-        <ul className="space-y-2 text-sm">
-          <li className="p-2 bg-card rounded-md">🔹 백엔드 개발</li>
-          <li className="p-2 bg-card rounded-md">🔹 자바 중급</li>
-          <li className="p-2 bg-card rounded-md">🔹 데이터 엔지니어링</li>
-        </ul>
+      {/* 🔹 퀴즈 추천 섹션 */}
+      <section className="mt-6 space-y-4">
+        <div className="space-y-4">
+          {/* ✅ 오늘의 퀴즈 카드 */}
+          <div className="bg-card border border-border p-4 rounded-lg ">
+            <h3 className="text-md font-semibold mb-2">📅 오늘의 퀴즈</h3>
+            {isLoadingDaily ? (
+              <p className="text-sm text-muted">불러오는 중...</p>
+            ) : dailyQuiz?.data ? (
+              <Link
+                href={`/quiz/daily/${dailyQuiz.data.id}`}
+                className="block text-md font-semibold bg-primary text-white p-2 rounded-md text-center hover:bg-primary/90 transition"
+              >
+                {dailyQuiz.data.title} 🚀
+              </Link>
+            ) : (
+              <p className="text-sm text-muted">오늘의 퀴즈가 없습니다.</p>
+            )}
+          </div>
 
-        {/* 🔹 추천 포지션 */}
-        <h3 className="text-md font-semibold mt-6 mb-3">💼 추천 포지션</h3>
-        <ul className="space-y-2 text-sm">
-          <li className="p-2 bg-card rounded-md">💼 미들급 백엔드 개발자</li>
-          <li className="p-2 bg-card rounded-md">
-            💼 웹 프론트엔드/백엔드 개발자
-          </li>
-        </ul>
+          {/* ✅ 추천 퀴즈 카드 */}
+          <div className="bg-card border border-border p-4 rounded-lg ">
+            <h3 className="text-md font-semibold mb-2">🌟 추천 퀴즈</h3>
+            {isLoadingRecommended ? (
+              <p className="text-sm text-muted">불러오는 중...</p>
+            ) : recommendedQuizzes?.data?.length ? (
+              <div className="space-y-2">
+                {recommendedQuizzes.data.map((quiz) => (
+                  <Link
+                    key={quiz.id}
+                    href={`/quiz/recommended/${quiz.id}`}
+                    className="block text-sm bg-secondary text-white p-2 rounded-md hover:bg-secondary/90 transition"
+                  >
+                    {quiz.title}
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted">추천 퀴즈가 없습니다.</p>
+            )}
+          </div>
+        </div>
       </section>
     </aside>
   );

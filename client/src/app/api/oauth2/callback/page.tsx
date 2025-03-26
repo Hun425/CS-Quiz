@@ -13,10 +13,10 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     const token = searchParams.get("token");
     const refreshToken = searchParams.get("refreshToken");
-    const expiresIn = searchParams.get("expiresIn");
+    const expiresIn = searchParams.get("expiresIn"); //기본 한시간 후 만료됨
 
     if (token && refreshToken && expiresIn) {
-      const expiresAt = Date.now() + Number(expiresIn) * 1000;
+      const expiresAt = Date.now() + Number(expiresIn);
 
       // ✅ Zustand 상태에 저장 (localStorage도 자동 반영됨)
       setToken(token, refreshToken, expiresAt);

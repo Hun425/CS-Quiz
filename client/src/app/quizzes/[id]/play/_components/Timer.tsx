@@ -3,8 +3,8 @@
 import { useEffect, useState, useRef, memo } from "react";
 
 interface TimerProps {
-  initialTime: number; // 초 단위 (예: 900 = 15분)
-  onTimeUp: () => void; // 시간이 끝났을 때 실행할 콜백 함수
+  initialTime: number;
+  onTimeUp: () => void;
 }
 
 const Timer: React.FC<TimerProps> = ({ initialTime, onTimeUp }) => {
@@ -43,9 +43,8 @@ const Timer: React.FC<TimerProps> = ({ initialTime, onTimeUp }) => {
 
   return (
     <span
-      className={`px-4 py-3 text-lg rounded-md font-bold ${
-        timeLeft <= 60 ? "bg-red-500 text-white" : "bg-gray-800 text-white"
-      }`}
+      className={`w-[140px] px-6 py-3 text-lg rounded-md font-bold text-center shadow-md
+    ${timeLeft <= 60 ? "bg-red-500 text-white" : "bg-gray-800 text-white"}`}
     >
       ⏳ {formatTimeLeft()}
     </span>

@@ -5,42 +5,42 @@ import classNames from "classnames";
 import { TagResponse } from "@/lib/types/tag";
 import { QuizType, QuizDifficultyType } from "@/lib/types/quiz";
 
-// ✅ 태그 유형별 색상 조정 (차분한 컬러 팔레트)
+// ✅ 태그 유형별 색상 (더 흐린, 부드러운 파스텔 톤 적용)
 const getTagColor = (name: string) => {
   const colorMap: Record<string, string> = {
     // Java 계열 (차분한 블루-그레이 톤)
-    Java: "bg-blue-700 text-gray-200", // 더 어두운 블루
-    "Core Java": "bg-blue-600 text-gray-200",
-    "Java 8+": "bg-blue-500 text-gray-200",
-    "Java Collections": "bg-blue-400 text-gray-800",
+    Java: "bg-blue-300 text-gray-800",
+    "Core Java": "bg-blue-200 text-gray-800",
+    "Java 8+": "bg-blue-100 text-gray-900",
+    "Java Collections": "bg-blue-200 text-gray-800",
     "Java Concurrency": "bg-blue-300 text-gray-800",
     "Java OOP": "bg-blue-200 text-gray-800",
-    JVM: "bg-blue-800 text-gray-200",
+    JVM: "bg-blue-400 text-gray-800",
 
-    // Spring 계열 (뮤트된 세이지 그린 톤)
-    Spring: "bg-emerald-700 text-gray-200", // 더 어두운 그린
-    "Spring Core": "bg-emerald-600 text-gray-200",
-    "Spring Boot": "bg-emerald-500 text-gray-200",
-    "Spring MVC": "bg-emerald-400 text-gray-800",
+    // Spring 계열 (세이지 그린 톤 다운)
+    Spring: "bg-emerald-300 text-gray-800",
+    "Spring Core": "bg-emerald-200 text-gray-900",
+    "Spring Boot": "bg-emerald-100 text-gray-900",
+    "Spring MVC": "bg-emerald-200 text-gray-800",
     "Spring Data": "bg-emerald-300 text-gray-800",
-    "Spring Security": "bg-emerald-800 text-gray-200",
+    "Spring Security": "bg-emerald-400 text-gray-800",
 
-    // 기존 태그 (뮤트 톤으로 변경)
-    자바스크립트: "bg-amber-600 text-gray-200", // 더 어두운 앰버
-    파이썬: "bg-sky-600 text-gray-200", // 더 어두운 스카이 블루
-    데이터베이스: "bg-teal-600 text-gray-200", // 더 어두운 틸
-    알고리즘: "bg-purple-600 text-gray-200", // 더 어두운 퍼플
-    자료구조: "bg-indigo-600 text-gray-200", // 더 어두운 인디고
-    시스템설계: "bg-gray-600 text-gray-200",
-    네트워크: "bg-cyan-600 text-gray-200", // 더 어두운 시안
-    운영체제: "bg-rose-600 text-gray-200", // 더 어두운 로즈
-    웹개발: "bg-blue-600 text-gray-200", // 더 어두운 블루
-    데브옵스: "bg-teal-600 text-gray-200", // 더 어두운 틸
-    머신러닝: "bg-orange-600 text-gray-200", // 더 어두운 오렌지
-    보안: "bg-red-600 text-gray-200", // 더 어두운 레드
+    // 기존 태그 (부드러운 뮤트 컬러 적용)
+    자바스크립트: "bg-amber-300 text-gray-800",
+    파이썬: "bg-sky-300 text-gray-800",
+    데이터베이스: "bg-teal-300 text-gray-800",
+    알고리즘: "bg-purple-300 text-gray-800",
+    자료구조: "bg-indigo-300 text-gray-800",
+    시스템설계: "bg-gray-300 text-gray-800",
+    네트워크: "bg-cyan-300 text-gray-800",
+    운영체제: "bg-rose-300 text-gray-800",
+    웹개발: "bg-blue-300 text-gray-800",
+    데브옵스: "bg-teal-300 text-gray-800",
+    머신러닝: "bg-orange-300 text-gray-800",
+    보안: "bg-red-300 text-gray-800",
   };
 
-  return colorMap[name] || "bg-gray-400 text-gray-800"; // 기본 색상도 차분하게
+  return colorMap[name] || "bg-gray-200 text-gray-800"; // 기본 색상도 부드럽게
 };
 
 // ✅ 퀴즈 유형 한글 라벨 매핑
@@ -58,32 +58,32 @@ const difficultyLabels: Record<QuizDifficultyType, string> = {
   [QuizDifficultyType.ADVANCED]: "고급",
 };
 
-// ✅ 난이도 색상 조정 (차분한 톤으로 변경)
+//난이도 색상
 const getDifficultyColor = (difficulty: QuizDifficultyType) => {
   const difficultyMap: Record<QuizDifficultyType, string> = {
-    [QuizDifficultyType.BEGINNER]: "bg-emerald-400 text-gray-800",
-    [QuizDifficultyType.INTERMEDIATE]: "bg-amber-400 text-gray-800",
-    [QuizDifficultyType.ADVANCED]: "bg-rose-400 text-gray-200",
+    [QuizDifficultyType.BEGINNER]: "bg-emerald-300 text-gray-800",
+    [QuizDifficultyType.INTERMEDIATE]: "bg-amber-300 text-gray-800",
+    [QuizDifficultyType.ADVANCED]: "bg-rose-300 text-gray-800",
   };
-  return difficultyMap[difficulty] || "bg-gray-400 text-gray-800";
+  return difficultyMap[difficulty] || "bg-gray-200 text-gray-800";
 };
 
 // ✅ 퀴즈 유형 색상 조정 (차분한 톤으로 변경)
 const getQuizTypeColor = (quizType: QuizType) => {
   const quizTypeMap: Record<QuizType, string> = {
-    [QuizType.DAILY]: "bg-sky-500 text-gray-200",
-    [QuizType.TAG_BASED]: "bg-purple-500 text-gray-200",
-    [QuizType.TOPIC_BASED]: "bg-indigo-500 text-gray-200",
-    [QuizType.CUSTOM]: "bg-gray-500 text-gray-200",
+    [QuizType.DAILY]: "bg-sky-300 text-gray-800",
+    [QuizType.TAG_BASED]: "bg-purple-300 text-gray-800",
+    [QuizType.TOPIC_BASED]: "bg-indigo-300 text-gray-800",
+    [QuizType.CUSTOM]: "bg-gray-300 text-gray-800",
   };
-  return quizTypeMap[quizType] || "bg-gray-400 text-gray-800";
+  return quizTypeMap[quizType] || "bg-gray-200 text-gray-800";
 };
 
 // ✅ 문제 개수 스타일 조정 (차분한 톤으로 변경)
 export const getQuestionCountStyle = (count: number) => {
-  if (count >= 10) return "bg-orange-500 text-gray-200 font-semibold";
-  if (count >= 5) return "bg-amber-400 text-gray-800";
-  return "bg-gray-300 text-gray-800";
+  if (count >= 10) return "bg-orange-300 text-gray-800 font-semibold";
+  if (count >= 5) return "bg-amber-200 text-gray-800";
+  return "bg-gray-200 text-gray-800";
 };
 
 const Tag: React.FC<{

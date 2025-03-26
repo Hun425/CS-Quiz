@@ -1,30 +1,79 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 
-// ✅ Zustand 상태 저장 (persist 적용)
 interface QuizState {
   attemptId: number | null;
-  answers: Record<number, string>; // 사용자가 선택한 답변
-  timeTaken: number; // 퀴즈 진행 시간
+  quizId: number | null;
+  currentQuestionIndex: number;
+  isQuizCompleted: boolean;
+  answers: Record<number, string>;
+  startTime: number | null;
+  setQuiz: (quizId: number, attemptId: number) => void;
+  setCurrentQuestionIndex: (
+    indexOrUpdater: number | ((prev: number) => number)
+  ) => void;
   setAnswer: (questionId: number, answer: string) => void;
-  incrementTime: () => void;
   resetQuiz: () => void;
 }
 
-export const useQuizStore = create(
-  persist<QuizState>(
-    (set) => ({
+export const useQuizStore = create<QuizState>()(
+  persist(
+    (set, get) => ({
       attemptId: null,
+      quizId: null,
+      currentQuestionIndex: 0,
       answers: {},
-      timeTaken: 0,
-      setAttepmtId: (attemptId: number) => set({ attemptId }),
-      setAnswer: (questionId, answer) =>
+      startTime: null,
+      isQuizCompleted: false,
+
+      // ✅ 퀴즈 시작 시 기존 attemptId가 같다면 초기화 X
+      setQuiz: (quizId, attemptId) => {
+        if (get().attemptId === attemptId) return;
+        set({
+          quizId,
+          attemptId,
+          currentQuestionIndex: 0,
+          answers: {},
+          startTime: get().startTime ?? Date.now(),
+          isQuizCompleted: false,
+        });
+      },
+
+      // ✅ 현재 문제 번호 업데이트
+      setCurrentQuestionIndex: (indexOrUpdater) =>
         set((state) => ({
-          answers: { ...state.answers, [questionId]: answer },
+          currentQuestionIndex:
+            typeof indexOrUpdater === "function"
+              ? indexOrUpdater(state.currentQuestionIndex)
+              : indexOrUpdater,
         })),
-      incrementTime: () => set((state) => ({ timeTaken: state.timeTaken + 1 })),
-      resetQuiz: () => set({ attemptId: null, answers: {}, timeTaken: 0 }),
+
+      // ✅ 사용자 답변 저장 & 퀴즈 완료 상태 업데이트
+      setAnswer: (questionId, answer) =>
+        set((state) => {
+          const updatedAnswers = { ...state.answers, [questionId]: answer };
+          const allAnswered =
+            Object.values(updatedAnswers).length >= (state.quizId ? 10 : 0);
+          return {
+            answers: updatedAnswers,
+            isQuizCompleted: allAnswered,
+          };
+        }),
+
+      // ✅ 창이 닫히거나 다른 페이지로 이동하면 초기화
+      resetQuiz: () =>
+        set({
+          attemptId: null,
+          quizId: null,
+          currentQuestionIndex: 0,
+          answers: {},
+          startTime: null,
+          isQuizCompleted: false,
+        }),
     }),
-    { name: "quizplay" }
+    {
+      name: "quiz-session",
+      storage: createJSONStorage(() => sessionStorage),
+    }
   )
 );

@@ -7,7 +7,6 @@ const CramMainPage = () => {
   return (
     <div className="min-h-screen max-w-screen-full px-4 md:px-8 lg:px-20 pt-16">
       <AuthSection />
-
       <section className="max-w-screen-xl mx-auto my-16">
         <h1 className="text-3xl font-bold text-center mb-8">
           <strong className="text-primary">CRAM</strong>의 특별한 학습법
@@ -66,6 +65,6 @@ const features = [
     description: "사용자의 수준과 관심사에 따라 맞춤형 퀴즈를 추천해 드립니다.",
     icon: <Code size={36} className="text-green-600" />,
     color: "from-green-50 to-green-100",
-    href: "/quizzes/custom-quiz",
+    href: "/quizzes",
   },
 ];

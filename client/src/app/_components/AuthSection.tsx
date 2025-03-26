@@ -70,22 +70,18 @@ const AuthSection = () => {
         <div className="flex-1 bg-card border-2 border-card-border p-6 rounded-xl shadow-sm hover:shadow-md transition text-center flex flex-col items-center justify-center gap-2 min-h-[180px]">
           <CalendarDays size={32} className="text-primary" />
           <h2 className="text-lg font-semibold text-foreground">오늘의 퀴즈</h2>
+
           {isAuthenticated ? (
             isLoadingDaily ? (
               <p className="text-sm text-neutral">퀴즈 불러오는 중...</p>
             ) : dailyError ? (
               <p className="text-sm text-neutral">퀴즈를 불러올 수 없습니다.</p>
             ) : dailyQuizzes?.data ? (
-              <>
-                <p className="text-base text-neutral">
+              <Link href={`/quizzes/${dailyQuizzes.data.id}`} passHref>
+                <button className="text-base text-neutral hover:underline cursor-pointer">
                   {dailyQuizzes.data.title}
-                </p>
-                <Link href={`/quiz/daily/${dailyQuizzes.data.id}`}>
-                  <Button variant="secondary" size="small" className="mt-3">
-                    도전하기 🚀
-                  </Button>
-                </Link>
-              </>
+                </button>
+              </Link>
             ) : (
               <p className="text-sm text-neutral">오늘의 퀴즈가 없습니다.</p>
             )
@@ -100,24 +96,21 @@ const AuthSection = () => {
         <div className="flex-1 bg-card border-2 border-card-border p-6 rounded-xl shadow-sm hover:shadow-md transition text-center flex flex-col items-center justify-center gap-2 min-h-[180px]">
           <Sparkles size={32} className="text-secondary" />
           <h2 className="text-lg font-semibold text-foreground">추천 퀴즈</h2>
+
           {isAuthenticated ? (
             isLoadingRecommended ? (
               <p className="text-sm text-neutral">퀴즈 불러오는 중...</p>
             ) : recommendedError ? (
               <p className="text-sm text-neutral">퀴즈를 불러올 수 없습니다.</p>
             ) : recommendedQuizzes?.data?.length ? (
-              <>
-                <p className="text-base text-neutral">
+              <Link
+                href={`/quizzes/${recommendedQuizzes.data[0]?.id}`}
+                passHref
+              >
+                <button className="text-base text-neutral hover:underline cursor-pointer">
                   {recommendedQuizzes.data[0]?.title}
-                </p>
-                <Link
-                  href={`/quiz/recommended/${recommendedQuizzes.data[0]?.id}`}
-                >
-                  <Button variant="secondary" size="small" className="mt-3">
-                    풀어보기 🌟
-                  </Button>
-                </Link>
-              </>
+                </button>
+              </Link>
             ) : (
               <p className="text-sm text-neutral">추천 퀴즈가 없습니다.</p>
             )
