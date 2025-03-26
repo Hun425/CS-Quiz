@@ -11,8 +11,6 @@ import { useAuthStore } from "@/store/authStore";
  */
 export const useGetQuizStatistics = (quizId: number) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const token = useAuthStore((state) => state.token);
-  console.log(token, "퀴즈 통계정보 토큰");
 
   return useQuery({
     queryKey: ["quizStatistics", quizId],

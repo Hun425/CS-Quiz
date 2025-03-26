@@ -14,16 +14,25 @@ const httpClient = axios.create({
 });
 
 // ✅ 리프레시 토큰을 이용한 액세스 토큰 갱신 함수
-const refreshAccessToken = async () => {
+export const refreshAccessToken = async () => {
   const { refreshToken, setToken, logout } = useAuthStore.getState();
+
   try {
     if (!refreshToken) {
       throw new Error("No refresh token found");
     }
 
-    const response = await axios.post(`${baseURL}/oauth2/refresh`, {
-      refreshToken,
-    });
+    // ✅ Refresh Token을 Authorization 헤더에 담아서 전송
+    const response = await axios.post(
+      `${baseURL}/oauth2/refresh`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${refreshToken}`,
+          Accept: "application/json",
+        },
+      }
+    );
 
     if (response.data?.accessToken) {
       const newAccessToken = response.data.accessToken;
@@ -39,7 +48,7 @@ const refreshAccessToken = async () => {
     }
   } catch (error) {
     console.error("❌ 토큰 갱신 실패:", error);
-    logout(); // ✅ 갱신 실패 시 로그아웃
+    logout();
     return null;
   }
 };
@@ -56,14 +65,12 @@ httpClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ✅ 응답 인터셉터: 401 에러 발생 시 토큰 갱신 후 재시도
 httpClient.interceptors.response.use(
   (response) => {
     const showToast = useToastStore.getState().showToast;
 
     // ✅ API 요청은 성공했지만, `success: false`이면 Toast 띄우기
     if (response.data?.success === false) {
-      console.warn("⚠️ API 요청 실패:", response);
       showToast(response.data.message || "API 요청 실패", "warning");
     }
 

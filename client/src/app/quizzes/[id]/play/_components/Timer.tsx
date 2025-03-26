@@ -7,32 +7,42 @@ interface TimerProps {
   onTimeUp: () => void;
 }
 
-const Timer: React.FC<TimerProps> = ({ initialTime, onTimeUp }) => {
+const Timer = memo(({ initialTime, onTimeUp }: TimerProps) => {
   const [timeLeft, setTimeLeft] = useState(initialTime);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const endTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (timeLeft <= 0) {
-      onTimeUp();
-      return;
-    }
+    if (typeof window === "undefined") return;
 
-    timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
+    // ✅ 초기화: 종료 시간을 설정
+    const now = Date.now();
+    endTimeRef.current = now + initialTime * 1000;
 
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+    const updateTimer = () => {
+      if (!endTimeRef.current) return;
+
+      const now = Date.now();
+      const remainingTime = Math.ceil((endTimeRef.current - now) / 1000);
+
+      if (remainingTime <= 0) {
+        setTimeLeft(0);
+        clearInterval(interval);
+        onTimeUp();
+      } else {
+        setTimeLeft(remainingTime);
+      }
     };
-  }, []);
 
-  useEffect(() => {
-    if (timeLeft <= 0 && timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-  }, [timeLeft]);
+    // ✅ 1초마다 실행
+    const interval = setInterval(updateTimer, 1000);
+    updateTimer(); // 즉시 실행하여 화면이 1초 늦게 반영되는 문제 해결
+
+    return () => clearInterval(interval);
+  }, [initialTime, onTimeUp]);
 
   const formatTimeLeft = () => {
+    if (timeLeft === null) return "00:00";
+
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
     return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
@@ -44,11 +54,17 @@ const Timer: React.FC<TimerProps> = ({ initialTime, onTimeUp }) => {
   return (
     <span
       className={`w-[140px] px-6 py-3 text-lg rounded-md font-bold text-center shadow-md
-    ${timeLeft <= 60 ? "bg-red-500 text-white" : "bg-gray-800 text-white"}`}
+    ${
+      timeLeft !== null && timeLeft <= 60
+        ? "bg-red-500 text-white"
+        : "bg-gray-800 text-white"
+    }`}
     >
       ⏳ {formatTimeLeft()}
     </span>
   );
-};
+});
 
-export default memo(Timer);
+Timer.displayName = "Timer";
+
+export default Timer;
