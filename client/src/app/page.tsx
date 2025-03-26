@@ -6,7 +6,6 @@ import AuthSection from "./_components/AuthSection";
 const CramMainPage = () => {
   return (
     <div className="min-h-screen max-w-screen-full px-4 md:px-8 lg:px-20 pt-16">
-      {/* 🔥 로그인 여부에 따른 렌더링 최적화 (CSR 적용) */}
       <AuthSection />
 
       <section className="max-w-screen-xl mx-auto my-16">

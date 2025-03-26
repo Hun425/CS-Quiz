@@ -6,6 +6,7 @@ import { useToastStore } from "@/store/toastStore";
 import Image from "next/image";
 import Progress from "@/app/_components/Progress";
 import Link from "next/link";
+import Button from "@/app/_components/Button";
 
 const Sidebar: React.FC = () => {
   const router = useRouter();
@@ -29,9 +30,13 @@ const Sidebar: React.FC = () => {
         <h2 className="text-lg font-semibold mb-4 text-primary">
           📢 로그인하고 연습을 시작하세요!
         </h2>
-        <button className="w-full py-2 bg-primary text-white rounded-md">
+        <Button
+          variant="primary"
+          className="w-full text-white"
+          onClick={() => router.push("/login")}
+        >
           로그인
-        </button>
+        </Button>
 
         {/* 로그인 혜택 설명 */}
         <p className="text-sm text-muted mt-3">

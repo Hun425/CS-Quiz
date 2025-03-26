@@ -24,6 +24,6 @@ export const useGetRecommendedQuizzes = ({ limit = 5 }: { limit?: number }) => {
       return response.data;
     },
     enabled: isAuthenticated,
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60 * 30, // 30분 동안 캐싱된 데이터 유지
   });
 };

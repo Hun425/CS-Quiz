@@ -51,6 +51,7 @@ export interface QuizSearchRequest {
 /**
  * ✅ 퀴즈 응답 타입 (QuizResponse)
  * - 퀴즈의 전체 데이터를 포함 (문제 포함)
+ * - daily 퀴즈 조회시에도 사용
  */
 export interface QuizPlayResponse extends QuizDetailResponse {
   questions: QuestionResponse[];
@@ -121,6 +122,7 @@ export interface QuizStatisticsResponse {
 /**
  * ✅ 퀴즈 요약 응답 타입 (QuizSummaryResponse)
  * - 퀴즈 목록에서 개별 퀴즈를 표시할 때 사용
+ * - 추천 퀴즈 반환값
  */
 export interface QuizSummaryResponse {
   id: number;
