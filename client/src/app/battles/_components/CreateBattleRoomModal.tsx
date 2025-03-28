@@ -1,6 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useCreateBattleRoom } from "@/lib/api/battle/useCreateBattleRoom";
+import { useGetRecommendedQuizzes } from "@/lib/api/quiz/useGetRecommendedQuizzes";
+import { useGetDailyQuizzes } from "@/lib/api/quiz/useGetDailyQuizzes";
+import { useSearchQuizzes } from "@/lib/api/quiz/useSearchQuizzes";
+import { useDebounce } from "@/lib/hooks/useDebounce";
 import Button from "@/app/_components/Button";
 
 interface CreateBattleRoomModalProps {
@@ -17,7 +21,15 @@ const CreateBattleRoomModal: React.FC<CreateBattleRoomModalProps> = ({
   const { mutateAsync: createBattleRoom, isPending } = useCreateBattleRoom();
   const [quizId, setQuizId] = useState<number | null>(null);
   const [maxParticipants, setMaxParticipants] = useState<number>(4);
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedQuery = useDebounce(searchQuery, 300);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
+
+  const { data: recommendedQuizzes } = useGetRecommendedQuizzes({ limit: 5 });
+  const { data: dailyQuizzes } = useGetDailyQuizzes();
+  const { data: searchedQuizzes, isLoading: isSearchLoading } =
+    useSearchQuizzes({ title: debouncedQuery });
 
   const handleCreateBattleRoom = async () => {
     if (!quizId) {
@@ -27,7 +39,6 @@ const CreateBattleRoomModal: React.FC<CreateBattleRoomModalProps> = ({
 
     try {
       await createBattleRoom({ quizId, maxParticipants });
-
       alert("✅ 배틀룸이 생성되었습니다!");
       onClose();
       onSuccess();
@@ -40,34 +51,14 @@ const CreateBattleRoomModal: React.FC<CreateBattleRoomModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-80">
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 text-default">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-[400px] max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">새 배틀룸 생성</h2>
 
-        {/* 🔹 퀴즈 선택 드롭다운 */}
-        <label className="block text-sm font-medium text-gray-700">
-          퀴즈 선택
-        </label>
-        <select
-          className="w-full p-2 border rounded-md mb-2"
-          value={quizId || ""}
-          onChange={(e) => setQuizId(Number(e.target.value))}
-        >
-          <option value="" disabled>
-            퀴즈를 선택하세요
-          </option>
-          <option value={1}>퀴즈 1</option>
-          <option value={2}>퀴즈 2</option>
-          <option value={3}>퀴즈 3</option>
-        </select>
-
-        {/* 🔹 최대 참가자 수 */}
-        <label className="block text-sm font-medium text-gray-700">
-          최대 참가자 수
-        </label>
+        {/* 최대 참가자 수 */}
+        <label className="block text-sm font-medium mb-1">최대 참가자 수</label>
         <input
           type="number"
-          placeholder="최대 참가자 수"
           className="w-full p-2 border rounded-md mb-4"
           value={maxParticipants}
           onChange={(e) => setMaxParticipants(Number(e.target.value))}
@@ -75,15 +66,77 @@ const CreateBattleRoomModal: React.FC<CreateBattleRoomModalProps> = ({
           max={10}
         />
 
-        {/* 🔹 에러 메시지 출력 */}
+        {/* 퀴즈 검색 */}
+        <label className="block text-sm font-medium mb-1">퀴즈 검색</label>
+        <input
+          type="search"
+          className="w-full p-2 border rounded-md mb-3"
+          placeholder="퀴즈 제목으로 검색"
+          value={searchQuery}
+          onChange={(e) =>
+            startTransition(() => setSearchQuery(e.target.value))
+          }
+        />
+
+        {/* 퀴즈 검색 결과 */}
+        <div className="h-[200px] overflow-y-auto border rounded-md mb-4 p-2 bg-gray-50">
+          {isSearchLoading ? (
+            <p className="text-sm text-center text-gray-500">검색 중...</p>
+          ) : searchedQuizzes?.content.length ? (
+            searchedQuizzes.content.map((quiz) => (
+              <div
+                key={quiz.id}
+                className={`p-2 rounded cursor-pointer hover:bg-primary hover:text-white transition-colors ${
+                  quizId === quiz.id ? "bg-primary text-white" : ""
+                }`}
+                onClick={() => setQuizId(quiz.id)}
+              >
+                {quiz.title}
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-center text-gray-400">
+              검색 결과가 없습니다. 다른 키워드를 입력해보세요.
+            </p>
+          )}
+        </div>
+
+        {/* 추천 퀴즈 */}
+        <h3 className="text-sm font-semibold mb-1">🌟 추천 퀴즈</h3>
+        {recommendedQuizzes?.data.map((quiz) => (
+          <div
+            key={quiz.id}
+            className={`p-2 rounded cursor-pointer hover:bg-primary hover:text-white transition-colors ${
+              quizId === quiz.id ? "bg-primary text-white" : ""
+            }`}
+            onClick={() => setQuizId(quiz.id)}
+          >
+            {quiz.title}
+          </div>
+        ))}
+
+        {/* 데일리 퀴즈 */}
+        <h3 className="text-sm font-semibold mt-3 mb-1">📅 데일리 퀴즈</h3>
+        {dailyQuizzes?.data && (
+          <div
+            className={`p-2 rounded cursor-pointer hover:bg-primary hover:text-white transition-colors ${
+              quizId === dailyQuizzes.data.id ? "bg-primary text-white" : ""
+            }`}
+            onClick={() => setQuizId(dailyQuizzes.data.id)}
+          >
+            {dailyQuizzes.data.title}
+          </div>
+        )}
+
+        {/* 에러 메시지 */}
         {errorMessage && (
-          <p className="text-red-500 text-sm text-center mb-2">
+          <p className="text-red-500 text-sm text-center mt-3">
             {errorMessage}
           </p>
         )}
 
-        {/* 🔹 버튼 */}
-        <div className="flex justify-end space-x-2">
+        {/* 버튼 */}
+        <div className="flex justify-end space-x-2 mt-5">
           <Button variant="outline" size="small" onClick={onClose}>
             취소
           </Button>
@@ -91,7 +144,7 @@ const CreateBattleRoomModal: React.FC<CreateBattleRoomModalProps> = ({
             variant="primary"
             size="small"
             onClick={handleCreateBattleRoom}
-            disabled={isPending} // 🔹 로딩 중이면 버튼 비활성화
+            disabled={isPending}
           >
             {isPending ? "생성 중..." : "생성"}
           </Button>

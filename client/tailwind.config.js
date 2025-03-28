@@ -10,6 +10,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      backgroundImage: {
+        "background-gradient": "var(--theme-color-background-gradient)",
+      },
       colors: {
         default: "var(--theme-color-default)",
         background: "var(--theme-color-background)",
@@ -32,11 +35,15 @@ module.exports = {
         "card-border": "var(--theme-color-card-border)",
         "card-hover": "var(--theme-color-card-hover)",
         tertiary: "var(--theme-color-tertiary)",
-
         "default-muted": "var(--theme-color-default-muted)",
         muted: "var(--theme-color-muted)",
       },
-      safelist: ["text-foreground", "bg-background", "border-border"],
+      safelist: [
+        "background-gradient",
+        "text-foreground",
+        "bg-background",
+        "border-border",
+      ],
     },
   },
   plugins: [],

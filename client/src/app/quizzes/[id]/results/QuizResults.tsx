@@ -4,6 +4,7 @@ import { useSearchParams, useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useGetQuizResult } from "@/lib/api/quiz/useGetQuizResult";
 import Button from "@/app/_components/Button";
+import RetryQuizButton from "../play/_components/RetryQuizButton";
 
 const QuizResultPage: React.FC = () => {
   const searchParams = useSearchParams();
@@ -137,12 +138,7 @@ const QuizResultPage: React.FC = () => {
         <Button variant="secondary" onClick={() => router.push("/quizzes")}>
           🔙 퀴즈 목록으로
         </Button>
-        <Button
-          variant="primary"
-          onClick={() => router.push(`/quizzes/${quizId}/play`)}
-        >
-          🔄 다시 풀기
-        </Button>
+        <RetryQuizButton quizId={quizId} />
       </div>
     </div>
   );

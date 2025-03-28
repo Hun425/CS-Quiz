@@ -1,90 +1,100 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUpdateMyProfile } from "@/lib/api/user/useUpdateMyProfile";
+import { useProfileStore } from "@/store/profileStore";
 import Button from "@/app/_components/Button";
 import { Loader2, Pencil, Check, X } from "lucide-react";
+import Image from "next/image";
 
 const SettingPage = () => {
+  const { userProfile } = useProfileStore();
   const [isEditing, setIsEditing] = useState(false);
-  const [username, setUsername] = useState("사용자123"); // 기본값 (실제 프로필 정보 가져오면 됨)
-  const [profileImage, setProfileImage] = useState(
-    "https://via.placeholder.com/100"
-  ); // 기본값 (기본 프로필 이미지)
+  const [username, setUsername] = useState(userProfile?.username ?? "");
+
   const { mutate, isPending } = useUpdateMyProfile();
 
   const handleSave = () => {
     mutate(
-      { username, profileImage },
-      { onSuccess: () => setIsEditing(false) }
+      { username }, // ✅ profileImage 제거
+      {
+        onSuccess: () => setIsEditing(false),
+      }
     );
   };
 
-  return (
-    <div className="max-w-lg flex justify-between space-y-6">
-      <h1 className="text-2xl font-semibold text-primary mb-4">프로필</h1>
+  useEffect(() => {
+    if (userProfile) {
+      setUsername(userProfile.username);
+    }
+  }, [userProfile]);
 
-      {/* ✅ 프로필 정보 (기본 상태) */}
-      {!isEditing ? (
-        <div className="flex items-center space-x-4">
-          <div className="flex flex-col">
-            <Button
-              variant="primary"
-              className="mt-1 text-sm hover:underline flex items-center"
-              onClick={() => setIsEditing(true)}
-            >
-              <Pencil size={14} className="mr-1" /> 수정
-            </Button>
-          </div>
-        </div>
-      ) : (
-        /* ✅ 수정 모드 */
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-muted mb-1">
-              유저네임
-            </label>
+  return (
+    <div className="max-w-lg mx-auto p-6 space-y-6 bg-background rounded-lg shadow-md">
+      <h1 className="text-2xl font-bold text-primary">프로필 설정</h1>
+
+      <div className="flex items-center space-x-4">
+        <Image
+          src={userProfile?.profileImage ?? "/default-profile.png"}
+          alt="프로필 이미지"
+          className="w-20 h-20 rounded-full border object-cover"
+          width={80}
+          height={80}
+        />
+        <div className="flex-1 space-y-1">
+          {!isEditing ? (
+            <>
+              <p className="text-lg font-medium text-foreground">{username}</p>
+            </>
+          ) : (
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full border border-border p-2 rounded-md"
+              aria-label="유저네임 입력"
+              className="w-full border border-border p-2 rounded-md text-sm"
             />
-          </div>
+          )}
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-muted mb-1">
-              프로필 이미지 (URL)
-            </label>
-            <input
-              type="url"
-              value={profileImage}
-              onChange={(e) => setProfileImage(e.target.value)}
-              className="w-full border border-border p-2 rounded-md"
-            />
-          </div>
+        {!isEditing && (
+          <Button
+            variant="primary"
+            size="small"
+            onClick={() => setIsEditing(true)}
+            aria-label="프로필 수정"
+            className="flex items-center gap-1"
+          >
+            <Pencil size={14} />
+            수정
+          </Button>
+        )}
+      </div>
 
-          <div className="flex space-x-2">
-            <Button
-              onClick={handleSave}
-              disabled={isPending}
-              className="flex-1"
-            >
-              {isPending ? (
-                <Loader2 className="animate-spin w-5 h-5" />
-              ) : (
-                <Check size={16} />
-              )}
-              저장
-            </Button>
-            <Button
-              onClick={() => setIsEditing(false)}
-              variant="secondary"
-              className="flex-1"
-            >
-              <X size={16} /> 취소
-            </Button>
-          </div>
+      {isEditing && (
+        <div className="flex gap-2 justify-end">
+          <Button
+            onClick={handleSave}
+            disabled={isPending}
+            aria-label="프로필 저장"
+            className="flex items-center gap-2"
+          >
+            {isPending ? (
+              <Loader2 className="animate-spin w-4 h-4" />
+            ) : (
+              <Check size={16} />
+            )}
+            저장
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => setIsEditing(false)}
+            aria-label="수정 취소"
+            className="flex items-center gap-2"
+          >
+            <X size={16} />
+            취소
+          </Button>
         </div>
       )}
     </div>

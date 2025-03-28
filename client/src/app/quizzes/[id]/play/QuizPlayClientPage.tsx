@@ -1,54 +1,60 @@
 "use client";
 
-import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getPlayableQuiz } from "@/lib/api/quiz/useGetPlayableQuiz";
-import Button from "@/app/_components/Button";
-import { useSubmitQuiz } from "@/lib/api/quiz/useSubmitQuizResult";
+import { useRouter } from "next/navigation";
 import { useQuizStore } from "@/store/quizStore";
+import { useSubmitQuiz } from "@/lib/api/quiz/useSubmitQuizResult";
 import { QuizPlayResponse } from "@/lib/types/quiz";
+import Timer from "./_components/Timer";
+import Button from "@/app/_components/Button";
 
-const QuizPlayPage: React.FC = () => {
+interface Props {
+  initialData: QuizPlayResponse;
+  quizId: number;
+}
+
+export default function QuizPlayClientPage({ initialData, quizId }: Props) {
   const router = useRouter();
-  const quizId = Number(useParams().id);
   const submitQuizMutation = useSubmitQuiz();
+  const [quizPlayData] = useState(initialData);
 
-  // ✅ Zustand에서 남은 시간 상태 가져오기
-  const { remainingTime, attemptId, setQuiz, decreaseTime } = useQuizStore();
-  const [quizPlayData, setQuizPlayData] = useState<QuizPlayResponse | null>(
-    null
-  );
-  const [isLoading, setIsLoading] = useState(true);
-  // ✅ 퀴즈 상태 관리
   const {
+    attemptId,
     currentQuestionIndex,
     answers,
     isQuizCompleted,
+    remainingTime,
+    setQuiz,
     setCurrentQuestionIndex,
     setAnswer,
     resetQuiz,
+    getElapsedTime,
   } = useQuizStore();
 
+  // 상태 초기화
   useEffect(() => {
-    if (!quizPlayData && !attemptId) {
-      getPlayableQuiz(quizId).then((data) => {
-        if (data?.quizAttemptId) {
-          setQuiz(
-            quizId,
-            data.quizAttemptId,
-            data.timeLimit,
-            data.questionCount
-          ); // ✅ 제한 시간 및 총 문제 개수 설정
-          setQuizPlayData(data);
-          setIsLoading(false);
-        }
-      });
+    if (!attemptId) {
+      const currentTime = Date.now();
+      const calculatedEndTime = currentTime + initialData.timeLimit * 1000;
+      setQuiz(
+        quizId,
+        initialData.quizAttemptId,
+        initialData.timeLimit,
+        initialData.questionCount,
+        currentTime,
+        calculatedEndTime
+      );
     }
-  }, [quizId, quizPlayData, setQuiz]);
+  }, [attemptId, quizId, initialData]);
 
-  // ✅ 퀴즈 제출 핸들러
   const handleSubmitQuiz = async () => {
     if (!quizPlayData) return;
+
+    if (!isQuizCompleted && remainingTime === 0) {
+      alert("시간이 초과되었습니다. 퀴즈 목록으로 돌아갑니다.");
+      router.push(`/quizzes/${quizId}`);
+      return;
+    }
 
     if (!isQuizCompleted) {
       alert("퀴즈가 완료되지 않았습니다. 모든 문제에 답을 선택해주세요.");
@@ -56,74 +62,29 @@ const QuizPlayPage: React.FC = () => {
     }
 
     try {
+      const elapsedTime = getElapsedTime();
+
       await submitQuizMutation.mutateAsync({
         quizId,
         submitData: {
           quizAttemptId: attemptId!,
           answers,
-          timeTaken: quizPlayData.timeLimit - remainingTime,
+          timeTaken: elapsedTime,
         },
       });
 
+      resetQuiz();
       router.push(`/quizzes/${quizId}/results?attemptId=${attemptId}`);
-    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (err) {
       alert("퀴즈 제출 중 오류가 발생했습니다.");
+      router.push(`/quizzes/${quizId}`);
     }
   };
 
-  // ✅ 타이머 관리 (1초마다 감소)
-  useEffect(() => {
-    if (remainingTime > 0) {
-      const timer = setInterval(() => {
-        decreaseTime();
-      }, 1000);
-
-      return () => clearInterval(timer);
-    } else {
-      handleSubmitQuiz();
-    }
-  }, [remainingTime, decreaseTime]);
-
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      resetQuiz();
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        resetQuiz();
-      }
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [resetQuiz]);
-
-  // ✅ 로딩 중이면 로딩 UI 표시
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center py-12 text-xl min-h-screen">
-        🔄 퀴즈 정보를 불러오는 중...
-      </div>
-    );
-  }
-
-  // ✅ 데이터가 없으면 에러 UI 표시
-  if (!quizPlayData) {
-    return (
-      <div className="flex justify-center items-center py-12 text-xl min-h-screen text-danger">
-        ❌ 퀴즈 데이터를 불러오는 데 실패했습니다.
-      </div>
-    );
-  }
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-sub-background">
-      {/* 📌 사이드바 (PC 전용) */}
+      {/* 사이드바 */}
       <aside className="hidden lg:flex flex-col w-64 bg-background shadow-lg rounded-xl p-4 border-r border-border space-y-4">
         <h3 className="text-lg font-semibold text-primary mb-3">
           📌 진행 상황
@@ -150,6 +111,7 @@ const QuizPlayPage: React.FC = () => {
             );
           })}
         </div>
+
         <Button
           variant="primary"
           onClick={handleSubmitQuiz}
@@ -161,12 +123,14 @@ const QuizPlayPage: React.FC = () => {
         </Button>
       </aside>
 
+      {/* 메인 섹션 */}
       <section className="flex-1 min-w-xl max-w-2xl w-full mx-auto p-6 bg-background rounded-lg">
         <div className="flex flex-col gap-6">
           <div className="flex justify-between items-center bg-sub-background p-4 rounded-lg">
             <h2 className="text-2xl font-semibold text-primary">
               문제 {currentQuestionIndex + 1} / {quizPlayData.questions.length}
             </h2>
+            <Timer onTimeUp={handleSubmitQuiz} />
           </div>
 
           <p className="text-lg text-foreground">
@@ -197,7 +161,8 @@ const QuizPlayPage: React.FC = () => {
             )}
           </div>
         </div>
-        {/* ✅ 모바일 문제 선택 네비게이션 (점 형태) */}
+
+        {/* 모바일 네비 */}
         <div className="lg:hidden flex justify-center gap-2 my-4">
           {quizPlayData.questions.map((_, index) => {
             const isSelected = index === currentQuestionIndex;
@@ -219,7 +184,7 @@ const QuizPlayPage: React.FC = () => {
           })}
         </div>
 
-        {/* 버튼 영역 */}
+        {/* 이전/다음 버튼 */}
         <div className="flex justify-between gap-4 mt-6">
           <Button
             disabled={currentQuestionIndex === 0}
@@ -251,6 +216,4 @@ const QuizPlayPage: React.FC = () => {
       </section>
     </div>
   );
-};
-
-export default QuizPlayPage;
+}

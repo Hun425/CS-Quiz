@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { QuizPlayResponse } from "@/lib/types/quiz";
 
 interface QuizStore {
   quizId: number | null;
@@ -8,19 +9,26 @@ interface QuizStore {
   isQuizCompleted: boolean;
   remainingTime: number;
   questionCount: number;
+  startTime: number | 0;
+  endTime: number | null;
+  quizPlayData: QuizPlayResponse | null;
+
+  setQuizPlayData: (data: QuizPlayResponse) => void;
   setQuiz: (
     quizId: number,
     attemptId: number,
     timeLimit: number,
-    questionCount: number
+    questionCount: number,
+    startTime: number,
+    endTime: number
   ) => void;
   setCurrentQuestionIndex: (index: number | ((prev: number) => number)) => void;
   setAnswer: (questionId: number, answer: string) => void;
-  decreaseTime: () => void;
   resetQuiz: () => void;
+  getElapsedTime: () => number;
 }
 
-export const useQuizStore = create<QuizStore>((set) => ({
+export const useQuizStore = create<QuizStore>((set, get) => ({
   quizId: null,
   attemptId: null,
   currentQuestionIndex: 0,
@@ -28,17 +36,32 @@ export const useQuizStore = create<QuizStore>((set) => ({
   isQuizCompleted: false,
   remainingTime: 0,
   questionCount: 0,
+  startTime: 0,
+  endTime: null,
+  quizPlayData: null,
 
-  setQuiz: (quizId, attemptId, timeLimit, questionCount) =>
+  setQuizPlayData: (data) => set({ quizPlayData: data }),
+
+  setQuiz: (
+    quizId,
+    attemptId,
+    timeLimit,
+    questionCount,
+    startTime,
+    endTime
+  ) => {
     set(() => ({
       quizId,
       attemptId,
+      startTime,
+      endTime,
       remainingTime: timeLimit,
       questionCount,
       currentQuestionIndex: 0,
       answers: {},
       isQuizCompleted: false,
-    })),
+    }));
+  },
 
   setCurrentQuestionIndex: (index) =>
     set((state) => ({
@@ -58,8 +81,14 @@ export const useQuizStore = create<QuizStore>((set) => ({
       };
     }),
 
-  resetQuiz: () =>
-    set(() => ({
+  resetQuiz: () => {
+    const { quizId, attemptId } = get();
+    if (quizId && attemptId) {
+      const key = `quiz-${quizId}-${attemptId}`;
+      sessionStorage.removeItem(key);
+    }
+
+    set({
       quizId: null,
       attemptId: null,
       currentQuestionIndex: 0,
@@ -67,10 +96,14 @@ export const useQuizStore = create<QuizStore>((set) => ({
       isQuizCompleted: false,
       remainingTime: 0,
       questionCount: 0,
-    })),
+      startTime: 0,
+      endTime: null,
+      quizPlayData: null,
+    });
+  },
 
-  decreaseTime: () =>
-    set((state) => ({
-      remainingTime: state.remainingTime > 0 ? state.remainingTime - 1 : 0,
-    })),
+  getElapsedTime: () => {
+    const start = get().startTime;
+    return start ? Math.floor((Date.now() - start) / 1000) : 0;
+  },
 }));

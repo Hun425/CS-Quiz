@@ -7,7 +7,7 @@ export default function MyPageLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="max-w-6xl mx-auto p-6 flex flex-col lg:flex-row gap-6">
+    <div className="max-w-6xl mx-auto p-6 flex flex-col lg:flex-row gap-6 min-h-screen">
       {/* ✅ 사이드바 (프로필 + 네비게이션) */}
       <aside className="w-full lg:w-1/4 bg-card p-4 rounded-lg shadow-md">
         <Profile />
@@ -15,19 +15,19 @@ export default function MyPageLayout({
         <nav className="mt-4 flex flex-col gap-2">
           <Link
             href="/mypage/dashboard"
-            className="w-full px-4 py-2 text-left text-sm font-semibold text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
+            className="w-full px-4 py-2 text-left text-sm font-semibold text-foreground bg-sub-foreground border border-border rounded hover:bg-gray-500"
           >
             활동 기록
           </Link>
           <Link
             href="/mypage/dashboard"
-            className="w-full px-4 py-2 text-left text-sm font-semibold text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
+            className="w-full px-4 py-2 text-left text-sm font-semibold text-foreground bg-sub-foreground border border-border rounded hover:bg-gray-500"
           >
             퀴즈 생성하기
           </Link>
           <Link
             href="/mypage/settings"
-            className="w-full px-4 py-2 text-left text-sm font-semibold text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
+            className="w-full px-4 py-2 text-left text-sm font-semibold text-foreground bg-sub-foreground border border-border rounded hover:bg-gray-500"
           >
             설정
           </Link>

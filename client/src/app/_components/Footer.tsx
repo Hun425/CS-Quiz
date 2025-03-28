@@ -16,7 +16,7 @@ const Footer = () => {
               alt="CRAM Logo"
             />
             <h2 className="text-xl font-bold text-primary mt-2">CRAM</h2>
-            <p className="text-sm  mt-1">
+            <p className="text-sm  mt-1 text-foreground">
               컴퓨터 과학 지식을 테스트하고 향상하세요.
             </p>
           </div>

@@ -20,14 +20,14 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
   variant?: ButtonVariant;
   size?: ButtonSize;
-  onClick?: () => void;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
   disabled?: boolean;
   className?: string;
   type?: "button" | "submit" | "reset";
 }
 
 const colorVariants: Record<ButtonVariant, string> = {
-  primary: "bg-primary text-foreground hover:bg-primary-hover",
+  primary: "bg-primary text-white hover:bg-primary-hover",
   secondary: "bg-secondary text-foreground hover:bg-secondary-hover",
   danger: "bg-danger text-foreground hover:bg-danger-light",
   outline:

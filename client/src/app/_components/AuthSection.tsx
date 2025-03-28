@@ -32,13 +32,13 @@ const AuthSection = () => {
           <p className="text-xl text-neutral max-w-3xl leading-relaxed">
             계속해서 퀴즈를 풀며 CS 지식을 쌓아보세요!
           </p>
-          <Link href="/mypage">
+          <Link href="/quizzes">
             <Button
               variant="primary"
               size="large"
               className="mt-6 px-6 py-3 font-semibold text-white"
             >
-              대시보드로 이동 🚀
+              퀴즈 시작하기 🚀
             </Button>
           </Link>
         </>
@@ -65,57 +65,57 @@ const AuthSection = () => {
       )}
 
       {/* 오늘의 퀴즈 & 추천 퀴즈 */}
-      <section className="w-full min-h-[300px] mx-auto mt-8 flex flex-col md:flex-row gap-6">
+      <section className="w-full max-w-screen-xl mx-auto mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* ✅ 오늘의 퀴즈 */}
-        <div className="flex-1 bg-card border-2 border-card-border p-6 rounded-xl shadow-sm hover:shadow-md transition text-center flex flex-col items-center justify-center gap-2 min-h-[180px]">
-          <CalendarDays size={32} className="text-primary" />
-          <h2 className="text-lg font-semibold text-foreground">오늘의 퀴즈</h2>
+        <div className="flex-1 bg-card-background border border-border px-4 py-5 rounded-lg hover:border-primary hover:bg-sub-background transition text-center flex flex-col items-center justify-center gap-1 min-h-[130px]">
+          <CalendarDays size={24} className="text-primary mb-1" />
+          <h2 className="text-base font-medium text-foreground">오늘의 퀴즈</h2>
 
           {isAuthenticated ? (
             isLoadingDaily ? (
-              <p className="text-sm text-neutral">퀴즈 불러오는 중...</p>
+              <p className="text-sm text-muted">퀴즈 불러오는 중...</p>
             ) : dailyError ? (
-              <p className="text-sm text-neutral">퀴즈를 불러올 수 없습니다.</p>
+              <p className="text-sm text-muted">퀴즈를 불러올 수 없습니다.</p>
             ) : dailyQuizzes?.data ? (
               <Link href={`/quizzes/${dailyQuizzes.data.id}`} passHref>
-                <button className="text-base text-neutral hover:underline cursor-pointer">
+                <button className="text-sm text-primary hover:underline transition">
                   {dailyQuizzes.data.title}
                 </button>
               </Link>
             ) : (
-              <p className="text-sm text-neutral">오늘의 퀴즈가 없습니다.</p>
+              <p className="text-sm text-muted">오늘의 퀴즈가 없습니다.</p>
             )
           ) : (
-            <p className="text-sm text-neutral">
+            <p className="text-sm text-muted">
               로그인하면 오늘의 퀴즈를 확인할 수 있어요.
             </p>
           )}
         </div>
 
         {/* ✅ 추천 퀴즈 */}
-        <div className="flex-1 bg-card border-2 border-card-border p-6 rounded-xl shadow-sm hover:shadow-md transition text-center flex flex-col items-center justify-center gap-2 min-h-[180px]">
-          <Sparkles size={32} className="text-secondary" />
-          <h2 className="text-lg font-semibold text-foreground">추천 퀴즈</h2>
+        <div className="flex-1 bg-card-background border border-border rounded-lg px-4 py-5 transition hover:border-primary hover:bg-sub-background text-center flex flex-col items-center justify-center gap-1 min-h-[140px]">
+          <Sparkles size={24} className="text-secondary mb-1" />
+          <h2 className="text-base font-medium text-foreground">추천 퀴즈</h2>
 
           {isAuthenticated ? (
             isLoadingRecommended ? (
-              <p className="text-sm text-neutral">퀴즈 불러오는 중...</p>
+              <p className="text-sm text-muted">퀴즈 불러오는 중...</p>
             ) : recommendedError ? (
-              <p className="text-sm text-neutral">퀴즈를 불러올 수 없습니다.</p>
+              <p className="text-sm text-muted">퀴즈를 불러올 수 없습니다.</p>
             ) : recommendedQuizzes?.data?.length ? (
               <Link
                 href={`/quizzes/${recommendedQuizzes.data[0]?.id}`}
                 passHref
               >
-                <button className="text-base text-neutral hover:underline cursor-pointer">
+                <button className="text-sm text-primary hover:underline transition">
                   {recommendedQuizzes.data[0]?.title}
                 </button>
               </Link>
             ) : (
-              <p className="text-sm text-neutral">추천 퀴즈가 없습니다.</p>
+              <p className="text-sm text-muted">추천 퀴즈가 없습니다.</p>
             )
           ) : (
-            <p className="text-sm text-neutral">
+            <p className="text-sm text-muted">
               로그인하면 추천 퀴즈를 확인할 수 있어요.
             </p>
           )}

@@ -3,11 +3,10 @@ import { useState } from "react";
 import { useGetActiveBattleRooms } from "@/lib/api/battle/useGetActiveBattleRooms";
 import { useGetMyActiveBattleRoom } from "@/lib/api/battle/useGetMyActiveBattleRoom";
 import CreateBattleRoomModal from "./_components/CreateBattleRoomModal";
-import ParticipantList from "./_components/ParticipantList";
 import BattleRoomCard from "./_components/BattleRoomCard";
 import Button from "../_components/Button";
 
-/** ✅ 메인 배틀 페이지 */
+/** ✅ 실시간 퀴즈 대결 메인 페이지 - 웹 접근성 및 aria-label 적용 */
 const BattlesPage: React.FC = () => {
   const {
     data: activeRoomsData,
@@ -28,7 +27,7 @@ const BattlesPage: React.FC = () => {
               실시간 퀴즈 대결
             </h2>
             <p className="text-md mt-2 opacity-90 text-white">
-              빠르게 문제를 풀고 승리를 차지하세요!
+              다른 사용자들과 문제 풀이 속도를 겨뤄보세요!
             </p>
           </div>
           <Button
@@ -36,15 +35,44 @@ const BattlesPage: React.FC = () => {
             size="medium"
             className="mt-4 sm:mt-0 hover:scale-105 transition-transform duration-200 shadow-md hover:shadow-lg"
             onClick={() => setIsModalOpen(true)}
+            aria-label="새로운 퀴즈 대결 생성하기"
           >
             새 대결 만들기
           </Button>
         </div>
+        {/* 대결 방법 안내 */}
+        <section
+          className="bg-info p-6 rounded-lg shadow-lg border border-card-border"
+          aria-label="퀴즈 대결 방법 안내"
+        >
+          <h2 className="text-xl font-bold border-b-2 border-primary pb-2 mb-4">
+            📌 대결 방법
+          </h2>
+          <ol className="list-decimal list-inside space-y-2">
+            <li>
+              대결 참가: 참가하려는 대결을 선택하거나 새로운 대결을 만듭니다.
+            </li>
+            <li>
+              준비 완료: 대결방에 입장하면 <strong> 준비 완료 </strong> 버튼을
+              클릭하여 준비 상태로 변경합니다.
+            </li>
+            <li>
+              대결 시작: 모든 참가자가 준비 완료되면 대결이 자동으로 시작됩니다.
+            </li>
+            <li>
+              정답 제출: 문제를 풀어 빠르고 정확하게 답변을 제출하세요. 정답률과
+              응답 시간에 따라 점수가 부여됩니다.
+            </li>
+          </ol>
+        </section>
 
         {/* 내 활성 배틀룸 */}
-        <div className="bg-card p-6 rounded-lg shadow-lg border border-card-border hover:bg-card-hover transition-all">
+        <section
+          className="bg-card p-6 rounded-lg shadow-lg border border-card-border transition-all"
+          aria-label="참여 중인 퀴즈 대결"
+        >
           <h2 className="text-xl font-bold border-b-2 border-primary pb-2">
-            🏆 참여 중인 배틀
+            🏆 참여 중인 대결
           </h2>
           {isMyBattleRoomLoading ? (
             <p className="text-center py-4 text-muted animate-fade-in-out">
@@ -53,24 +81,29 @@ const BattlesPage: React.FC = () => {
           ) : myBattleRoomData?.data ? (
             <>
               <BattleRoomCard room={myBattleRoomData.data} />
-              <ParticipantList
-                participants={myBattleRoomData.data.participants}
-              />
             </>
           ) : (
             <p className="text-center py-4 text-muted">
-              현재 진행 중인 배틀이 없습니다.
+              현재 참여 중인 대결이 없습니다.
             </p>
           )}
-        </div>
+        </section>
 
         {/* 활성화된 배틀룸 목록 */}
-        <div className="bg-card p-6 rounded-lg shadow-lg border border-card-border hover:bg-card-hover transition-all">
+        <section
+          className="bg-card p-6 rounded-lg shadow-lg border border-card-border transition-all"
+          aria-label="현재 활성화된 퀴즈 대결 목록"
+        >
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold border-b-2 border-primary pb-2">
               🎯 활성화된 대결
             </h2>
-            <Button variant="outline" size="small" onClick={refetch}>
+            <Button
+              variant="outline"
+              size="small"
+              onClick={() => refetch()}
+              aria-label="활성화된 퀴즈 목록 새로고침"
+            >
               새로고침
             </Button>
           </div>
@@ -80,25 +113,31 @@ const BattlesPage: React.FC = () => {
               로딩 중...
             </p>
           ) : activeRoomsData?.data?.length ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {activeRoomsData.data.map((room) => (
-                <BattleRoomCard key={room.id} room={room} />
+                <li
+                  key={room.id}
+                  aria-label={`${room.quizTitle} 퀴즈 대결 카드`}
+                >
+                  <BattleRoomCard room={room} />
+                </li>
               ))}
-            </div>
+            </ul>
           ) : (
             <p className="text-center py-4 text-muted">
               현재 활성화된 대결이 없습니다.
             </p>
           )}
-        </div>
-      </div>
+        </section>
 
-      {/* 🔹 배틀룸 생성 모달 */}
-      <CreateBattleRoomModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={refetch}
-      />
+        {/* 🔹 새 배틀룸 생성 모달 */}
+        <CreateBattleRoomModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSuccess={refetch}
+          aria-label="새로운 퀴즈 대결 생성 모달 창"
+        />
+      </div>
     </div>
   );
 };

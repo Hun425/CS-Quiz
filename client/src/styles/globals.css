@@ -33,9 +33,15 @@
     --theme-color-card-background: #f8fafc;
     --theme-color-card-border: rgb(207, 212, 218);
     --theme-color-card-hover: #e2e8f0;
-    --theme-color-tertiary: #9333ea;
+    --theme-color-tertiary: rgb(91, 51, 234);
     --theme-color-muted: rgb(83, 88, 99);
     --theme-color-default-muted: rgb(54, 58, 65);
+
+    --theme-color-background-gradient: radial-gradient(
+      circle 700px at bottom,
+      rgba(180, 130, 255, 0.4),
+      transparent 100%
+    );
   }
 
   /* 🌙 ✅ 다크 모드 대비 증가 */
@@ -63,6 +69,12 @@
     --theme-color-card-hover: rgba(255, 255, 255, 0.08);
     --theme-color-tertiary: #c084fc;
     --theme-color-muted: rgb(83, 88, 99);
+
+    --theme-color-background-gradient: radial-gradient(
+      circle 700px at bottom,
+      rgba(140, 86, 255, 0.81),
+      /* 더 밝고 선명한 연보라 */ rgb(0, 0, 0)
+    );
   }
 
   /* ✅ 기본 텍스트 색상 */

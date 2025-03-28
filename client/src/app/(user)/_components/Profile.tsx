@@ -35,7 +35,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4 border border-border rounded bg-background shadow-sm">
+    <div className="max-w-full min-w-200 mx-auto text-foreground p-4 border border-border rounded bg-background shadow-sm">
       {/* ✅ 프로필 정보 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -47,16 +47,18 @@ export default function Profile() {
             className="w-16 h-16 rounded-full border border-border shadow-sm"
           />
           <div>
-            <p className="text-lg font-semibold">{userProfile.username}</p>
-            <p className="text-sm text-muted">{userProfile.email}</p>
-            <p className="text-xs text-muted">
+            <p className="text-lg font-semibold text-foreground">
+              {userProfile.username}
+            </p>
+            <p className="text-sm text-foreground">{userProfile.email}</p>
+            <p className="text-xs text-foreground">
               가입일:{" "}
               {userProfile.joinedAt
                 ? format(new Date(userProfile.joinedAt), "yyyy-MM-dd")
                 : "정보 없음"}
             </p>
-            <p className="text-xs text-muted">
-              마지막 로그인:{" "}
+            <p className="text-xs text-foreground">
+              마지막 로그인:
               {userProfile.lastLogin
                 ? format(new Date(userProfile.lastLogin), "yyyy-MM-dd HH:mm")
                 : "정보 없음"}

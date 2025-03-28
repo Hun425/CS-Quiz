@@ -13,13 +13,21 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     const token = searchParams.get("token");
     const refreshToken = searchParams.get("refreshToken");
-    const expiresIn = searchParams.get("expiresIn"); //기본 한시간 후 만료됨
+    const expiresIn = searchParams.get("expiresIn");
 
     if (token && refreshToken && expiresIn) {
       const expiresAt = Date.now() + Number(expiresIn);
 
-      // ✅ Zustand 상태에 저장 (localStorage도 자동 반영됨)
       setToken(token, refreshToken, expiresAt);
+
+      //넥스트 서버에 토큰 보관
+      fetch("/api/oauth2/set-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, refreshToken, expiresIn }),
+      }).finally(() => {
+        router.replace("/");
+      });
     } else {
       console.warn("🔴 잘못된 로그인 응답. 로그인 페이지로 이동.");
       router.replace("/login");

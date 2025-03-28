@@ -1,4 +1,44 @@
 import { QuestionType } from "./question";
+/**
+ * ✅ WebSocket을 통해 서버로부터 수신 가능한 이벤트 타입
+ /** 참가자 목록 (입장/퇴장/준비 상태 포함) */
+/** 배틀 시작 이벤트 */
+/** 배틀 상태 (WAITING, IN_PROGRESS, FINISHED 등) */
+/** 배틀 진행 상황 (정답 제출 이후 참가자 상태 포함) */
+/** 다음 문제 도착 */
+/** 정답 결과 (개인에게만 전송되는 결과 큐) */
+/** 배틀 종료 결과 (최종 순위, 점수 등) */
+
+export enum BattleSocketEventKey {
+  PARTICIPANTS = "PARTICIPANTS",
+  START = "START",
+  STATUS = "STATUS",
+  PROGRESS = "PROGRESS",
+  NEXT_QUESTION = "NEXT_QUESTION",
+  RESULT = "RESULT",
+  END = "END",
+}
+
+export interface BattleWebSocketEvents {
+  [BattleSocketEventKey.PARTICIPANTS]: BattleParticipantsPayload;
+  [BattleSocketEventKey.START]: BattleStartResponse;
+  [BattleSocketEventKey.STATUS]: { status: BattleStatus };
+  [BattleSocketEventKey.PROGRESS]: BattleProgressResponse;
+  [BattleSocketEventKey.NEXT_QUESTION]: BattleNextQuestionResponse;
+  [BattleSocketEventKey.RESULT]: BattleAnswerResponse;
+  [BattleSocketEventKey.END]: BattleEndResponse;
+}
+
+/** ✅ 소켓으로 참가자 및 룸 상태 정보를 받을 때 사용하는 타입 */
+export interface BattleParticipantsPayload {
+  roomId: number;
+  userId: number;
+  username: string;
+  currentParticipants: number;
+  maxParticipants: number;
+  participants: Participant[];
+  joinedAt: string;
+}
 
 /**
  * ✅ 배틀룸 생성 요청 타입
@@ -27,7 +67,7 @@ export interface Participant {
   username: string; // 사용자 이름
   profileImage?: string | null; // 프로필 이미지 (선택 사항)
   level: number; // 사용자 레벨
-  isReady: boolean; // 참가자의 준비 상태 여부
+  ready: boolean; // 참가자의 준비 상태 여부
 }
 
 /**

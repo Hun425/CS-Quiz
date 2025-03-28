@@ -1,7 +1,6 @@
 import QuizCard from "./QuizCard";
 import { QuizSummaryResponse } from "@/lib/types/quiz";
 import { PageResponse } from "@/lib/types/common";
-import { mockQuizzes } from "@/lib/mockQuizzes";
 
 interface Props {
   data?: PageResponse<QuizSummaryResponse>;
@@ -18,9 +17,7 @@ const QuizSearchList: React.FC<Props> = ({
   currentPage,
   setCurrentPage,
 }) => {
-  // 검색 결과 또는 더미 데이터 사용
-  const quizzes =
-    data?.content && data.content.length > 0 ? data.content : mockQuizzes;
+  const quizzes = data?.content ?? [];
   const hasQuizzes = quizzes.length > 0;
 
   return (
@@ -45,7 +42,7 @@ const QuizSearchList: React.FC<Props> = ({
             quizzes.map((quiz) => <QuizCard key={quiz.id} quiz={quiz} />)
           ) : (
             <p className="text-center col-span-3 text-muted">
-              퀴즈가 없습니다.
+              검색된 퀴즈가 없습니다.
             </p>
           )}
         </div>

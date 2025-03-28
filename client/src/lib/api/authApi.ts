@@ -1,5 +1,3 @@
-// 인증 관련 API
-import httpClient from "./httpClient";
 import { useAuthStore } from "@/store/authStore";
 
 /**
@@ -11,8 +9,13 @@ export const authApi = {
    */
   logout: async () => {
     try {
-      await httpClient.post("/auth/logout", null);
       useAuthStore.getState().logout();
+
+      // 2. 서버 쿠키 삭제
+      await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+
       window.location.href = "/";
     } catch (error) {
       console.error("🔴 로그아웃 요청 실패:", error);

@@ -9,6 +9,12 @@ const nextConfig: NextConfig = {
       "avatars.githubusercontent.com",
       "k.kakaocdn.net",
     ],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "via.placeholder.com",
+      },
+    ],
   },
 };
 
