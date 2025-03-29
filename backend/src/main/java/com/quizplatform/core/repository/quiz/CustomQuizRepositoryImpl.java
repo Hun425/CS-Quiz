@@ -21,12 +21,9 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
-// 커스텀 레포지토리 구현
 @RequiredArgsConstructor
 @Slf4j
 public class CustomQuizRepositoryImpl implements CustomQuizRepository {
@@ -39,7 +36,7 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
         QTag tag = QTag.tag;
 
         // 조건 유효성 검사 추가
-        condition.validate(); // 이 라인 추가
+        condition.validate();
 
         // 동적 쿼리 생성
         BooleanBuilder builder = new BooleanBuilder();
@@ -65,7 +62,7 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
         // 태그 필터 (계층 구조 고려하여 수정)
         if (condition.getTagIds() != null && !condition.getTagIds().isEmpty()) {
             // 복수 태그 검색 개선
-            handleMultipleTagSearch(builder, quiz, condition.getTagIds());
+            handleTagSearch(builder, quiz, condition.getTagIds());
         }
 
         // 문제 수 범위 필터
@@ -92,7 +89,7 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
                 .distinct();
 
         // 전체 카운트 쿼리
-        long total = queryFactory
+        Long total = queryFactory
                 .select(quiz.countDistinct())
                 .from(quiz)
                 .leftJoin(quiz.tags, tag)
@@ -104,72 +101,54 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
 
         log.debug("검색 결과 수: {}", content.size());
 
-        return new PageImpl<>(content, pageable, total);
+        return new PageImpl<>(content, pageable, total != null ? total : 0);
     }
 
-    // 복수 태그 검색을 처리하는 새로운 메서드
-    private void handleMultipleTagSearch(BooleanBuilder builder, QQuiz quiz, List<Long> tagIds) {
+    // 태그 검색 처리를 위한 개선된 메서드
+    private void handleTagSearch(BooleanBuilder builder, QQuiz quiz, List<Long> tagIds) {
         QTag tag = QTag.tag;
 
         if (tagIds.size() == 1) {
-            // 단일 태그 검색: 기존 방식 유지 (태그와 그 하위 태그 포함)
-            Set<Long> expandedIds = expandTagIds(tagIds);
+            // 단일 태그 검색: 기존 방식 (태그 ID와 그 하위 태그 포함)
+            Set<Long> expandedIds = expandTagId(tagIds.get(0));
             builder.and(quiz.tags.any().id.in(expandedIds));
+            log.debug("단일 태그 검색: 태그 ID {} 및 하위 태그 검색", tagIds.get(0));
         } else {
-            // 복수 태그 검색: 모든 태그를 포함하는 퀴즈만 선택
+            // 복수 태그 검색: 모든 태그가 있는 퀴즈만 선택 (AND 조건)
             for (Long tagId : tagIds) {
-                // 각 태그 ID와 하위 태그 ID 확장
-                Set<Long> expandedIds = expandSingleTagId(tagId);
-
-                // 이 태그(또는 하위 태그) 중 하나를 포함해야 함
-                BooleanExpression tagCondition = quiz.tags.any().id.in(expandedIds);
-
-                // 각 태그에 대한 조건을 AND로 연결
-                builder.and(tagCondition);
+                // 각 태그 ID와 하위 태그를 확장
+                Set<Long> expandedIds = expandTagId(tagId);
+                builder.and(quiz.id.in(
+                        JPAExpressions.select(quiz.id)
+                                .from(quiz)
+                                .join(quiz.tags, tag)
+                                .where(tag.id.in(expandedIds))
+                ));
+                log.debug("다중 태그 검색: 태그 ID {} 및 하위 태그 조건 추가", tagId);
             }
         }
     }
 
-    private Set<Long> expandTagIds(List<Long> tagIds) {
-        Set<Long> expandedIds = new HashSet<>(tagIds);
-
-        // 각 태그 ID에 대해 하위 태그 추가
-        for (Long tagId : tagIds) {
-            expandedIds.addAll(expandSingleTagId(tagId));
-        }
-
-        log.debug("태그 ID 확장: {} -> {}", tagIds, expandedIds);
-        return expandedIds;
-    }
-
     // 단일 태그 ID에 대한 확장 (이 태그와 모든 하위 태그)
-    private Set<Long> expandSingleTagId(Long parentId) {
+    private Set<Long> expandTagId(Long tagId) {
+        log.debug("태그 ID 확장 시작: {}", tagId);
         Set<Long> expandedIds = new HashSet<>();
-        expandedIds.add(parentId); // 현재 태그 ID 추가
+        expandedIds.add(tagId); // 현재 태그 ID 추가
 
-        // 직접 쿼리로 하위 태그 조회
-        List<Tag> childTags = tagRepository.findByParentId(parentId);
-        for (Tag childTag : childTags) {
-            expandedIds.add(childTag.getId());
-            // 재귀적으로 더 깊은 수준의 하위 태그도 추가
-            expandedIds.addAll(findAllChildTagIds(childTag.getId()));
+        try {
+            // 해당 태그의 모든 하위 태그를 가져옴
+            List<Tag> childTags = tagRepository.findTagAndAllDescendants(tagId);
+            for (Tag childTag : childTags) {
+                if (!childTag.getId().equals(tagId)) { // 현재 태그가 아닌 경우만 추가
+                    expandedIds.add(childTag.getId());
+                }
+            }
+        } catch (Exception e) {
+            log.error("태그 ID 확장 중 오류 발생: {}", e.getMessage());
         }
 
+        log.debug("태그 ID {} 확장 결과: {}", tagId, expandedIds);
         return expandedIds;
-    }
-
-    // 재귀적으로 모든 하위 태그 ID 조회 메서드
-    private Set<Long> findAllChildTagIds(Long parentId) {
-        Set<Long> childIds = new HashSet<>();
-        List<Tag> childTags = tagRepository.findByParentId(parentId);
-
-        for (Tag childTag : childTags) {
-            childIds.add(childTag.getId());
-            // 재귀 호출: 더 깊은 레벨의 하위 태그도 포함
-            childIds.addAll(findAllChildTagIds(childTag.getId()));
-        }
-
-        return childIds;
     }
 
     @Override
