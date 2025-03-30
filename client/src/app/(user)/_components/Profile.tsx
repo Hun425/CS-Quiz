@@ -35,7 +35,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="max-w-full min-w-200 mx-auto text-foreground p-4 border border-border rounded bg-background shadow-sm">
+    <div className="max-w-full min-w-200 rounded-md mx-auto text-foreground p-4 border border-border rounded bg-background shadow-sm">
       {/* ✅ 프로필 정보 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">

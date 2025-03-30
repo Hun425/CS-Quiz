@@ -12,7 +12,7 @@ const ReadyStatusIndicator = ({ participants }: Props) => {
   const allReady = total > 1 && total === ready;
 
   return (
-    <div className="bg-muted p-4 rounded-xl text-center border border-border">
+    <div className="bg-sub-background p-4 rounded-xl text-center border border-border">
       <p className="text-base text-muted-foreground">
         ✅ 준비된 인원: <span className="text-primary font-bold">{ready}</span>{" "}
         / {total}

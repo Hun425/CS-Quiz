@@ -7,15 +7,15 @@ export default function MyPageLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="max-w-6xl mx-auto p-6 flex flex-col lg:flex-row gap-6 min-h-screen">
+    <div className="max-w-screen-lg mx-auto py-16 flex flex-col lg:flex-row gap-6 min-h-screen">
       {/* ✅ 사이드바 (프로필 + 네비게이션) */}
-      <aside className="w-full lg:w-1/4 bg-card p-4 rounded-lg shadow-md">
+      <aside className="w-full lg:w-1/4 bg-card shadow-md">
         <Profile />
         {/* 🔹 네비게이션 버튼 (클릭하면 해당 페이지로 이동) */}
-        <nav className="mt-4 flex flex-col gap-2">
+        <nav className="mt-4 flex flex-col gap-2 min-h-full">
           <Link
             href="/mypage/dashboard"
-            className="w-full px-4 py-2 text-left text-sm font-semibold text-foreground bg-sub-foreground border border-border rounded hover:bg-gray-500"
+            className="w-full px-4 py-2 text-left text-sm font-semibold text-foreground bg-sub-foreground border border-border rounded hover:bg-gray-500 "
           >
             활동 기록
           </Link>
@@ -35,7 +35,7 @@ export default function MyPageLayout({
       </aside>
 
       {/* ✅ 메인 콘텐츠 영역 (라우팅된 페이지가 렌더링될 곳) */}
-      <main className="w-full lg:w-3/4 bg-card p-6 rounded-lg shadow-md">
+      <main className="w-full lg:w-3/4 bg-card p-6 shadow-md border border-border rounded-md">
         {children}
       </main>
     </div>

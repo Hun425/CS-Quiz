@@ -3,7 +3,7 @@ import { BattleStatus } from "@/lib/types/battle";
 import Button from "@/app/_components/Button";
 import { useRouter } from "next/navigation";
 
-const BattleRoomCard = ({ room }: { room: BattleRoomResponse }) => {
+const MyActiveRoomCard = ({ room }: { room: BattleRoomResponse }) => {
   const router = useRouter();
 
   const handleJoinClick = async () => {
@@ -55,36 +55,28 @@ const BattleRoomCard = ({ room }: { room: BattleRoomResponse }) => {
       : "종료됨";
 
   return (
-    <div className="w-full bg-background border border-border p-4 rounded-xl shadow-md flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-6">
+    <div className="w-full bg-background border border-border p-5 rounded-xl shadow-md flex flex-row justify-between items-center gap-6">
       {/* 왼쪽 정보 */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 flex-1">
-        <h3 className="text-base sm:text-lg font-semibold text-primary">
-          {room.quizTitle}
-        </h3>
+        <h3 className="text-lg font-semibold text-primary">{room.quizTitle}</h3>
 
-        <span className="text-sm sm:text-base text-neutral">
+        <span className="text-base text-neutral">
           🧩 {room.questionCount}문제
         </span>
 
-        <span className="text-sm sm:text-base text-neutral">
-          ⏱ {room.timeLimit}초
-        </span>
+        <span className="text-base text-neutral">⏱ {room.timeLimit}초</span>
 
-        <span
-          className={`text-sm sm:text-base font-medium ${
-            statusColor[room.status]
-          }`}
-        >
+        <span className={`text-base font-medium ${statusColor[room.status]}`}>
           ⚡ {getStatusText()}
         </span>
 
-        <span className="text-sm sm:text-base text-neutral">
+        <span className="text-base text-neutral">
           👥 {room.currentParticipants}/{room.maxParticipants}
         </span>
       </div>
 
       {/* 오른쪽 버튼 */}
-      <div className="self-end sm:self-auto">
+      <div>
         <Button
           variant={buttonVariant}
           size="large"
@@ -98,4 +90,4 @@ const BattleRoomCard = ({ room }: { room: BattleRoomResponse }) => {
   );
 };
 
-export default BattleRoomCard;
+export default MyActiveRoomCard;

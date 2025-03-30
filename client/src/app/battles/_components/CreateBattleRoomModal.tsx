@@ -1,8 +1,7 @@
 "use client";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useCreateBattleRoom } from "@/lib/api/battle/useCreateBattleRoom";
-import { useGetRecommendedQuizzes } from "@/lib/api/quiz/useGetRecommendedQuizzes";
-import { useGetDailyQuizzes } from "@/lib/api/quiz/useGetDailyQuizzes";
 import { useSearchQuizzes } from "@/lib/api/quiz/useSearchQuizzes";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import Button from "@/app/_components/Button";
@@ -18,6 +17,7 @@ const CreateBattleRoomModal: React.FC<CreateBattleRoomModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const router = useRouter();
   const { mutateAsync: createBattleRoom, isPending } = useCreateBattleRoom();
   const [quizId, setQuizId] = useState<number | null>(null);
   const [maxParticipants, setMaxParticipants] = useState<number>(4);
@@ -26,8 +26,6 @@ const CreateBattleRoomModal: React.FC<CreateBattleRoomModalProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
-  const { data: recommendedQuizzes } = useGetRecommendedQuizzes({ limit: 5 });
-  const { data: dailyQuizzes } = useGetDailyQuizzes();
   const { data: searchedQuizzes, isLoading: isSearchLoading } =
     useSearchQuizzes({ title: debouncedQuery });
 
@@ -38,10 +36,13 @@ const CreateBattleRoomModal: React.FC<CreateBattleRoomModalProps> = ({
     }
 
     try {
-      await createBattleRoom({ quizId, maxParticipants });
+      const response = await createBattleRoom({ quizId, maxParticipants });
+      const battleRoomId = response.data.id;
+
       alert("✅ 배틀룸이 생성되었습니다!");
       onClose();
       onSuccess();
+      router.push(`/battles/${battleRoomId}`);
     } catch (error) {
       console.error("배틀룸 생성 실패:", error);
       setErrorMessage("❌ 배틀룸 생성에 실패했습니다. 다시 시도해주세요.");
@@ -100,33 +101,6 @@ const CreateBattleRoomModal: React.FC<CreateBattleRoomModalProps> = ({
             </p>
           )}
         </div>
-
-        {/* 추천 퀴즈 */}
-        <h3 className="text-sm font-semibold mb-1">🌟 추천 퀴즈</h3>
-        {recommendedQuizzes?.data.map((quiz) => (
-          <div
-            key={quiz.id}
-            className={`p-2 rounded cursor-pointer hover:bg-primary hover:text-white transition-colors ${
-              quizId === quiz.id ? "bg-primary text-white" : ""
-            }`}
-            onClick={() => setQuizId(quiz.id)}
-          >
-            {quiz.title}
-          </div>
-        ))}
-
-        {/* 데일리 퀴즈 */}
-        <h3 className="text-sm font-semibold mt-3 mb-1">📅 데일리 퀴즈</h3>
-        {dailyQuizzes?.data && (
-          <div
-            className={`p-2 rounded cursor-pointer hover:bg-primary hover:text-white transition-colors ${
-              quizId === dailyQuizzes.data.id ? "bg-primary text-white" : ""
-            }`}
-            onClick={() => setQuizId(dailyQuizzes.data.id)}
-          >
-            {dailyQuizzes.data.title}
-          </div>
-        )}
 
         {/* 에러 메시지 */}
         {errorMessage && (

@@ -3,6 +3,7 @@
 import { useSearchParams, useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useGetQuizResult } from "@/lib/api/quiz/useGetQuizResult";
+import { useQuizStore } from "@/store/quizStore";
 import Button from "@/app/_components/Button";
 import RetryQuizButton from "../play/_components/RetryQuizButton";
 
@@ -13,6 +14,8 @@ const QuizResultPage: React.FC = () => {
   const attemptId = searchParams.get("attemptId");
 
   useEffect(() => {
+    useQuizStore.getState().resetQuiz(); // ✅ 퀴즈 상태 초기화
+
     if (!attemptId) {
       alert("잘못된 접근입니다.");
       router.replace("/quizzes");

@@ -81,7 +81,7 @@ export default function QuizPlayPage() {
       sessionStorage.removeItem("lastAttempt");
       sessionStorage.removeItem(`quiz-${attemptId}`);
 
-      resetQuiz();
+      // resetQuiz(); 화면 깜빡이 방지를 위해 이동된 결과 페이지에서 초기화
       router.push(`/quizzes/${quizId}/results?attemptId=${attemptId}`);
     } catch {
       alert("퀴즈 제출 중 오류가 발생했습니다.");

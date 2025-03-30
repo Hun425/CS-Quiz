@@ -11,6 +11,7 @@ import BattleParticipantsList from "../_components/BattleParticipantsList";
 import ReadyStatusIndicator from "../_components/ReadyStatusIndicator";
 import BattleControlButtons from "../_components/BattleControlButtons";
 import battleSocketClient from "@/lib/services/websocket/battleWebSocketService";
+import Loading from "@/app/_components/Loading";
 
 const BattleRoomClientPage = () => {
   const router = useRouter();
@@ -27,7 +28,7 @@ const BattleRoomClientPage = () => {
   );
 
   const myParticipant = useMemo(() => {
-    return participantsPayload?.participants.find((p) => p.userId === userId);
+    return participantsPayload?.participants?.find((p) => p.userId === userId);
   }, [participantsPayload, userId]);
 
   const isReady = myParticipant?.ready ?? false;
@@ -47,12 +48,8 @@ const BattleRoomClientPage = () => {
     };
   }, []);
 
-  if (!userId || isLoading)
-    return (
-      <div className="flex justify-center items-center min-h-screen text-muted">
-        로딩 중...
-      </div>
-    );
+  if (!userId || isLoading || !participantsPayload?.participants)
+    return <Loading />;
 
   if (!battleRoom)
     return (

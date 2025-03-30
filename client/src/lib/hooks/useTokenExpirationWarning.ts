@@ -6,11 +6,11 @@ import httpClient from "../api/httpClient";
 
 const useTokenExpirationWarning = () => {
   const [showPopup, setShowPopup] = useState(false);
-  const { token, expiresAt, setToken } = useAuthStore();
+  const { isAuthenticated, token, expiresAt, setToken } = useAuthStore();
 
   useEffect(() => {
-    if (!token || !expiresAt) {
-      setShowPopup(false); // 로그아웃 상태에서는 팝업 안 뜨게
+    if (!token || !expiresAt || isAuthenticated) {
+      setShowPopup(false);
       return;
     }
 

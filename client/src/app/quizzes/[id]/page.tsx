@@ -16,6 +16,7 @@ import {
   Legend,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
+import Loading from "@/app/_components/Loading";
 
 ChartJS.register(
   CategoryScale,
@@ -46,11 +47,7 @@ const QuizDetailPage: React.FC = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-screen text-lg">
-        🔄 퀴즈 정보를 불러오는 중...
-      </div>
-    );
+    return <Loading />;
   }
 
   if (error || !quiz) {
