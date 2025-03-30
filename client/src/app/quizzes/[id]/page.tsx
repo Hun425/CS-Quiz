@@ -2,7 +2,7 @@
 
 import { useRouter, useParams } from "next/navigation";
 import { useGetQuizDetail } from "@/lib/api/quiz/useGetQuizDetail";
-import { useGetQuizStatistics } from "@/lib/api/quiz/useGetQuizStatistics";
+// import { useGetQuizStatistics } from "@/lib/api/quiz/useGetQuizStatistics";
 import { useAuthStore } from "@/store/authStore";
 import Image from "next/image";
 import Tag from "../_components/Tag";
@@ -31,9 +31,11 @@ const QuizDetailPage: React.FC = () => {
   const quizId = useParams().id;
   const { isAuthenticated } = useAuthStore();
   const { isLoading, error, data: quiz } = useGetQuizDetail(Number(quizId));
-  const { data: quizStatistics, error: statsError } = useGetQuizStatistics(
-    Number(quizId)
-  );
+  // const { data: quizStatistics, error: statsError } = useGetQuizStatistics(
+  //   Number(quizId)
+  // );
+
+  const quizStatistics = quiz?.statistics;
 
   const handleStartQuiz = () => {
     if (!isAuthenticated) {
@@ -148,7 +150,7 @@ const QuizDetailPage: React.FC = () => {
       </button>
 
       {/* 📊 퀴즈 통계 */}
-      {statsError ? (
+      {!quizStatistics ? (
         <div className="bg-background p-6 rounded-lg border border-border shadow-md text-center">
           <p className="text-lg text-danger font-semibold">
             ❌ 통계 데이터를 불러오는 데 실패했습니다.

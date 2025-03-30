@@ -9,19 +9,24 @@ const useTokenExpirationWarning = () => {
   const { token, expiresAt, setToken } = useAuthStore();
 
   useEffect(() => {
-    if (!token || !expiresAt) return;
+    if (!token || !expiresAt) {
+      setShowPopup(false); // 로그아웃 상태에서는 팝업 안 뜨게
+      return;
+    }
 
     const checkExpiration = () => {
       const now = Date.now();
       const remainingTime = expiresAt - now;
 
       if (remainingTime < 5 * 60 * 1000 && remainingTime > 0) {
-        // 5분 이내면 팝업 표시
         setShowPopup(true);
+      } else {
+        setShowPopup(false);
       }
     };
 
-    const interval = setInterval(checkExpiration, 1000 * 30); // 30초마다 체크
+    checkExpiration(); // 최초 진입 시 한 번 검사
+    const interval = setInterval(checkExpiration, 1000 * 30);
     return () => clearInterval(interval);
   }, [token, expiresAt]);
 

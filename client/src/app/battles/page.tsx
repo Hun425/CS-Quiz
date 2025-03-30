@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import { useGetActiveBattleRooms } from "@/lib/api/battle/useGetActiveBattleRooms";
 import { useGetMyActiveBattleRoom } from "@/lib/api/battle/useGetMyActiveBattleRoom";
@@ -6,16 +7,25 @@ import CreateBattleRoomModal from "./_components/CreateBattleRoomModal";
 import BattleRoomCard from "./_components/BattleRoomCard";
 import Button from "../_components/Button";
 
-/** ✅ 실시간 퀴즈 대결 메인 페이지 - 웹 접근성 및 aria-label 적용 */
 const BattlesPage: React.FC = () => {
   const {
     data: activeRoomsData,
     isLoading: isActiveRoomsLoading,
-    refetch,
+    refetch: refetchActiveRooms, // 🔁 전체 목록 리패치
   } = useGetActiveBattleRooms();
-  const { data: myBattleRoomData, isLoading: isMyBattleRoomLoading } =
-    useGetMyActiveBattleRoom();
+
+  const {
+    data: myBattleRoomData,
+    isLoading: isMyBattleRoomLoading,
+    refetch: refetchMyRoom, // ✅ 참여중 대결 리패치
+  } = useGetMyActiveBattleRoom();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const handleCreateRoomSuccess = async () => {
+    await refetchActiveRooms();
+    await refetchMyRoom();
+    setIsModalOpen(false);
+  };
 
   return (
     <div className="bg-sub-background min-h-screen max-w-screen-xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
@@ -40,6 +50,7 @@ const BattlesPage: React.FC = () => {
             새 대결 만들기
           </Button>
         </div>
+
         {/* 대결 방법 안내 */}
         <section
           className="bg-info p-6 rounded-lg shadow-lg border border-card-border"
@@ -53,7 +64,7 @@ const BattlesPage: React.FC = () => {
               대결 참가: 참가하려는 대결을 선택하거나 새로운 대결을 만듭니다.
             </li>
             <li>
-              준비 완료: 대결방에 입장하면 <strong> 준비 완료 </strong> 버튼을
+              준비 완료: 대결방에 입장하면 <strong>준비 완료</strong> 버튼을
               클릭하여 준비 상태로 변경합니다.
             </li>
             <li>
@@ -79,9 +90,7 @@ const BattlesPage: React.FC = () => {
               로딩 중...
             </p>
           ) : myBattleRoomData?.data ? (
-            <>
-              <BattleRoomCard room={myBattleRoomData.data} />
-            </>
+            <BattleRoomCard room={myBattleRoomData.data} />
           ) : (
             <p className="text-center py-4 text-muted">
               현재 참여 중인 대결이 없습니다.
@@ -101,7 +110,7 @@ const BattlesPage: React.FC = () => {
             <Button
               variant="outline"
               size="small"
-              onClick={() => refetch()}
+              onClick={() => refetchActiveRooms()}
               aria-label="활성화된 퀴즈 목록 새로고침"
             >
               새로고침
@@ -134,7 +143,7 @@ const BattlesPage: React.FC = () => {
         <CreateBattleRoomModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          onSuccess={refetch}
+          onSuccess={handleCreateRoomSuccess} // ✅ 여기서 두 가지 refetch
           aria-label="새로운 퀴즈 대결 생성 모달 창"
         />
       </div>

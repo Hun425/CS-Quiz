@@ -9,6 +9,10 @@ import {
   BattleSocketEventKey,
 } from "@/lib/types/battle";
 
+type EventHandlerMap = {
+  [K in BattleSocketEventKey]?: (data: BattleWebSocketEvents[K]) => void;
+};
+
 // WebSocket 기본 주소
 const WS_BASE_URL =
   process.env.NEXT_PUBLIC_WS_BASE_URL || "ws://localhost:8080/ws-battle/";
@@ -17,9 +21,7 @@ class BattleWebSocketService {
   private client: Client | null = null;
   private roomId: number | null = null;
 
-  private eventHandlers: {
-    [K in BattleSocketEventKey]?: (data: BattleWebSocketEvents[K]) => void;
-  } = {};
+  private eventHandlers: Partial<EventHandlerMap> = {};
 
   private connected = false;
   private connecting = false;
@@ -72,7 +74,10 @@ class BattleWebSocketService {
           this.connecting = false;
 
           this.subscribeToBattleEvents(roomId);
-          this.joinBattle(userId);
+          // ⏳ 약간의 지연 후 참가 전송
+          setTimeout(() => {
+            this.joinBattle(userId);
+          }, 100);
 
           console.log("✅ WebSocket 연결 완료:", frame);
           resolve();
@@ -208,12 +213,15 @@ class BattleWebSocketService {
       return;
     }
 
+    if (!this.roomId) {
+      console.error("❌ 준비 상태 변경 실패: roomId 없음");
+      return;
+    }
+
     this.client.publish({
       destination: "/app/battle/ready",
-      body: JSON.stringify({ userId, roomId: this.roomId }),
+      body: JSON.stringify({ roomId: this.roomId, userId }),
     });
-
-    console.log("📨 준비 상태 요청 전송");
   }
 
   /** ✅ 서버에 정답 제출 */
@@ -264,8 +272,8 @@ class BattleWebSocketService {
   on<K extends BattleSocketEventKey>(
     event: K,
     handler: (data: BattleWebSocketEvents[K]) => void
-  ) {
-    this.eventHandlers[event] = handler;
+  ): void {
+    (this.eventHandlers as EventHandlerMap)[event] = handler;
   }
 
   /** ✅ 이벤트 핸들러 제거 */
@@ -277,6 +285,7 @@ class BattleWebSocketService {
   clearEventHandlers() {
     this.eventHandlers = {};
   }
+
   /** ✅ 연결 종료 */
   async disconnect(): Promise<void> {
     if (!this.client || this.disconnecting) return;
