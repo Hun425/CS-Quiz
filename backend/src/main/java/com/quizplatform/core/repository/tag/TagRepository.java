@@ -46,6 +46,19 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
         """, nativeQuery = true)
     List<Object[]> getTagPerformanceByUserId(@Param("userId") Long userId);
 
+    /**
+     * 사용자가 시도한 서로 다른 태그의 개수를 반환
+     */
+    @Query(value = """
+        SELECT COUNT(DISTINCT t.id)
+        FROM tags t
+        JOIN quiz_tags qt ON t.id = qt.tag_id
+        JOIN quizzes q ON qt.quiz_id = q.id
+        JOIN quiz_attempts qa ON q.id = qa.quiz_id
+        WHERE qa.user_id = :userId
+        """, nativeQuery = true)
+    int countDistinctTagsAttemptedByUserId(@Param("userId") Long userId);
+
     // 추가 메소드
 
     /**

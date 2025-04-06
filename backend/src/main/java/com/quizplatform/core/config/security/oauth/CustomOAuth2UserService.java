@@ -25,6 +25,7 @@ import java.util.Random;
 @Slf4j
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final UserRepository userRepository;
+    private final com.quizplatform.core.repository.user.UserLevelRepository userLevelRepository;
     private final Random random = new Random();
 
     @Override
@@ -122,7 +123,33 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .profileImage(oauth2UserInfo.getImageUrl())
                 .build();
 
-        return userRepository.save(user);
+        // 사용자 저장
+        user = userRepository.save(user);
+        
+        // UserLevel 생성 및 저장 (자동)
+        createUserLevel(user);
+
+        return user;
+    }
+    
+    /**
+     * 사용자의 UserLevel 정보를 생성합니다.
+     */
+    private void createUserLevel(User user) {
+        try {
+            // LevelingService를 사용할 수 없으므로 직접 생성
+            com.quizplatform.core.domain.user.UserLevel userLevel = new com.quizplatform.core.domain.user.UserLevel(user);
+            
+            // 로깅
+            log.info("사용자 레벨 정보 생성: userId={}, level={}", user.getId(), userLevel.getLevel());
+            
+            // UserLevel 저장
+            userRepository.flush(); // User를 먼저 flush하여 ID 확정
+            userLevelRepository.save(userLevel);
+        } catch (Exception e) {
+            // 실패해도 사용자 생성은 계속 진행
+            log.error("사용자 레벨 정보 생성 실패: {}", e.getMessage(), e);
+        }
     }
 
     /**

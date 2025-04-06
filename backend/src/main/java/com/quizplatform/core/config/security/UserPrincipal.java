@@ -1,24 +1,46 @@
 package com.quizplatform.core.config.security;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.quizplatform.core.domain.user.AuthProvider;
 import com.quizplatform.core.domain.user.User;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
+import lombok.ToString;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Getter
+@ToString(exclude = {"user", "attributes", "password"})
+@Schema(description = "인증된 사용자 정보")
 public class UserPrincipal implements OAuth2User, UserDetails {
+    
+    @Schema(description = "사용자 ID", example = "1")
     private final Long id;
+    
+    @Schema(description = "이메일", example = "user@example.com")
     private final String email;
+    
+    @JsonIgnore
     private final String password;
+    
+    @Schema(description = "프로필 이미지 URL", example = "https://example.com/profile.jpg")
     private final String profileImage;
+    
+    @Schema(description = "인증 제공자", example = "GOOGLE")
     private final AuthProvider provider;
+    
+    @Schema(description = "사용자 권한", example = "[\"ROLE_USER\"]")
     private final Collection<? extends GrantedAuthority> authorities;
+    
+    @JsonIgnore
     private final User user;  // 도메인 User 객체를 저장하는 필드
+    
+    @JsonIgnore
     private Map<String, Object> attributes;
 
     // 생성자에 User 객체를 추가하여 초기화합니다.
@@ -55,38 +77,47 @@ public class UserPrincipal implements OAuth2User, UserDetails {
         return userPrincipal;
     }
 
-    // 이 메서드를 통해 도메인 User 객체를 반환할 수 있습니다.
-    public User getUser() {
-        return user;
+    // 사용자 권한을 문자열 리스트로 반환하는 편의 메서드 (Swagger 문서화용)
+    @Schema(description = "사용자 권한 목록")
+    public List<String> getAuthorityNames() {
+        return authorities.stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
     }
 
     // 나머지 UserDetails, OAuth2User 메서드 구현...
     @Override
+    @Schema(description = "사용자 이름(이메일)")
     public String getUsername() {
         return email;
     }
 
     @Override
+    @JsonIgnore
     public boolean isAccountNonExpired() {
         return true;
     }
 
     @Override
+    @JsonIgnore
     public boolean isAccountNonLocked() {
         return true;
     }
 
     @Override
+    @JsonIgnore
     public boolean isCredentialsNonExpired() {
         return true;
     }
 
     @Override
+    @JsonIgnore
     public boolean isEnabled() {
         return true;
     }
 
     @Override
+    @JsonIgnore
     public Map<String, Object> getAttributes() {
         return attributes;
     }
@@ -96,6 +127,7 @@ public class UserPrincipal implements OAuth2User, UserDetails {
     }
 
     @Override
+    @JsonIgnore
     public String getName() {
         return id.toString();
     }
