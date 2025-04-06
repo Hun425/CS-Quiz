@@ -22,6 +22,7 @@ import com.quizplatform.core.service.level.LevelingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,7 +44,7 @@ public class BattleService {
     private final RedisTemplate<String, String> redisTemplate;
     private final LevelingService levelingService;
     private final EntityMapperService entityMapperService;
-
+    private final SimpMessagingTemplate messagingTemplate;
 
     // Redis 키 접두사
     private static final String BATTLE_ROOM_KEY_PREFIX = "battle:room:";
@@ -139,8 +140,14 @@ public class BattleService {
             throw new BusinessException(ErrorCode.ALREADY_PARTICIPATING, "이미 참가 중인 사용자입니다.");
         }
 
-        // 참가자 추가
-        addParticipant(battleRoom, user);
+        // 참가자 추가 및 반환값 저장
+        BattleParticipant participant = addParticipant(battleRoom, user);
+
+        // WebSocket 메시지 발송
+        messagingTemplate.convertAndSend(
+                "/topic/battle/" + roomId + "/participants",
+                createBattleJoinResponse(battleRoom, participant)
+        );
 
         return entityMapperService.mapToBattleRoomResponse(battleRoom);
     }
