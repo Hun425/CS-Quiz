@@ -21,6 +21,8 @@ import com.quizplatform.core.service.common.EntityMapperService;
 import com.quizplatform.core.service.level.LevelingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -30,9 +32,9 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
+import org.springframework.context.annotation.Lazy;
 @Service
-@RequiredArgsConstructor
+// @RequiredArgsConstructor
 @Transactional
 @Slf4j
 public class BattleService {
@@ -50,6 +52,23 @@ public class BattleService {
     private static final String BATTLE_ROOM_KEY_PREFIX = "battle:room:";
     private static final String PARTICIPANT_KEY_PREFIX = "battle:participant:";
     private static final int ROOM_EXPIRE_SECONDS = 3600; // 1시간
+
+    // @Autowired 생성자를 직접 만들고 SimpMessagingTemplate 파라미터에 @Lazy 추가
+    @Autowired
+    public BattleService(BattleRoomRepository battleRoomRepository, BattleParticipantRepository participantRepository,
+                         UserRepository userRepository, QuizRepository quizRepository, UserBattleStatsRepository userBattleStatsRepository,
+                         RedisTemplate<String, String> redisTemplate, LevelingService levelingService,
+                         EntityMapperService entityMapperService, @Lazy SimpMessagingTemplate messagingTemplate) {
+        this.battleRoomRepository = battleRoomRepository;
+        this.participantRepository = participantRepository;
+        this.userRepository = userRepository;
+        this.quizRepository = quizRepository;
+        this.userBattleStatsRepository = userBattleStatsRepository;
+        this.redisTemplate = redisTemplate;
+        this.levelingService = levelingService;
+        this.entityMapperService = entityMapperService;
+        this.messagingTemplate = messagingTemplate;
+    }
 
     /**
      * 새로운 대결방 생성

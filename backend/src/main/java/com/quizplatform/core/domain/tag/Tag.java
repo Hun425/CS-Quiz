@@ -37,7 +37,7 @@ public class Tag {
     @OneToMany(mappedBy = "parent")
     private Set<Tag> children = new HashSet<>();
 
-    @ManyToMany(mappedBy = "tags", fetch = FetchType.EAGER)
+    @ManyToMany(mappedBy = "tags", fetch = FetchType.LAZY) // EAGER에서 LAZY로 변경
     private Set<Quiz> quizzes = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.EAGER)
