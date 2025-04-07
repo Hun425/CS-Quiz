@@ -43,6 +43,14 @@ public class UserService {
     private final AchievementRepository achievementRepository;
     private final UserLevelHistoryRepository userLevelHistoryRepository;
     private final EntityMapperService entityMapperService;
+    
+    /**
+     * 사용자 ID로 사용자 조회
+     */
+    public User getUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다: " + userId));
+    }
 
     /**
      * 사용자 프로필 조회

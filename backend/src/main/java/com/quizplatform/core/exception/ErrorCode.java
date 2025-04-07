@@ -65,6 +65,8 @@ public enum ErrorCode {
     INVALID_BATTLE_SETTINGS(HttpStatus.BAD_REQUEST, "B051", "잘못된 배틀 설정입니다."),
     BATTLE_VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "B052", "배틀 검증 오류가 발생했습니다."),
 
+    // 태그 에러
+    TAG_NOT_FOUND(HttpStatus.BAD_REQUEST, "T001","태그가 존재하지 않습니다"),
 
     PARTICIPANT_INACTIVE(HttpStatus.BAD_REQUEST, "11", "배틀 검증 오류가 발생했습니다.");
     private final HttpStatus status;
