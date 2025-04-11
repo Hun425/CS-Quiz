@@ -46,8 +46,8 @@ const SocialAccountSection = () => {
         <SocialButton
           name="Google"
           icon={<GoogleIcon size={16} />}
-          bgClass="bg-white border border-gray-300"
-          textClass="text-[#5F6368]"
+          bgClass="!bg-white border border-gray-300"
+          textClass="!text-black"
         />
         <SocialButton
           name="GitHub"
