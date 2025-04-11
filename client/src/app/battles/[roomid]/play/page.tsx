@@ -35,7 +35,8 @@ const BattleContent = () => {
       if (now - lastUpdated > 15000) {
         console.warn("⏰ 서버 응답 없음. fallback 처리 시도");
         // 필요한 fallback 예시: 새로고침 또는 진행상황 요청 등
-        location.reload();
+        alert("서버와의 연결이 끊어졌습니다. 새로고침 해주세요.");
+        clearInterval(interval);
       }
     }, 5000);
 
