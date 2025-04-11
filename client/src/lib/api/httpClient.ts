@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
+import refreshAccessToken from "./refreshAccessToken";
 
 const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL
   ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/api`
@@ -12,46 +13,6 @@ const httpClient = axios.create({
     "Content-Type": "application/json",
   },
 });
-
-// ✅ 리프레시 토큰을 이용한 액세스 토큰 갱신 함수
-export const refreshAccessToken = async () => {
-  const { refreshToken, setToken, logout } = useAuthStore.getState();
-
-  try {
-    if (!refreshToken) {
-      throw new Error("No refresh token found");
-    }
-
-    // ✅ Refresh Token을 Authorization 헤더에 담아서 전송
-    const response = await axios.post(
-      `${baseURL}/oauth2/refresh`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${refreshToken}`,
-          Accept: "application/json",
-        },
-      }
-    );
-
-    if (response.data?.accessToken) {
-      const newAccessToken = response.data.accessToken;
-      const newRefreshToken = response.data.refreshToken;
-      const expiresAt = Date.now() + response.data.expiresIn;
-
-      // ✅ Zustand 스토어 업데이트
-      setToken(newAccessToken, newRefreshToken, expiresAt);
-
-      return newAccessToken;
-    } else {
-      throw new Error("Invalid refresh response");
-    }
-  } catch (error) {
-    console.error("❌ 토큰 갱신 실패:", error);
-    logout();
-    return null;
-  }
-};
 
 // ✅ 요청 인터셉터: JWT를 요청 헤더에 추가
 httpClient.interceptors.request.use(
@@ -103,7 +64,7 @@ httpClient.interceptors.response.use(
       console.error("❌ API 오류:", error.response);
       showToast(
         error.response?.data?.message || "서버 오류가 발생했습니다.",
-        "error"
+        "warning"
       );
     }
 

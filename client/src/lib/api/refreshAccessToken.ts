@@ -1,4 +1,3 @@
-// src/lib/api/auth/refreshAccessToken.ts
 import axios from "axios";
 import { useAuthStore } from "@/store/authStore";
 
@@ -15,6 +14,7 @@ export default async function refreshAccessToken(): Promise<string | null> {
   const { refreshToken, setToken } = useAuthStore.getState();
 
   try {
+    console.log("🔄 토큰 갱신 요청", refreshToken);
     if (!refreshToken) throw new Error("리프레시 토큰 없음");
 
     const response = await axios.post(
@@ -27,6 +27,7 @@ export default async function refreshAccessToken(): Promise<string | null> {
       }
     );
 
+    console.log("✅ 토큰 갱신 성공", response.data);
     const {
       accessToken,
       refreshToken: newRefreshToken,

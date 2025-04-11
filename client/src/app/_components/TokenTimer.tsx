@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, memo } from "react";
 import { useAuthStore } from "@/store/authStore";
-import { refreshAccessToken } from "@/lib/api/httpClient";
+import refreshAccessToken from "@/lib/api/refreshAccessToken";
 
 const TokenTimer = memo(() => {
   const expiresAt = useAuthStore((state) => state.expiresAt);

@@ -8,41 +8,22 @@ import { useAuthStore } from "@/store/authStore";
 import { useProfileStore } from "@/store/profileStore";
 import Button from "./Button";
 import TokenTimer from "./TokenTimer";
-import httpClient from "@/lib/api/httpClient";
+import refreshAccessToken from "@/lib/api/refreshAccessToken";
 
 const LoginButton = () => {
   const pathname = usePathname();
-  const { isAuthenticated, logout, setToken } = useAuthStore();
+  const { isAuthenticated, logout } = useAuthStore();
   const { userProfile } = useProfileStore();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // 토큰 갱신 핸들러
   const handleRefreshToken = async () => {
-    try {
-      const refreshToken = localStorage.getItem("refresh_token");
-      const response = await httpClient.post("/oauth2/refresh", {
-        refreshToken,
-      });
-
-      const {
-        accessToken,
-        refreshToken: newRefresh,
-        expiresIn,
-      } = response.data;
-
-      if (accessToken) {
-        const expiresAt = Date.now() + expiresIn * 1000;
-        setToken(accessToken, newRefresh, expiresAt);
-
-        localStorage.setItem("access_token", accessToken);
-        localStorage.setItem("refresh_token", newRefresh);
-        localStorage.setItem("expires_in", expiresAt.toString());
-
-        alert("✅ 토큰이 갱신되었습니다.");
-      }
-    } catch (error) {
+    const accessToken = await refreshAccessToken();
+    if (accessToken) {
+      alert("✅ 토큰이 갱신되었습니다.");
+    } else {
       alert("❌ 토큰 갱신에 실패했습니다.");
-      console.error("토큰 갱신 실패:", error);
     }
   };
 
