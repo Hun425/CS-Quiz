@@ -41,6 +41,6 @@ export default async function refreshAccessToken(): Promise<string | null> {
     return accessToken;
   } catch (err) {
     console.error("❌ 토큰 갱신 실패", err);
-    return null; // ❌ 여기서 logout 제거
+    return null;
   }
 }

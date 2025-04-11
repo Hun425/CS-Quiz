@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSubmitQuiz } from "@/lib/api/quiz/useSubmitQuizResult";
 import { useQuizStore } from "@/store/quizStore";
@@ -30,8 +30,9 @@ export default function QuizPlayPage() {
   // ✅ 퀴즈 상태 초기화
   const { quizPlayData, error, isLoading } = useLoadQuizPlayData(quizId);
 
-  //라우팅 이동 전 제거
-  useBeforeRouteLeave(true, () => {
+  // 라우팅 이동 전 제거
+  const [shouldBlock, setShouldBlock] = useState(true); // 퀴즈 제출 후에는 false로 변경
+  useBeforeRouteLeave(shouldBlock, () => {
     resetQuiz(true); // 세션까지 제거
   });
 
@@ -98,6 +99,8 @@ export default function QuizPlayPage() {
       // 세션 제거
       resetQuiz(true);
       // 퀴즈 결과 페이지로 이동
+      alert("문제가 제출되었습니다.");
+      setShouldBlock(false); // 제출 후 라우팅 막기 비활성화
       router.push(`/quizzes/${quizId}/results?attemptId=${attemptId}`);
     } catch {
       alert("퀴즈 제출 중 오류가 발생했습니다.");
