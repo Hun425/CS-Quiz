@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import Tag from "@/app/quizzes/_components/Tag";
 import "@/styles/globals.css";
-import { TagResponse } from "@/lib/types/api";
+import { TagResponse } from "@/lib/types/tag";
 
 const StoryTag = ({
   id = 1,
@@ -22,7 +22,7 @@ const StoryTag = ({
 }) => {
   const tag: TagResponse = { id, name, quizCount, description, synonyms };
 
-  return <Tag tag={tag} selected={selected} onClick={onClick} />;
+  return <Tag tag={tag} isSelected={selected} onClick={onClick} />;
 };
 
 const meta: Meta<typeof StoryTag> = {
@@ -132,7 +132,7 @@ export const MultipleTags: Story = {
           synonyms: ["ML"],
         },
       ].map((tag) => (
-        <Tag key={tag.id} tag={tag} selected={tag.id === 6} />
+        <Tag key={tag.id} tag={tag} isSelected={tag.id === 6} />
       ))}
     </div>
   ),

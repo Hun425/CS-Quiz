@@ -68,7 +68,7 @@ const DailyQuizHeatmap: React.FC<DailyQuizHeatmapProps> = ({
       },
       {} as Record<number, { date: string }[]>
     );
-  }, []);
+  }, [endDate, startDate]);
 
   // 📆 최근 7일 활동 데이터 가져오기 (모바일 전용)
   const recentDays = useMemo(() => {

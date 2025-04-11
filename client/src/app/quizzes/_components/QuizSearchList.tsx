@@ -1,6 +1,5 @@
 import QuizCard from "./QuizCard";
 import { QuizSummaryResponse } from "@/lib/types/quiz";
-import { PageResponse } from "@/lib/types/common";
 
 interface Props {
   data?: PageResponse<QuizSummaryResponse>;

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import httpClient from "../httpClient";
-import { CommonApiResponse } from "@/lib/types/common";
+
 import { QuizStatisticsResponse } from "@/lib/types/quiz";
 import { useAuthStore } from "@/store/authStore";
 

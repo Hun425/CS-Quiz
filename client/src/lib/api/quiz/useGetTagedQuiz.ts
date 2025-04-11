@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import httpClient from "../httpClient";
-import { PageResponse } from "@/lib/types/common";
+
 import { QuizSummaryResponse } from "@/lib/types/quiz";
-import { CommonApiResponse } from "@/lib/types/common";
 
 /**
  * ✅ 특정 태그에 해당하는 퀴즈 목록 조회 훅 (페이징 지원)

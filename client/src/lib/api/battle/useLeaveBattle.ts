@@ -1,6 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
 import httpClient from "../httpClient";
-import { CommonApiResponse } from "@/lib/types/common";
 
 /**
  * ✅ 배틀룸 나가기 훅

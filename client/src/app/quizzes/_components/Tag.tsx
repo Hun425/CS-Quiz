@@ -49,6 +49,7 @@ const quizTypeLabels: Record<QuizType, string> = {
   [QuizType.TAG_BASED]: "태그 기반",
   [QuizType.TOPIC_BASED]: "주제 기반",
   [QuizType.CUSTOM]: "커스텀",
+  [QuizType.BATTLE]: "배틀",
 };
 
 // ✅ 난이도 한글 라벨 매핑
@@ -75,6 +76,7 @@ const getQuizTypeColor = (quizType: QuizType) => {
     [QuizType.TAG_BASED]: "bg-purple-300 text-gray-800",
     [QuizType.TOPIC_BASED]: "bg-indigo-300 text-gray-800",
     [QuizType.CUSTOM]: "bg-gray-300 text-gray-800",
+    [QuizType.BATTLE]: "bg-red-300 text-gray-800",
   };
   return quizTypeMap[quizType] || "bg-gray-200 text-gray-800";
 };

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 // import { tagApi } from "@/lib/api/tagApi";
-import { TagResponse } from "@/lib/types/api";
+import { TagResponse } from "@/lib/types/tag";
 
 interface TagSelectorProps {
   selectedTagIds: number[];
@@ -19,9 +19,9 @@ const TagSelector: React.FC<TagSelectorProps> = ({
   maxTags = 5,
   required = false,
 }) => {
-  const [allTags, setAllTags] = useState<TagResponse[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [allTags] = useState<TagResponse[]>([]);
+  const [loading] = useState<boolean>(true);
+  const [error] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [filteredTags, setFilteredTags] = useState<TagResponse[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);

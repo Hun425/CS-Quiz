@@ -4,7 +4,6 @@ import {
   BattleRoomCreateRequest,
   BattleRoomResponse,
 } from "@/lib/types/battle";
-import { CommonApiResponse } from "@/lib/types/common";
 
 /**
  * ✅ 배틀룸 생성 훅

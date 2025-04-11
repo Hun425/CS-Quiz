@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import httpClient from "../httpClient";
-import { CommonApiResponse } from "@/lib/types/common";
+
 import { QuizSubmitRequest, QuizResultResponse } from "@/lib/types/quiz";
 
 /**

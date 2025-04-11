@@ -19,7 +19,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     } else {
       setIsAuthenticated(true);
     }
-  }, []);
+  }, [router]);
 
   if (isAuthenticated === null) {
     return <p>로딩 중...</p>;

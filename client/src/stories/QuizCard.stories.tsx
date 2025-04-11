@@ -1,17 +1,18 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import QuizCard from "@/app/quizzes/_components/QuizCard";
 import "@/styles/globals.css";
-import { QuizSummaryResponse } from "@/lib/types/api";
-import { TagResponse } from "@/lib/types/api";
-
-type DifficultyLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
-type QuizType = "DAILY" | "TAG_BASED" | "TOPIC_BASED" | "CUSTOM";
+import {
+  QuizSummaryResponse,
+  QuizDifficultyType,
+  QuizType,
+} from "@/lib/types/quiz";
+import { TagResponse } from "@/lib/types/tag";
 
 const StoryQuizCard = ({
   id = 1,
   title = "기본 퀴즈 카드",
-  difficultyLevel = "BEGINNER" as DifficultyLevel,
-  quizType = "DAILY" as QuizType,
+  difficultyLevel = QuizDifficultyType.BEGINNER,
+  quizType = QuizType.DAILY,
   questionCount = 10,
   attemptCount = 0,
   avgScore = 0.0,
@@ -20,7 +21,7 @@ const StoryQuizCard = ({
 }: {
   id?: number;
   title?: string;
-  difficultyLevel?: DifficultyLevel;
+  difficultyLevel?: QuizDifficultyType;
   quizType?: QuizType;
   questionCount?: number;
   attemptCount?: number;
@@ -85,8 +86,8 @@ type Story = StoryObj<typeof StoryQuizCard>;
 export const Default: Story = {
   args: {
     title: "기본 퀴즈 카드",
-    difficultyLevel: "BEGINNER",
-    quizType: "DAILY",
+    difficultyLevel: QuizDifficultyType.BEGINNER,
+    quizType: QuizType.DAILY,
     questionCount: 10,
     attemptCount: 0,
     avgScore: 0.0,
@@ -97,8 +98,8 @@ export const Default: Story = {
 export const Intermediate: Story = {
   args: {
     title: "중급 퀴즈",
-    difficultyLevel: "INTERMEDIATE",
-    quizType: "TAG_BASED",
+    difficultyLevel: QuizDifficultyType.INTERMEDIATE,
+    quizType: QuizType.TAG_BASED,
     questionCount: 15,
     attemptCount: 12,
     avgScore: 75.5,
@@ -109,8 +110,8 @@ export const Intermediate: Story = {
 export const Advanced: Story = {
   args: {
     title: "고급 퀴즈",
-    difficultyLevel: "ADVANCED",
-    quizType: "TOPIC_BASED",
+    difficultyLevel: QuizDifficultyType.ADVANCED,
+    quizType: QuizType.TOPIC_BASED,
     questionCount: 20,
     attemptCount: 5,
     avgScore: 62.8,
@@ -121,8 +122,8 @@ export const Advanced: Story = {
 export const CustomQuiz: Story = {
   args: {
     title: "커스텀 퀴즈",
-    difficultyLevel: "BEGINNER",
-    quizType: "CUSTOM",
+    difficultyLevel: QuizDifficultyType.BEGINNER,
+    quizType: QuizType.CUSTOM,
     questionCount: 5,
     attemptCount: 3,
     avgScore: 90.0,

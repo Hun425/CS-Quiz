@@ -1,7 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import httpClient from "../httpClient";
 import { BattleRoomResponse } from "@/lib/types/battle";
-import { CommonApiResponse } from "@/lib/types/common";
 
 /**
  * ✅ 배틀룸 준비 상태 토글 훅

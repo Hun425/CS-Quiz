@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { CommonApiResponse } from "@/lib/types/common";
+
 import { TagResponse } from "@/lib/types/tag";
 import httpClient from "../httpClient";
 

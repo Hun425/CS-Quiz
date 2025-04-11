@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CommonApiResponse } from "@/lib/types/common";
+
 import httpClient from "../httpClient";
 
 const deleteTag = async (tagId: number) => {

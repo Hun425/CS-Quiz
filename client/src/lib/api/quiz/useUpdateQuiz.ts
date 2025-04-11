@@ -1,6 +1,6 @@
 import httpClient from "../httpClient";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { QuizResponse, QuizCreateRequest } from "@/lib/types/quiz";
+import { QuizPlayResponse, QuizCreateRequest } from "@/lib/types/quiz";
 
 /**
  * ✅ 퀴즈 업데이트 API
@@ -17,10 +17,9 @@ export const useUpdateQuiz = () => {
       quizId: number;
       data: QuizCreateRequest;
     }) => {
-      const response = await httpClient.put<CommonApiResponse<QuizResponse>>(
-        `/quizzes/${quizId}`,
-        data
-      );
+      const response = await httpClient.put<
+        CommonApiResponse<QuizPlayResponse>
+      >(`/quizzes/${quizId}`, data);
       return response.data;
     },
     onSuccess: (_, { quizId }) => {

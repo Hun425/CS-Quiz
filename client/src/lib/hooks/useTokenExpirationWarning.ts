@@ -28,7 +28,7 @@ const useTokenExpirationWarning = () => {
     checkExpiration(); // 최초 진입 시 한 번 검사
     const interval = setInterval(checkExpiration, 1000 * 30);
     return () => clearInterval(interval);
-  }, [token, expiresAt]);
+  }, [token, expiresAt, isAuthenticated]);
 
   const handleRefreshToken = async () => {
     try {
