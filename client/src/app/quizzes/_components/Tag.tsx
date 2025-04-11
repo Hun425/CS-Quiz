@@ -45,11 +45,11 @@ const getTagColor = (name: string) => {
 
 // ✅ 퀴즈 유형 한글 라벨 매핑
 const quizTypeLabels: Record<QuizType, string> = {
+  [QuizType.REGULAR]: "일반 퀴즈",
   [QuizType.DAILY]: "데일리 퀴즈",
-  [QuizType.TAG_BASED]: "태그 기반",
-  [QuizType.TOPIC_BASED]: "주제 기반",
-  [QuizType.CUSTOM]: "커스텀",
-  [QuizType.BATTLE]: "배틀",
+  [QuizType.WEEKLY]: "위클리 퀴즈",
+  [QuizType.SPECIAL]: "스페셜 퀴즈",
+  [QuizType.BATTLE]: "배틀 퀴즈",
 };
 
 // ✅ 난이도 한글 라벨 매핑
@@ -72,10 +72,10 @@ const getDifficultyColor = (difficulty: QuizDifficultyType) => {
 // ✅ 퀴즈 유형 색상 조정 (차분한 톤으로 변경)
 const getQuizTypeColor = (quizType: QuizType) => {
   const quizTypeMap: Record<QuizType, string> = {
+    [QuizType.REGULAR]: "bg-gray-300 text-gray-800",
     [QuizType.DAILY]: "bg-sky-300 text-gray-800",
-    [QuizType.TAG_BASED]: "bg-purple-300 text-gray-800",
-    [QuizType.TOPIC_BASED]: "bg-indigo-300 text-gray-800",
-    [QuizType.CUSTOM]: "bg-gray-300 text-gray-800",
+    [QuizType.WEEKLY]: "bg-violet-300 text-gray-800",
+    [QuizType.SPECIAL]: "bg-indigo-300 text-gray-800",
     [QuizType.BATTLE]: "bg-red-300 text-gray-800",
   };
   return quizTypeMap[quizType] || "bg-gray-200 text-gray-800";

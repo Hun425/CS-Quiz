@@ -10,6 +10,7 @@ const getAllTags = async () => {
   const response = await httpClient.get<CommonApiResponse<TagResponse[]>>(
     `/tags`
   );
+  console.log("✅ 전체 태그 조회", response.data);
   return response.data;
 };
 

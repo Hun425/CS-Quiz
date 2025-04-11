@@ -23,6 +23,9 @@ const searchQuizzes = async (
 ): Promise<PageResponse<QuizSummaryResponse>> => {
   // ✅ Query Params 변환
   const params = new URLSearchParams();
+  console.log("🔍 퀴즈 검색 요청:", params.toString());
+
+  console.log("📌 현재 quizType", searchParams.quizType);
 
   if (searchParams.title) params.append("title", searchParams.title);
   if (searchParams.difficultyLevel)

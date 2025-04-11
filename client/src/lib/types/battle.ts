@@ -17,6 +17,7 @@ export enum BattleSocketEventKey {
   NEXT_QUESTION = "NEXT_QUESTION",
   RESULT = "RESULT",
   END = "END",
+  ERROR = "ERROR",
 }
 
 export interface BattleWebSocketEvents {
@@ -27,6 +28,7 @@ export interface BattleWebSocketEvents {
   [BattleSocketEventKey.NEXT_QUESTION]: BattleNextQuestionResponse;
   [BattleSocketEventKey.RESULT]: BattleAnswerResponse;
   [BattleSocketEventKey.END]: BattleEndResponse;
+  [BattleSocketEventKey.ERROR]: string;
 }
 
 /** ✅ 소켓으로 참가자 및 룸 상태 정보를 받을 때 사용하는 타입 */
@@ -78,6 +80,7 @@ export interface Participant {
  */
 export enum BattleStatus {
   WAITING = "WAITING", // 대기 중
+  READEY = "READY", // 준비 완료
   IN_PROGRESS = "IN_PROGRESS", // 진행 중
   FINISHED = "FINISHED", // 종료됨
 }
@@ -112,6 +115,7 @@ export interface BattleJoinResponse {
   maxParticipants: number; // 최대 참가자 수
   participants: Participant[]; // 현재 배틀룸 참가자 목록
   joinedAt: string; // 참가 시간 (ISO 8601 형식)
+  creatorUserId: number; // 배틀룸 생성자 ID
 }
 
 /**

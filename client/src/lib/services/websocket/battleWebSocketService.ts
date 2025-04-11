@@ -134,6 +134,7 @@ class BattleWebSocketService {
    *  → /topic/battle/{roomId}/question      🔸 "NEXT", MoveTo NextQuestion() 호출시
    *   → /topic/battle/{roomId}/end          🔸 "END" 종료
    *  → /user/{sessionId}/queue/battle/result🔸 "RESULT" 최종결과, 세션아이디별
+   *  → /user/{sessionId}/queue/errors      🔸 "ERROR" 에러메시지
    */
 
   /** ✅ 배틀 이벤트 구독 */
@@ -173,6 +174,11 @@ class BattleWebSocketService {
     this.client.subscribe(`/user/queue/battle/result`, (msg) => {
       const data = JSON.parse(msg.body);
       this.triggerEvent(BattleSocketEventKey.RESULT, data);
+    });
+
+    this.client.subscribe(`/user/queue/errors`, (msg) => {
+      const data = msg.body;
+      this.triggerEvent(BattleSocketEventKey.ERROR, data);
     });
   }
 

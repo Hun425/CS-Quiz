@@ -27,11 +27,11 @@ const DIFFICULTY_LABEL: Record<QuizDifficultyType, string> = {
   ADVANCED: "고급",
 };
 const QUIZ_TYPE_LABEL: Record<QuizType, string> = {
+  REGULAR: "일반 퀴즈",
   DAILY: "데일리 퀴즈",
-  TAG_BASED: "태그 기반 퀴즈",
-  TOPIC_BASED: "주제 기반 퀴즈",
+  WEEKLY: "위클리 퀴즈",
+  SPECIAL: "스페셜 퀴즈",
   BATTLE: "배틀 퀴즈",
-  CUSTOM: "커스텀 퀴즈",
 };
 const QuizCreateForm = ({ initialTags }: { initialTags: TagResponse[] }) => {
   const [quiz, setQuiz] = useState<QuizCreateRequest>(initialQuiz);

@@ -56,7 +56,7 @@ const meta: Meta<typeof StoryQuizCard> = {
     },
     quizType: {
       control: "select",
-      options: ["DAILY", "TAG_BASED", "TOPIC_BASED", "CUSTOM"],
+      options: ["REGULAR", "DAILY", "WEEKLY", "SPECIAL", "BATTLE"],
       description: "퀴즈 유형을 선택하세요.",
     },
     questionCount: {
@@ -99,7 +99,7 @@ export const Intermediate: Story = {
   args: {
     title: "중급 퀴즈",
     difficultyLevel: QuizDifficultyType.INTERMEDIATE,
-    quizType: QuizType.TAG_BASED,
+    quizType: QuizType.REGULAR,
     questionCount: 15,
     attemptCount: 12,
     avgScore: 75.5,
@@ -111,7 +111,7 @@ export const Advanced: Story = {
   args: {
     title: "고급 퀴즈",
     difficultyLevel: QuizDifficultyType.ADVANCED,
-    quizType: QuizType.TOPIC_BASED,
+    quizType: QuizType.SPECIAL,
     questionCount: 20,
     attemptCount: 5,
     avgScore: 62.8,
@@ -123,7 +123,7 @@ export const CustomQuiz: Story = {
   args: {
     title: "커스텀 퀴즈",
     difficultyLevel: QuizDifficultyType.BEGINNER,
-    quizType: QuizType.CUSTOM,
+    quizType: QuizType.WEEKLY,
     questionCount: 5,
     attemptCount: 3,
     avgScore: 90.0,

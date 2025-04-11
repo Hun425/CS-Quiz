@@ -4,6 +4,7 @@ export interface TagResponse {
   description: string;
   quizCount: number;
   synonyms: string[];
+  parentId: number | null;
 }
 
 export interface TagCreateRequest {

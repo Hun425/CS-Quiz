@@ -6,11 +6,11 @@ import { TagResponse } from "./tag";
  * - 퀴즈의 분류를 정의하는 열거형(Enum)
  */
 export enum QuizType {
+  REGULAR = "REGULAR",
   DAILY = "DAILY",
-  TAG_BASED = "TAG_BASED",
-  TOPIC_BASED = "TOPIC_BASED",
+  WEEKLY = "WEEKLY",
+  SPECIAL = "SPECIAL",
   BATTLE = "BATTLE",
-  CUSTOM = "CUSTOM",
 }
 
 /**

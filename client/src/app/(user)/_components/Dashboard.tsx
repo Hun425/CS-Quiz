@@ -16,7 +16,7 @@ import { useUserRecentActivities } from "@/lib/api/user/useUserRecentActivities"
 import Skeleton from "@/app/_components/Skeleton";
 
 interface DashboardProps {
-  userId?: number; // 없으면 내 데이터로 간주
+  userId?: number;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ userId }) => {
@@ -29,6 +29,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userId }) => {
   const { data: topicPerformance, isLoading: isLoadingTopics } =
     useUserTopicPerformance(userId);
 
+  console.log(achievements);
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-6">
       {/* 🔹 퀴즈 통계 */}
@@ -155,7 +156,13 @@ const Dashboard: React.FC<DashboardProps> = ({ userId }) => {
           <ul className="grid grid-cols-2 gap-4">
             {achievements.map((ach) => (
               <li key={ach.id} className="flex items-center gap-3">
-                <Image src={ach.iconUrl} alt={ach.name} className="w-10 h-10" />
+                <Image
+                  src={ach.iconUrl}
+                  alt={ach.name}
+                  className="w-10 h-10"
+                  width={10}
+                  height={10}
+                />
                 <div>
                   <p className="font-semibold">{ach.name}</p>
                   <p className="text-sm text-muted">{ach.description}</p>

@@ -96,6 +96,14 @@ export const useBattleSocket = (roomId: number) => {
             setEndPayload(data);
           }
         );
+
+        battleWebSocketService.on(
+          BattleSocketEventKey.ERROR,
+          (data: BattleWebSocketEvents[BattleSocketEventKey.ERROR]) => {
+            console.error("❌ [ERROR] 에러 수신:", data);
+            alert(data);
+          }
+        );
       } catch (error) {
         console.error("❌ WebSocket 초기화 실패:", error);
       }

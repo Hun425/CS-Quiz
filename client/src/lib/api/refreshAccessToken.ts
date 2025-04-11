@@ -22,7 +22,7 @@ export default async function refreshAccessToken(): Promise<string | null> {
       {},
       {
         headers: {
-          Authorization: `Bearer ${refreshToken.replace(/\s/g, "")}`,
+          "X-Refresh-Token": `Bearer ${refreshToken}`,
         },
       }
     );

@@ -19,6 +19,14 @@ interface Props {
   }) => void;
 }
 
+const QUIZ_TYPE_LABEL: Record<QuizType, string> = {
+  REGULAR: "일반 퀴즈",
+  DAILY: "데일리 퀴즈",
+  WEEKLY: "위클리 퀴즈",
+  SPECIAL: "스페셜 퀴즈",
+  BATTLE: "배틀 퀴즈",
+};
+
 const QuizSearchHeader: React.FC<Props> = ({ onSearch }) => {
   // 🔹 검색 필터 상태 관리
   const [title, setTitle] = useState("");
@@ -107,11 +115,12 @@ const QuizSearchHeader: React.FC<Props> = ({ onSearch }) => {
           onChange={(e) => setSelectedCategory(e.target.value as QuizType)}
           className="w-full p-3 border border-border rounded-md bg-background text-foreground"
         >
-          <option value="">기출문제 모음</option>
-          <option value={QuizType.DAILY}>데일리</option>
-          <option value={QuizType.TOPIC_BASED}>주제 기반</option>
-          <option value={QuizType.TAG_BASED}>태그 기반</option>
-          <option value={QuizType.CUSTOM}>사용자 지정</option>
+          <option value="">퀴즈 유형 선택</option>
+          {Object.entries(QUIZ_TYPE_LABEL).map(([key, label]) => (
+            <option key={key} value={key}>
+              {label}
+            </option>
+          ))}
         </select>
       </div>
 
