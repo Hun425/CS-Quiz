@@ -15,7 +15,7 @@ export const useGetDailyQuizzes = () => {
     queryFn: async () => {
       const response = await httpClient.get<
         CommonApiResponse<QuizPlayResponse>
-      >("/quizzes/daily");
+      >("/daily-quiz/today");
       return response.data;
     },
     staleTime: 1000 * 60 * 30, // 30분 동안 캐싱된 데이터 유지

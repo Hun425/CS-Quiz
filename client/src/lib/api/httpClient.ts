@@ -30,7 +30,6 @@ httpClient.interceptors.response.use(
   (response) => {
     const showToast = useToastStore.getState().showToast;
 
-    // ✅ API 요청은 성공했지만, `success: false`이면 Toast 띄우기
     if (response.data?.success === false) {
       showToast(response.data.message || "API 요청 실패", "warning");
     }
@@ -42,30 +41,32 @@ httpClient.interceptors.response.use(
     const showToast = useToastStore.getState().showToast;
     const { logout } = useAuthStore.getState();
 
-    // ✅ 401 Unauthorized 에러 처리
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+
+    if (status === 401) {
       console.warn("🔴 인증 만료됨. 토큰 갱신 시도");
 
       const newAccessToken = await refreshAccessToken();
       if (newAccessToken) {
-        // ✅ 새 토큰으로 기존 요청 재시도
         error.config.headers.Authorization = `Bearer ${newAccessToken}`;
         return httpClient(error.config);
       }
 
       console.warn("🚨 토큰 갱신 실패. 로그아웃 처리");
       logout();
-
       if (typeof window !== "undefined") {
         window.location.href = "/login";
       }
     } else {
-      // ❌ 기타 API 오류 처리 (예: 500, 403, 404 등)
       console.error("❌ API 오류:", error.response);
-      showToast(
-        error.response?.data?.message || "서버 오류가 발생했습니다.",
-        "warning"
-      );
+
+      const message =
+        error.response?.data?.message || "서버 오류가 발생했습니다.";
+
+      const toastType =
+        status >= 500 ? "error" : status >= 400 ? "warning" : "info"; // fallback
+
+      showToast(message, toastType);
     }
 
     return Promise.reject(error);

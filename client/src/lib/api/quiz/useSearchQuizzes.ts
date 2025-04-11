@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import httpClient from "@/lib/api/httpClient";
 import { QuizSummaryResponse } from "@/lib/types/quiz";
+import httpClient from "@/lib/api/httpClient";
 
 interface SearchParams {
   title?: string;
