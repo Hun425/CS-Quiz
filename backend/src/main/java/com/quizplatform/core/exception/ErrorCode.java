@@ -29,6 +29,7 @@ public enum ErrorCode {
     INVALID_REVIEW_RATING(HttpStatus.BAD_REQUEST, "R003", "잘못된 별점입니다."),
     INVALID_REVIEW_CONTENT(HttpStatus.BAD_REQUEST, "R004", "잘못된 리뷰 내용입니다."),
 
+
     // Battle Related Errors
     BATTLE_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "B001", "배틀룸을 찾을 수 없습니다."),
     BATTLE_ROOM_FULL(HttpStatus.CONFLICT, "B002", "배틀룸이 가득 찼습니다."),
@@ -36,6 +37,7 @@ public enum ErrorCode {
     BATTLE_NOT_STARTED(HttpStatus.FORBIDDEN, "B004", "아직 시작되지 않은 배틀입니다."),
     BATTLE_NOT_IN_PROGRESS(HttpStatus.FORBIDDEN, "B005", "진행 중이 아닌 배틀입니다."),
     BATTLE_ALREADY_FINISHED(HttpStatus.CONFLICT, "B006", "이미 종료된 배틀입니다."),
+    INVALID_OPERATION(HttpStatus.CONFLICT,"B007","준비 상태 변경 오류"),
 
     // Level Related Errors
     INSUFFICIENT_LEVEL(HttpStatus.FORBIDDEN, "L001", "레벨이 부족합니다."),

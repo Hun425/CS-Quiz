@@ -104,7 +104,7 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
         return new PageImpl<>(content, pageable, total != null ? total : 0);
     }
 
-    // 태그 검색 처리를 위한 개선된 메서드
+    // 태그 검색 처리를 위한 개선된 메서드 (OR 조건으로 변경)
     private void handleTagSearch(BooleanBuilder builder, QQuiz quiz, List<Long> tagIds) {
         QTag tag = QTag.tag;
 
@@ -114,18 +114,21 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
             builder.and(quiz.tags.any().id.in(expandedIds));
             log.debug("단일 태그 검색: 태그 ID {} 및 하위 태그 검색", tagIds.get(0));
         } else {
-            // 복수 태그 검색: 모든 태그가 있는 퀴즈만 선택 (AND 조건)
+            // 복수 태그 검색: 태그 중 하나라도 있는 퀴즈 선택 (OR 조건으로 변경)
+            BooleanBuilder tagCondition = new BooleanBuilder();
+            
             for (Long tagId : tagIds) {
                 // 각 태그 ID와 하위 태그를 확장
                 Set<Long> expandedIds = expandTagId(tagId);
-                builder.and(quiz.id.in(
-                        JPAExpressions.select(quiz.id)
-                                .from(quiz)
-                                .join(quiz.tags, tag)
-                                .where(tag.id.in(expandedIds))
-                ));
-                log.debug("다중 태그 검색: 태그 ID {} 및 하위 태그 조건 추가", tagId);
+                
+                // OR 조건으로 추가
+                tagCondition.or(quiz.tags.any().id.in(expandedIds));
+                log.debug("다중 태그 검색(OR): 태그 ID {} 및 하위 태그 조건 추가", tagId);
             }
+            
+            // 최종 태그 조건을 쿼리에 AND로 추가
+            builder.and(tagCondition);
+            log.debug("다중 태그 검색: OR 조건으로 검색 (적어도 하나의 태그 포함)");
         }
     }
 

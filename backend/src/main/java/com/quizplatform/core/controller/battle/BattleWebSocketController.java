@@ -45,11 +45,36 @@ public class BattleWebSocketController {
         // 세션에 사용자 정보 저장
         headerAccessor.getSessionAttributes().put("userId", request.getUserId());
         headerAccessor.getSessionAttributes().put("roomId", request.getRoomId());
-
-        log.info("배틀 입장 요청: roomId={}, userId={}, sessionId={}", request.getRoomId(), request.getUserId(), sessionId);
+        
+        // 방 생성자 ID 확인 (프론트에서 전달)
+        Long creatorId = request.getCreatorUserId();
+        
+        log.info("배틀 입장 요청: roomId={}, userId={}, creatorId={}, sessionId={}", 
+                request.getRoomId(), request.getUserId(), creatorId, sessionId);
 
         try {
-            // 대결방 입장 처리
+            // 방 생성자인 경우 join 요청을 처리하지 않음 (서버에서 이미 등록됨)
+            if (creatorId != null && creatorId.equals(request.getUserId())) {
+                log.info("방 생성자는 이미 자동 등록되어 join 요청 무시: roomId={}, userId={}", 
+                        request.getRoomId(), request.getUserId());
+                
+                // 대신 현재 참가자 정보만 반환
+                BattleJoinResponse response = battleService.getCurrentBattleParticipants(request.getRoomId());
+                
+                // 세션에 참가자 정보 연결 (생성자 세션 유지)
+                battleService.linkSessionToParticipant(request.getRoomId(), request.getUserId(), sessionId);
+                
+                // 현재 참가자 정보 전송
+                messagingTemplate.convertAndSendToUser(
+                        sessionId,
+                        "/queue/battle/join",
+                        response
+                );
+                
+                return;
+            }
+            
+            // 일반 참가자 - 대결방 입장 처리
             BattleJoinResponse response = battleService.joinBattle(request, sessionId);
 
             // 대결방의 모든 참가자에게 새로운 참가자 알림
@@ -63,10 +88,34 @@ public class BattleWebSocketController {
 
             // 대결 시작 조건 확인
             if (battleService.isReadyToStart(request.getRoomId())) {
-                startBattle(request.getRoomId());
+                // 자동 시작 대신 5초 지연 후 시작하도록 수정
+                log.info("모든 참가자 준비 완료. 5초 후 배틀 시작: roomId={}", request.getRoomId());
+                
+                // 대기 상태 메시지 전송
+                messagingTemplate.convertAndSend(
+                        "/topic/battle/" + request.getRoomId() + "/status",
+                        new BattleRoomStatusChangeResponse(request.getRoomId(), BattleRoomStatus.READY)
+                );
+                
+                // 5초 후 시작
+                new Thread(() -> {
+                    try {
+                        Thread.sleep(5000);
+                        startBattle(request.getRoomId());
+                    } catch (Exception e) {
+                        log.error("지연 배틀 시작 처리 중 오류 발생: roomId={}", request.getRoomId(), e);
+                    }
+                }).start();
             }
         } catch (Exception e) {
             log.error("배틀 입장 처리 중 오류 발생: roomId={}, userId={}", request.getRoomId(), request.getUserId(), e);
+            
+            // 오류 메시지를 클라이언트에게 전송
+            messagingTemplate.convertAndSendToUser(
+                    sessionId,
+                    "/queue/errors",
+                    "배틀 입장 중 오류가 발생했습니다: " + e.getMessage()
+            );
         }
     }
 
@@ -182,13 +231,27 @@ public class BattleWebSocketController {
     /**
      * 대결 시작
      */
-    private void startBattle(Long roomId) {
+    private synchronized void startBattle(Long roomId) {
         log.info("배틀 시작: roomId={}", roomId);
-        gameSessionMap.put(roomId, UUID.randomUUID().toString());
+        
         try {
-            // 문제 인덱스 추적 초기화
+            // 시작 가능 여부 다시 한번 확인 (동시 요청 처리 대비)
+            if (!battleService.isReadyToStart(roomId)) {
+                log.info("배틀 시작 조건 미충족, 시작 취소: roomId={}", roomId);
+                return;
+            }
+            
+            // 이미 시작된 방인지 확인
+            if (gameSessionMap.containsKey(roomId)) {
+                log.info("이미 시작된 배틀입니다: roomId={}", roomId);
+                return;
+            }
+            
+            // 세션 생성 및 인덱스 초기화
+            gameSessionMap.put(roomId, UUID.randomUUID().toString());
             roomQuestionIndexMap.put(roomId, 0);
 
+            // 배틀 시작 처리
             BattleStartResponse response = battleService.startBattle(roomId);
 
             // 대결 시작 알림 전송
@@ -200,6 +263,16 @@ public class BattleWebSocketController {
             log.info("배틀 시작 알림 전송 완료: roomId={}, 총문제수={}", roomId, response.getTotalQuestions());
         } catch (Exception e) {
             log.error("배틀 시작 처리 중 오류 발생: roomId={}", roomId, e);
+            
+            // 오류 발생시 맵에서 삭제하여 재시작 가능하게 함
+            gameSessionMap.remove(roomId);
+            roomQuestionIndexMap.remove(roomId);
+            
+            // 오류 메시지 전달
+            messagingTemplate.convertAndSend(
+                    "/topic/battle/" + roomId + "/error",
+                    "배틀 시작 중 오류가 발생했습니다: " + e.getMessage()
+            );
         }
     }
 
@@ -306,7 +379,7 @@ public class BattleWebSocketController {
      * 클라이언트: /app/battle/ready로 메시지 전송
      */
     @MessageMapping("/battle/ready")
-    public void toggleReady(
+    public synchronized void toggleReady(
             BattleReadyRequest request,
             @Header("simpSessionId") String sessionId
     ) {
@@ -326,13 +399,37 @@ public class BattleWebSocketController {
             log.info("준비 상태 토글 처리 완료: roomId={}, userId={}, 참가자수={}",
                     request.getRoomId(), request.getUserId(), response.getParticipants().size());
 
-            // 대결 시작 조건 확인
+            // 대결 시작 조건 확인 (경쟁 상태 방지를 위해 synchronized 블록 내에서 처리)
             if (battleService.isReadyToStart(request.getRoomId())) {
-                startBattle(request.getRoomId());
+                // 자동 시작을 바로 하지 않고 5초 지연 후 시작하도록 수정
+                log.info("모든 참가자 준비 완료. 5초 후 배틀 시작: roomId={}", request.getRoomId());
+                
+                // 대기 상태 메시지 전송
+                messagingTemplate.convertAndSend(
+                        "/topic/battle/" + request.getRoomId() + "/status",
+                        new BattleRoomStatusChangeResponse(request.getRoomId(), BattleRoomStatus.READY)
+                );
+                
+                // 5초 후 시작
+                new Thread(() -> {
+                    try {
+                        Thread.sleep(5000);
+                        startBattle(request.getRoomId());
+                    } catch (Exception e) {
+                        log.error("지연 배틀 시작 처리 중 오류 발생: roomId={}", request.getRoomId(), e);
+                    }
+                }).start();
             }
         } catch (Exception e) {
             log.error("준비 상태 토글 처리 중 오류 발생: roomId={}, userId={}",
                     request.getRoomId(), request.getUserId(), e);
+            
+            // 오류 메시지를 클라이언트에게 전송
+            messagingTemplate.convertAndSendToUser(
+                    sessionId,
+                    "/queue/errors",
+                    "준비 상태 변경 중 오류가 발생했습니다: " + e.getMessage()
+            );
         }
     }
 }

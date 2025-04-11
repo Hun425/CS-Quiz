@@ -363,9 +363,15 @@ public class BattleService {
     /**
      * 대결 시작 준비 상태 확인
      */
-    public boolean isReadyToStart(Long roomId) {
+    @Transactional
+    public synchronized boolean isReadyToStart(Long roomId) {
         BattleRoom room = battleRoomRepository.findByIdWithDetails(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
+
+        // 이미 시작된 방이면 false 반환
+        if (room.getStatus() != BattleRoomStatus.WAITING) {
+            return false;
+        }
 
         return room.isReadyToStart();
     }
@@ -373,10 +379,16 @@ public class BattleService {
     /**
      * 대결 시작 처리
      */
-    public BattleStartResponse startBattle(Long roomId) {
+    @Transactional
+    public synchronized BattleStartResponse startBattle(Long roomId) {
         BattleRoom room = battleRoomRepository.findByIdWithQuizQuestions(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
+        // 추가 안전 장치: 방 상태 다시 확인
+        if (room.getStatus() != BattleRoomStatus.WAITING && room.getStatus() != BattleRoomStatus.READY) {
+            throw new BusinessException(ErrorCode.BATTLE_ALREADY_STARTED, "이미 시작된 배틀입니다.");
+        }
+        
         // 대결 시작 상태로 변경
         room.startBattle();
         battleRoomRepository.save(room);
@@ -439,7 +451,7 @@ public class BattleService {
 
 
     @Transactional  // 트랜잭션 추가하여 세션이 활성화된 상태에서 지연 로딩 처리
-    public boolean allParticipantsAnswered(Long roomId) {
+    public synchronized boolean allParticipantsAnswered(Long roomId) {
         BattleRoom room = battleRoomRepository.findByIdWithQuizQuestions(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
@@ -796,7 +808,7 @@ public class BattleService {
      * WebSocket을 통한 준비 상태 토글
      */
     @Transactional
-    public BattleReadyResponse toggleReadyState(BattleReadyRequest request, String sessionId) {
+    public synchronized BattleReadyResponse toggleReadyState(BattleReadyRequest request, String sessionId) {
         log.info("준비 상태 토글 요청: roomId={}, userId={}", request.getRoomId(), request.getUserId());
 
         try {
@@ -809,20 +821,37 @@ public class BattleService {
                     .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
             // 3. 참가자 조회
-            BattleParticipant participant = participantRepository.findByBattleRoomAndUser(room, user)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND));
+            BattleParticipant participant;
+            
+            // 참가자 존재 여부 확인
+            Optional<BattleParticipant> existingParticipant = participantRepository.findByBattleRoomAndUser(room, user);
+            
+            if (existingParticipant.isPresent()) {
+                // 이미 존재하는 참가자인 경우
+                participant = existingParticipant.get();
+                log.info("기존 참가자 준비 상태 토글: roomId={}, userId={}", request.getRoomId(), request.getUserId());
+            } else {
+                // 방장이 처음 toggleReady할 때는 발생하지 않아야 함 (프론트엔드 문제)
+                log.warn("참가자가 등록되지 않음. 대기방 생성자가 이미 서버에서 자동 등록됨: roomId={}, userId={}", 
+                        request.getRoomId(), request.getUserId());
+                throw new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND, 
+                        "참가자가 등록되지 않았습니다. 방에 다시 입장해주세요.");
+            }
 
-            // 4. 준비 상태 토글
+            // 4. 준비 상태 토글 전 유효성 검사
+            validateReadyToggle(participant);
+
+            // 5. 준비 상태 토글
             participant.toggleReady();
             participantRepository.save(participant);
 
-            // 5. Redis에 참가자 정보 저장 (세션 정보 연결)
+            // 6. Redis에 참가자 정보 저장 (세션 정보 연결)
             saveParticipantToRedis(participant, sessionId);
 
             log.info("준비 상태 토글 완료: roomId={}, userId={}, isReady={}",
                     request.getRoomId(), request.getUserId(), participant.isReady());
 
-            // 6. 응답 생성 - 참가자 정보 새로 조회하여 최신 상태 반영
+            // 7. 응답 생성 - 참가자 정보 새로 조회하여 최신 상태 반영
             List<BattleParticipant> updatedParticipants = participantRepository.findByBattleRoom(room);
             return createBattleReadyResponse(room, updatedParticipants);
         } catch (Exception e) {
@@ -831,7 +860,57 @@ public class BattleService {
             throw e;
         }
     }
+    
+    /**
+     * 준비 상태 토글 유효성 검사
+     */
+    private void validateReadyToggle(BattleParticipant participant) {
+        // 대기방 상태 확인
+        if (participant.getBattleRoom().getStatus() != BattleRoomStatus.WAITING) {
+            throw new BusinessException(ErrorCode.BATTLE_ALREADY_STARTED, 
+                    "대기 중인 방에서만 준비 상태를 변경할 수 있습니다.");
+        }
+        
+        // 활성 상태 참가자만 준비 가능
+        if (!participant.isActive()) {
+            throw new BusinessException(ErrorCode.INVALID_OPERATION, 
+                    "활성 상태의 참가자만 준비 상태를 변경할 수 있습니다.");
+        }
+    }
 
+    /**
+     * 현재 배틀룸 참가자 정보만 반환 (방장용)
+     */
+    public BattleJoinResponse getCurrentBattleParticipants(Long roomId) {
+        BattleRoom room = battleRoomRepository.findByIdWithDetails(roomId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
+                
+        // 방장 찾기 (첫 참가자)
+        BattleParticipant creator = room.getParticipants().stream()
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND, "방장을 찾을 수 없습니다."));
+                
+        return createBattleJoinResponse(room, creator);
+    }
+    
+    /**
+     * 세션 ID와 참가자 연결 (방장용)
+     */
+    public void linkSessionToParticipant(Long roomId, Long userId, String sessionId) {
+        BattleRoom room = battleRoomRepository.findById(roomId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
+                
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                
+        BattleParticipant participant = participantRepository.findByBattleRoomAndUser(room, user)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND));
+                
+        // Redis에 참가자 정보 저장
+        saveParticipantToRedis(participant, sessionId);
+        log.info("세션과 참가자 연결 완료: roomId={}, userId={}, sessionId={}", roomId, userId, sessionId);
+    }
+    
     /**
      * 준비 상태 변경 응답 생성
      */

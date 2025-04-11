@@ -62,7 +62,7 @@ public class OAuth2Controller {
 
     @Operation(summary = "토큰 갱신", description = "리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급받습니다.")
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refreshToken(@RequestHeader("Authorization") String refreshToken) {
+    public ResponseEntity<AuthResponse> refreshToken(@RequestHeader("X-Refresh-Token") String refreshToken) {
         log.info("리프레시 토큰 요청 수신: {}", refreshToken);
         
         // Bearer 접두사 제거
