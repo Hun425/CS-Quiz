@@ -33,9 +33,15 @@ const useTokenExpirationWarning = () => {
   const handleRefreshToken = async () => {
     try {
       const refreshToken = localStorage.getItem("refresh_token");
+      if (!refreshToken) {
+        console.warn("❌ refresh_token 없음, 갱신 불가");
+        return;
+      }
+
       const response = await httpClient.post("/oauth2/refresh", {
         refreshToken,
       });
+      console.log("🔁 토큰 갱신 응답", response.data);
 
       if (response.data?.accessToken) {
         setToken(

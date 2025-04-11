@@ -18,7 +18,7 @@ const SettingPage = () => {
 
   const handleSave = () => {
     mutate(
-      { username }, // ✅ profileImage 제거
+      { username },
       {
         onSuccess: () => setIsEditing(false),
       }

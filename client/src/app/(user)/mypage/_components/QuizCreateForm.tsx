@@ -8,9 +8,8 @@ import {
   QuizType,
 } from "@/lib/types/quiz";
 import Button from "@/app/_components/Button";
-import QuizList from "./QuizList";
-import TagSelect from "./TagSelect";
 import { TagResponse } from "@/lib/types/tag";
+import TagSelector from "./TagSelector";
 
 const initialQuiz: QuizCreateRequest = {
   title: "",
@@ -22,11 +21,19 @@ const initialQuiz: QuizCreateRequest = {
   questions: [],
 };
 
-const QuizCreateForm = ({
-  initialTags,
-}: {
-  initialTags: { id: number; name: string }[];
-}) => {
+const DIFFICULTY_LABEL: Record<QuizDifficultyType, string> = {
+  BEGINNER: "초급",
+  INTERMEDIATE: "중급",
+  ADVANCED: "고급",
+};
+const QUIZ_TYPE_LABEL: Record<QuizType, string> = {
+  DAILY: "데일리 퀴즈",
+  TAG_BASED: "태그 기반 퀴즈",
+  TOPIC_BASED: "주제 기반 퀴즈",
+  BATTLE: "배틀 퀴즈",
+  CUSTOM: "커스텀 퀴즈",
+};
+const QuizCreateForm = ({ initialTags }: { initialTags: TagResponse[] }) => {
   const [quiz, setQuiz] = useState<QuizCreateRequest>(initialQuiz);
   const { mutate: createQuiz, isPending } = useCreateQuiz();
 
@@ -38,85 +45,105 @@ const QuizCreateForm = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 border rounded p-6 mt-10"
+      className="space-y-6 bg-sub-background border border-border rounded-xl p-8 shadow-md"
     >
-      <h2 className="text-xl font-bold text-primary">퀴즈 생성하기</h2>
+      <h2 className="text-2xl font-bold text-primary mb-4">📝 퀴즈 생성하기</h2>
 
-      <input
-        type="text"
-        value={quiz.title}
-        onChange={(e) => setQuiz({ ...quiz, title: e.target.value })}
-        placeholder="퀴즈 제목"
-        aria-label="퀴즈 제목 입력"
-        className="w-full border p-2 rounded-md"
-      />
-
-      <textarea
-        value={quiz.description}
-        onChange={(e) => setQuiz({ ...quiz, description: e.target.value })}
-        placeholder="퀴즈 설명"
-        aria-label="퀴즈 설명 입력"
-        className="w-full border p-2 rounded-md"
-      />
-
-      <select
-        value={quiz.quizType}
-        onChange={(e) =>
-          setQuiz({
-            ...quiz,
-            quizType: e.target.value as QuizCreateRequest["quizType"],
-          })
-        }
-        aria-label="퀴즈 유형 선택"
-        className="w-full border p-2 rounded-md"
-      >
-        <option value="DAILY">데일리 퀴즈</option>
-        <option value="TAGGED">태그 퀴즈</option>
-      </select>
-
-      <select
-        value={quiz.difficultyLevel}
-        onChange={(e) =>
-          setQuiz({
-            ...quiz,
-            difficultyLevel: e.target
-              .value as QuizCreateRequest["difficultyLevel"],
-          })
-        }
-        aria-label="퀴즈 난이도 선택"
-        className="w-full border p-2 rounded-md"
-      >
-        <option value="BEGINNER">초급</option>
-        <option value="INTERMEDIATE">중급</option>
-        <option value="ADVANCED">고급</option>
-      </select>
-
-      <input
-        type="number"
-        value={quiz.timeLimit}
-        onChange={(e) =>
-          setQuiz({ ...quiz, timeLimit: Number(e.target.value) })
-        }
-        aria-label="제한 시간 (분)"
-        className="w-full border p-2 rounded-md"
-        placeholder="제한 시간 (분)"
-        min={0}
-      />
-
-      <TagSelect
-        selectedTagIds={quiz.tagIds}
-        onChange={(tagIds: TagResponse[]) => setQuiz({ ...quiz, tagIds })}
-        allTags={initialTags}
-      />
-
-      <div className="p-4 border rounded-md">
-        <p className="text-lg font-semibold mb-2">문제 목록 (미구현)</p>
-        <p className="text-sm text-muted-foreground">곧 구현될 예정입니다.</p>
+      <div className="space-y-2">
+        <label className="block text-sm text-muted-foreground">퀴즈 제목</label>
+        <input
+          type="text"
+          value={quiz.title}
+          onChange={(e) => setQuiz({ ...quiz, title: e.target.value })}
+          placeholder="예: 자료구조 기초 퀴즈"
+          className="w-full border border-border bg-background text-foreground p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+        />
       </div>
 
-      <Button type="submit" aria-label="퀴즈 생성하기" disabled={isPending}>
-        {isPending ? "생성 중..." : "퀴즈 생성하기"}
-      </Button>
+      <div className="space-y-2">
+        <label className="block text-sm text-muted-foreground">퀴즈 설명</label>
+        <textarea
+          value={quiz.description}
+          onChange={(e) => setQuiz({ ...quiz, description: e.target.value })}
+          placeholder="이 퀴즈에 대한 간단한 설명을 작성해주세요."
+          className="w-full border border-border bg-background text-foreground p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="block text-sm text-muted-foreground">
+            퀴즈 유형
+          </label>
+          <select
+            value={quiz.quizType}
+            onChange={(e) =>
+              setQuiz({
+                ...quiz,
+                quizType: e.target.value as QuizType,
+              })
+            }
+            className="w-full border border-border bg-background text-foreground p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            {Object.values(QuizType).map((type) => (
+              <option key={type} value={type}>
+                {QUIZ_TYPE_LABEL[type]}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-sm text-muted-foreground">난이도</label>
+          <select
+            value={quiz.difficultyLevel}
+            onChange={(e) =>
+              setQuiz({
+                ...quiz,
+                difficultyLevel: e.target.value as QuizDifficultyType,
+              })
+            }
+            className="w-full border border-border bg-background text-foreground p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            {Object.values(QuizDifficultyType).map((level) => (
+              <option key={level} value={level}>
+                {DIFFICULTY_LABEL[level]}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className="block text-sm text-muted-foreground">
+          제한 시간 (초)
+        </label>
+        <input
+          type="number"
+          value={quiz.timeLimit}
+          onChange={(e) =>
+            setQuiz({ ...quiz, timeLimit: Number(e.target.value) })
+          }
+          placeholder="예: 10"
+          min={0}
+          className="w-full border border-border bg-background text-foreground p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="block text-sm text-muted-foreground">태그 선택</label>
+        <TagSelector
+          allTags={initialTags}
+          selectedTagIds={quiz.tagIds}
+          onChange={(tagIds) => setQuiz({ ...quiz, tagIds })}
+        />
+      </div>
+
+      <div className="flex justify-end">
+        <Button type="submit" disabled={isPending}>
+          {isPending ? "생성 중..." : "퀴즈 생성하기"}
+        </Button>
+      </div>
     </form>
   );
 };
