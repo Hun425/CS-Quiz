@@ -21,6 +21,11 @@ export interface UserProfile {
   lastLogin: string; // 마지막 로그인 시간 (ISO 8601 형식)
 }
 
+export interface UserProfileUpdateRequest {
+  username?: string; // 사용자 닉네임
+  profileImage?: string | null; // 프로필 이미지 URL (없을 경우 null)
+}
+
 /**
  * @api /api/users/me/topic-performance
  * @api /api/users/{userId}/topic-performance

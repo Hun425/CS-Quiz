@@ -9,6 +9,7 @@ export enum QuizType {
   DAILY = "DAILY",
   TAG_BASED = "TAG_BASED",
   TOPIC_BASED = "TOPIC_BASED",
+  BATTLE = "BATTLE",
   CUSTOM = "CUSTOM",
 }
 
@@ -23,13 +24,13 @@ export enum QuizDifficultyType {
 }
 
 /**
- * ✅ 퀴즈 생성 유형 (QuizCreateType)
- * - 퀴즈 생성 시 사용되는 유형 구분
+ * ✅ 태그생성 유형 (TagCreateType)
  */
-export enum QuizCreateType {
-  TAG_BASED = "TAG_BASED",
-  TOPIC_BASED = "TOPIC_BASED",
-  CUSTOM = "CUSTOM",
+export interface TagCreateType {
+  name: string;
+  description: string;
+  parentId?: number;
+  synonyms?: string[];
 }
 
 /**
@@ -143,7 +144,7 @@ export interface QuizSummaryResponse {
 export interface QuizCreateRequest {
   title: string;
   description: string;
-  quizType: QuizCreateType;
+  quizType: QuizType;
   difficultyLevel: QuizDifficultyType;
   timeLimit: number;
   tagIds: number[];

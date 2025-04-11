@@ -44,7 +44,7 @@ const BattleRoomCard = ({ room }: { room: BattleRoomResponse }) => {
       : "outline";
 
   const isButtonDisabled =
-    room.status !== BattleStatus.WAITING ||
+    room.status === BattleStatus.FINISHED ||
     room.currentParticipants >= room.maxParticipants;
 
   const buttonText =

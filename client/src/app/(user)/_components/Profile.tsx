@@ -4,9 +4,17 @@ import Image from "next/image";
 import { format } from "date-fns";
 import { useGetMyProfile } from "@/lib/api/user/useGetMyProfile";
 import Button from "@/app/_components/Button";
+import { useParams } from "next/navigation";
 
 export default function Profile() {
-  const { data: userProfile, isLoading, error, refetch } = useGetMyProfile();
+  const params = useParams();
+  const userId = params?.userId ? Number(params.userId) : undefined;
+  const {
+    data: userProfile,
+    isLoading,
+    error,
+    refetch,
+  } = useGetMyProfile(userId);
 
   if (isLoading) {
     return <p className="text-center">프로필 정보를 불러오는 중...</p>;
@@ -66,6 +74,7 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
       {/* ✅ 총 포인트 */}
       <div className="mt-3 text-base font-semibold flex items-center justify-between">
         <div>

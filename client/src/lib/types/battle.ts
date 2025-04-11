@@ -46,7 +46,7 @@ export interface BattleParticipantsPayload {
  */
 export interface BattleRoomCreateRequest {
   quizId: number; // 배틀에서 사용할 퀴즈 ID
-  maxParticipants?: number; // 최대 참가자 수 (선택 사항)
+  maxParticipants: number; // 최대 참가자 수 (선택 사항)
 }
 
 /**
@@ -175,13 +175,15 @@ export interface BattleAnswerResponse {
  * - 배틀 중 각 참가자의 현재 진행 상태를 나타냄
  */
 export interface ParticipantProgress {
-  userId: number; // 참가자 ID
+  participantId: number; // 참가자 ID
   username: string; // 참가자 이름
   currentScore: number; // 현재 점수
   correctAnswers: number; // 맞춘 문제 개수
   totalAnswered: number; // 총 답변 개수
   hasAnsweredCurrent: boolean; // 현재 문제에 답변했는지 여부
   currentStreak: number; // 연속 정답 개수
+  correctRate: number; // 정답률 (0~100%)
+  averageAnswerTime: number; // 평균 답변 시간 (초 단위)
 }
 
 /**
@@ -189,12 +191,12 @@ export interface ParticipantProgress {
  * - 배틀 진행 중 참가자의 상태를 전달하는 응답
  */
 export interface BattleProgressResponse {
-  roomId?: number; // 배틀룸 ID (선택 사항)
+  roomId: number; // 배틀룸 ID
   currentQuestionIndex: number; // 현재 문제 순번
-  totalQuestions?: number; // 총 문제 개수 (선택 사항)
-  remainingTimeSeconds?: number; // 남은 시간 (초 단위)
+  totalQuestions: number; // 총 문제 개수
+  remainingTimeSeconds: number; // 남은 시간 (초 단위)
   participantProgress: { [userId: number]: ParticipantProgress }; // 참가자의 진행 상황
-  status?: "WAITING" | "IN_PROGRESS" | "FINISHED"; // 배틀 상태
+  status: "WAITING" | "IN_PROGRESS" | "FINISHED"; // 배틀 상태
 }
 
 /**

@@ -14,7 +14,7 @@ const QuizResultPage: React.FC = () => {
   const attemptId = searchParams.get("attemptId");
 
   useEffect(() => {
-    useQuizStore.getState().resetQuiz(); // ✅ 퀴즈 상태 초기화
+    useQuizStore.getState().resetQuiz(true); // ✅ 퀴즈 상태 초기화
 
     if (!attemptId) {
       alert("잘못된 접근입니다.");

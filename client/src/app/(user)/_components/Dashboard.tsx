@@ -15,14 +15,19 @@ import { useUserTopicPerformance } from "@/lib/api/user/useUserTopicPerformance"
 import { useUserRecentActivities } from "@/lib/api/user/useUserRecentActivities";
 import Skeleton from "@/app/_components/Skeleton";
 
-const Dashboard: React.FC = () => {
-  const { data: statistics, isLoading: isLoadingStats } = useUserStatistics();
+interface DashboardProps {
+  userId?: number; // 없으면 내 데이터로 간주
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ userId }) => {
+  const { data: statistics, isLoading: isLoadingStats } =
+    useUserStatistics(userId);
   const { data: activities, isLoading: isLoadingActivities } =
-    useUserRecentActivities();
+    useUserRecentActivities(userId);
   const { data: achievements, isLoading: isLoadingAchievements } =
-    useUserAchievements();
+    useUserAchievements(userId);
   const { data: topicPerformance, isLoading: isLoadingTopics } =
-    useUserTopicPerformance();
+    useUserTopicPerformance(userId);
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-6">

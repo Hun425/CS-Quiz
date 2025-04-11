@@ -3,37 +3,38 @@ import httpClient from "@/lib/api/httpClient";
 import { UserProfile } from "@/lib/types/user";
 import { useProfileStore } from "@/store/profileStore";
 import { useToastStore } from "@/store/toastStore";
-import { CommonApiResponse } from "@/lib/types/common"; // ✅ 공통 API 타입 사용
 
-// ✅ 내 프로필 조회 API
-const fetchMyProfile = async (): Promise<UserProfile> => {
-  console.log("내 프로필 조회");
+// ✅ 프로필 조회 API (내 정보 or 특정 사용자)
+const fetchUserProfile = async (userId?: number): Promise<UserProfile> => {
+  const endpoint = userId ? `/users/${userId}/profile` : "/users/me/profile";
+
   const response = await httpClient.get<CommonApiResponse<UserProfile>>(
-    "/users/me/profile"
+    endpoint
   );
-
-  return response.data.data; // ✅ success 여부는 인터셉터에서 처리되므로, data만 반환
+  return response.data.data;
 };
 
-// ✅ 내 프로필 조회 훅 (React Query)
-export const useGetMyProfile = () => {
+// ✅ 프로필 조회 훅 (userId가 없으면 "내 정보")
+export const useGetMyProfile = (userId?: number) => {
   const { showToast } = useToastStore.getState();
+  const isMe = !userId;
 
   return useQuery({
-    queryKey: ["myProfile"],
+    queryKey: ["userProfile", userId ?? "me"],
     queryFn: async () => {
-      // ✅ 스토어에서 기존 데이터가 있으면 반환
-      const storedUser = useProfileStore.getState().userProfile;
-      if (storedUser) return storedUser;
+      // 내 정보일 경우엔 store 캐시 우선 활용
+      if (isMe) {
+        const stored = useProfileStore.getState().userProfile;
+        if (stored) return stored;
+      }
 
-      // ✅ API 호출
-      const userProfile = await fetchMyProfile();
-      useProfileStore.getState().setUserProfile(userProfile);
+      const profile = await fetchUserProfile(userId);
+      if (isMe) useProfileStore.getState().setUserProfile(profile);
+
       showToast("프로필 조회 성공", "success");
-
-      return userProfile;
+      return profile;
     },
-    staleTime: 1000 * 60 * 10,
+    staleTime: isMe ? 1000 * 60 * 10 : 0, // 내 정보만 staleTime 적용
     refetchOnWindowFocus: true,
   });
 };

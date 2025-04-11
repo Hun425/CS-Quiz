@@ -10,9 +10,9 @@ export function genPageMetadata({ title, description, openGraph }: IMetadata) {
     openGraph: {
       ...base.openGraph,
       ...openGraph,
-      title: openGraph?.title || base.openGraph.title,
-      description: openGraph?.description || base.openGraph.description,
-      images: openGraph?.images || base.openGraph.images,
+      title: openGraph?.title || base.openGraph?.title,
+      description: openGraph?.description || base.openGraph?.description,
+      images: openGraph?.images || base.openGraph?.images,
     },
   };
 }

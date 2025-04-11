@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import httpClient from "../httpClient";
 import { BattleRoomResponse } from "@/lib/types/battle";
-import { CommonApiResponse } from "@/lib/types/common";
 
 /**
  * ✅ 활성 배틀룸 목록 조회 훅

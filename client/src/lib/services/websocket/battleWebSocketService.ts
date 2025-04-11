@@ -10,7 +10,7 @@ import {
 } from "@/lib/types/battle";
 
 type EventHandlerMap = {
-  [K in BattleSocketEventKey]?: (data: BattleWebSocketEvents[K]) => void;
+  [K in BattleSocketEventKey]: (data: BattleWebSocketEvents[K]) => void;
 };
 
 // WebSocket 기본 주소
@@ -125,16 +125,17 @@ class BattleWebSocketService {
       console.warn(`⚠️ '${event}' 이벤트 핸들러 없음`);
     }
   }
-  /**
-  * → /topic/battle/{roomId}/participants   🔸 "PARTICIPANTS"
-  *   → /topic/battle/{roomId}/start        🔸 "START"
-  *   → /topic/battle/{roomId}/status       🔸 "STATUS"
-  *   → /topic/battle/{roomId}/end          🔸 "END"
-  *  → /topic/battle/{roomId}/question      🔸 "NEXT" 또는 "QUESTION" 등으로 해석 가능
-  *  → /topic/battle/{roomId}/progress      🔸 "STATUS"로 같이 묶일 수도 있음
-  *  → /user/{sessionId}/queue/battle/result🔸 "ANSWER"
 
+  /** ✅ 배틀 관련 이벤트 구독 (서버 -> 클라이언트)
+   * → /topic/battle/{roomId}/participants   🔸 "PARTICIPANTS"
+   *   → /topic/battle/{roomId}/start        🔸 "START" 시작, 첫번쨰 문제 포함
+   *   → /topic/battle/{roomId}/status       🔸 "STATUS"
+   *  → /topic/battle/{roomId}/progress      🔸 "STATUS"로 묶일 수도 있음, 진행상황
+   *  → /topic/battle/{roomId}/question      🔸 "NEXT", MoveTo NextQuestion() 호출시
+   *   → /topic/battle/{roomId}/end          🔸 "END" 종료
+   *  → /user/{sessionId}/queue/battle/result🔸 "RESULT" 최종결과, 세션아이디별
    */
+
   /** ✅ 배틀 이벤트 구독 */
   private subscribeToBattleEvents(roomId: number) {
     if (!this.client) return;
@@ -149,14 +150,14 @@ class BattleWebSocketService {
       this.triggerEvent(BattleSocketEventKey.START, data);
     });
 
-    this.client.subscribe(`/topic/battle/${roomId}/progress`, (msg) => {
-      const data = JSON.parse(msg.body);
-      this.triggerEvent(BattleSocketEventKey.PROGRESS, data);
-    });
-
     this.client.subscribe(`/topic/battle/${roomId}/status`, (msg) => {
       const data = JSON.parse(msg.body);
       this.triggerEvent(BattleSocketEventKey.STATUS, data);
+    });
+
+    this.client.subscribe(`/topic/battle/${roomId}/progress`, (msg) => {
+      const data = JSON.parse(msg.body);
+      this.triggerEvent(BattleSocketEventKey.PROGRESS, data);
     });
 
     this.client.subscribe(`/topic/battle/${roomId}/question`, (msg) => {
@@ -164,14 +165,14 @@ class BattleWebSocketService {
       this.triggerEvent(BattleSocketEventKey.NEXT_QUESTION, data);
     });
 
-    this.client.subscribe(`/user/queue/battle/result`, (msg) => {
-      const data = JSON.parse(msg.body);
-      this.triggerEvent(BattleSocketEventKey.RESULT, data);
-    });
-
     this.client.subscribe(`/topic/battle/${roomId}/end`, (msg) => {
       const data = JSON.parse(msg.body);
       this.triggerEvent(BattleSocketEventKey.END, data);
+    });
+
+    this.client.subscribe(`/user/queue/battle/result`, (msg) => {
+      const data = JSON.parse(msg.body);
+      this.triggerEvent(BattleSocketEventKey.RESULT, data);
     });
   }
 
@@ -200,7 +201,7 @@ class BattleWebSocketService {
       body: JSON.stringify({ userId, roomId: this.roomId, isReady: false }),
     });
 
-    console.log("📨 배틀 참가 요청 전송");
+    console.log("📨 배틀 참가 요청 전송" + "참가 요청 유저ID : " + userId);
   }
 
   /** ✅ 서버에 준비 상태 전송 */
@@ -268,12 +269,17 @@ class BattleWebSocketService {
     console.log("📨 방 나가기 요청 전송");
   }
 
+  /** ✅ 외부에서 호출 가능한 재연결 시도 */
+  public retryConnection(roomId: number, userId: number) {
+    this.handleReconnect(roomId, userId);
+  }
+
   /** ✅ 이벤트 핸들러 등록 */
   on<K extends BattleSocketEventKey>(
     event: K,
-    handler: (data: BattleWebSocketEvents[K]) => void
+    handler: EventHandlerMap[K]
   ): void {
-    (this.eventHandlers as EventHandlerMap)[event] = handler;
+    this.eventHandlers[event] = handler;
   }
 
   /** ✅ 이벤트 핸들러 제거 */

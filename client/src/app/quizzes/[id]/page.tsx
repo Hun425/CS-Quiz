@@ -2,7 +2,7 @@
 
 import { useRouter, useParams } from "next/navigation";
 import { useGetQuizDetail } from "@/lib/api/quiz/useGetQuizDetail";
-// import { useGetQuizStatistics } from "@/lib/api/quiz/useGetQuizStatistics";
+
 import { useAuthStore } from "@/store/authStore";
 import Image from "next/image";
 import Tag from "../_components/Tag";
@@ -32,10 +32,6 @@ const QuizDetailPage: React.FC = () => {
   const quizId = useParams().id;
   const { isAuthenticated } = useAuthStore();
   const { isLoading, error, data: quiz } = useGetQuizDetail(Number(quizId));
-  // const { data: quizStatistics, error: statsError } = useGetQuizStatistics(
-  //   Number(quizId)
-  // );
-
   const quizStatistics = quiz?.statistics;
 
   const handleStartQuiz = () => {

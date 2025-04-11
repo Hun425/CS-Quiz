@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useBattleSocketStore } from "@/store/battleStore";
 import { useProfileStore } from "@/store/profileStore";
 import battleWebSocketService from "@/lib/services/websocket/battleWebSocketService";
@@ -8,13 +9,13 @@ import {
   BattleWebSocketEvents,
   BattleSocketEventKey,
 } from "@/lib/types/battle";
-
 /**
  * ✅ 배틀 WebSocket을 초기화하고 이벤트를 상태에 반영하는 훅
  * @param roomId - 현재 배틀 방 ID
  */
 export const useBattleSocket = (roomId: number) => {
   const userId = useProfileStore.getState().userProfile?.id;
+  const router = useRouter();
 
   const {
     setParticipantsPayload,
@@ -49,6 +50,10 @@ export const useBattleSocket = (roomId: number) => {
           (data: BattleWebSocketEvents[BattleSocketEventKey.START]) => {
             console.log("🚀 [START] 배틀 시작 수신:", data);
             setStartPayload(data);
+
+            setTimeout(() => {
+              router.push(`/battles/${roomId}/play`);
+            }, 1000); // 1초 후
           }
         );
 
@@ -107,6 +112,7 @@ export const useBattleSocket = (roomId: number) => {
   }, [
     roomId,
     userId,
+    router,
     setParticipantsPayload,
     setStartPayload,
     setStatus,

@@ -1,8 +1,9 @@
 import { QuizDifficultyType } from "./quiz";
 
 /**
- * ✅ 문제 유형 (QuestionType)
- * - 퀴즈 문제의 유형을 정의하는 열거형(Enum)
+ * ✅ 문제 유형 (QuestionType) : 사용자가 퀴즈를 풀 때 API에서 반환하는 문제 데이터에 포함됨
+ * - 퀴즈 문제의 유형을 정의하는 열거형(Enum)/Multiple Choice, True/False, Short Answer, Code Analysis, Diagram Based
+ *
  */
 export enum QuestionType {
   MULTIPLE_CHOICE = "MULTIPLE_CHOICE",

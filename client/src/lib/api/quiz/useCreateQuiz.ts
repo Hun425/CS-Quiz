@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import httpClient from "../httpClient";
-import { QuizCreateRequest, QuizResponse } from "@/lib/types/quiz";
+import { QuizCreateRequest, QuizPlayResponse } from "@/lib/types/quiz";
 
 /**
  * ✅ 퀴즈 생성 API
@@ -14,10 +14,9 @@ export const useCreateQuiz = () => {
 
   return useMutation({
     mutationFn: async (data: QuizCreateRequest) => {
-      const response = await httpClient.post<CommonApiResponse<QuizResponse>>(
-        "/quizzes",
-        data
-      );
+      const response = await httpClient.post<
+        CommonApiResponse<QuizPlayResponse>
+      >("/quizzes", data);
       return response.data;
     },
     onSuccess: () => {

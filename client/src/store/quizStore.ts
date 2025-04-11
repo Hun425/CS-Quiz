@@ -24,7 +24,7 @@ interface QuizStore {
   ) => void;
   setCurrentQuestionIndex: (index: number | ((prev: number) => number)) => void;
   setAnswer: (questionId: number, answer: string) => void;
-  resetQuiz: () => void;
+  resetQuiz: (clearSession?: boolean) => void;
   getElapsedTime: () => number;
 }
 
@@ -81,10 +81,12 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
       };
     }),
 
-  resetQuiz: () => {
+  resetQuiz: (clearSession = true) => {
     const { quizId, attemptId } = get();
-    if (quizId && attemptId) {
+
+    if (clearSession && quizId && attemptId) {
       const key = `quiz-${quizId}-${attemptId}`;
+      sessionStorage.removeItem("lastAttempt");
       sessionStorage.removeItem(key);
     }
 

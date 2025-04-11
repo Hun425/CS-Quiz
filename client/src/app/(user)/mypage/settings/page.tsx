@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useUpdateMyProfile } from "@/lib/api/user/useUpdateMyProfile";
+
 import { useProfileStore } from "@/store/profileStore";
 import Button from "@/app/_components/Button";
 import { Loader2, Pencil, Check, X } from "lucide-react";
 import Image from "next/image";
+import SocialAccountSection from "./../_components/SocialAccountSection";
 
 const SettingPage = () => {
   const { userProfile } = useProfileStore();
@@ -30,7 +32,7 @@ const SettingPage = () => {
   }, [userProfile]);
 
   return (
-    <div className="max-w-lg mx-auto p-6 space-y-6 bg-background rounded-lg shadow-md">
+    <div className="w-full mx-auto p-6 space-y-6 bg-background rounded-lg ">
       <h1 className="text-2xl font-bold text-primary">프로필 설정</h1>
 
       <div className="flex items-center space-x-4">
@@ -97,6 +99,9 @@ const SettingPage = () => {
           </Button>
         </div>
       )}
+      <section className="border-t border-border pt-6">
+        <SocialAccountSection />
+      </section>
     </div>
   );
 };

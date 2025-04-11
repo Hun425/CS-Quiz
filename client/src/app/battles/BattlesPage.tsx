@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useGetActiveBattleRooms } from "@/lib/api/battle/useGetActiveBattleRooms";
 import { useGetMyActiveBattleRoom } from "@/lib/api/battle/useGetMyActiveBattleRoom";
 import CreateBattleRoomModal from "./_components/CreateBattleRoomModal";
+import { BattleRoomResponse } from "@/lib/types/battle";
 import BattleRoomCard from "./_components/BattleRoomCard";
 import Button from "../_components/Button";
 
@@ -82,7 +83,7 @@ const BattlesPage: React.FC = () => {
           className="bg-background p-6 rounded-lg shadow-sm border border-card-border transition-all"
           aria-label="참여 중인 퀴즈 대결"
         >
-          <h2 className="text-xl font-bold border-b-2 border-primary pb-2">
+          <h2 className="text-xl font-bold border-b-2 border-primary pb-2 mb-2">
             🏆 참여 중인 대결
           </h2>
           {isMyBattleRoomLoading ? (
@@ -123,7 +124,7 @@ const BattlesPage: React.FC = () => {
             </p>
           ) : activeRoomsData?.data?.length ? (
             <ul className="flex flex-col gap-4 overflow-y-auto pr-1 h-full">
-              {activeRoomsData.data.map((room) => (
+              {activeRoomsData.data.map((room: BattleRoomResponse) => (
                 <li
                   key={room.id}
                   aria-label={`${room.quizTitle} 퀴즈 대결 카드`}
