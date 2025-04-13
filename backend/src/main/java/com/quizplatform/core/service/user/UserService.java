@@ -16,6 +16,7 @@ import com.quizplatform.core.repository.user.UserLevelHistoryRepository;
 import com.quizplatform.core.repository.user.UserLevelRepository;
 import com.quizplatform.core.service.common.EntityMapperService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
@@ -25,15 +26,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class UserService {
 
     private final UserRepository userRepository;
@@ -44,6 +43,14 @@ public class UserService {
     private final AchievementRepository achievementRepository;
     private final UserLevelHistoryRepository userLevelHistoryRepository;
     private final EntityMapperService entityMapperService;
+    
+    /**
+     * 사용자 ID로 사용자 조회
+     */
+    public User getUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다: " + userId));
+    }
 
     /**
      * 사용자 프로필 조회
@@ -58,7 +65,13 @@ public class UserService {
     /**
      * 사용자 통계 조회
      */
+    @Cacheable(value = "userStatistics", key = "#userId")
     public UserStatisticsDto getUserStatistics(Long userId) {
+        // 사용자 존재 확인
+        if (!userRepository.existsById(userId)) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다: " + userId);
+        }
+
         // 퀴즈 시도 통계를 계산하는 로직
         long totalQuizzesTaken = quizAttemptRepository.countByUserId(userId);
         long totalQuizzesCompleted = quizAttemptRepository.countByUserIdAndIsCompletedTrue(userId);
@@ -141,7 +154,7 @@ public class UserService {
                     achievementId,
                     achievementName,
                     null,
-                    formatDateTime(ZonedDateTime.from(earnedAt))
+                    formatDateTime(earnedAt)
             ));
         }
 
@@ -162,7 +175,7 @@ public class UserService {
                     null,
                     null,
                     newLevel,
-                    formatDateTime(ZonedDateTime.from(occurredAt))
+                    formatDateTime(occurredAt)
             ));
         }
 
@@ -176,9 +189,27 @@ public class UserService {
     /**
      * 업적 조회
      */
+    @Transactional // 읽기 전용 트랜잭션 해제
     public List<AchievementDto> getAchievements(Long userId) {
+        // 사용자 존재 확인
+        if (!userRepository.existsById(userId)) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다: " + userId);
+        }
+
+        // UserLevel 정보 조회 (없으면 새로 생성)
         UserLevel userLevel = userLevelRepository.findByUserId(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "사용자 레벨 정보를 찾을 수 없습니다: " + userId));
+                .orElseGet(() -> {
+                    // 사용자 조회
+                    User user = userRepository.findById(userId)
+                            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다: " + userId));
+                    
+                    // 로그 추가: 자동 UserLevel 생성
+                    log.info("사용자 {} (ID: {})의 UserLevel이 없어 자동 생성합니다.", user.getUsername(), userId);
+                    
+                    // UserLevel 생성 및 저장
+                    UserLevel newLevel = new UserLevel(user);
+                    return userLevelRepository.save(newLevel);
+                });
 
         // 사용자가 획득한 업적 목록
         Set<Achievement> earnedAchievements = userLevel.getAchievements();
@@ -190,11 +221,10 @@ public class UserService {
             String earnedAt = null;
 
             if (isEarned) {
-                // 업적 획득 시간 조회
-                Object[] record = achievementRepository.findByUserIdAndAchievement(userId, achievement.name());
-                if (record != null) {
-                    LocalDateTime earnedAtTime = (LocalDateTime) record[4]; // 인덱스는 네이티브 쿼리 결과 순서에 맞춰 조정
-                    earnedAt = earnedAtTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                // 업적 획득 시간 조회 - 새로운 안전한 메서드 사용
+                Optional<LocalDateTime> earnedAtTime = achievementRepository.findEarnedAtByUserIdAndAchievement(userId, achievement.name());
+                if (earnedAtTime.isPresent()) {
+                    earnedAt = formatDateTime(earnedAtTime.get());
                 }
             }
 
@@ -223,14 +253,14 @@ public class UserService {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다: " + userId);
         }
 
-        // 태그별 성과 데이터 조회 (복잡한 조인 쿼리 필요)
+        // 태그별 성과 데이터 조회 (태그별 퀴즈 시도, 평균 점수, 정답률)
         List<Object[]> tagPerformances = tagRepository.getTagPerformanceByUserId(userId);
 
         List<TopicPerformanceDto> result = new ArrayList<>();
         for (Object[] row : tagPerformances) {
-            Long tagId = (Long) row[0];
+            Long tagId = ((Number) row[0]).longValue();
             String tagName = (String) row[1];
-            Long quizzesTaken = (Long) row[2];
+            Long quizzesTaken = ((Number) row[2]).longValue();
             Double averageScore = (Double) row[3];
             Double correctRate = (Double) row[4];
 
@@ -247,13 +277,17 @@ public class UserService {
             ));
         }
 
-        return result;
+        // 점수 순으로 정렬 (높은 것부터)
+        return result.stream()
+                .sorted(Comparator.comparing(TopicPerformanceDto::getAverageScore).reversed())
+                .collect(Collectors.toList());
     }
 
     /**
      * 프로필 정보 업데이트
      */
     @Transactional
+    @CacheEvict(value = {"userProfile", "userStatistics"}, key = "#userId")
     public UserProfileDto updateProfile(Long userId, UserProfileUpdateRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다: " + userId));
@@ -304,7 +338,22 @@ public class UserService {
                 int currentStreak = user.getBattleStats().getCurrentStreak();
                 return Math.min((currentStreak * 100) / targetStreak, 99); // 99%까지만 표시
 
-            // 다른 업적에 대한 진행도 계산 로직 추가...
+            case DAILY_QUIZ_MASTER:
+                // 연속 데일리 퀴즈 참여 일수 (7일 목표)
+                int dailyStreak = quizAttemptRepository.getDailyQuizStreakByUserId(userId);
+                return Math.min((dailyStreak * 100) / 7, 99); // 99%까지만 표시
+
+            case QUICK_SOLVER:
+                // 가장 빠른 풀이 시간 (초 단위, 30초 이내면 달성)
+                Integer fastestTime = quizAttemptRepository.getFastestTimeTakenByUserId(userId);
+                if (fastestTime == null) return 0;
+                // 30초가 목표, 더 빠를수록 높은 진행도
+                return fastestTime <= 30 ? 100 : Math.max(0, 100 - (fastestTime - 30) * 3);
+
+            case KNOWLEDGE_SEEKER:
+                // 다른 주제의 퀴즈 참여 수 (3개 목표)
+                int topicCount = tagRepository.countDistinctTagsAttemptedByUserId(userId);
+                return Math.min((topicCount * 100) / 3, 99); // 99%까지만 표시
 
             default:
                 return 0;

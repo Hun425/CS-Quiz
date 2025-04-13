@@ -6,7 +6,8 @@ import lombok.Getter;
 public enum AuthProvider {
     GOOGLE("GOOGLE"),
     GITHUB("GITHUB"),
-    KAKAO("KAKAO");
+    KAKAO("KAKAO"),
+    TEST("TEST");  // 테스트용 인증 제공자 추가
 
     private final String providerName;
 

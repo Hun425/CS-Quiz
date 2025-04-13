@@ -72,13 +72,33 @@ public class JwtTokenProvider {
     }
 
     public String getUserIdFromToken(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        try {
+            log.debug("토큰에서 사용자 ID 추출: {}", token);
+            
+            // Bearer 접두사 제거
+            if (token.startsWith("Bearer ")) {
+                token = token.substring(7);
+            }
+            
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
 
-        return claims.getSubject();
+            String userId = claims.getSubject();
+            log.debug("추출된 사용자 ID: {}", userId);
+            return userId;
+        } catch (ExpiredJwtException e) {
+            log.error("만료된 토큰: {}", e.getMessage());
+            throw new TokenExpiredException("토큰이 만료되었습니다.");
+        } catch (JwtException e) {
+            log.error("JWT 토큰 파싱 오류: {}", e.getMessage());
+            throw new InvalidTokenException("유효하지 않은 JWT 토큰입니다.");
+        } catch (Exception e) {
+            log.error("토큰에서, ID 추출 중 오류 발생: {}", e.getMessage());
+            throw new InvalidTokenException("토큰 처리 중 오류가 발생했습니다.");
+        }
     }
 
 
@@ -157,21 +177,36 @@ public class JwtTokenProvider {
 
     public boolean validateToken(String token) {
         try {
+            if (token == null || token.trim().isEmpty()) {
+                log.error("토큰이 비어있거나 null입니다.");
+                return false;
+            }
+            
+            log.debug("토큰 검증: {}", token.substring(0, Math.min(20, token.length())) + "...");
+            
+            // Bearer 접두사 제거
+            if (token.startsWith("Bearer ")) {
+                token = token.substring(7);
+            }
+            
             Jwts.parserBuilder()
                     .setSigningKey(key)
                     .build()
                     .parseClaimsJws(token);
+            log.debug("토큰이 유효합니다");
             return true;
         } catch (SecurityException ex) {
-            log.error("Invalid JWT signature");
+            log.error("잘못된 JWT 서명: {}", ex.getMessage());
         } catch (MalformedJwtException ex) {
-            log.error("Invalid JWT token");
+            log.error("잘못된 JWT 토큰: {}", ex.getMessage());
         } catch (ExpiredJwtException ex) {
-            log.error("Expired JWT token");
+            log.error("만료된 JWT 토큰: {}", ex.getMessage());
         } catch (UnsupportedJwtException ex) {
-            log.error("Unsupported JWT token");
+            log.error("지원되지 않는 JWT 토큰: {}", ex.getMessage());
         } catch (IllegalArgumentException ex) {
-            log.error("JWT claims string is empty");
+            log.error("JWT claims 문자열이 비어있습니다: {}", ex.getMessage());
+        } catch (Exception ex) {
+            log.error("JWT 토큰 검증 중 오류 발생: {}", ex.getMessage());
         }
         return false;
     }

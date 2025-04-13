@@ -30,16 +30,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         try {
             String jwt = getJwtFromRequest(request);
+            log.debug("JWT from request: {}", jwt != null ? jwt.substring(0, Math.min(20, jwt.length())) + "..." : null);
 
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
+                log.debug("JWT is valid, extracting user ID...");
                 String userId = tokenProvider.getUserIdFromToken(jwt);
+                log.debug("Extracted user ID: {}", userId);
+                
                 UserDetails userDetails = userDetailsService.loadUserByUsername(userId);
+                log.debug("Loaded UserDetails: {}", userDetails);
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                log.debug("Authentication set in SecurityContext: {}", authentication);
+            } else if (StringUtils.hasText(jwt)) {
+                log.warn("JWT found but invalid: {}", jwt.substring(0, Math.min(20, jwt.length())) + "...");
             }
         } catch (Exception ex) {
             log.error("Could not set user authentication in security context", ex);
@@ -50,8 +58,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private String getJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
+        log.debug("Authorization header: {}", bearerToken);
+        
+        if (StringUtils.hasText(bearerToken)) {
+            // 이중 Bearer 접두사 처리 (Bearer Bearer token -> token)
+            if (bearerToken.startsWith("Bearer Bearer ")) {
+                log.debug("Found double 'Bearer' prefix, removing both...");
+                return bearerToken.substring(14);
+            }
+            // 일반 Bearer 접두사 처리 (Bearer token -> token)
+            else if (bearerToken.startsWith("Bearer ")) {
+                log.debug("Found standard 'Bearer' prefix, removing it...");
+                return bearerToken.substring(7);
+            }
+            // 접두사 없는 경우 (token)
+            else {
+                log.debug("No 'Bearer' prefix found, using token as is");
+                return bearerToken;
+            }
         }
         return null;
     }

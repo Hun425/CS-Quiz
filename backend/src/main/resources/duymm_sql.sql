@@ -45,14 +45,14 @@ VALUES
 INSERT INTO public.quizzes (attempt_count, avg_score, created_at, description, difficulty_level, is_public, question_count, quiz_type, time_limit, title, updated_at, creator_id)
 VALUES
     -- Java 퀴즈
-    (0, 0.0, NOW(), 'Java 기초 개념과 문법에 대한 기업 면접용 퀴즈입니다. 객체지향 프로그래밍의 기본과 Java 기초 문법을 다룹니다.', 'BEGINNER', true, 10, 'TAG_BASED', 600, 'Java 면접 기초 퀴즈', NOW(), (SELECT id FROM public.users WHERE username = 'JavaQuizAdmin')),
-    (0, 0.0, NOW(), 'Java 중급 개념에 대한 기업 면접용 퀴즈입니다. Collections, Exception handling, 제네릭 등을 다룹니다.', 'INTERMEDIATE', true, 10, 'TAG_BASED', 900, 'Java 면접 중급 퀴즈', NOW(), (SELECT id FROM public.users WHERE username = 'JavaQuizAdmin')),
-    (0, 0.0, NOW(), 'Java 고급 개념에 대한 기업 면접용 퀴즈입니다. 멀티쓰레딩, 동시성, JVM 내부 구조 등 심화 개념을 다룹니다.', 'ADVANCED', true, 10, 'TAG_BASED', 1200, 'Java 면접 고급 퀴즈', NOW(), (SELECT id FROM public.users WHERE username = 'JavaQuizAdmin')),
+    (0, 0.0, NOW(), 'Java 기초 개념과 문법에 대한 기업 면접용 퀴즈입니다. 객체지향 프로그래밍의 기본과 Java 기초 문법을 다룹니다.', 'BEGINNER', true, 10, 'REGULAR', 600, 'Java 면접 기초 퀴즈', NOW(), (SELECT id FROM public.users WHERE username = 'JavaQuizAdmin')),
+    (0, 0.0, NOW(), 'Java 중급 개념에 대한 기업 면접용 퀴즈입니다. Collections, Exception handling, 제네릭 등을 다룹니다.', 'INTERMEDIATE', true, 10, 'REGULAR', 900, 'Java 면접 중급 퀴즈', NOW(), (SELECT id FROM public.users WHERE username = 'JavaQuizAdmin')),
+    (0, 0.0, NOW(), 'Java 고급 개념에 대한 기업 면접용 퀴즈입니다. 멀티쓰레딩, 동시성, JVM 내부 구조 등 심화 개념을 다룹니다.', 'ADVANCED', true, 10, 'REGULAR', 1200, 'Java 면접 고급 퀴즈', NOW(), (SELECT id FROM public.users WHERE username = 'JavaQuizAdmin')),
 
     -- Spring 퀴즈
-    (0, 0.0, NOW(), 'Spring 프레임워크의 기초 개념에 대한 기업 면접용 퀴즈입니다. IoC, DI 등 Spring의 핵심 개념을 다룹니다.', 'BEGINNER', true, 10, 'TAG_BASED', 600, 'Spring 면접 기초 퀴즈', NOW(), (SELECT id FROM public.users WHERE username = 'JavaQuizAdmin')),
-    (0, 0.0, NOW(), 'Spring 프레임워크의 중급 개념에 대한 기업 면접용 퀴즈입니다. AOP, 트랜잭션 관리 등을 다룹니다.', 'INTERMEDIATE', true, 10, 'TAG_BASED', 900, 'Spring 면접 중급 퀴즈', NOW(), (SELECT id FROM public.users WHERE username = 'JavaQuizAdmin')),
-    (0, 0.0, NOW(), 'Spring 프레임워크의 고급 개념에 대한 기업 면접용 퀴즈입니다. Spring Security, 마이크로서비스 아키텍처 등 심화 개념을 다룹니다.', 'ADVANCED', true, 10, 'TAG_BASED', 1200, 'Spring 면접 고급 퀴즈', NOW(), (SELECT id FROM public.users WHERE username = 'JavaQuizAdmin'));
+    (0, 0.0, NOW(), 'Spring 프레임워크의 기초 개념에 대한 기업 면접용 퀴즈입니다. IoC, DI 등 Spring의 핵심 개념을 다룹니다.', 'BEGINNER', true, 10, 'REGULAR', 600, 'Spring 면접 기초 퀴즈', NOW(), (SELECT id FROM public.users WHERE username = 'JavaQuizAdmin')),
+    (0, 0.0, NOW(), 'Spring 프레임워크의 중급 개념에 대한 기업 면접용 퀴즈입니다. AOP, 트랜잭션 관리 등을 다룹니다.', 'INTERMEDIATE', true, 10, 'REGULAR', 900, 'Spring 면접 중급 퀴즈', NOW(), (SELECT id FROM public.users WHERE username = 'JavaQuizAdmin')),
+    (0, 0.0, NOW(), 'Spring 프레임워크의 고급 개념에 대한 기업 면접용 퀴즈입니다. Spring Security, 마이크로서비스 아키텍처 등 심화 개념을 다룹니다.', 'ADVANCED', true, 10, 'REGULAR', 1200, 'Spring 면접 고급 퀴즈', NOW(), (SELECT id FROM public.users WHERE username = 'JavaQuizAdmin'));
 
 -- 퀴즈-태그 연결
 INSERT INTO public.quiz_tags (quiz_id, tag_id)
@@ -621,7 +621,7 @@ VALUES
 -- 추가 퀴즈 시도 및, Java 원격 면접 퀴즈 생성
 INSERT INTO public.quizzes (attempt_count, avg_score, created_at, description, difficulty_level, is_public, question_count, quiz_type, time_limit, title, updated_at, creator_id)
 VALUES
-    (0, 0.0, NOW(), 'Java 원격 면접에서 자주 물어보는 문제들을 모았습니다. 기본적인 자바 기술뿐만 아니라 코드 공유 도구와 원격 협업 방식에 익숙해질 수 있는 문제들이 포함되어 있습니다.', 'INTERMEDIATE', true, 10, 'TAG_BASED', 1200, 'Java 원격 면접 대비 퀴즈', NOW(), (SELECT id FROM public.users WHERE username = 'JavaQuizAdmin'));
+    (0, 0.0, NOW(), 'Java 원격 면접에서 자주 물어보는 문제들을 모았습니다. 기본적인 자바 기술뿐만 아니라 코드 공유 도구와 원격 협업 방식에 익숙해질 수 있는 문제들이 포함되어 있습니다.', 'INTERMEDIATE', true, 10, 'REGULAR', 1200, 'Java 원격 면접 대비 퀴즈', NOW(), (SELECT id FROM public.users WHERE username = 'JavaQuizAdmin'));
 
 -- Java 원격 면접 퀴즈와 태그 연결
 INSERT INTO public.quiz_tags (quiz_id, tag_id)
@@ -694,7 +694,7 @@ VALUES
 -- 추가 데이터: Spring 애플리케이션 성능 최적화 퀴즈
 INSERT INTO public.quizzes (attempt_count, avg_score, created_at, description, difficulty_level, is_public, question_count, quiz_type, time_limit, title, updated_at, creator_id)
 VALUES
-    (0, 0.0, NOW(), 'Spring 애플리케이션의 성능 최적화 기법에 관한 퀴즈입니다. 실제 기업에서 자주 발생하는 성능 문제와 그 해결책에 대한 지식을 테스트합니다.', 'ADVANCED', true, 10, 'TAG_BASED', 1500, 'Spring 애플리케이션 성능 최적화 퀴즈', NOW(), (SELECT id FROM public.users WHERE username = 'JavaQuizAdmin'));
+    (0, 0.0, NOW(), 'Spring 애플리케이션의 성능 최적화 기법에 관한 퀴즈입니다. 실제 기업에서 자주 발생하는 성능 문제와 그 해결책에 대한 지식을 테스트합니다.', 'ADVANCED', true, 10, 'REGULAR', 1500, 'Spring 애플리케이션 성능 최적화 퀴즈', NOW(), (SELECT id FROM public.users WHERE username = 'JavaQuizAdmin'));
 
 -- Spring 애플리케이션 성능 최적화 퀴즈와 태그 연결
 INSERT INTO public.quiz_tags (quiz_id, tag_id)

@@ -46,6 +46,19 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
         """, nativeQuery = true)
     List<Object[]> getTagPerformanceByUserId(@Param("userId") Long userId);
 
+    /**
+     * 사용자가 시도한 서로 다른 태그의 개수를 반환
+     */
+    @Query(value = """
+        SELECT COUNT(DISTINCT t.id)
+        FROM tags t
+        JOIN quiz_tags qt ON t.id = qt.tag_id
+        JOIN quizzes q ON qt.quiz_id = q.id
+        JOIN quiz_attempts qa ON q.id = qa.quiz_id
+        WHERE qa.user_id = :userId
+        """, nativeQuery = true)
+    int countDistinctTagsAttemptedByUserId(@Param("userId") Long userId);
+
     // 추가 메소드
 
     /**
@@ -56,14 +69,20 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
     /**
      * 퀴즈 수가 많은 순으로 태그 조회
      */
-    @Query("SELECT t FROM Tag t LEFT JOIN t.quizzes q GROUP BY t ORDER BY COUNT(q) DESC")
-    List<Tag> findTopTagsByQuizCount(Pageable pageable);
+    @Query("SELECT t, COUNT(q) as quizCount FROM Tag t JOIN t.quizzes q GROUP BY t ORDER BY quizCount DESC")
+    List<Object[]> findTopTagsByQuizCount(Pageable pageable);
 
     /**
-     * 특정 태그들을 포함하는 퀴즈 수를 반환
+     * 인기 태그 조회 (퀴즈 개수 기준)
      */
-    @Query("SELECT COUNT(DISTINCT q) FROM Quiz q JOIN q.tags t WHERE t IN :tags")
-    int countQuizzesWithTags(@Param("tags") Set<Tag> tags);
+    @Query("SELECT t, COUNT(q) as quizCount FROM Tag t JOIN t.quizzes q GROUP BY t ORDER BY quizCount DESC")
+    List<Object[]> findTopTagsByQuizCount(int limit);
+
+    /**
+     * 태그별 퀴즈 개수 조회
+     */
+    @Query("SELECT COUNT(q) FROM Quiz q JOIN q.tags t WHERE t.id = :tagId")
+    int countQuizzesForTag(@Param("tagId") Long tagId);
 
     /**
      * 동의어로 태그 검색

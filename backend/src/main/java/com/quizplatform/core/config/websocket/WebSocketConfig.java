@@ -1,6 +1,5 @@
 package com.quizplatform.core.config.websocket;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -12,6 +11,12 @@ import org.springframework.web.socket.server.support.HttpSessionHandshakeInterce
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    private final StompChannelInterceptor stompChannelInterceptor;
+
+    public WebSocketConfig(StompChannelInterceptor stompChannelInterceptor) {
+        this.stompChannelInterceptor = stompChannelInterceptor;
+    }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
@@ -38,11 +43,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(stompChannelInterceptor());
-    }
-
-    @Bean
-    public StompChannelInterceptor stompChannelInterceptor() {
-        return new StompChannelInterceptor();
+        registration.interceptors(stompChannelInterceptor);
     }
 }

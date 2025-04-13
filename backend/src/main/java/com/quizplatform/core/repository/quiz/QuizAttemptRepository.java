@@ -66,5 +66,36 @@ public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, Long> 
 
     @Query("SELECT qa FROM QuizAttempt qa WHERE qa.user.id = :userId ORDER BY qa.createdAt DESC")
     List<QuizAttempt> findByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId, Pageable pageable);
-
+    
+    /**
+     * 데일리 퀴즈 연속 참여 일수 조회
+     */
+    @Query(value = """
+        WITH daily_participation AS (
+            SELECT DISTINCT DATE(created_at) as quiz_date
+            FROM quiz_attempts
+            WHERE user_id = :userId
+              AND quiz_type = 'DAILY'
+            ORDER BY quiz_date DESC
+        ),
+        date_diff AS (
+            SELECT quiz_date, 
+                   (quiz_date - LEAD(quiz_date) OVER (ORDER BY quiz_date DESC)) as day_diff
+            FROM daily_participation
+        )
+        SELECT COUNT(*) 
+        FROM (
+            SELECT quiz_date, day_diff,
+                   SUM(CASE WHEN day_diff != 1 THEN 1 ELSE 0 END) OVER (ORDER BY quiz_date DESC) as group_id
+            FROM date_diff
+        ) t
+        WHERE group_id = 0
+        """, nativeQuery = true)
+    int getDailyQuizStreakByUserId(@Param("userId") Long userId);
+    
+    /**
+     * 가장 빠른 퀴즈 완료 시간(초) 조회
+     */
+    @Query("SELECT MIN(qa.timeTaken) FROM QuizAttempt qa WHERE qa.user.id = :userId AND qa.isCompleted = true")
+    Integer getFastestTimeTakenByUserId(@Param("userId") Long userId);
 }

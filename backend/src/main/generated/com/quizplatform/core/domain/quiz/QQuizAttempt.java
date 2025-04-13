@@ -34,6 +34,8 @@ public class QQuizAttempt extends EntityPathBase<QuizAttempt> {
 
     public final QQuiz quiz;
 
+    public final EnumPath<QuizType> quizType = createEnum("quizType", QuizType.class);
+
     public final NumberPath<Integer> score = createNumber("score", Integer.class);
 
     public final DateTimePath<java.time.LocalDateTime> startTime = createDateTime("startTime", java.time.LocalDateTime.class);

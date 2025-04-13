@@ -18,9 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -37,16 +35,19 @@ public class TagService {
     @Cacheable(value = "tags", key = "'all'")
     public List<TagResponse> getAllTags() {
         List<Tag> tags = tagRepository.findAll();
+        
+        // 결과 태그 응답 리스트
+        List<TagResponse> responses = new ArrayList<>();
 
         // 세션이 열려있는 상태에서 지연 로딩된 컬렉션을 명시적으로 초기화
         for (Tag tag : tags) {
             Hibernate.initialize(tag.getSynonyms());
-            Hibernate.initialize(tag.getQuizzes());
+            // 퀴즈 개수는 별도의 쿼리로 조회
+            int quizCount = tagRepository.countQuizzesForTag(tag.getId());
+            responses.add(TagResponse.from(tag, quizCount));
         }
 
-        return tags.stream()
-                .map(TagResponse::from)
-                .collect(Collectors.toList());
+        return responses;
     }
 
     /**
@@ -64,7 +65,24 @@ public class TagService {
             tagsPage = tagRepository.findAll(pageable);
         }
 
-        Page<TagResponse> tagResponses = tagsPage.map(TagResponse::from);
+        // 태그 ID 목록 추출
+        List<Long> tagIds = tagsPage.getContent().stream()
+                .map(Tag::getId)
+                .collect(Collectors.toList());
+        
+        // 각 태그별 퀴즈 개수 조회
+        Map<Long, Integer> quizCountMap = new HashMap<>();
+        for (Long tagId : tagIds) {
+            quizCountMap.put(tagId, tagRepository.countQuizzesForTag(tagId));
+        }
+        
+        // DTO로 변환
+        Page<TagResponse> tagResponses = tagsPage.map(tag -> {
+            Hibernate.initialize(tag.getSynonyms());
+            int quizCount = quizCountMap.getOrDefault(tag.getId(), 0);
+            return TagResponse.from(tag, quizCount);
+        });
+        
         return PageResponse.of(tagResponses);
     }
 
@@ -79,9 +97,11 @@ public class TagService {
 
         // 세션이 열려있는 상태에서 지연 로딩된 컬렉션을 명시적으로 초기화
         Hibernate.initialize(tag.getSynonyms());
-        Hibernate.initialize(tag.getQuizzes());
+        
+        // 퀴즈 개수는 별도의 쿼리로 조회
+        int quizCount = tagRepository.countQuizzesForTag(tagId);
 
-        return TagResponse.from(tag);
+        return TagResponse.from(tag, quizCount);
     }
 
     /**
@@ -91,16 +111,19 @@ public class TagService {
     @Cacheable(value = "tags", key = "'roots'")
     public List<TagResponse> getRootTags() {
         List<Tag> rootTags = tagRepository.findAllRootTags();
+        
+        // 결과 태그 응답 리스트
+        List<TagResponse> responses = new ArrayList<>();
 
         // 세션이 열려있는 상태에서 지연 로딩된 컬렉션을 명시적으로 초기화
         for (Tag tag : rootTags) {
             Hibernate.initialize(tag.getSynonyms());
-            Hibernate.initialize(tag.getQuizzes());
+            // 퀴즈 개수는 별도의 쿼리로 조회
+            int quizCount = tagRepository.countQuizzesForTag(tag.getId());
+            responses.add(TagResponse.from(tag, quizCount));
         }
 
-        return rootTags.stream()
-                .map(TagResponse::from)
-                .collect(Collectors.toList());
+        return responses;
     }
 
     /**
@@ -109,19 +132,25 @@ public class TagService {
     @Transactional(readOnly = true)
     @Cacheable(value = "tags", key = "'popular:' + #limit")
     public List<TagResponse> getPopularTags(int limit) {
-        List<Tag> allTags = tagRepository.findAll();
-
-        // 세션이 열려있는 상태에서 지연 로딩된 컬렉션을 명시적으로 초기화
-        for (Tag tag : allTags) {
+        // 태그별 퀴즈 개수 조회
+        List<Object[]> tagCounts = tagRepository.findTopTagsByQuizCount(limit);
+        
+        // 결과 리스트
+        List<TagResponse> result = new ArrayList<>();
+        
+        // 퀴즈 개수를 기준으로 정렬된 태그 정보로 응답 생성
+        for (Object[] row : tagCounts) {
+            Tag tag = (Tag) row[0];
+            Long count = (Long) row[1];
+            
+            // 동의어 초기화
             Hibernate.initialize(tag.getSynonyms());
-            Hibernate.initialize(tag.getQuizzes());
+            
+            // 응답 생성 및 추가
+            result.add(TagResponse.from(tag, count.intValue()));
         }
-
-        return allTags.stream()
-                .sorted(Comparator.comparing(tag -> tag.getQuizzes().size(), Comparator.reverseOrder()))
-                .limit(limit)
-                .map(TagResponse::from)
-                .collect(Collectors.toList());
+        
+        return result;
     }
 
 
@@ -232,8 +261,17 @@ public class TagService {
         Tag parentTag = tagRepository.findById(parentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND, "부모 태그를 찾을 수 없습니다. ID: " + parentId));
 
-        return parentTag.getChildren().stream()
-                .map(TagResponse::from)
-                .collect(Collectors.toList());
+        List<TagResponse> responses = new ArrayList<>();
+        
+        for (Tag child : parentTag.getChildren()) {
+            // 각 자식 태그의 퀴즈 개수 조회
+            int quizCount = tagRepository.countQuizzesForTag(child.getId());
+            // 동의어 초기화
+            Hibernate.initialize(child.getSynonyms());
+            // 응답 생성
+            responses.add(TagResponse.from(child, quizCount));
+        }
+        
+        return responses;
     }
 }

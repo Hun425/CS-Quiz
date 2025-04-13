@@ -62,10 +62,17 @@ public class OAuth2Controller {
 
     @Operation(summary = "토큰 갱신", description = "리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급받습니다.")
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refreshToken(@RequestHeader("Authorization") String refreshToken) {
-
+    public ResponseEntity<AuthResponse> refreshToken(@RequestHeader("X-Refresh-Token") String refreshToken) {
+        log.info("리프레시 토큰 요청 수신: {}", refreshToken);
+        
+        // Bearer 접두사 제거
+        if (refreshToken.startsWith("Bearer ")) {
+            refreshToken = refreshToken.substring(7);
+        }
+        
         // 리프레시 토큰 검증 및 새 토큰 발급
         AuthResponse authResponse = authService.refreshToken(refreshToken);
+        log.info("새로운 액세스 토큰 발급 완료: {}", authResponse.getAccessToken());
         return ResponseEntity.ok(authResponse);
     }
 }

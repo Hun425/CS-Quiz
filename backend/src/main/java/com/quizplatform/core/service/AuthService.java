@@ -110,25 +110,39 @@ public class AuthService {
      */
     @Transactional
     public AuthResponse refreshToken(String refreshToken) {
+        log.info("리프레시 토큰 처리 시작: {}", refreshToken);
+        
+        // 토큰 유효성 검증
         if (!jwtTokenProvider.validateToken(refreshToken)) {
+            log.error("유효하지 않은 리프레시 토큰: {}", refreshToken);
             throw new OAuth2AuthenticationProcessingException("유효하지 않은 리프레시 토큰입니다.");
         }
 
-        String userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
-        User user = userRepository.findById(Long.parseLong(userId))
-                .orElseThrow(() -> new OAuth2AuthenticationProcessingException("사용자를 찾을 수 없습니다."));
+        try {
+            String userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
+            log.info("토큰에서 추출한 사용자 ID: {}", userId);
+            
+            User user = userRepository.findById(Long.parseLong(userId))
+                    .orElseThrow(() -> new OAuth2AuthenticationProcessingException("사용자를 찾을 수 없습니다."));
 
-        // 새로운 액세스 토큰 생성
-        String newAccessToken = jwtTokenProvider.generateAccessToken(createAuthentication(user));
+            log.info("사용자 조회 성공: {}", user.getUsername());
 
-        return AuthResponse.builder()
-                .accessToken(newAccessToken)
-                .refreshToken(refreshToken)
-                .email(user.getEmail())
-                .username(user.getUsername())
-                .tokenType("Bearer")
-                .expiresIn(jwtTokenProvider.getAccessTokenExpirationMs())
-                .build();
+            // 새로운 액세스 토큰 생성
+            String newAccessToken = jwtTokenProvider.generateAccessToken(createAuthentication(user));
+            log.info("새 액세스 토큰 생성 완료: {}", newAccessToken);
+
+            return AuthResponse.builder()
+                    .accessToken(newAccessToken)
+                    .refreshToken(refreshToken)
+                    .email(user.getEmail())
+                    .username(user.getUsername())
+                    .tokenType("Bearer")
+                    .expiresIn(jwtTokenProvider.getAccessTokenExpirationMs())
+                    .build();
+        } catch (Exception e) {
+            log.error("리프레시 토큰 처리 중 오류 발생: {}", e.getMessage(), e);
+            throw new OAuth2AuthenticationProcessingException("토큰 갱신 처리 중 오류가 발생했습니다: " + e.getMessage());
+        }
     }
 
     /**
@@ -266,7 +280,7 @@ public class AuthService {
                         "name", user.getUsername(),
                         "picture", user.getProfileImage()
                 ),
-                "email"  // nameAttributeKey
+                "sub"  // nameAttributeKey - ID를 기본 식별자로 사용
         );
 
         // OAuth2 인증 토큰 생성

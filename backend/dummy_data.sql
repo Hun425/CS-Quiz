@@ -186,7 +186,7 @@ WITH user_level_info AS (
                      END,
                  true,
                  10, -- 각 주제별 퀴즈는 10개 문제
-                 'TOPIC_BASED',
+                 'REGULAR',
                  30, -- 30분 제한시간
                  (SELECT id FROM admin_user),
                  floor(random() * 80 + 20), -- 20-100 시도 횟수
@@ -244,7 +244,7 @@ WITH user_level_info AS (
                      ELSE true                  -- 80%는 공개 퀴즈
                      END,
                  floor(random() * 5) + 3, -- 3-7개 문제
-                 'CUSTOM',
+                 'SPECIAL',
                  20, -- 20분 제한시간
                  (SELECT id FROM user_ids ORDER BY random() LIMIT 1), -- 랜덤 사용자
                  floor(random() * 50 + 5), -- 5-55 시도 횟수

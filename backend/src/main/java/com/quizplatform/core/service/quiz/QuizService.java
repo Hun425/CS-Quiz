@@ -276,6 +276,14 @@ public class QuizService {
         // 퀴즈 시도 ID 추가
         return quizResponse.withQuizAttemptId(quizAttempt.getId());
     }
+    
+    /**
+     * Quiz 엔티티를 QuizDetailResponse DTO로 변환합니다.
+     * DailyQuizController에서 사용하는 메서드입니다.
+     */
+    public QuizDetailResponse convertToDetailResponse(Quiz quiz) {
+        return entityMapperService.mapToQuizDetailResponse(quiz);
+    }
 
     // 내부 헬퍼 메서드들
     private Set<Tag> validateAndGetTags(List<Long> tagIds) {

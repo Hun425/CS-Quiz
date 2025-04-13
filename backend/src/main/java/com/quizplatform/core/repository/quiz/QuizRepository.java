@@ -2,6 +2,7 @@ package com.quizplatform.core.repository.quiz;
 
 import com.quizplatform.core.domain.quiz.DifficultyLevel;
 import com.quizplatform.core.domain.quiz.Quiz;
+import com.quizplatform.core.domain.quiz.QuizType;
 import com.quizplatform.core.domain.tag.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -83,4 +84,36 @@ public interface QuizRepository extends JpaRepository<Quiz, Long>, CustomQuizRep
             "WHERE :tag MEMBER OF q.tags " +
             "ORDER BY q.title ASC")
     Page<Quiz> findByTags(@Param("tag") Tag tag, Pageable pageable);
+    
+    // 데일리 퀴즈 서비스 추가 메서드
+    
+    /**
+     * 특정 유형의 퀴즈 중 유효기간이 특정 기간 내에 있는 퀴즈 조회
+     */
+    Optional<Quiz> findByQuizTypeAndValidUntilBetween(QuizType quizType, LocalDateTime start, LocalDateTime end);
+    
+    /**
+     * 특정 유형의 퀴즈 중 유효기간이 현재보다 이후인 퀴즈 목록 조회
+     */
+    List<Quiz> findByQuizTypeAndValidUntilAfter(QuizType quizType, LocalDateTime dateTime);
+    
+    /**
+     * 특정 유형의 퀴즈 중 공개된 퀴즈 목록 조회
+     */
+    List<Quiz> findByQuizTypeAndIsPublicTrue(QuizType quizType);
+    
+    /**
+     * 데일리 퀴즈로 선정 가능한 퀴즈 목록 조회
+     * (최근에 데일리 퀴즈로 사용되지 않은 공개 퀴즈)
+     */
+    @Query("SELECT q FROM Quiz q " +
+            "WHERE q.quizType = com.quizplatform.core.domain.quiz.QuizType.REGULAR " +
+            "AND q.isPublic = true " +
+            "AND q.id NOT IN (" +
+            "   SELECT dq.id FROM Quiz dq " + 
+            "   WHERE dq.quizType = com.quizplatform.core.domain.quiz.QuizType.DAILY " +
+            "   AND dq.createdAt > :since" +
+            ") " +
+            "ORDER BY q.createdAt DESC")
+    List<Quiz> findEligibleQuizzesForDaily(@Param("since") LocalDateTime since);
 }

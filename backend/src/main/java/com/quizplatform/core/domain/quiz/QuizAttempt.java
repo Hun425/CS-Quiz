@@ -48,6 +48,10 @@ public class QuizAttempt {
     @Column(name = "time_taken")
     private Integer timeTaken; // 초 단위
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "quiz_type")
+    private QuizType quizType = QuizType.REGULAR; // 기본값은 일반 퀴즈
+
     @OneToMany(mappedBy = "quizAttempt", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QuestionAttempt> questionAttempts = new ArrayList<>();
 
