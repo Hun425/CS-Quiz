@@ -80,7 +80,7 @@ export interface Participant {
  */
 export enum BattleStatus {
   WAITING = "WAITING", // 대기 중
-  READEY = "READY", // 준비 완료
+  READY = "READY", // 준비 완료
   IN_PROGRESS = "IN_PROGRESS", // 진행 중
   FINISHED = "FINISHED", // 종료됨
 }

@@ -12,7 +12,7 @@ export default function QuizPage() {
   const { data: fakeQuizzes, isLoading: quizzesLoading } = useFakeQuizzes();
 
   // ❗ 현재는 관리자 아님. 나중에 useCheckIsAdmin()으로 대체 예정
-  const isAdmin = false;
+  const isAdmin = true;
 
   if (tagsLoading || quizzesLoading) {
     return (

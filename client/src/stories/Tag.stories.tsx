@@ -20,7 +20,14 @@ const StoryTag = ({
   selected?: boolean;
   onClick?: () => void;
 }) => {
-  const tag: TagResponse = { id, name, quizCount, description, synonyms };
+  const tag: TagResponse = {
+    id,
+    name,
+    quizCount,
+    description,
+    synonyms,
+    parentId: 0,
+  };
 
   return <Tag tag={tag} isSelected={selected} onClick={onClick} />;
 };
@@ -102,6 +109,7 @@ export const MultipleTags: Story = {
           quizCount: 15,
           description: "파이썬 문제들",
           synonyms: ["Python"],
+          parentId: 0,
         },
         {
           id: 4,
@@ -109,6 +117,7 @@ export const MultipleTags: Story = {
           quizCount: 7,
           description: "SQL & NoSQL",
           synonyms: ["DB"],
+          parentId: 0,
         },
         {
           id: 5,
@@ -116,6 +125,7 @@ export const MultipleTags: Story = {
           quizCount: 9,
           description: "TCP/IP 및 프로토콜",
           synonyms: ["Network"],
+          parentId: 0,
         },
         {
           id: 6,
@@ -123,6 +133,7 @@ export const MultipleTags: Story = {
           quizCount: 5,
           description: "OS 개념 및 원리",
           synonyms: ["OS"],
+          parentId: 1, // 예: 자바스크립트의 하위로 설정
         },
         {
           id: 7,
@@ -130,6 +141,7 @@ export const MultipleTags: Story = {
           quizCount: 6,
           description: "ML 기초",
           synonyms: ["ML"],
+          parentId: 0,
         },
       ].map((tag) => (
         <Tag key={tag.id} tag={tag} isSelected={tag.id === 6} />

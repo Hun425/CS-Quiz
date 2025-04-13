@@ -1,5 +1,4 @@
-import { BattleRoomResponse } from "@/lib/types/battle";
-import { BattleStatus } from "@/lib/types/battle";
+import { BattleRoomResponse, BattleStatus } from "@/lib/types/battle";
 import Button from "@/app/_components/Button";
 import { useRouter } from "next/navigation";
 
@@ -21,6 +20,8 @@ const BattleRoomCard = ({ room }: { room: BattleRoomResponse }) => {
     switch (room.status) {
       case BattleStatus.WAITING:
         return "게임 대기 중";
+      case BattleStatus.READY:
+        return "준비 완료";
       case BattleStatus.IN_PROGRESS:
         return "게임 진행 중";
       case BattleStatus.FINISHED:
@@ -30,29 +31,33 @@ const BattleRoomCard = ({ room }: { room: BattleRoomResponse }) => {
     }
   };
 
-  const statusColor = {
+  const statusColor: Record<BattleStatus, string> = {
     [BattleStatus.WAITING]: "text-blue-500",
+    [BattleStatus.READY]: "text-indigo-500",
     [BattleStatus.IN_PROGRESS]: "text-green-600",
     [BattleStatus.FINISHED]: "text-gray-500",
   };
 
-  const buttonVariant =
-    room.status === BattleStatus.WAITING
-      ? "primary"
-      : room.status === BattleStatus.IN_PROGRESS
-      ? "secondary"
-      : "outline";
+  const buttonVariant: Record<
+    BattleStatus,
+    "primary" | "secondary" | "outline"
+  > = {
+    [BattleStatus.WAITING]: "primary",
+    [BattleStatus.READY]: "primary",
+    [BattleStatus.IN_PROGRESS]: "secondary",
+    [BattleStatus.FINISHED]: "outline",
+  };
+
+  const buttonText: Record<BattleStatus, string> = {
+    [BattleStatus.WAITING]: "참가하기",
+    [BattleStatus.READY]: "참가하기",
+    [BattleStatus.IN_PROGRESS]: "진행 중",
+    [BattleStatus.FINISHED]: "종료됨",
+  };
 
   const isButtonDisabled =
     room.status === BattleStatus.FINISHED ||
     room.currentParticipants >= room.maxParticipants;
-
-  const buttonText =
-    room.status === BattleStatus.WAITING
-      ? "참가하기"
-      : room.status === BattleStatus.IN_PROGRESS
-      ? "진행 중"
-      : "종료됨";
 
   return (
     <div className="w-full bg-background border border-border p-4 rounded-xl shadow-md flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-6">
@@ -86,12 +91,12 @@ const BattleRoomCard = ({ room }: { room: BattleRoomResponse }) => {
       {/* 오른쪽 버튼 */}
       <div className="self-end sm:self-auto">
         <Button
-          variant={buttonVariant}
+          variant={buttonVariant[room.status]}
           size="large"
           disabled={isButtonDisabled}
           onClick={handleJoinClick}
         >
-          {buttonText}
+          {buttonText[room.status]}
         </Button>
       </div>
     </div>
