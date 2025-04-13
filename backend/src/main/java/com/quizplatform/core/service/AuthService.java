@@ -280,7 +280,7 @@ public class AuthService {
                         "name", user.getUsername(),
                         "picture", user.getProfileImage()
                 ),
-                "email"  // nameAttributeKey
+                "sub"  // nameAttributeKey - ID를 기본 식별자로 사용
         );
 
         // OAuth2 인증 토큰 생성
