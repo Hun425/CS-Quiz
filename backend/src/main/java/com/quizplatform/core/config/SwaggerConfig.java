@@ -9,12 +9,28 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Swagger/OpenAPI 설정 클래스
+ * 
+ * <p>API 문서화를 위한 Swagger/OpenAPI 설정을 담당합니다.
+ * JWT 인증을 포함한 API 문서의 기본 정보 및 보안 설정을 제공합니다.</p>
+ * 
+ * @author 채기훈
+ * @since JDK 21 eclipse temurin 21.0.6
+ */
 @Configuration
 public class SwaggerConfig {
 
     @Value("${app.oauth2.authorized-redirect-uri}")
     private String redirectUri;
 
+    /**
+     * OpenAPI 설정 빈
+     * 
+     * <p>API 문서의 기본 정보, 보안 스키마, 사용법 설명 등을 정의합니다.</p>
+     * 
+     * @return 구성된 OpenAPI 객체
+     */
     @Bean
     public OpenAPI openAPI() {
         // 보안 스키마 이름 상수 정의

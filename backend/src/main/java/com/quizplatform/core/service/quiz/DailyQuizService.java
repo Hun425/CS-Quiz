@@ -21,7 +21,13 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 /**
- * 데일리 퀴즈 관리 서비스 - 개선된 버전
+ * 데일리 퀴즈 관리 서비스
+ * 
+ * <p>매일 자정에 새로운 데일리 퀴즈를 선택하고, 관리하는 기능을 담당합니다.
+ * 요일별 난이도 로테이션, 최근 출제된 퀴즈 제외, 퀴즈 적합도 계산 등의 로직을 구현합니다.</p>
+ * 
+ * @author 채기훈
+ * @since JDK 21 eclipse temurin 21.0.6
  */
 @Slf4j
 @Service
@@ -40,6 +46,8 @@ public class DailyQuizService {
 
     /**
      * 매일 자정에 새로운 데일리 퀴즈 선택
+     * 
+     * <p>스케줄링된 작업으로 매일 00:00에 실행되며, 새로운 데일리 퀴즈를 선택합니다.</p>
      */
     @Scheduled(cron = "0 0 0 * * ?") // 매일 00:00에 실행
     @Transactional
@@ -80,6 +88,11 @@ public class DailyQuizService {
     
     /**
      * 현재 데일리 퀴즈 조회 (오늘의 퀴즈)
+     * 
+     * <p>현재 활성화된 데일리 퀴즈를 반환합니다.</p>
+     * 
+     * @return 오늘의 데일리 퀴즈
+     * @throws BusinessException 데일리 퀴즈가 없는 경우
      */
     @Transactional(readOnly = true)
     public Quiz getCurrentDailyQuiz() {
@@ -93,6 +106,8 @@ public class DailyQuizService {
     
     /**
      * 기존 데일리 퀴즈 만료 처리
+     * 
+     * <p>현재 활성화된 모든 데일리 퀴즈의 유효기간을 현재 시간으로 설정하여 만료시킵니다.</p>
      */
     private void expireCurrentDailyQuizzes() {
         List<Quiz> activeDailyQuizzes = quizRepository.findByQuizTypeAndValidUntilAfter(
@@ -107,7 +122,11 @@ public class DailyQuizService {
     
     /**
      * 요일별 난이도 결정 로직
-     * 주간 난이도 밸런스를 맞추기 위한 로직
+     * 
+     * <p>주간 난이도 밸런스를 맞추기 위해 요일에 따라 난이도를 결정합니다.
+     * 월-화는 초급, 수-목-금은 중급, 토-일은 고급으로 설정됩니다.</p>
+     * 
+     * @return 오늘의 난이도
      */
     private DifficultyLevel determineTodaysDifficulty() {
         LocalDate today = LocalDate.now();
@@ -125,6 +144,12 @@ public class DailyQuizService {
     
     /**
      * 참여도, 평가, 난이도를 고려해 최적의 데일리 퀴즈 선택
+     * 
+     * <p>지정된 난이도에 맞는 퀴즈 중에서 조회수, 평균 점수, 시도 횟수 등을 고려하여
+     * 데일리 퀴즈로 가장 적합한 퀴즈를 선택합니다.</p>
+     * 
+     * @param targetDifficulty 목표 난이도
+     * @return 선택된 퀴즈, 적합한 퀴즈가 없는 경우 null
      */
     private Quiz selectBestQuizForDaily(DifficultyLevel targetDifficulty) {
         // 최근 14일간 사용된 퀴즈 ID 목록 조회
@@ -170,6 +195,13 @@ public class DailyQuizService {
     
     /**
      * 퀴즈 점수 계산 (데일리 퀴즈로서의 적합도)
+     * 
+     * <p>조회수, 평균 점수, 시도 횟수를 기반으로 데일리 퀴즈로서의 적합도를 계산합니다.</p>
+     * 
+     * @param viewCount 조회수
+     * @param avgScore 평균 점수
+     * @param attemptCount 시도 횟수
+     * @return 계산된 적합도 점수 (0.0 ~ 1.0)
      */
     private double calculateQuizScore(int viewCount, double avgScore, int attemptCount) {
         // 조회수가 많을수록 좋음 (인기도), 0.4의 가중치
@@ -186,6 +218,11 @@ public class DailyQuizService {
     
     /**
      * 백업용: 적합한 퀴즈가 없을 경우 랜덤 선택
+     * 
+     * <p>지정된 난이도에 맞는 퀴즈가 없는 경우 사용되는 백업 메서드로,
+     * 최근 7일간 사용되지 않은 퀴즈 중에서 랜덤하게 선택합니다.</p>
+     * 
+     * @return 선택된 퀴즈, 적합한 퀴즈가 없는 경우 null
      */
     private Quiz selectRandomQuizForDaily() {
         // 최근 7일간 사용된 퀴즈 제외
@@ -207,6 +244,12 @@ public class DailyQuizService {
     
     /**
      * 기존 퀴즈를 바탕으로 데일리 퀴즈 생성
+     * 
+     * <p>선택된 템플릿 퀴즈를 기반으로 새로운 데일리 퀴즈를 생성하고,
+     * 유효기간을 다음날 자정까지로 설정합니다.</p>
+     * 
+     * @param template 템플릿으로 사용할 퀴즈
+     * @return 생성된 데일리 퀴즈
      */
     private Quiz createDailyQuizFromTemplate(Quiz template) {
         // 데일리 퀴즈 복사본 생성
@@ -222,11 +265,19 @@ public class DailyQuizService {
     
     /**
      * 퀴즈 후보 클래스 (점수 계산용)
+     * 
+     * <p>퀴즈와 그 적합도 점수를 함께 저장하기 위한 내부 클래스입니다.</p>
      */
     private static class QuizCandidate {
         private final Quiz quiz;
         private final double score;
         
+        /**
+         * 퀴즈 후보 생성자
+         * 
+         * @param quiz 퀴즈 객체
+         * @param score 계산된 적합도 점수
+         */
         public QuizCandidate(Quiz quiz, double score) {
             this.quiz = quiz;
             this.score = score;

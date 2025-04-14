@@ -34,6 +34,15 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.*;
 
+/**
+ * 인증 관련 서비스 클래스
+ * 
+ * <p>OAuth2 소셜 로그인 인증, JWT 토큰 발급, 리프레시 및 로그아웃 기능을 제공합니다.
+ * 다양한 소셜 로그인 제공자(Google, GitHub, Kakao)에 대한 처리를 지원합니다.</p>
+ * 
+ * @author 채기훈
+ * @since JDK 21 eclipse temurin 21.0.6
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -50,7 +59,12 @@ public class AuthService {
 
     /**
      * 소셜 로그인 제공자의 인증 URL을 생성합니다.
-     * 이 URL로 사용자를 리다이렉트하면 소셜 로그인 프로세스가 시작됩니다.
+     * 
+     * <p>이 URL로 사용자를 리다이렉트하면 소셜 로그인 프로세스가 시작됩니다.</p>
+     * 
+     * @param provider 소셜 로그인 제공자 (google, github, kakao 등)
+     * @return 인증 URL 문자열
+     * @throws OAuth2AuthenticationProcessingException 지원하지 않는 제공자가 요청된 경우
      */
     public String getAuthorizationUrl(String provider) {
         ClientRegistration registration = clientRegistrationRepository.findByRegistrationId(provider.toLowerCase());
@@ -74,7 +88,13 @@ public class AuthService {
 
     /**
      * OAuth2 인증 코드를 처리하고 사용자 정보와 토큰을 포함한 인증 응답을 생성합니다.
-     * 사용자가 존재하지 않으면 새로 생성하고, 이미 존재하면 정보를 업데이트합니다.
+     * 
+     * <p>사용자가 존재하지 않으면 새로 생성하고, 이미 존재하면 정보를 업데이트합니다.</p>
+     * 
+     * @param provider 소셜 로그인 제공자
+     * @param code 인증 코드
+     * @return 액세스 토큰, 리프레시 토큰, 사용자 정보를 포함한 인증 응답
+     * @throws OAuth2AuthenticationProcessingException 인증 처리 중 오류 발생 시
      */
     @Transactional
     public AuthResponse processOAuth2Login(String provider, String code) {
@@ -106,15 +126,20 @@ public class AuthService {
 
     /**
      * 리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급합니다.
-     * 사용자 정보도 함께 반환하여 클라이언트가 필요한 정보를 모두 가질 수 있도록 합니다.
+     * 
+     * <p>사용자 정보도 함께 반환하여 클라이언트가 필요한 정보를 모두 가질 수 있도록 합니다.</p>
+     * 
+     * @param refreshToken 리프레시 토큰
+     * @return 새로운 액세스 토큰과 사용자 정보를 포함한 인증 응답
+     * @throws OAuth2AuthenticationProcessingException 토큰이 유효하지 않거나 처리 중 오류 발생 시
      */
     @Transactional
     public AuthResponse refreshToken(String refreshToken) {
-        log.info("리프레시 토큰 처리 시작: {}", refreshToken);
+        log.info("리프레시 토큰 처리 시작");
         
         // 토큰 유효성 검증
         if (!jwtTokenProvider.validateToken(refreshToken)) {
-            log.error("유효하지 않은 리프레시 토큰: {}", refreshToken);
+            log.error("유효하지 않은 리프레시 토큰");
             throw new OAuth2AuthenticationProcessingException("유효하지 않은 리프레시 토큰입니다.");
         }
 
@@ -129,7 +154,7 @@ public class AuthService {
 
             // 새로운 액세스 토큰 생성
             String newAccessToken = jwtTokenProvider.generateAccessToken(createAuthentication(user));
-            log.info("새 액세스 토큰 생성 완료: {}", newAccessToken);
+            log.info("새 액세스 토큰 생성 완료");
 
             return AuthResponse.builder()
                     .accessToken(newAccessToken)
@@ -147,6 +172,8 @@ public class AuthService {
 
     /**
      * 토큰을 무효화하고 사용자를 로그아웃 처리합니다.
+     * 
+     * @param userId 로그아웃할 사용자 ID
      */
     @Transactional
     public void logout(String userId) {
@@ -155,6 +182,9 @@ public class AuthService {
 
     /**
      * 토큰에서 사용자 ID를 추출합니다.
+     * 
+     * @param token JWT 토큰
+     * @return 추출된 사용자 ID
      */
     public String getUserIdFromToken(String token) {
         return jwtTokenProvider.getUserIdFromToken(
@@ -162,13 +192,24 @@ public class AuthService {
         );
     }
 
+    /**
+     * 승인된 리다이렉트 URI를 반환합니다.
+     * 
+     * @return 승인된 리다이렉트 URI
+     */
     public String getAuthorizedRedirectUri() {
         return authorizedRedirectUri;
     }
 
     /**
      * OAuth2 인증 코드를 사용하여 액세스 토큰을 요청합니다.
-     * 각 소셜 로그인 제공자의 토큰 엔드포인트로 요청을 보내 액세스 토큰을 받아옵니다.
+     * 
+     * <p>각 소셜 로그인 제공자의 토큰 엔드포인트로 요청을 보내 액세스 토큰을 받아옵니다.</p>
+     * 
+     * @param registration 클라이언트 등록 정보
+     * @param code 인증 코드
+     * @return OAuth2 액세스 토큰
+     * @throws OAuth2AuthenticationProcessingException 토큰 요청 실패 시
      */
     private OAuth2AccessToken getOAuth2AccessToken(ClientRegistration registration, String code) {
         RestTemplate restTemplate = new RestTemplate();
@@ -199,6 +240,10 @@ public class AuthService {
                 String encodedCredentials = Base64.getEncoder().encodeToString(credentials.getBytes());
                 headers.add("Authorization", "Basic " + encodedCredentials);
                 break;
+
+            default:
+                throw new OAuth2AuthenticationProcessingException(
+                        "지원하지 않는 로그인 제공자입니다: " + registration.getRegistrationId());
         }
 
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -236,7 +281,13 @@ public class AuthService {
 
     /**
      * OAuth2 사용자 정보를 처리하고 사용자 엔티티를 생성하거나 업데이트합니다.
-     * CustomOAuth2UserService의 로직과 유사하게 동작하지만, 토큰 발급을 위한 추가 처리를 포함합니다.
+     * 
+     * <p>각 소셜 로그인 제공자에서 사용자 정보를 추출하고 DB에 저장합니다.</p>
+     * 
+     * @param oauth2User OAuth2 사용자 정보
+     * @param provider 소셜 로그인 제공자
+     * @return 생성되거나 업데이트된 사용자 엔티티
+     * @throws OAuth2AuthenticationProcessingException 이메일 정보가 없거나 처리 중 오류 발생 시
      */
     private User processUserDetails(OAuth2User oauth2User, String provider) {
         // 제공자별 사용자 정보 추출
@@ -264,7 +315,11 @@ public class AuthService {
 
     /**
      * 사용자 정보를 바탕으로 Authentication 객체를 생성합니다.
-     * 이 Authentication 객체는 JWT 토큰 생성에 사용됩니다.
+     * 
+     * <p>이 Authentication 객체는 JWT 토큰 생성에 사용됩니다.</p>
+     * 
+     * @param user 사용자 엔티티
+     * @return Spring Security Authentication 객체
      */
     private Authentication createAuthentication(User user) {
         Set<GrantedAuthority> authorities = Collections.singleton(
@@ -291,7 +346,14 @@ public class AuthService {
         );
     }
 
-    // 사용자 정보 추출 유틸리티 메서드들
+    /**
+     * 제공자별 사용자 이메일 추출
+     * 
+     * @param oauth2User OAuth2 사용자 정보
+     * @param provider 소셜 로그인 제공자
+     * @return 추출된 이메일
+     * @throws OAuth2AuthenticationProcessingException 지원하지 않는 제공자인 경우
+     */
     private String extractEmail(OAuth2User oauth2User, String provider) {
         Map<String, Object> attributes = oauth2User.getAttributes();
         switch (provider.toLowerCase()) {
@@ -307,6 +369,14 @@ public class AuthService {
         }
     }
 
+    /**
+     * 제공자별 사용자 이름 추출
+     * 
+     * @param oauth2User OAuth2 사용자 정보
+     * @param provider 소셜 로그인 제공자
+     * @return 추출된 이름
+     * @throws OAuth2AuthenticationProcessingException 지원하지 않는 제공자인 경우
+     */
     private String extractName(OAuth2User oauth2User, String provider) {
         Map<String, Object> attributes = oauth2User.getAttributes();
         switch (provider.toLowerCase()) {
@@ -322,6 +392,14 @@ public class AuthService {
         }
     }
 
+    /**
+     * 제공자별 사용자 프로필 이미지 URL 추출
+     * 
+     * @param oauth2User OAuth2 사용자 정보
+     * @param provider 소셜 로그인 제공자
+     * @return 추출된 프로필 이미지 URL
+     * @throws OAuth2AuthenticationProcessingException 지원하지 않는 제공자인 경우
+     */
     private String extractImageUrl(OAuth2User oauth2User, String provider) {
         Map<String, Object> attributes = oauth2User.getAttributes();
         switch (provider.toLowerCase()) {
@@ -337,6 +415,14 @@ public class AuthService {
         }
     }
 
+    /**
+     * 제공자별 프로바이더 ID 추출
+     * 
+     * @param oauth2User OAuth2 사용자 정보
+     * @param provider 소셜 로그인 제공자
+     * @return 추출된 프로바이더 ID
+     * @throws OAuth2AuthenticationProcessingException 지원하지 않는 제공자인 경우
+     */
     private String extractProviderId(OAuth2User oauth2User, String provider) {
         Map<String, Object> attributes = oauth2User.getAttributes();
         switch (provider.toLowerCase()) {
@@ -351,11 +437,29 @@ public class AuthService {
         }
     }
 
+    /**
+     * 기존 사용자 정보 업데이트
+     * 
+     * @param existingUser 기존 사용자 엔티티
+     * @param name 새 이름
+     * @param imageUrl 새 프로필 이미지 URL
+     * @return 업데이트된 사용자 엔티티
+     */
     private User updateExistingUser(User existingUser, String name, String imageUrl) {
         existingUser.updateProfile(name, imageUrl);
         return existingUser;
     }
 
+    /**
+     * 새 사용자 등록
+     * 
+     * @param email 이메일
+     * @param name 이름
+     * @param imageUrl 프로필 이미지 URL
+     * @param providerId 프로바이더 ID
+     * @param provider 소셜 로그인 제공자
+     * @return 생성된 사용자 엔티티
+     */
     private User registerNewUser(String email, String name, String imageUrl, String providerId, String provider) {
         return User.builder()
                 .email(email)
@@ -366,6 +470,14 @@ public class AuthService {
                 .build();
     }
 
+    /**
+     * 고유한 사용자명 생성
+     * 
+     * <p>동일한 이름이 이미 존재하는 경우 숫자 접미사를 추가합니다.</p>
+     * 
+     * @param baseName 기본 이름
+     * @return 고유한 사용자명
+     */
     private String generateUniqueUsername(String baseName) {
         String username = baseName;
         int suffix = 1;
