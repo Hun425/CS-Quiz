@@ -2,7 +2,6 @@ package com.quizplatform.core.dto.quiz;
 
 import com.quizplatform.core.domain.quiz.DifficultyLevel;
 import com.quizplatform.core.domain.quiz.QuizType;
-import com.quizplatform.core.service.quiz.QuizSearchCondition;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -26,8 +25,8 @@ public class QuizSearchRequest {
     private String orderBy;
 
     // QuizSearchRequest.java의 toCondition 메서드
-    public QuizSearchCondition toCondition() {
-        QuizSearchCondition condition = QuizSearchCondition.builder()
+    public QuizSubmitRequest.QuizSearchCondition toCondition() {
+        QuizSubmitRequest.QuizSearchCondition condition = QuizSubmitRequest.QuizSearchCondition.builder()
                 .title(title)
                 .difficultyLevel(difficultyLevel)
                 .quizType(quizType)

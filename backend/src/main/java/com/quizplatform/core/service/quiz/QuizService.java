@@ -162,7 +162,7 @@ public class QuizService {
      * @param pageable 페이징 정보
      * @return 검색된 퀴즈 목록 (페이징)
      */
-    public Page<QuizSummaryResponse> searchQuizzesDto(QuizSearchCondition condition, Pageable pageable) {
+    public Page<QuizSummaryResponse> searchQuizzesDto(QuizSubmitRequest.QuizSearchCondition condition, Pageable pageable) {
         // 조건 유효성 검사
         condition.validate();
 

@@ -19,16 +19,35 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * 배틀(퀴즈 대결) 컨트롤러 클래스
+ * 
+ * <p>배틀방 생성, 조회, 참가, 상태 변경 등 배틀 관련 REST API를 제공합니다.
+ * 배틀은 다수의 사용자가 실시간으로 퀴즈를 풀고 경쟁하는 기능입니다.</p>
+ * 
+ * @author 채기훈
+ * @since JDK 21 eclipse temurin 21.0.6
+ */
 @RestController
 @RequestMapping("/api/battles")
 @RequiredArgsConstructor
 @Tag(name = "Battle Controller", description = "퀴즈 대결 관련 API를 제공합니다.")
 public class BattleController {
 
+    /**
+     * 배틀 서비스
+     */
     private final BattleService battleService;
 
     /**
-     * 새로운 대결방 생성
+     * 배틀방 생성 API
+     * 
+     * <p>새로운 퀴즈 대결방을 생성합니다. 방 생성자는 자동으로 참가자가 됩니다.</p>
+     * 
+     * @param userPrincipal 인증된 사용자 정보
+     * @param request 배틀방 생성 요청 데이터
+     * @return 생성된 배틀방 정보
+     * @throws BusinessException 인증되지 않은 사용자 또는 잘못된 요청일 경우
      */
     @Operation(summary = "대결방 생성", description = "새로운 퀴즈 대결방을 생성합니다.")
     @ApiResponses(value = {
@@ -56,7 +75,12 @@ public class BattleController {
     }
 
     /**
-     * 대결방 조회
+     * 배틀방 조회 API
+     * 
+     * <p>특정 ID의 배틀방 정보를 조회합니다.</p>
+     * 
+     * @param roomId 조회할 배틀방 ID
+     * @return 배틀방 정보
      */
     @Operation(summary = "대결방 조회", description = "특정 대결방의 정보를 조회합니다.")
     @ApiResponses(value = {
@@ -72,7 +96,11 @@ public class BattleController {
     }
 
     /**
-     * 활성화된 대결방 목록 조회
+     * 활성화된 배틀방 목록 조회 API
+     * 
+     * <p>현재 대기 중인(WAITING) 상태의 배틀방 목록을 조회합니다.</p>
+     * 
+     * @return 활성화된 배틀방 목록
      */
     @Operation(summary = "활성화된 대결방 목록 조회", description = "현재 활성화된 대결방 목록을 조회합니다.")
     @ApiResponses(value = {
@@ -85,7 +113,14 @@ public class BattleController {
     }
 
     /**
-     * 대결방 참가
+     * 배틀방 참가 API
+     * 
+     * <p>특정 배틀방에 참가합니다. 배틀방은 WAITING 상태여야 합니다.</p>
+     * 
+     * @param userPrincipal 인증된 사용자 정보
+     * @param roomId 참가할 배틀방 ID
+     * @return 참가 후 배틀방 정보
+     * @throws BusinessException 인증되지 않은 사용자 또는 방 참가 불가 상태일 경우
      */
     @Operation(summary = "대결방 참가", description = "특정 대결방에 참가합니다.")
     @ApiResponses(value = {
@@ -108,7 +143,15 @@ public class BattleController {
     }
 
     /**
-     * 대결방 준비 상태 토글
+     * 배틀 준비 상태 토글 API
+     * 
+     * <p>배틀방에서 사용자의 준비 상태를 전환합니다.
+     * 모든 참가자가 준비 완료되면 배틀이 자동으로 시작됩니다.</p>
+     * 
+     * @param userPrincipal 인증된 사용자 정보
+     * @param roomId 배틀방 ID
+     * @return 상태 변경 후 배틀방 정보
+     * @throws BusinessException 인증되지 않은 사용자 또는 상태 변경 불가 상태일 경우
      */
     @Operation(summary = "대결방 준비 상태 토글", description = "대결방에서 사용자의 준비 상태를 토글합니다.")
     @ApiResponses(value = {
@@ -131,7 +174,15 @@ public class BattleController {
     }
 
     /**
-     * 대결방 나가기
+     * 배틀방 나가기 API
+     * 
+     * <p>현재 참가 중인 배틀방을 나갑니다. 
+     * 배틀이 이미 시작된 경우 패배 처리됩니다.</p>
+     * 
+     * @param userPrincipal 인증된 사용자 정보
+     * @param roomId 나갈 배틀방 ID
+     * @return 퇴장 후 배틀방 정보
+     * @throws BusinessException 인증되지 않은 사용자 또는 퇴장 불가 상태일 경우
      */
     @Operation(summary = "대결방 나가기", description = "현재 참가 중인 대결방을 나갑니다.")
     @ApiResponses(value = {
@@ -154,7 +205,14 @@ public class BattleController {
     }
 
     /**
-     * 내 활성 대결방 조회
+     * 내 활성 배틀방 조회 API
+     * 
+     * <p>현재 사용자가 참가 중인 활성 배틀방을 조회합니다.
+     * 한 사용자는 한 번에 하나의 배틀방에만 참가할 수 있습니다.</p>
+     * 
+     * @param userPrincipal 인증된 사용자 정보
+     * @return 사용자의 활성 배틀방 정보
+     * @throws BusinessException 인증되지 않은 사용자일 경우
      */
     @Operation(summary = "내 활성 대결방 조회", description = "현재 사용자가 참가 중인 활성 대결방을 조회합니다.")
     @ApiResponses(value = {
