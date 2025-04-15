@@ -111,6 +111,7 @@ public class BattleService {
         BattleRoom battleRoom = BattleRoom.builder()
                 .quiz(quiz)
                 .maxParticipants(maxParticipants != null ? maxParticipants : 4)
+                .creatorId(creator.getId()) // 방 생성자 ID 설정
                 .build();
 
         // 대결방 설정 유효성 검사

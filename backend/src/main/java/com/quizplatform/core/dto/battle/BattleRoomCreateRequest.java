@@ -8,4 +8,5 @@ import lombok.Getter;
 public class BattleRoomCreateRequest {
     private Long quizId;
     private Integer maxParticipants;
+    private Long creatorId;
 }

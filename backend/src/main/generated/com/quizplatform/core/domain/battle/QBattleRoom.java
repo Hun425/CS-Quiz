@@ -24,6 +24,8 @@ public class QBattleRoom extends EntityPathBase<BattleRoom> {
 
     public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
 
+    public final NumberPath<Long> creatorId = createNumber("creatorId", Long.class);
+
     public final NumberPath<Integer> currentQuestionIndex = createNumber("currentQuestionIndex", Integer.class);
 
     public final DateTimePath<java.time.LocalDateTime> currentQuestionStartTime = createDateTime("currentQuestionStartTime", java.time.LocalDateTime.class);

@@ -136,13 +136,15 @@ public class BattleRoom {
      * 
      * @param quiz 사용할 퀴즈
      * @param maxParticipants 최대 참가자 수
+     * @param creatorId 방 생성자 ID
      */
     @Builder
-    public BattleRoom(Quiz quiz, int maxParticipants) {
+    public BattleRoom(Quiz quiz, int maxParticipants, Long creatorId) {
         this.quiz = quiz;
         this.maxParticipants = Math.max(maxParticipants, MIN_PARTICIPANTS);
         this.status = BattleRoomStatus.WAITING;
         this.roomCode = generateRoomCode();
+        this.creatorId = creatorId;
     }
 
     /**
@@ -592,6 +594,12 @@ public class BattleRoom {
     public void setStatus(BattleRoomStatus status) {
         this.status = status;
     }
+
+    /**
+     * 배틀 방 생성자 ID
+     */
+    @Column(name = "creator_id")
+    private Long creatorId;
 
     /**
      * 퀴즈 설정

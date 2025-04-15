@@ -100,6 +100,9 @@ public class EntityMapperService {
         battleRoom.getQuiz().getTitle(); // 배틀 퀴즈 정보 초기화
         battleRoom.getQuiz().getTimeLimit();
         battleRoom.getQuiz().getQuestions().size();
+        
+        // 방 생성자 ID 확인
+        Long creatorId = battleRoom.getCreatorId();
 
         return BattleRoomResponse.from(battleRoom);
     }

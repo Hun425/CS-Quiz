@@ -65,10 +65,17 @@ public class BattleController {
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "인증이 필요합니다.");
         }
 
+        // creatorId를 요청 객체에 설정
+        BattleRoomCreateRequest updateRequest = BattleRoomCreateRequest.builder()
+                .quizId(request.getQuizId())
+                .maxParticipants(request.getMaxParticipants())
+                .creatorId(userPrincipal.getUser().getId())
+                .build();
+                
         BattleRoomResponse battleRoom = battleService.createBattleRoom(
                 userPrincipal.getUser(),
-                request.getQuizId(),
-                request.getMaxParticipants()
+                updateRequest.getQuizId(),
+                updateRequest.getMaxParticipants()
         );
 
         return ResponseEntity.ok(CommonApiResponse.success(battleRoom));
