@@ -13,7 +13,6 @@ const getQuizResult = async (quizid: number, quizAttemptId: number) => {
   const response = await httpClient.get<CommonApiResponse<QuizResultResponse>>(
     `/quizzes/${quizid}/results/${quizAttemptId}`
   );
-  console.log(response.data.data);
   return response.data.data;
 };
 

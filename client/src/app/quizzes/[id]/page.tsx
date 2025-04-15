@@ -15,8 +15,9 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { Bar } from "react-chartjs-2";
 import Loading from "@/app/_components/Loading";
+// import { useGetQuizStatistics } from "@/lib/api/quiz/useGetQuizStatistics";
+import DifficultyChart from "../_components/DifficultyChart";
 
 ChartJS.register(
   CategoryScale,
@@ -30,8 +31,12 @@ ChartJS.register(
 const QuizDetailPage: React.FC = () => {
   const router = useRouter();
   const quizId = useParams().id;
+
   const { isAuthenticated } = useAuthStore();
   const { isLoading, error, data: quiz } = useGetQuizDetail(Number(quizId));
+  // const { data: quizStatistics } = useGetQuizStatistics(Number(quizId));
+  // console.log(quizStatistics);
+
   const quizStatistics = quiz?.statistics;
 
   const handleStartQuiz = () => {
@@ -79,7 +84,9 @@ const QuizDetailPage: React.FC = () => {
           </div>
 
           {/* 📝 퀴즈 설명 */}
-          <p className="text-foreground text-base">{quiz.description}</p>
+          <p className="text-sm sm:text-[17px] text-foreground">
+            {quiz.description}
+          </p>
 
           {/* 🔖 태그 목록 */}
           <div className="flex flex-wrap gap-2">
@@ -125,10 +132,12 @@ const QuizDetailPage: React.FC = () => {
         </div>
 
         {/* 오른쪽: ⏳ 퀴즈 제한 시간 */}
-        <div className="flex flex-col border border-border items-center justify-center p-4 md:p-6 bg-background rounded-lg w-full md:w-40 text-center gap-2 md:gap-3">
-          <span className="text-3xl font-bold text-primary">⏳</span>
-          <span className="text-sm text-gray-500">제한 시간</span>
-          <span className="text-3xl font-bold text-primary">
+        <div className="flex flex-col border border-border items-center justify-center p-3 sm:p-4 md:p-6 bg-background rounded-lg w-full sm:w-40 text-center gap-2 sm:gap-3">
+          <span className="text-2xl sm:text-3xl font-bold text-primary">
+            ⏳
+          </span>
+          <span className="text-xs sm:text-sm text-gray-500">제한 시간</span>
+          <span className="text-xl sm:text-3xl font-bold text-primary">
             {Math.floor(quiz.timeLimit / 60)}분
           </span>
         </div>
@@ -151,7 +160,7 @@ const QuizDetailPage: React.FC = () => {
         </div>
       ) : quizStatistics ? (
         <div className="bg-background p-6 rounded-lg border border-border shadow-md">
-          <h2 className="text-xl font-semibold text-primary mb-4">
+          <h2 className="text-xl sm:text-2xl font-semibold text-primary mb-4">
             📊 퀴즈 통계
           </h2>
 
@@ -179,9 +188,7 @@ const QuizDetailPage: React.FC = () => {
           {quizStatistics?.difficultyDistribution && (
             <div className="mt-5 w-full">
               <DifficultyChart
-                data={Object.entries(quizStatistics.difficultyDistribution).map(
-                  ([key, value]) => ({ name: key, value })
-                )}
+                distribution={quiz.statistics?.difficultyDistribution ?? {}}
               />
             </div>
           )}
@@ -195,42 +202,8 @@ const QuizDetailPage: React.FC = () => {
 const StatCard = ({ title, value }: { title: string; value: string }) => {
   return (
     <div className="bg-card-background p-4 rounded-md shadow-sm border border-card-border text-center">
-      <p className="text-sm text-foreground">{title}</p>
-      <p className="text-lg font-bold text-primary">{value}</p>
-    </div>
-  );
-};
-
-const DifficultyChart = ({
-  data,
-}: {
-  data: { name: string; value: number }[];
-}) => {
-  if (!data || data.length === 0) {
-    return <p className="text-gray-500 mt-2 text-sm">데이터가 없습니다.</p>;
-  }
-
-  const chartData = {
-    labels: data.map((item) => item.name),
-    datasets: [
-      {
-        label: "문제 수",
-        data: data.map((item) => item.value),
-        backgroundColor: ["#4CAF50", "#FF9800", "#F44336"],
-      },
-    ],
-  };
-
-  return (
-    <div className="w-full h-24">
-      <Bar
-        data={chartData}
-        options={{
-          responsive: true,
-          indexAxis: "y",
-          maintainAspectRatio: false,
-        }}
-      />
+      <p className="text-sm sm:text-base text-foreground">{title}</p>
+      <p className="text-base sm:text-lg font-bold text-primary">{value}</p>
     </div>
   );
 };

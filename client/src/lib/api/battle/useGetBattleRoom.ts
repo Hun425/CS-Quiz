@@ -18,8 +18,6 @@ export const useGetBattleRoom = (roomId: number) => {
       const response = await httpClient.get<
         CommonApiResponse<BattleRoomResponse>
       >(`/battles/${roomId}`);
-      console.log("배틀룸 정보조회", "ㅇ");
-      console.log(response.data.data, "배틀룸 조회 결과");
 
       return response.data;
     },

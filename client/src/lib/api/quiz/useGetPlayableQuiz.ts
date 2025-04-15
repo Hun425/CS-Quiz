@@ -13,7 +13,6 @@ export const getPlayableQuiz = async (quizId: number) => {
   const response = await httpClient.get<CommonApiResponse<QuizPlayResponse>>(
     `/quizzes/${quizId}/play`
   );
-  console.log(response.data.data);
   return response.data.data;
 };
 

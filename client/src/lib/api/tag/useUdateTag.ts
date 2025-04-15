@@ -1,14 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
-
-import { TagResponse } from "@/lib/types/tag";
+import { TagResponse, UpdateTagRequest } from "@/lib/types/tag";
 import httpClient from "../httpClient";
-
-interface UpdateTagRequest {
-  name: string;
-  description: string;
-  parentId?: number;
-  synonyms: string[];
-}
 
 const updateTag = async ({
   tagId,
@@ -38,11 +30,5 @@ export const useUpdateTag = () => {
     { tagId: number; data: UpdateTagRequest }
   >({
     mutationFn: updateTag,
-    onSuccess: (data) => {
-      console.log("태그 수정 성공:", data);
-    },
-    onError: (error) => {
-      console.error("태그 수정 실패:", error);
-    },
   });
 };

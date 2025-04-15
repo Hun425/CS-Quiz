@@ -18,9 +18,9 @@ export const useGetQuizStatistics = (quizId: number) => {
       const response = await httpClient.get<
         CommonApiResponse<QuizStatisticsResponse>
       >(`/quizzes/${quizId}/statistics`);
-      return response.data.data;
+      return response.data;
     },
     enabled: isAuthenticated && !!quizId,
-    staleTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: true,
   });
 };

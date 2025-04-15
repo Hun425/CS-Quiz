@@ -16,8 +16,6 @@ const submitQuiz = async (quizId: number, submitData: QuizSubmitRequest) => {
     `/quizzes/${quizId}/results`,
     submitData
   );
-
-  console.log(submitData, "submitData");
   return response.data;
 };
 
@@ -36,8 +34,6 @@ export const useSubmitQuiz = () => {
       submitData: QuizSubmitRequest;
     }) => submitQuiz(quizId, submitData),
     onSuccess: (data, { quizId }) => {
-      console.log("🎉 퀴즈 제출 성공:", data);
-
       // ✅ 퀴즈 결과 페이지에 대한 캐시 무효화
       queryClient.invalidateQueries({ queryKey: ["quizResult", quizId] });
     },

@@ -6,7 +6,8 @@ import httpClient from "../api/httpClient";
 
 const useTokenExpirationWarning = () => {
   const [showPopup, setShowPopup] = useState(false);
-  const { isAuthenticated, token, expiresAt, setToken } = useAuthStore();
+  const { isAuthenticated, token, refreshToken, expiresAt, setToken, logout } =
+    useAuthStore();
 
   useEffect(() => {
     if (!token || !expiresAt || isAuthenticated) {
@@ -25,42 +26,34 @@ const useTokenExpirationWarning = () => {
       }
     };
 
-    checkExpiration(); // 최초 진입 시 한 번 검사
+    checkExpiration();
     const interval = setInterval(checkExpiration, 1000 * 30);
     return () => clearInterval(interval);
   }, [token, expiresAt, isAuthenticated]);
 
   const handleRefreshToken = async () => {
     try {
-      const refreshToken = localStorage.getItem("refresh_token");
-      if (!refreshToken) {
-        console.warn("❌ refresh_token 없음, 갱신 불가");
-        return;
-      }
+      if (!refreshToken) return;
 
       const response = await httpClient.post("/oauth2/refresh", {
         refreshToken,
       });
-      console.log("🔁 토큰 갱신 응답", response.data);
 
       if (response.data?.accessToken) {
+        const newExpiresAt = Date.now() + response.data.expiresIn * 1000;
+
         setToken(
           response.data.accessToken,
           response.data.refreshToken,
-          Date.now() + response.data.expiresIn * 1000
-        );
-
-        localStorage.setItem("access_token", response.data.accessToken);
-        localStorage.setItem("refresh_token", response.data.refreshToken);
-        localStorage.setItem(
-          "expires_in",
-          (Date.now() + response.data.expiresIn * 1000).toString()
+          newExpiresAt
         );
 
         setShowPopup(false);
+      } else {
+        logout(); // 🔴 응답에 accessToken이 없을 경우 강제 로그아웃
       }
-    } catch (error) {
-      console.error("토큰 갱신 실패:", error);
+    } catch {
+      logout(); // 🔴 요청 실패 시 강제 로그아웃
     }
   };
 

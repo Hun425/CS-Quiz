@@ -23,9 +23,6 @@ const searchQuizzes = async (
 ): Promise<PageResponse<QuizSummaryResponse>> => {
   // ✅ Query Params 변환
   const params = new URLSearchParams();
-  console.log("🔍 퀴즈 검색 요청:", params.toString());
-
-  console.log("📌 현재 quizType", searchParams.quizType);
 
   if (searchParams.title) params.append("title", searchParams.title);
   if (searchParams.difficultyLevel)
@@ -45,8 +42,6 @@ const searchQuizzes = async (
   // ✅ 페이징 처리
   params.append("page", page.toString());
   params.append("size", size.toString());
-
-  console.log("🔍 퀴즈 검색 요청:", params.toString());
 
   // ✅ API 요청
   const response = await httpClient.get<

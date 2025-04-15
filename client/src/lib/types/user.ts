@@ -89,3 +89,15 @@ export interface Achievement {
   progress: number /** 달성 진행도 (0~100%) */;
   requirementDescription: string /** 업적 획득 조건 설명 */;
 }
+
+export type ActivityType = "QUIZ_ATTEMPT" | "ACHIEVEMENT_EARNED" | "LEVEL_UP";
+
+export interface ActivityResponse {
+  id: number;
+  type: ActivityType;
+  quizTitle?: string | null;
+  score?: number | null;
+  achievementName?: string | null;
+  newLevel?: number | null;
+  timestamp?: string | null;
+}

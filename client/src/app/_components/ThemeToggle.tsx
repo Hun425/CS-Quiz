@@ -11,12 +11,10 @@ const ThemeToggle: React.FC = () => {
     if (savedTheme) {
       setTheme(savedTheme);
       document.documentElement.setAttribute("data-theme", savedTheme);
-      console.log("localstorage theme 확인용: saveTheme :", savedTheme);
     } else {
       const prefersDark = window.matchMedia(
         "(prefers-color-scheme: dark)"
       ).matches;
-      console.log("시스템 theme 확인용: prefersDark :", prefersDark);
 
       setTheme(prefersDark ? "dark" : "light");
       document.documentElement.setAttribute(

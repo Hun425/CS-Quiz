@@ -13,3 +13,10 @@ export interface TagCreateRequest {
   parentId?: number;
   synonyms?: string[];
 }
+
+export interface UpdateTagRequest {
+  name: string;
+  description: string;
+  parentId?: number;
+  synonyms: string[];
+}

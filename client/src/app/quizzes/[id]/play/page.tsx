@@ -14,7 +14,10 @@ export default function QuizPlayPage() {
   const quizId = Number(id);
   const router = useRouter();
   const submitQuizMutation = useSubmitQuiz();
+  // 라우팅 이동 전 제거
+  const [shouldBlock, setShouldBlock] = useState(true); // 퀴즈 제출 후에는 false로 변경
 
+  // 퀴즈 상태 관리
   const {
     attemptId,
     currentQuestionIndex,
@@ -30,11 +33,26 @@ export default function QuizPlayPage() {
   // ✅ 퀴즈 상태 초기화
   const { quizPlayData, error, isLoading } = useLoadQuizPlayData(quizId);
 
-  // 라우팅 이동 전 제거
-  const [shouldBlock, setShouldBlock] = useState(true); // 퀴즈 제출 후에는 false로 변경
-  useBeforeRouteLeave(shouldBlock, () => {
-    resetQuiz(true); // 세션까지 제거
-  });
+  // ✅ 뒤로가기 버튼 처리
+  useEffect(() => {
+    const handlePopState = () => {
+      const confirmLeave = window.confirm(
+        "퀴즈가 초기화됩니다. 나가시겠습니까?"
+      );
+      if (confirmLeave) {
+        resetQuiz();
+        router.replace("/quizzes");
+      } else {
+        // 뒤로가기를 취소: push로 다시 현재 위치 고정
+        router.push(`/quizzes/${quizId}/play`);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [resetQuiz, router, quizId, shouldBlock]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -47,27 +65,6 @@ export default function QuizPlayPage() {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, []);
-
-  // ✅ 뒤로가기 버튼 처리
-  useEffect(() => {
-    const handlePopState = () => {
-      const confirmLeave = window.confirm(
-        "퀴즈가 초기화됩니다. 나가시겠습니까?"
-      );
-      if (confirmLeave) {
-        resetQuiz(true);
-        router.replace("/quizzes"); // 또는 이전 페이지 등 원하는 경로
-      } else {
-        // 사용자가 취소 → 다시 현재 페이지로
-        router.push(`/quizzes/${quizId}/play`);
-      }
-    };
-
-    window.addEventListener("popstate", handlePopState);
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
-  }, [resetQuiz, router, quizId]);
 
   // ✅ 퀴즈 제출
   const handleSubmitQuiz = async () => {
@@ -96,17 +93,19 @@ export default function QuizPlayPage() {
         },
       });
 
-      // 세션 제거
-      resetQuiz(true);
+      setShouldBlock(false);
       // 퀴즈 결과 페이지로 이동
       alert("문제가 제출되었습니다.");
-      setShouldBlock(false); // 제출 후 라우팅 막기 비활성화
       router.push(`/quizzes/${quizId}/results?attemptId=${attemptId}`);
     } catch {
       alert("퀴즈 제출 중 오류가 발생했습니다.");
       router.push(`/quizzes/${quizId}`);
     }
   };
+
+  useBeforeRouteLeave(shouldBlock, () => {
+    resetQuiz(true); // 세션까지 제거
+  });
 
   // ✅ 로딩 / 에러 상태 처리
   if (error) {

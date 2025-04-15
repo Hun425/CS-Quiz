@@ -7,17 +7,32 @@ import {
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
-import Image from "next/image";
 
 import { useUserAchievements } from "@/lib/api/user/useUserAchievements";
 import { useUserStatistics } from "@/lib/api/user/useUserStatistic";
 import { useUserTopicPerformance } from "@/lib/api/user/useUserTopicPerformance";
 import { useUserRecentActivities } from "@/lib/api/user/useUserRecentActivities";
+import AchievementBadge from "@/app/_components/AchivementBadge";
+import TagPerformanceList from "./TagPerformanceList";
 import Skeleton from "@/app/_components/Skeleton";
+import { ActivityResponse, ActivityType } from "@/lib/types/user";
 
 interface DashboardProps {
   userId?: number;
 }
+
+const activityMessageMap: Record<
+  ActivityType,
+  (activity: ActivityResponse) => string
+> = {
+  QUIZ_ATTEMPT: (a) =>
+    `퀴즈 "${a.quizTitle ?? "제목 없는 퀴즈"}" 시도 - 점수: ${
+      a.score ?? "미정"
+    }`,
+  ACHIEVEMENT_EARNED: (a) =>
+    `업적 달성: ${a.achievementName ?? "이름 없는 업적"}`,
+  LEVEL_UP: (a) => `레벨업! 새로운 레벨: ${a.newLevel ?? "레벨 정보 없음"}`,
+};
 
 const Dashboard: React.FC<DashboardProps> = ({ userId }) => {
   const { data: statistics, isLoading: isLoadingStats } =
@@ -29,14 +44,35 @@ const Dashboard: React.FC<DashboardProps> = ({ userId }) => {
   const { data: topicPerformance, isLoading: isLoadingTopics } =
     useUserTopicPerformance(userId);
 
-  console.log(achievements);
+  console.log("Dashboard - Statistics:", statistics);
+  console.log("Dashboard - Activities:", activities);
+  const SectionWrapper = ({
+    title,
+    icon,
+    ariaLabel,
+    children,
+  }: {
+    title: string;
+    icon: React.ReactNode;
+    ariaLabel: string;
+    children: React.ReactNode;
+  }) => (
+    <section className="bg-background p-4 space-y-3" aria-label={ariaLabel}>
+      <h2 className="text-lg font-semibold flex items-center gap-2 border-b-2 border-primary pb-2 mb-2">
+        {icon} {title}
+      </h2>
+      {children}
+    </section>
+  );
+
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-6">
       {/* 🔹 퀴즈 통계 */}
-      <div className="bg-background p-4 rounded-lg shadow-sm">
-        <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-          <BarChart className="w-5 h-5" /> 퀴즈 통계
-        </h2>
+      <SectionWrapper
+        title="퀴즈 통계"
+        icon={<BarChart className="w-5 h-5" />}
+        ariaLabel="사용자의 퀴즈 통계 섹션"
+      >
         {isLoadingStats ? (
           <Skeleton />
         ) : statistics ? (
@@ -58,127 +94,94 @@ const Dashboard: React.FC<DashboardProps> = ({ userId }) => {
         ) : (
           <p className="text-muted">통계 데이터를 불러올 수 없습니다.</p>
         )}
-      </div>
-
+      </SectionWrapper>
       {/* 🔹 최근 활동 */}
-      <div className="bg-background p-4 rounded-lg shadow-sm mt-4">
-        <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-          <Activity className="w-5 h-5" /> 최근 활동
-        </h2>
+      <SectionWrapper
+        title="최근 활동"
+        icon={<Activity className="w-5 h-5" />}
+        ariaLabel="사용자의 최근 퀴즈 활동 섹션"
+      >
         {isLoadingActivities ? (
           <Skeleton />
         ) : activities && activities.length > 0 ? (
           <ul className="space-y-2">
-            {activities.map((activity) => (
-              <li key={activity.id} className="p-2 border-b border-gray-200">
-                {activity.type === "QUIZ_ATTEMPT"
-                  ? `퀴즈 "${activity.quizTitle}" 시도 - 점수: ${activity.score}`
-                  : activity.type === "ACHIEVEMENT_EARNED"
-                  ? `업적 달성: ${activity.achievementName}`
-                  : `레벨업! 새로운 레벨: ${activity.newLevel}`}
-                <span className="text-gray-500 text-sm">
-                  {" "}
-                  ({activity.timestamp})
-                </span>
-              </li>
-            ))}
+            {activities.slice(0, 5).map((activity) => {
+              const message =
+                activityMessageMap[activity.type as ActivityType]?.(activity) ??
+                "기록되지 않은 활동";
+
+              return (
+                <li
+                  key={activity.id + activity.type}
+                  className="p-1 border-b border-gray-200 text-sm"
+                >
+                  {message}
+                  {activity.timestamp && (
+                    <span className="text-gray-500 text-xs ml-1">
+                      (
+                      {new Date(activity.timestamp).toLocaleDateString("ko-KR")}
+                      )
+                    </span>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         ) : (
           <p className="text-muted">최근 활동이 없습니다.</p>
         )}
-      </div>
+      </SectionWrapper>
 
-      {/* 🔹 강점 & 약점 태그 (Topic Performance) */}
-      <div className="bg-background p-4 rounded-lg shadow-sm mt-4">
-        <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-green-600" /> 강점 태그 vs 약점
-          태그
-        </h2>
+      {/* 🔹 강점 & 약점 태그 */}
+      <SectionWrapper
+        title="강점 태그 vs 약점 태그"
+        icon={<TrendingUp className="w-5 h-5 text-green-600" />}
+        ariaLabel="사용자의 태그별 강점과 약점 섹션"
+      >
         {isLoadingTopics ? (
           <Skeleton />
         ) : topicPerformance ? (
-          <div className="grid grid-cols-2 gap-4">
-            {/* 강점 태그 */}
-            <div>
-              <h3 className="text-md font-semibold flex items-center gap-2 text-green-600">
-                <TrendingUp className="w-4 h-4" /> 강점 태그
-              </h3>
-              {topicPerformance.filter((tp) => tp.strength).length > 0 ? (
-                <ul className="mt-2">
-                  {topicPerformance
-                    .filter((tp) => tp.strength)
-                    .map((topic) => (
-                      <li key={topic.tagId} className="text-sm">
-                        ✅ {topic.tagName} (정답률: {topic.correctRate}%)
-                      </li>
-                    ))}
-                </ul>
-              ) : (
-                <p className="text-muted text-sm">강점 태그가 없습니다.</p>
-              )}
-            </div>
-
-            {/* 약점 태그 */}
-            <div>
-              <h3 className="text-md font-semibold flex items-center gap-2 text-red-600">
-                <TrendingDown className="w-4 h-4" /> 약점 태그
-              </h3>
-              {topicPerformance.filter((tp) => !tp.strength).length > 0 ? (
-                <ul className="mt-2">
-                  {topicPerformance
-                    .filter((tp) => !tp.strength)
-                    .map((topic) => (
-                      <li key={topic.tagId} className="text-sm">
-                        ❌ {topic.tagName} (정답률: {topic.correctRate}%)
-                      </li>
-                    ))}
-                </ul>
-              ) : (
-                <p className="text-muted text-sm">약점 태그가 없습니다.</p>
-              )}
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <TagPerformanceList
+              title="강점 태그"
+              icon={<TrendingUp className="w-4 h-4" />}
+              colorClass="text-green-600"
+              isStrength
+              items={topicPerformance}
+            />
+            <TagPerformanceList
+              title="약점 태그"
+              icon={<TrendingDown className="w-4 h-4" />}
+              colorClass="text-red-600"
+              isStrength={false}
+              items={topicPerformance}
+            />
           </div>
         ) : (
           <p className="text-muted">
             태그별 퍼포먼스 데이터를 불러올 수 없습니다.
           </p>
         )}
-      </div>
+      </SectionWrapper>
 
       {/* 🔹 업적 */}
-      <div className="bg-background p-4 rounded-lg shadow-sm mt-4">
-        <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-          <Medal className="w-5 h-5" /> 업적
-        </h2>
+      <SectionWrapper
+        title="업적"
+        icon={<Medal className="w-5 h-5" />}
+        ariaLabel="사용자의 퀴즈 업적 섹션"
+      >
         {isLoadingAchievements ? (
           <Skeleton />
         ) : achievements && achievements.length > 0 ? (
-          <ul className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {achievements.map((ach) => (
-              <li key={ach.id} className="flex items-center gap-3">
-                <Image
-                  src={ach.iconUrl}
-                  alt={ach.name}
-                  className="w-10 h-10"
-                  width={10}
-                  height={10}
-                />
-                <div>
-                  <p className="font-semibold">{ach.name}</p>
-                  <p className="text-sm text-muted">{ach.description}</p>
-                  <p className="text-xs text-gray-500">
-                    {ach.earnedAt
-                      ? `획득: ${ach.earnedAt}`
-                      : `진행도: ${ach.progress}%`}
-                  </p>
-                </div>
-              </li>
+              <AchievementBadge key={ach.id} achievement={ach} />
             ))}
-          </ul>
+          </div>
         ) : (
           <p className="text-muted">획득한 업적이 없습니다.</p>
         )}
-      </div>
+      </SectionWrapper>
     </div>
   );
 };

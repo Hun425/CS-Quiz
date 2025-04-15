@@ -11,7 +11,6 @@ import { Provider } from "../types/auth";
 export const useOAuthLogin = () => {
   const loginWithProvider = (provider: Provider) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-    console.log("api 요청경로:", apiUrl);
     window.location.href = `${apiUrl}/api/oauth2/authorize/${provider}`;
   };
 

@@ -14,13 +14,13 @@ const QuizResultPage: React.FC = () => {
   const attemptId = searchParams.get("attemptId");
 
   useEffect(() => {
-    useQuizStore.getState().resetQuiz(true); // ✅ 퀴즈 상태 초기화
+    useQuizStore.getState().resetQuiz(true);
 
     if (!attemptId) {
       alert("잘못된 접근입니다.");
       router.replace("/quizzes");
     }
-  }, [attemptId, router]);
+  }, [attemptId]);
 
   // ✅ 퀴즈 결과 조회
   const {

@@ -12,7 +12,7 @@ import refreshAccessToken from "@/lib/api/refreshAccessToken";
 
 const LoginButton = () => {
   const pathname = usePathname();
-  const { isAuthenticated, logout } = useAuthStore();
+  const { isAuthenticated, logout, wasLoggedOut } = useAuthStore();
   const { userProfile } = useProfileStore();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -22,8 +22,10 @@ const LoginButton = () => {
     const accessToken = await refreshAccessToken();
     if (accessToken) {
       alert("✅ 토큰이 갱신되었습니다.");
+    } else if (wasLoggedOut) {
+      alert("❗ 로그아웃 상태입니다. 다시 로그인 해주세요.");
     } else {
-      alert("❌ 토큰 갱신에 실패했습니다.");
+      alert("❗ 토큰 갱신에 실패했습니다.");
     }
   };
 

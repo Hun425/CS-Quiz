@@ -1,10 +1,10 @@
 import Dashboard from "../../_components/Dashboard";
-import DailyQuizHeatmap from "../../_components/DailyQizHeatmap";
+// import DailyQuizHeatmap from "../../_components/DailyQizHeatmap";
 
 const DashboardPage = () => {
   return (
     <div>
-      <DailyQuizHeatmap />
+      {/* <DailyQuizHeatmap /> */}
       <Dashboard />
     </div>
   );
