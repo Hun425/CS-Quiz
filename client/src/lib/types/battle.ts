@@ -1,4 +1,3 @@
-import { QuestionType } from "./question";
 /**
  * ✅ WebSocket을 통해 서버로부터 수신 가능한 이벤트 타입
  /** 참가자 목록 (입장/퇴장/준비 상태 포함) */
@@ -21,7 +20,7 @@ export enum BattleSocketEventKey {
 }
 
 export interface BattleWebSocketEvents {
-  [BattleSocketEventKey.PARTICIPANTS]: BattleParticipantsPayload;
+  [BattleSocketEventKey.PARTICIPANTS]: Participant[]; // 참가자 목록
   [BattleSocketEventKey.START]: BattleStartResponse;
   [BattleSocketEventKey.STATUS]: { status: BattleStatus };
   [BattleSocketEventKey.PROGRESS]: BattleProgressResponse;
@@ -29,17 +28,6 @@ export interface BattleWebSocketEvents {
   [BattleSocketEventKey.RESULT]: BattleAnswerResponse;
   [BattleSocketEventKey.END]: BattleEndResponse;
   [BattleSocketEventKey.ERROR]: string;
-}
-
-/** ✅ 소켓으로 참가자 및 룸 상태 정보를 받을 때 사용하는 타입 */
-export interface BattleParticipantsPayload {
-  roomId: number;
-  userId: number;
-  username: string;
-  currentParticipants: number;
-  maxParticipants: number;
-  participants: Participant[];
-  joinedAt: string;
 }
 
 /**
@@ -124,12 +112,12 @@ export interface BattleJoinResponse {
  */
 export interface BattleNextQuestionResponse {
   questionId: number; // 문제 ID
-  questionText: string; // 문제 내용
-  questionType: QuestionType; // 문제 유형 (객관식, 단답형 등)
-  options?: string[]; // 선택지가 있는 경우 (객관식)
-  timeLimit: number; // 문제 풀이 제한 시간 (초 단위)
-  points: number; // 해당 문제의 점수
-  isLastQuestion?: boolean; // 마지막 문제 여부
+  questionText: string; // 문제 텍스트
+  questionType: string; // 문제 타입 (예: MULTIPLE_CHOICE 등)
+  options: string[]; // 선택지 목록
+  timeLimit: number; // 제한 시간 (초)
+  points: number; // 문제 배점
+  isLastQuestion: boolean; // 마지막 문제 여부
   isGameOver: boolean; // 게임 종료 여부
 }
 
@@ -138,15 +126,12 @@ export interface BattleNextQuestionResponse {
  * - 배틀이 시작될 때 서버에서 보내는 응답
  */
 export interface BattleStartResponse {
-  roomId: number; // 배틀룸 ID
-  participants: Pick<
-    Participant,
-    "userId" | "username" | "profileImage" | "level"
-  >[]; // 참가자 정보 (일부만 포함)
-  totalQuestions: number; // 총 문제 수
-  timeLimit: number; // 배틀 전체 시간 제한
-  startTime: string; // 배틀 시작 시간 (ISO 8601 형식)
   firstQuestion: BattleNextQuestionResponse; // 첫 번째 문제 정보
+  roomId: number; // 배틀룸 ID
+  participants: Participant[]; // 참가자 목록
+  startTime: string; // 배틀 시작 시간 (ISO 8601 형식)
+  timeLimit: number; // 배틀 전체 시간 제한
+  totalQuestions: number; // 총 문제 수
 }
 
 /**
@@ -179,28 +164,24 @@ export interface BattleAnswerResponse {
  * - 배틀 중 각 참가자의 현재 진행 상태를 나타냄
  */
 export interface ParticipantProgress {
-  participantId: number; // 참가자 ID
+  userId: number; // 참가자 ID (백엔드 필드와 일치)
   username: string; // 참가자 이름
   currentScore: number; // 현재 점수
   correctAnswers: number; // 맞춘 문제 개수
-  totalAnswered: number; // 총 답변 개수
   hasAnsweredCurrent: boolean; // 현재 문제에 답변했는지 여부
   currentStreak: number; // 연속 정답 개수
-  correctRate: number; // 정답률 (0~100%)
-  averageAnswerTime: number; // 평균 답변 시간 (초 단위)
 }
-
 /**
  * ✅ 배틀 진행 상황 응답 타입
  * - 배틀 진행 중 참가자의 상태를 전달하는 응답
  */
 export interface BattleProgressResponse {
-  roomId: number; // 배틀룸 ID
-  currentQuestionIndex: number; // 현재 문제 순번
-  totalQuestions: number; // 총 문제 개수
-  remainingTimeSeconds: number; // 남은 시간 (초 단위)
-  participantProgress: { [userId: number]: ParticipantProgress }; // 참가자의 진행 상황
-  status: "WAITING" | "IN_PROGRESS" | "FINISHED"; // 배틀 상태
+  roomId: number;
+  currentQuestionIndex: number;
+  totalQuestions: number;
+  remainingTimeSeconds: number;
+  participantProgress: { [userId: number]: ParticipantProgress };
+  status: BattleStatus; // 배틀 진행 상태
 }
 
 /**

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useAuthStore } from "@/store/authStore";
+import { useToastStore } from "@/store/toastStore";
 
 const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL
   ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/api`
@@ -12,9 +13,8 @@ const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL
 // refreshAccessToken.ts
 export default async function refreshAccessToken(): Promise<string | null> {
   const { refreshToken, setToken } = useAuthStore.getState();
-
+  const showToast = useToastStore.getState().showToast;
   try {
-    console.log("🔄 토큰 갱신 요청", refreshToken);
     if (!refreshToken) throw new Error("리프레시 토큰 없음");
 
     const response = await axios.post(
@@ -27,7 +27,7 @@ export default async function refreshAccessToken(): Promise<string | null> {
       }
     );
 
-    console.log("✅ 토큰 갱신 성공", response.data);
+    showToast("액세스 토큰이 갱신되었습니다.", "success");
     const {
       accessToken,
       refreshToken: newRefreshToken,
@@ -36,12 +36,16 @@ export default async function refreshAccessToken(): Promise<string | null> {
 
     if (!accessToken) throw new Error("잘못된 응답");
 
-    const expiresAt = Date.now() + expiresIn * 1000;
+    const expiresAt = Date.now() + expiresIn;
     setToken(accessToken, newRefreshToken, expiresAt);
 
     return accessToken;
+    // eslint-disable-next-line
   } catch (err) {
-    console.error("❌ 토큰 갱신 실패", err);
+    showToast(
+      "액세스 토큰 갱신에 실패했습니다. 다시 로그인 해주세요.",
+      "error"
+    );
     return null;
   }
 }

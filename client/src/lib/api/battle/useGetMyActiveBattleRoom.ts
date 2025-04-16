@@ -13,7 +13,7 @@ export const useGetMyActiveBattleRoom = () => {
     queryKey: ["myActiveBattleRoom"],
     queryFn: async () => {
       const response = await httpClient.get<
-        CommonApiResponse<BattleRoomResponse>
+        CommonApiResponse<BattleRoomResponse | []>
       >("/battles/my-active");
       return response.data;
     },

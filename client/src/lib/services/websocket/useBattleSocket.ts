@@ -122,18 +122,17 @@ export const useBattleSocket = (roomId: number) => {
     initSocket();
 
     return () => {
-      console.log("👋 WebSocket 연결 종료 및 핸들러 해제");
-      battleWebSocketService.off(BattleSocketEventKey.PARTICIPANTS);
-      battleWebSocketService.off(BattleSocketEventKey.START);
-      battleWebSocketService.off(BattleSocketEventKey.STATUS);
-      battleWebSocketService.off(BattleSocketEventKey.PROGRESS);
-      battleWebSocketService.off(BattleSocketEventKey.NEXT_QUESTION);
-      battleWebSocketService.off(BattleSocketEventKey.RESULT);
-      battleWebSocketService.off(BattleSocketEventKey.END);
-      battleWebSocketService.off(BattleSocketEventKey.ERROR);
-
-      battleWebSocketService.disconnect();
-      resetStore();
+      // console.log("👋 WebSocket 연결 종료 및 핸들러 해제");
+      // battleWebSocketService.off(BattleSocketEventKey.PARTICIPANTS);
+      // battleWebSocketService.off(BattleSocketEventKey.START);
+      // battleWebSocketService.off(BattleSocketEventKey.STATUS);
+      // battleWebSocketService.off(BattleSocketEventKey.PROGRESS);
+      // battleWebSocketService.off(BattleSocketEventKey.NEXT_QUESTION);
+      // battleWebSocketService.off(BattleSocketEventKey.RESULT);
+      // battleWebSocketService.off(BattleSocketEventKey.END);
+      // battleWebSocketService.off(BattleSocketEventKey.ERROR);
+      // battleWebSocketService.disconnect();
+      // resetStore();
     };
   }, [
     roomId,

@@ -44,8 +44,7 @@ httpClient.interceptors.response.use(
     const status = error.response?.status;
 
     if (status === 401) {
-      console.warn("🔴 인증 만료됨. 토큰 갱신 시도");
-
+      showToast("인증 오류: 로그인이 필요합니다.", "warning");
       const newAccessToken = await refreshAccessToken();
       if (newAccessToken) {
         error.config.headers.Authorization = `Bearer ${newAccessToken}`;

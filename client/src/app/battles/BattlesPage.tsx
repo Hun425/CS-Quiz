@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useGetActiveBattleRooms } from "@/lib/api/battle/useGetActiveBattleRooms";
 import { useGetMyActiveBattleRoom } from "@/lib/api/battle/useGetMyActiveBattleRoom";
 import CreateBattleRoomModal from "./_components/CreateBattleRoomModal";
-import { BattleRoomResponse } from "@/lib/types/battle";
 import BattleRoomCard from "./_components/BattleRoomCard";
 import Button from "../_components/Button";
 
@@ -27,6 +26,15 @@ const BattlesPage: React.FC = () => {
     await refetchMyRoom();
     setIsModalOpen(false);
   };
+
+  // 준비
+  const myRoom = myBattleRoomData?.data;
+  const activeRooms = activeRoomsData?.data;
+
+  // ⛑ 안전하게 검사 (null, undefined, 빈배열, 잘못된 타입 모두 커버)
+  const hasMyRoom = myRoom && !Array.isArray(myRoom); // 단일 객체만 허용
+
+  const hasActiveRooms = Array.isArray(activeRooms) && activeRooms.length > 0;
 
   return (
     <div className="bg-sub-background min-h-screen max-w-screen-xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
@@ -87,15 +95,11 @@ const BattlesPage: React.FC = () => {
             🏆 참여 중인 대결
           </h2>
           {isMyBattleRoomLoading ? (
-            <p className="flex justify-center items-center h-20 text-muted text-center rounded-md bg-subtle">
-              로딩 중...
-            </p>
-          ) : myBattleRoomData?.data ? (
-            <BattleRoomCard room={myBattleRoomData.data} />
+            <p>로딩 중...</p>
+          ) : hasMyRoom ? (
+            <BattleRoomCard room={myRoom} />
           ) : (
-            <p className="flex justify-center items-center h-20 text-muted text-center rounded-md bg-subtle">
-              현재 참여 중인 대결이 없습니다.
-            </p>
+            <p>현재 참여 중인 대결이 없습니다.</p>
           )}
         </section>
 
@@ -119,25 +123,17 @@ const BattlesPage: React.FC = () => {
           </div>
 
           {isActiveRoomsLoading ? (
-            <p className="text-center py-4 text-muted animate-fade-in-out">
-              로딩 중...
-            </p>
-          ) : activeRoomsData?.data?.length ? (
-            <ul className="flex flex-col gap-4 overflow-y-auto pr-1 h-full">
-              {activeRoomsData.data.map((room: BattleRoomResponse) => (
-                <li
-                  key={room.id}
-                  aria-label={`${room.quizTitle} 퀴즈 대결 카드`}
-                  className="w-full"
-                >
+            <p>로딩 중...</p>
+          ) : hasActiveRooms ? (
+            <ul className="overflow-y-auto">
+              {activeRooms!.map((room) => (
+                <li key={room.id}>
                   <BattleRoomCard room={room} />
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="flex justify-center items-center h-full text-muted text-center rounded-md bg-subtle">
-              현재 활성화된 대결이 없습니다.
-            </p>
+            <p>현재 활성화된 대결이 없습니다.</p>
           )}
         </section>
 

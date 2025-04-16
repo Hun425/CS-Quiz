@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useGetBattleRoom } from "@/lib/api/battle/useGetBattleRoom";
 import { useBattleSocket } from "@/lib/services/websocket/useBattleSocket";
@@ -34,6 +34,7 @@ const BattleRoomClientPage = () => {
 
   const isReady = myParticipant?.ready ?? false;
 
+  // 방 떠나는건 버튼 누르는것만으로 가능
   const handleLeave = () => {
     battleSocketClient.leaveBattle();
     router.push("/battles");
@@ -42,12 +43,6 @@ const BattleRoomClientPage = () => {
   const handleToggleReady = () => {
     battleSocketClient.toggleReady();
   };
-
-  useEffect(() => {
-    return () => {
-      battleSocketClient.leaveBattle();
-    };
-  }, []);
 
   if (!userId || isLoading || !participantsPayload?.participants)
     return <Loading />;
