@@ -4,10 +4,7 @@ import SockJS from "sockjs-client";
 import { Client, IFrame } from "@stomp/stompjs";
 import { useProfileStore } from "@/store/profileStore";
 import { BattleWebSocketEvents } from "@/lib/types/battle";
-import {
-  BattleParticipantsPayload,
-  BattleSocketEventKey,
-} from "@/lib/types/battle";
+import { Participant, BattleSocketEventKey } from "@/lib/types/battle";
 
 type EventHandlerMap = {
   [K in BattleSocketEventKey]: (data: BattleWebSocketEvents[K]) => void;
@@ -139,7 +136,7 @@ class BattleWebSocketService {
     if (!this.client) return;
 
     this.client.subscribe(`/topic/battle/${roomId}/participants`, (msg) => {
-      const data: BattleParticipantsPayload = JSON.parse(msg.body);
+      const data: Participant[] = JSON.parse(msg.body);
       this.triggerEvent(BattleSocketEventKey.PARTICIPANTS, data);
     });
 

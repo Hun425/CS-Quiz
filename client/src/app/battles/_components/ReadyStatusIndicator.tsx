@@ -1,14 +1,14 @@
 "use client";
 
-import { BattleParticipantsPayload } from "@/lib/types/battle";
+import { Participant } from "@/lib/types/battle";
 
 interface Props {
-  participants: BattleParticipantsPayload | null;
+  participants: Participant[] | null;
 }
 
 const ReadyStatusIndicator = ({ participants }: Props) => {
-  const total = participants?.participants.length ?? 0;
-  const ready = participants?.participants.filter((p) => p.ready).length ?? 0;
+  const total = participants?.length ?? 0;
+  const ready = participants?.filter((p) => p.ready).length ?? 0;
   const allReady = total > 1 && total === ready;
 
   return (

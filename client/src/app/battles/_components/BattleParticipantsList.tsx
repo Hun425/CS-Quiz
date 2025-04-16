@@ -1,17 +1,17 @@
-import { BattleParticipantsPayload } from "@/lib/types/battle";
+import { Participant } from "@/lib/types/battle";
 import Image from "next/image";
 
 interface Props {
-  participants: BattleParticipantsPayload | null;
+  participants: Participant[] | null;
 }
 
 const BattleParticipantsList: React.FC<Props> = ({ participants }) => {
-  const hasParticipants = (participants?.participants?.length ?? 0) > 0;
+  const hasParticipants = (participants?.length ?? 0) > 0;
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
       {hasParticipants ? (
-        participants!.participants.map((p) => (
+        participants!.map((p) => (
           <div
             key={p.userId}
             className={`p-4 rounded-2xl flex flex-col items-center border ${

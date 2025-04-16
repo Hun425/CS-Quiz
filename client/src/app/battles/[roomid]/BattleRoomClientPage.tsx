@@ -29,7 +29,7 @@ const BattleRoomClientPage = () => {
   );
 
   const myParticipant = useMemo(() => {
-    return participantsPayload?.participants?.find((p) => p.userId === userId);
+    return participantsPayload?.find((p) => p.userId === userId);
   }, [participantsPayload, userId]);
 
   const isReady = myParticipant?.ready ?? false;
@@ -44,8 +44,7 @@ const BattleRoomClientPage = () => {
     battleSocketClient.toggleReady();
   };
 
-  if (!userId || isLoading || !participantsPayload?.participants)
-    return <Loading />;
+  if (!userId || isLoading || !participantsPayload) return <Loading />;
 
   if (!battleRoom)
     return (
