@@ -19,6 +19,5 @@ export const useGetActiveBattleRooms = () => {
       >("/battles/active");
       return response.data;
     },
-    staleTime: 1000 * 60 * 2, // 2분 동안 캐싱
   });
 };

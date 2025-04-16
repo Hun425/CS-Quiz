@@ -22,6 +22,5 @@ export const useGetBattleRoom = (roomId: number) => {
       return response.data;
     },
     enabled: typeof roomId === "number" && !isNaN(roomId),
-    staleTime: 1000 * 60 * 5, // 5분 동안 캐싱
   });
 };

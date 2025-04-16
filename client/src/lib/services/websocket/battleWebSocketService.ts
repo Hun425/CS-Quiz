@@ -73,11 +73,8 @@ class BattleWebSocketService {
           this.connected = true;
           this.connecting = false;
 
+          this.joinBattle(userId);
           this.subscribeToBattleEvents(roomId);
-          // ⏳ 약간의 지연 후 참가 전송
-          setTimeout(() => {
-            this.joinBattle(userId);
-          }, 100);
 
           console.log("✅ WebSocket 연결 완료:", frame);
           resolve();

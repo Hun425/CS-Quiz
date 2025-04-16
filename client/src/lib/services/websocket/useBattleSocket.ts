@@ -9,6 +9,7 @@ import {
   BattleWebSocketEvents,
   BattleSocketEventKey,
 } from "@/lib/types/battle";
+
 /**
  * ✅ 배틀 WebSocket을 초기화하고 이벤트를 상태에 반영하는 훅
  * @param roomId - 현재 배틀 방 ID
@@ -31,6 +32,65 @@ export const useBattleSocket = (roomId: number) => {
   useEffect(() => {
     if (!roomId || !userId) return;
 
+    const handleParticipants = (
+      data: BattleWebSocketEvents[BattleSocketEventKey.PARTICIPANTS]
+    ) => {
+      console.log("📥 [PARTICIPANTS] 참가자 정보 수신:", data);
+      setParticipantsPayload({ ...data });
+    };
+
+    const handleStart = (
+      data: BattleWebSocketEvents[BattleSocketEventKey.START]
+    ) => {
+      console.log("🚀 [START] 배틀 시작 수신:", data);
+      setStartPayload(data);
+      setTimeout(() => {
+        router.push(`/battles/${roomId}/play`);
+      }, 1000);
+    };
+
+    const handleStatus = (
+      data: BattleWebSocketEvents[BattleSocketEventKey.STATUS]
+    ) => {
+      console.log("📡 [STATUS] 상태 변경 수신:", data);
+      setStatus(data.status);
+    };
+
+    const handleProgress = (
+      data: BattleWebSocketEvents[BattleSocketEventKey.PROGRESS]
+    ) => {
+      console.log("📊 [PROGRESS] 진행 상황 수신:", data);
+      setProgress(data);
+    };
+
+    const handleNext = (
+      data: BattleWebSocketEvents[BattleSocketEventKey.NEXT_QUESTION]
+    ) => {
+      console.log("❓ [NEXT_QUESTION] 다음 문제 수신:", data);
+      setNextQuestion(data);
+    };
+
+    const handleResult = (
+      data: BattleWebSocketEvents[BattleSocketEventKey.RESULT]
+    ) => {
+      console.log("📝 [RESULT] 정답 결과 수신:", data);
+      setResult(data);
+    };
+
+    const handleEnd = (
+      data: BattleWebSocketEvents[BattleSocketEventKey.END]
+    ) => {
+      console.log("🏁 [END] 배틀 종료 수신:", data);
+      setEndPayload(data);
+    };
+
+    const handleError = (
+      data: BattleWebSocketEvents[BattleSocketEventKey.ERROR]
+    ) => {
+      console.error("❌ [ERROR] 에러 수신:", data);
+      alert(data);
+    };
+
     const initSocket = async () => {
       try {
         console.log("🌐 WebSocket 연결 시도 중...");
@@ -39,71 +99,21 @@ export const useBattleSocket = (roomId: number) => {
 
         battleWebSocketService.on(
           BattleSocketEventKey.PARTICIPANTS,
-          (data: BattleWebSocketEvents[BattleSocketEventKey.PARTICIPANTS]) => {
-            console.log("📥 [PARTICIPANTS] 참가자 정보 수신:", data);
-            setParticipantsPayload({ ...data });
-          }
+          handleParticipants
         );
-
-        battleWebSocketService.on(
-          BattleSocketEventKey.START,
-          (data: BattleWebSocketEvents[BattleSocketEventKey.START]) => {
-            console.log("🚀 [START] 배틀 시작 수신:", data);
-            setStartPayload(data);
-
-            setTimeout(() => {
-              router.push(`/battles/${roomId}/play`);
-            }, 1000); // 1초 후
-          }
-        );
-
-        battleWebSocketService.on(
-          BattleSocketEventKey.STATUS,
-          (data: BattleWebSocketEvents[BattleSocketEventKey.STATUS]) => {
-            console.log("📡 [STATUS] 상태 변경 수신:", data);
-            setStatus(data.status);
-          }
-        );
-
+        battleWebSocketService.on(BattleSocketEventKey.START, handleStart);
+        battleWebSocketService.on(BattleSocketEventKey.STATUS, handleStatus);
         battleWebSocketService.on(
           BattleSocketEventKey.PROGRESS,
-          (data: BattleWebSocketEvents[BattleSocketEventKey.PROGRESS]) => {
-            console.log("📊 [PROGRESS] 진행 상황 수신:", data);
-            setProgress(data);
-          }
+          handleProgress
         );
-
         battleWebSocketService.on(
           BattleSocketEventKey.NEXT_QUESTION,
-          (data: BattleWebSocketEvents[BattleSocketEventKey.NEXT_QUESTION]) => {
-            console.log("❓ [NEXT_QUESTION] 다음 문제 수신:", data);
-            setNextQuestion(data);
-          }
+          handleNext
         );
-
-        battleWebSocketService.on(
-          BattleSocketEventKey.RESULT,
-          (data: BattleWebSocketEvents[BattleSocketEventKey.RESULT]) => {
-            console.log("📝 [RESULT] 정답 결과 수신:", data);
-            setResult(data);
-          }
-        );
-
-        battleWebSocketService.on(
-          BattleSocketEventKey.END,
-          (data: BattleWebSocketEvents[BattleSocketEventKey.END]) => {
-            console.log("🏁 [END] 배틀 종료 수신:", data);
-            setEndPayload(data);
-          }
-        );
-
-        battleWebSocketService.on(
-          BattleSocketEventKey.ERROR,
-          (data: BattleWebSocketEvents[BattleSocketEventKey.ERROR]) => {
-            console.error("❌ [ERROR] 에러 수신:", data);
-            alert(data);
-          }
-        );
+        battleWebSocketService.on(BattleSocketEventKey.RESULT, handleResult);
+        battleWebSocketService.on(BattleSocketEventKey.END, handleEnd);
+        battleWebSocketService.on(BattleSocketEventKey.ERROR, handleError);
       } catch (error) {
         console.error("❌ WebSocket 초기화 실패:", error);
       }
@@ -112,8 +122,16 @@ export const useBattleSocket = (roomId: number) => {
     initSocket();
 
     return () => {
-      console.log("👋 WebSocket 연결 종료 및 상태 초기화");
-      battleWebSocketService.clearEventHandlers();
+      console.log("👋 WebSocket 연결 종료 및 핸들러 해제");
+      battleWebSocketService.off(BattleSocketEventKey.PARTICIPANTS);
+      battleWebSocketService.off(BattleSocketEventKey.START);
+      battleWebSocketService.off(BattleSocketEventKey.STATUS);
+      battleWebSocketService.off(BattleSocketEventKey.PROGRESS);
+      battleWebSocketService.off(BattleSocketEventKey.NEXT_QUESTION);
+      battleWebSocketService.off(BattleSocketEventKey.RESULT);
+      battleWebSocketService.off(BattleSocketEventKey.END);
+      battleWebSocketService.off(BattleSocketEventKey.ERROR);
+
       battleWebSocketService.disconnect();
       resetStore();
     };

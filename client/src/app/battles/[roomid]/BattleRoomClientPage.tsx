@@ -23,6 +23,7 @@ const BattleRoomClientPage = () => {
   const battleRoom = data?.data;
 
   useBattleSocket(roomId);
+
   const participantsPayload = useBattleSocketStore(
     (s) => s.participantsPayload
   );

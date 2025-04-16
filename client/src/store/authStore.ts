@@ -31,6 +31,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
+        const { wasLoggedOut } = useAuthStore.getState();
         useProfileStore.getState().clearProfile();
 
         set({
@@ -41,7 +42,9 @@ export const useAuthStore = create<AuthState>()(
           wasLoggedOut: true,
         });
 
-        alert("로그아웃 되었습니다.");
+        if (!wasLoggedOut) {
+          alert("로그아웃 되었습니다.");
+        }
         if (typeof window !== "undefined") {
           localStorage.removeItem("auth");
           localStorage.removeItem("profile");

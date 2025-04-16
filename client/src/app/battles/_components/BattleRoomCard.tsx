@@ -1,7 +1,6 @@
 import { BattleRoomResponse, BattleStatus } from "@/lib/types/battle";
 import Button from "@/app/_components/Button";
 import { useRouter } from "next/navigation";
-
 const BattleRoomCard = ({ room }: { room: BattleRoomResponse }) => {
   const router = useRouter();
 
