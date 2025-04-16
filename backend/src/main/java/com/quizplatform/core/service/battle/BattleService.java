@@ -166,18 +166,36 @@ public class BattleService {
      * 특정 사용자가 현재 참여하고 있는 '진행중' 상태의 대결방을 조회합니다.
      *
      * @param user 조회할 사용자
-     * @return 사용자가 참여중인 활성 대결방 정보 ({@link BattleRoomResponse})
-     * @throws BusinessException 활성 대결방을 찾을 수 없을 때 (ErrorCode.BATTLE_ROOM_NOT_FOUND)
+     * @return 사용자가 참여중인 활성 대결방 정보 ({@link BattleRoomResponse}), 없으면 null
      */
     public BattleRoomResponse getActiveBattleRoomByUser(User user) {
-        BattleRoom room = battleRoomRepository.findActiveRoomByUser(user, BattleRoomStatus.IN_PROGRESS)
-                .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND, "활성 대결방이 없습니다."));
-
-        // 상세 정보 로드
-        room = battleRoomRepository.findByIdWithDetails(room.getId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND, "활성 대결방이 없습니다."));
-
-        return entityMapperService.mapToBattleRoomResponse(room);
+        try {
+            // IN_PROGRESS 상태인 방 찾기 시도
+            Optional<BattleRoom> roomOpt = battleRoomRepository.findActiveRoomByUser(user, BattleRoomStatus.IN_PROGRESS);
+            
+            // IN_PROGRESS 상태인 방이 없으면 WAITING 상태인 방도 찾아봄
+            if (roomOpt.isEmpty()) {
+                roomOpt = battleRoomRepository.findActiveRoomByUser(user, BattleRoomStatus.WAITING);
+            }
+            
+            // 활성 대결방이 없으면 null 반환
+            if (roomOpt.isEmpty()) {
+                return null;
+            }
+            
+            // 상세 정보 로드
+            BattleRoom room = battleRoomRepository.findByIdWithDetails(roomOpt.get().getId())
+                    .orElse(null);
+                    
+            if (room == null) {
+                return null;
+            }
+    
+            return entityMapperService.mapToBattleRoomResponse(room);
+        } catch (Exception e) {
+            // 예외 발생 시에도 null 반환 (컨트롤러에서 빈 배열로 변환)
+            return null;
+        }
     }
 
     /**
@@ -714,23 +732,39 @@ public class BattleService {
      * @return 생성된 {@link BattleJoinResponse} DTO
      */
     private BattleJoinResponse createBattleJoinResponse(BattleRoom room, BattleParticipant newParticipant) {
-        List<BattleJoinResponse.ParticipantInfo> participants = room.getParticipants().stream()
-                .map(participant -> BattleJoinResponse.ParticipantInfo.builder()
-                        .userId(participant.getUser().getId())
-                        .username(participant.getUser().getUsername())
-                        .profileImage(participant.getUser().getProfileImage())
-                        .level(participant.getUser().getLevel())
-                        .isReady(participant.isReady())
-                        .build())
+        // 방의 최신 참가자 목록을 직접 DB에서 다시 조회
+        List<BattleParticipant> latestParticipants = participantRepository.findByBattleRoom(room);
+        
+        log.info("대결방 참가자 목록 조회: roomId={}, 전체참가자수={}, 신규참가자ID={}",
+                room.getId(), latestParticipants.size(), newParticipant.getUser().getId());
+        
+        // 최신 참가자 목록에서 ParticipantInfo로 변환
+        List<BattleJoinResponse.ParticipantInfo> participants = latestParticipants.stream()
+                .map(participant -> {
+                    User user = participant.getUser();
+                    return BattleJoinResponse.ParticipantInfo.builder()
+                            .userId(user.getId())
+                            .username(user.getUsername())
+                            .profileImage(user.getProfileImage())
+                            .level(user.getLevel())
+                            .isReady(participant.isReady())
+                            .build();
+                })
                 .collect(Collectors.toList());
+
+        // 참가자 ID 목록 로깅 (디버깅용)
+        String participantIds = participants.stream()
+                .map(p -> p.getUserId().toString())
+                .collect(Collectors.joining(", "));
+        log.info("참가자 ID 목록: {}", participantIds);
 
         return BattleJoinResponse.builder()
                 .roomId(room.getId())
                 .userId(newParticipant.getUser().getId()) // 응답의 주체 사용자 ID
                 .username(newParticipant.getUser().getUsername())
-                .currentParticipants(room.getParticipants().size())
+                .currentParticipants(latestParticipants.size()) // 최신 참가자 수 기준
                 .maxParticipants(room.getMaxParticipants())
-                .participants(participants) // 전체 참가자 목록
+                .participants(participants) // 최신 참가자 목록
                 .joinedAt(LocalDateTime.now())
                 .build();
     }

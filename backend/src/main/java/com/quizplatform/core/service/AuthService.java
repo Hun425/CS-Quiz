@@ -144,21 +144,52 @@ public class AuthService {
         }
 
         try {
-            String userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
-            log.info("토큰에서 추출한 사용자 ID: {}", userId);
+            // 토큰에서 클레임 정보를 직접 추출
+            var claims = jwtTokenProvider.getClaimsFromToken(refreshToken);
+            String userIdentifier = claims.getSubject();
+            log.info("토큰에서 추출한 사용자 식별자: {}", userIdentifier);
             
-            User user = userRepository.findById(Long.parseLong(userId))
-                    .orElseThrow(() -> new OAuth2AuthenticationProcessingException("사용자를 찾을 수 없습니다."));
+            User user = null;
+            
+            // 1. 먼저 ID로 조회 시도
+            try {
+                Long userId = Long.parseLong(userIdentifier);
+                user = userRepository.findById(userId).orElse(null);
+                log.info("ID로 사용자 조회 {}회: {}", user != null ? "성공" : "실패", userId);
+            } catch (NumberFormatException e) {
+                log.info("사용자 식별자가 숫자가 아닙니다: {}", userIdentifier);
+            }
+            
+            // 2. ID로 조회 실패 시 이메일로 조회
+            if (user == null) {
+                user = userRepository.findByEmail(userIdentifier).orElse(null);
+                log.info("이메일로 사용자 조회 {}: {}", user != null ? "성공" : "실패", userIdentifier);
+            }
+            
+            // 3. 그래도 못 찾으면 다른 방법 시도 (claims에서 email 필드가 있는지 확인)
+            if (user == null && claims.containsKey("email")) {
+                String email = claims.get("email", String.class);
+                user = userRepository.findByEmail(email).orElse(null);
+                log.info("클레임의 이메일로 사용자 조회 {}: {}", user != null ? "성공" : "실패", email);
+            }
+            
+            // 4. 최종적으로 사용자를 찾지 못한 경우
+            if (user == null) {
+                throw new OAuth2AuthenticationProcessingException("사용자를 찾을 수 없습니다: " + userIdentifier);
+            }
 
-            log.info("사용자 조회 성공: {}", user.getUsername());
+            log.info("사용자 조회 성공: id={}, username={}", user.getId(), user.getUsername());
 
-            // 새로운 액세스 토큰 생성
-            String newAccessToken = jwtTokenProvider.generateAccessToken(createAuthentication(user));
-            log.info("새 액세스 토큰 생성 완료");
+            // 새로운 액세스 토큰 생성 - 여기서는 명시적으로 ID를 subject로 사용
+            Authentication auth = createAuthenticationWithId(user);
+            String newAccessToken = jwtTokenProvider.generateAccessToken(auth);
+            String newRefreshToken = jwtTokenProvider.generateRefreshToken(auth);
+            
+            log.info("새 토큰 생성 완료");
 
             return AuthResponse.builder()
                     .accessToken(newAccessToken)
-                    .refreshToken(refreshToken)
+                    .refreshToken(newRefreshToken) // 새로운 리프레시 토큰으로 교체
                     .email(user.getEmail())
                     .username(user.getUsername())
                     .tokenType("Bearer")
@@ -168,6 +199,38 @@ public class AuthService {
             log.error("리프레시 토큰 처리 중 오류 발생: {}", e.getMessage(), e);
             throw new OAuth2AuthenticationProcessingException("토큰 갱신 처리 중 오류가 발생했습니다: " + e.getMessage());
         }
+    }
+    
+    /**
+     * 사용자 ID를. 명시적으로 subject(sub)로 사용하는 Authentication 객체를 생성합니다.
+     * 이는 리프레시 토큰 처리 시 일관성을 유지하기 위함입니다.
+     *
+     * @param user 사용자 엔티티
+     * @return ID를 subject로 사용하는 Authentication 객체
+     */
+    private Authentication createAuthenticationWithId(User user) {
+        Set<GrantedAuthority> authorities = Collections.singleton(
+                new SimpleGrantedAuthority("ROLE_USER")
+        );
+
+        // OAuth2User 구현체 생성 - subject로 ID를 직접 사용
+        OAuth2User oauth2User = new DefaultOAuth2User(
+                authorities,
+                Map.of(
+                        "sub", user.getId().toString(), // ID를 sub 클레임으로 설정
+                        "email", user.getEmail(),
+                        "name", user.getUsername(),
+                        "picture", user.getProfileImage()
+                ),
+                "sub" // nameAttributeKey - ID를 기본 식별자로 사용
+        );
+
+        // OAuth2 인증 토큰 생성
+        return new OAuth2AuthenticationToken(
+                oauth2User,
+                authorities,
+                user.getProvider().toString().toLowerCase()
+        );
     }
 
     /**

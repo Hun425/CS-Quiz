@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -218,16 +219,15 @@ public class BattleController {
      * 한 사용자는 한 번에 하나의 배틀방에만 참가할 수 있습니다.</p>
      * 
      * @param userPrincipal 인증된 사용자 정보
-     * @return 사용자의 활성 배틀방 정보
+     * @return 사용자의 활성 배틀방 정보 또는 빈 배열
      * @throws BusinessException 인증되지 않은 사용자일 경우
      */
     @Operation(summary = "내 활성 대결방 조회", description = "현재 사용자가 참가 중인 활성 대결방을 조회합니다.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "활성 대결방 정보가 성공적으로 조회되었습니다."),
-            @ApiResponse(responseCode = "404", description = "활성 대결방이 없습니다.")
+            @ApiResponse(responseCode = "200", description = "활성 대결방 정보가 성공적으로 조회되었습니다.")
     })
     @GetMapping("/my-active")
-    public ResponseEntity<CommonApiResponse<BattleRoomResponse>> getMyActiveBattleRoom(
+    public ResponseEntity<CommonApiResponse<Object>> getMyActiveBattleRoom(
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
         // 사용자 인증 확인
@@ -236,6 +236,12 @@ public class BattleController {
         }
 
         BattleRoomResponse battleRoom = battleService.getActiveBattleRoomByUser(userPrincipal.getUser());
+        
+        // 활성 대결방이 없으면 빈 배열 반환
+        if (battleRoom == null) {
+            return ResponseEntity.ok(CommonApiResponse.success(new ArrayList<>()));
+        }
+        
         return ResponseEntity.ok(CommonApiResponse.success(battleRoom));
     }
 }
