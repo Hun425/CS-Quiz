@@ -9,12 +9,12 @@ const BattleParticipantsList: React.FC<Props> = ({ participants }) => {
   const hasParticipants = (participants?.length ?? 0) > 0;
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
       {hasParticipants ? (
         participants!.map((p) => (
           <div
             key={p.userId}
-            className={`p-4 rounded-2xl flex flex-col items-center border ${
+            className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col items-center border transition-all ${
               p.ready
                 ? "border-green-500 bg-background"
                 : "border-border bg-background"
@@ -24,15 +24,15 @@ const BattleParticipantsList: React.FC<Props> = ({ participants }) => {
               src={p.profileImage || "/default-avatar.png"}
               alt={p.username}
               className="rounded-full"
-              width={80}
-              height={80}
+              width={60}
+              height={60}
               priority
             />
-            <p className="mt-3 text-lg font-semibold text-foreground">
+            <p className="mt-2 sm:mt-3 text-sm sm:text-base font-semibold text-foreground text-center truncate max-w-[90%]">
               {p.username}
             </p>
             <p
-              className={`mt-2 text-sm font-bold px-3 py-1 rounded-full tracking-wide ${
+              className={`mt-1 sm:mt-2 text-xs sm:text-sm font-bold px-2.5 py-1 rounded-full tracking-wide text-center ${
                 p.ready
                   ? "bg-green-100 text-green-700 border border-green-400"
                   : "bg-gray-100 text-gray-500 border border-gray-300"

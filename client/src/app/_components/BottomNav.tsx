@@ -4,7 +4,7 @@ import { ClipboardList, Sword, User } from "lucide-react";
 
 const BottomNav = () => {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white shadow-lg p-3 rounded-t-xl md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white shadow-lg p-3 rounded-t-xl md:hidden border-t border-border z-50">
       <div className="flex justify-around">
         {/* 퀴즈 */}
         <Link

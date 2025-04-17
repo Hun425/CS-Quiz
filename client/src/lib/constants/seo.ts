@@ -33,6 +33,33 @@ export const METADATA: Record<string, IMetadata> = {
       images: [DEFAULT_OG_IMAGE],
     },
   },
+  login: {
+    title: "로그인 | Cram",
+    description:
+      "소셜 계정으로 간편하게 로그인하고 Cram의 모든 기능을 즐겨보세요!",
+    openGraph: {
+      title: "로그인 | Cram",
+      description: "Google, Kakao 등 소셜 계정으로 간편하게 로그인하세요.",
+      url: `${SITE_URL}/login`,
+      siteName: "Cram",
+      images: [
+        {
+          url: `${SITE_URL}/images/og-login.png`,
+          width: 1200,
+          height: 630,
+          alt: "Cram 로그인 페이지",
+        },
+      ],
+      locale: "ko_KR",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "로그인 | Cram",
+      description: "Cram에 로그인하고 다양한 CS 퀴즈 기능을 이용해보세요!",
+      images: [`${SITE_URL}/images/og-login.png`],
+    },
+  },
 
   quizList: {
     title: "퀴즈 목록 | Cram",

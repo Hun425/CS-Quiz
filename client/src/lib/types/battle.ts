@@ -1,4 +1,5 @@
 /**
+import BattleParticipantsList from './../../app/battles/_components/BattleParticipantsList';
  * ✅ WebSocket을 통해 서버로부터 수신 가능한 이벤트 타입
  /** 참가자 목록 (입장/퇴장/준비 상태 포함) */
 /** 배틀 시작 이벤트 */
@@ -20,7 +21,7 @@ export enum BattleSocketEventKey {
 }
 
 export interface BattleWebSocketEvents {
-  [BattleSocketEventKey.PARTICIPANTS]: Participant[]; // 참가자 목록
+  [BattleSocketEventKey.PARTICIPANTS]: BattleParticipantsResponse; // 참가자 목록
   [BattleSocketEventKey.START]: BattleStartResponse;
   [BattleSocketEventKey.STATUS]: { status: BattleStatus };
   [BattleSocketEventKey.PROGRESS]: BattleProgressResponse;
@@ -28,6 +29,20 @@ export interface BattleWebSocketEvents {
   [BattleSocketEventKey.RESULT]: BattleAnswerResponse;
   [BattleSocketEventKey.END]: BattleEndResponse;
   [BattleSocketEventKey.ERROR]: string;
+}
+
+/**
+ * ✅ 배틀룸 참가자 목록 응답 타입 (WebSocket)
+ * - 배틀룸에 참가한 사용자들의 정보를 포함
+ */
+export interface BattleParticipantsResponse {
+  currentParticipants: number; // 현재 참가자 수
+  joinedAt: string; // 참가 시간 (ISO 8601 형식)
+  maxParticipants: number; // 최대 참가자 수
+  participants: Participant[]; // 참가자 목록
+  roomId: number; // 배틀룸 ID
+  userId: number; // 참가자 ID
+  username: string; // 참가자 이름
 }
 
 /**

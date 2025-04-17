@@ -1,27 +1,34 @@
 "use client";
 
-import { Participant } from "@/lib/types/battle";
+import { BattleParticipantsResponse } from "@/lib/types/battle";
+import { CheckCircle, Users } from "lucide-react";
 
 interface Props {
-  participants: Participant[] | null;
+  participantsPayload: BattleParticipantsResponse | null;
 }
 
-const ReadyStatusIndicator = ({ participants }: Props) => {
-  const total = participants?.length ?? 0;
-  const ready = participants?.filter((p) => p.ready).length ?? 0;
-  const allReady = total > 1 && total === ready;
+const ReadyStatusIndicator = ({ participantsPayload }: Props) => {
+  const participants = participantsPayload?.participants ?? [];
+  const current = participantsPayload?.currentParticipants ?? 0;
+  const max = participantsPayload?.maxParticipants ?? 0;
+  const ready = participants.filter((p) => p.ready).length;
 
   return (
-    <div className="bg-sub-background p-4 rounded-xl text-center border border-border">
-      <p className="text-base text-muted-foreground">
-        ✅ 준비된 인원: <span className="text-primary font-bold">{ready}</span>{" "}
-        / {total}
-      </p>
-      {allReady && (
-        <p className="mt-2 text-green-600 font-semibold text-sm animate-pulse">
-          🚀 모든 참가자가 준비 완료되었습니다. 잠시 후 대결이 시작됩니다!
-        </p>
-      )}
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 px-4 py-3 border border-border rounded-lg bg-sub-background text-sm shadow-sm">
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <Users className="w-4 h-4 text-primary" />
+        <span>
+          <span className="font-medium text-foreground">{current}</span> / {max}{" "}
+          명 참여중
+        </span>
+      </div>
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <CheckCircle className="w-4 h-4 text-green-600" />
+        <span>
+          <span className="font-medium text-green-700">{ready}</span> /{" "}
+          {current} 준비 완료
+        </span>
+      </div>
     </div>
   );
 };

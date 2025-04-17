@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import {
-  Participant,
+  BattleParticipantsResponse,
   BattleStartResponse,
   BattleStatus,
   BattleProgressResponse,
@@ -12,7 +12,7 @@ import {
 } from "@/lib/types/battle";
 
 interface BattleSocketState {
-  participantsPayload: Participant[] | null;
+  participantsPayload: BattleParticipantsResponse | null;
   startPayload: BattleStartResponse | null;
   status: BattleStatus | null;
   progress: BattleProgressResponse | null;
@@ -21,7 +21,7 @@ interface BattleSocketState {
   endPayload: BattleEndResponse | null;
   lastUpdatedAt: number | null;
 
-  setParticipantsPayload: (data: Participant[]) => void;
+  setParticipantsPayload: (data: BattleParticipantsResponse) => void;
   setStartPayload: (data: BattleStartResponse) => void;
   setStatus: (status: BattleStatus) => void;
   setProgress: (data: BattleProgressResponse) => void;

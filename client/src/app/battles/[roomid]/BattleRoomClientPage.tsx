@@ -12,6 +12,7 @@ import ReadyStatusIndicator from "../_components/ReadyStatusIndicator";
 import BattleControlButtons from "../_components/BattleControlButtons";
 import battleSocketClient from "@/lib/services/websocket/battleWebSocketService";
 import Loading from "@/app/_components/Loading";
+import { Participant } from "@/lib/types/battle";
 
 const BattleRoomClientPage = () => {
   const router = useRouter();
@@ -28,9 +29,13 @@ const BattleRoomClientPage = () => {
     (s) => s.participantsPayload
   );
 
-  const myParticipant = useMemo(() => {
-    return participantsPayload?.find((p) => p.userId === userId);
-  }, [participantsPayload, userId]);
+  const myParticipant = useMemo(
+    () =>
+      participantsPayload?.participants.find(
+        (p: Participant) => p.userId === userId
+      ),
+    [participantsPayload, userId]
+  );
 
   const isReady = myParticipant?.ready ?? false;
 
@@ -57,13 +62,15 @@ const BattleRoomClientPage = () => {
     <div className="max-w-full mx-auto p-6 py-16 space-y-6 min-h-screen">
       <div className="max-w-screen-lg mx-auto space-y-6 min-h-screen">
         <BattleHeader battleRoom={battleRoom} />
-        <ReadyStatusIndicator participants={participantsPayload} />
+        <ReadyStatusIndicator participantsPayload={participantsPayload} />
         <BattleControlButtons
           isReady={isReady}
           onLeave={handleLeave}
           onToggleReady={handleToggleReady}
         />
-        <BattleParticipantsList participants={participantsPayload} />
+        <BattleParticipantsList
+          participants={participantsPayload.participants}
+        />
       </div>
     </div>
   );

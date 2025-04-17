@@ -20,14 +20,14 @@ export default function CallbackClient() {
 
       setToken(token, refreshToken, expiresAt);
 
-      //넥스트 서버에 토큰 보관
-      fetch("/api/oauth2/set-token", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, refreshToken, expiresIn }),
-      }).finally(() => {
-        router.replace("/");
-      });
+      // //넥스트 서버에 토큰 보관
+      // fetch("/api/oauth2/set-token", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({ token, refreshToken, expiresIn }),
+      // }).finally(() => {
+      //   router.replace("/quizzes");
+      // });
     } else {
       console.warn("🔴 잘못된 로그인 응답. 로그인 페이지로 이동.");
       router.replace("/login");

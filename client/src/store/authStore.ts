@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useProfileStore } from "@/store/profileStore";
+import { useQuizStore } from "./quizStore";
+
 interface AuthState {
   isAuthenticated: boolean;
   token: string | null;
@@ -10,6 +12,8 @@ interface AuthState {
   setToken: (token: string, refreshToken: string, expiresAt: number) => void;
   logout: () => void;
 }
+
+const { resetQuiz } = useQuizStore.getState();
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -48,6 +52,8 @@ export const useAuthStore = create<AuthState>()(
         if (typeof window !== "undefined") {
           localStorage.removeItem("auth");
           localStorage.removeItem("profile");
+          resetQuiz(true);
+          sessionStorage.removeItem("battle-socket-store");
           window.location.href = "/login";
         }
       },
