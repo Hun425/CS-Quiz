@@ -78,6 +78,20 @@ public class BattleAnswer {
     private int timeTaken;
 
     /**
+     * 타임아웃 발생 여부
+     * 시간 내에 답변을 제출하지 못한 경우 true
+     */
+    @Column(name = "timeout_occurred")
+    private boolean timeoutOccurred;
+
+    /**
+     * 연결 끊김 발생 여부
+     * 참가자가 중간에 연결이 끊긴 경우 true
+     */
+    @Column(name = "disconnect_occurred")
+    private boolean disconnectOccurred;
+
+    /**
      * 답변 제출 시간
      */
     @CreatedDate
@@ -99,6 +113,8 @@ public class BattleAnswer {
         this.timeTaken = timeTaken;
         this.timeBonus = 0;
         this.earnedPoints = 0;
+        this.timeoutOccurred = false;
+        this.disconnectOccurred = false;
     }
 
     /**
@@ -126,6 +142,24 @@ public class BattleAnswer {
      */
     public void setTimeBonus(int bonus) {
         this.timeBonus = bonus;
+    }
+
+    /**
+     * 타임아웃 발생 여부 설정
+     * 
+     * @param timeoutOccurred 타임아웃 발생 여부
+     */
+    public void setTimeoutOccurred(boolean timeoutOccurred) {
+        this.timeoutOccurred = timeoutOccurred;
+    }
+
+    /**
+     * 연결 끊김 발생 여부 설정
+     * 
+     * @param disconnectOccurred 연결 끊김 발생 여부
+     */
+    public void setDisconnectOccurred(boolean disconnectOccurred) {
+        this.disconnectOccurred = disconnectOccurred;
     }
 
     /**

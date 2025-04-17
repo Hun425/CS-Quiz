@@ -1,16 +1,28 @@
 package com.quizplatform.core.controller.battle;
 
+import com.quizplatform.core.config.security.UserPrincipal;
 import com.quizplatform.core.domain.battle.BattleRoomStatus;
 import com.quizplatform.core.dto.battle.*;
+import com.quizplatform.core.dto.common.CommonApiResponse;
+import com.quizplatform.core.exception.BusinessException;
+import com.quizplatform.core.exception.ErrorCode;
 import com.quizplatform.core.service.battle.BattleService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -490,5 +502,39 @@ public class BattleWebSocketController {
                     "준비 상태 변경 중 오류가 발생했습니다: " + e.getMessage()
             );
         }
+    }
+
+    /**
+     * 내 활성 배틀방 조회 API
+     *
+     * <p>현재 사용자가 참가 중인 활성 배틀방을 조회합니다.
+     * 한 사용자는 한 번에 하나의 배틀방에만 참가할 수 있습니다.</p>
+     *
+     * @param userPrincipal 인증된 사용자 정보
+     * @return 사용자의 활성 배틀방 정보 또는 빈 객체
+     * @throws BusinessException 인증되지 않은 사용자일 경우
+     */
+    @Operation(summary = "내 활성 대결방 조회", description = "현재 사용자가 참가 중인 활성 대결방을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "활성 대결방 정보가 성공적으로 조회되었습니다.")
+    })
+    @GetMapping("/my-active")
+    public ResponseEntity<CommonApiResponse<Object>> getMyActiveBattleRoom(
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal) {
+
+        // 사용자 인증 확인
+        if (userPrincipal == null) {
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "인증이 필요합니다.");
+        }
+
+        BattleRoomResponse battleRoom = battleService.getActiveBattleRoomByUser(userPrincipal.getUser());
+
+        // 활성 대결방이 없으면 빈 객체 반환 (이전: 빈 배열 반환)
+        if (battleRoom == null) {
+            // 빈 객체로 변경
+            return ResponseEntity.ok(CommonApiResponse.success(new HashMap<>()));
+        }
+
+        return ResponseEntity.ok(CommonApiResponse.success(battleRoom));
     }
 }

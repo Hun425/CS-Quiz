@@ -28,6 +28,8 @@ public class QBattleAnswer extends EntityPathBase<BattleAnswer> {
 
     public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
 
+    public final BooleanPath disconnectOccurred = createBoolean("disconnectOccurred");
+
     public final NumberPath<Integer> earnedPoints = createNumber("earnedPoints", Integer.class);
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
@@ -37,6 +39,8 @@ public class QBattleAnswer extends EntityPathBase<BattleAnswer> {
     public final com.quizplatform.core.domain.question.QQuestion question;
 
     public final NumberPath<Integer> timeBonus = createNumber("timeBonus", Integer.class);
+
+    public final BooleanPath timeoutOccurred = createBoolean("timeoutOccurred");
 
     public final NumberPath<Integer> timeTaken = createNumber("timeTaken", Integer.class);
 

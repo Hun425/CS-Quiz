@@ -512,4 +512,8 @@ public class BattleParticipant {
             return 0;
         }
     }
+
+    public void setCurrentStreak(int i) {
+        this.currentStreak = i;
+    }
 }

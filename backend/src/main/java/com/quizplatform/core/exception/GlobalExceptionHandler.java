@@ -1,5 +1,6 @@
 package com.quizplatform.core.exception;
 
+import com.quizplatform.core.dto.common.CommonApiResponse;
 import com.quizplatform.core.dto.error.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,16 +28,29 @@ public class GlobalExceptionHandler {
 
     /**
      * 비즈니스 예외 처리 메서드
-     * 
+     *
      * <p>애플리케이션의 비즈니스 로직에서 발생한 예외를 처리합니다.</p>
-     * 
+     *
      * @param e 비즈니스 예외 객체
      * @return 적절한 HTTP 상태 코드와 오류 정보가 포함된 응답 객체
      */
     @ExceptionHandler(BusinessException.class)
-    protected ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e) {
+    protected ResponseEntity<?> handleBusinessException(BusinessException e) {
         log.error("BusinessException: {}", e.getMessage());
         ErrorCode errorCode = e.getErrorCode();
+
+        // 데이터를 찾을 수 없는 경우(404)는 빈 객체로 응답
+        if (errorCode == ErrorCode.ENTITY_NOT_FOUND ||
+                errorCode == ErrorCode.USER_NOT_FOUND ||
+                errorCode == ErrorCode.QUIZ_NOT_FOUND ||
+                errorCode == ErrorCode.BATTLE_ROOM_NOT_FOUND ||
+                errorCode == ErrorCode.PARTICIPANT_NOT_FOUND) {
+
+            log.info("404 오류를 빈 객체로 응답 변환: {}", e.getMessage());
+            return ResponseEntity.ok(CommonApiResponse.success(new HashMap<>()));
+        }
+
+        // 그 외 비즈니스 예외는 기존대로 처리
         ErrorResponse response = ErrorResponse.of(errorCode, e.getMessage());
         return new ResponseEntity<>(response, errorCode.getStatus());
     }

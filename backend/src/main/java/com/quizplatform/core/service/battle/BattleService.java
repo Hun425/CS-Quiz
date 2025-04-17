@@ -1182,4 +1182,177 @@ public class BattleService {
                 .participants(participantInfos) // 업데이트된 참가자 목록
                 .build();
     }
+
+
+    /**
+     * 시간 내에 문제를 풀지 못한 참가자를 처리합니다.
+     * 현재 진행 중인 문제에 미응답 상태인 참가자들에게 자동으로 오답 처리합니다.
+     *
+     * @param roomId 배틀룸 ID
+     * @return 처리된 참가자 수
+     */
+    @Transactional
+    public int handleTimeoutParticipants(Long roomId) {
+        log.info("시간 내 미응답 참가자 처리: roomId={}", roomId);
+
+        BattleRoom room = battleRoomRepository.findByIdWithQuizQuestions(roomId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
+
+        // 진행 중인 방이 아니면 처리하지 않음
+        if (room.getStatus() != BattleRoomStatus.IN_PROGRESS) {
+            log.info("진행 중인 방이 아니므로 미응답 처리 무시: roomId={}, status={}", roomId, room.getStatus());
+            return 0;
+        }
+
+        // 현재 문제와 인덱스 확인
+        int currentIndex = room.getCurrentQuestionIndex();
+        Question currentQuestion = room.getCurrentQuestion();
+
+        if (currentQuestion == null) {
+            log.warn("현재 문제가 없어 미응답 처리 무시: roomId={}, index={}", roomId, currentIndex);
+            return 0;
+        }
+
+        log.info("미응답 처리 시작: roomId={}, 문제번호={}/{}, 인덱스={}",
+                roomId, currentIndex + 1, room.getQuestions().size(), currentIndex);
+
+        int processedCount = 0;
+
+        // 모든 활성 참가자 확인
+        for (BattleParticipant participant : room.getParticipants()) {
+            // 활성 참가자만 처리
+            if (participant.isActive()) {
+                // 각 참가자별로 현재 문제에 대한 답변 여부 확인
+                boolean hasAnswered = false;
+
+                // 안전하게 답변 데이터 접근을 위해 전체 참가자 데이터 다시 로드
+                BattleParticipant loadedParticipant = participantRepository.findByIdWithAnswers(participant.getId())
+                        .orElse(null);
+
+                if (loadedParticipant != null) {
+                    // 현재 문제 ID에 대한 답변이 있는지 확인
+                    hasAnswered = loadedParticipant.getAnswers().stream()
+                            .anyMatch(a -> a.getQuestion().getId().equals(currentQuestion.getId()));
+                }
+
+                // 답변하지 않은 참가자에게 자동 오답 처리
+                if (!hasAnswered) {
+                    log.info("미응답 참가자 발견: roomId={}, userId={}, 문제인덱스={}",
+                            roomId, participant.getUser().getId(), currentIndex);
+
+                    // 오답으로 처리 (빈 답변, 최대 제한 시간 사용)
+                    BattleAnswer timeoutAnswer = BattleAnswer.builder()
+                            .participant(participant)
+                            .question(currentQuestion)
+                            .answer("") // 빈 답변
+                            .timeTaken(currentQuestion.getTimeLimitSeconds()) // 최대 시간 사용
+                            .build();
+
+                    // 명시적으로 오답 처리
+                    timeoutAnswer.setCorrect(false);
+                    timeoutAnswer.setEarnedPoints(0);
+                    timeoutAnswer.setTimeoutOccurred(true); // 타임아웃 플래그 설정
+
+                    // 참가자 엔티티에 답변 추가
+                    participant.getAnswers().add(timeoutAnswer);
+                    participant.setCurrentStreak(0); // 연속 정답 초기화
+
+                    // 저장
+                    participantRepository.save(participant);
+                    processedCount++;
+
+                    log.info("타임아웃 자동 오답 처리 완료: roomId={}, userId={}, 문제={}",
+                            roomId, participant.getUser().getId(), currentQuestion.getId());
+                }
+            }
+        }
+
+        log.info("미응답 참가자 처리 완료: roomId={}, 처리된 참가자 수={}", roomId, processedCount);
+        return processedCount;
+    }
+
+    /**
+     * 배틀 중간에 이탈한 참가자를 처리합니다.
+     * WebSocket 연결이 끊긴 참가자를 자동으로 비활성화하고 필요시 오답 처리합니다.
+     *
+     * @param roomId 배틀룸 ID
+     * @param userId 참가자 ID
+     * @return 처리 결과 응답
+     */
+    @Transactional
+    public BattleLeaveResponse handleParticipantDisconnection(Long roomId, Long userId) {
+        log.info("배틀 이탈 참가자 처리: roomId={}, userId={}", roomId, userId);
+
+        BattleRoom room = battleRoomRepository.findByIdWithQuizQuestions(roomId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        BattleParticipant participant = participantRepository.findByBattleRoomAndUser(room, user)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND));
+
+        // 참가자 비활성화
+        participant.setActive(false);
+
+        // 진행 중인 배틀인 경우 추가 처리
+        if (room.getStatus() == BattleRoomStatus.IN_PROGRESS) {
+            // 현재 문제에 대해 아직 답변하지 않은 경우 자동 오답 처리
+            Question currentQuestion = room.getCurrentQuestion();
+
+            if (currentQuestion != null) {
+                // 안전하게 답변 데이터 접근을 위해 전체 참가자 데이터 다시 로드
+                BattleParticipant loadedParticipant = participantRepository.findByIdWithAnswers(participant.getId())
+                        .orElse(null);
+
+                if (loadedParticipant != null) {
+                    // 현재 문제 ID에 대한 답변이 있는지 확인
+                    boolean hasAnswered = loadedParticipant.getAnswers().stream()
+                            .anyMatch(a -> a.getQuestion().getId().equals(currentQuestion.getId()));
+
+                    // 답변하지 않은 경우 자동 오답 처리
+                    if (!hasAnswered) {
+                        log.info("이탈 참가자의 현재 문제 자동 오답 처리: roomId={}, userId={}, 문제ID={}",
+                                roomId, userId, currentQuestion.getId());
+
+                        // 오답으로 처리 (빈 답변, 최대 제한 시간 사용)
+                        BattleAnswer disconnectAnswer = BattleAnswer.builder()
+                                .participant(participant)
+                                .question(currentQuestion)
+                                .answer("") // 빈 답변
+                                .timeTaken(currentQuestion.getTimeLimitSeconds()) // 최대 시간 사용
+                                .build();
+
+                        // 명시적으로 오답 처리
+                        disconnectAnswer.setCorrect(false);
+                        disconnectAnswer.setEarnedPoints(0);
+                        disconnectAnswer.setDisconnectOccurred(true); // 연결 끊김 플래그 설정
+
+                        // 참가자 엔티티에 답변 추가
+                        participant.getAnswers().add(disconnectAnswer);
+                        participant.setCurrentStreak(0); // 연속 정답 초기화
+                    }
+                }
+            }
+        }
+
+        // 참가자 저장
+        participantRepository.save(participant);
+
+        log.info("이탈 참가자 처리 완료: roomId={}, userId={}, 상태={}",
+                roomId, userId, room.getStatus());
+
+        // 남은 활성 참가자가 없으면 배틀 종료
+        long activeParticipants = room.getParticipants().stream()
+                .filter(BattleParticipant::isActive)
+                .count();
+
+        if (activeParticipants == 0 && room.getStatus() == BattleRoomStatus.IN_PROGRESS) {
+            log.info("활성 참가자가 없어 배틀 자동 종료: roomId={}", roomId);
+            room.finishBattle();
+            battleRoomRepository.save(room);
+        }
+
+        return new BattleLeaveResponse(userId, roomId, room.getStatus());
+    }
 }
