@@ -3,7 +3,7 @@ import Button from "@/app/_components/Button";
 
 interface Props {
   questionId: number;
-  answer: string;
+  answer: string | null;
   timeSpentSecond: number;
 }
 
@@ -18,8 +18,8 @@ export default function SubmitAnswerButton({
       onClick={() => {
         battleWebSocketService.submitAnswer(
           questionId,
-          answer,
-          timeSpentSecond
+          timeSpentSecond,
+          answer
         );
       }}
     >

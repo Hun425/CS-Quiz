@@ -27,6 +27,7 @@ export const useBattleSocket = (roomId: number) => {
     setResult,
     setEndPayload,
     reset: resetStore,
+    updateLastActivity,
   } = useBattleSocketStore();
 
   useEffect(() => {
@@ -36,6 +37,7 @@ export const useBattleSocket = (roomId: number) => {
       data: BattleWebSocketEvents[BattleSocketEventKey.PARTICIPANTS]
     ) => {
       console.log("📥 [PARTICIPANTS] 참가자 정보 수신:", data);
+      updateLastActivity();
       setParticipantsPayload({ ...data });
     };
 
@@ -43,6 +45,7 @@ export const useBattleSocket = (roomId: number) => {
       data: BattleWebSocketEvents[BattleSocketEventKey.START]
     ) => {
       console.log("🚀 [START] 배틀 시작 수신:", data);
+      updateLastActivity();
       setStartPayload(data);
       setTimeout(() => {
         router.push(`/battles/${roomId}/play`);
@@ -53,6 +56,7 @@ export const useBattleSocket = (roomId: number) => {
       data: BattleWebSocketEvents[BattleSocketEventKey.STATUS]
     ) => {
       console.log("📡 [STATUS] 상태 변경 수신:", data);
+      updateLastActivity();
       setStatus(data.status);
     };
 
@@ -60,6 +64,7 @@ export const useBattleSocket = (roomId: number) => {
       data: BattleWebSocketEvents[BattleSocketEventKey.PROGRESS]
     ) => {
       console.log("📊 [PROGRESS] 진행 상황 수신:", data);
+      updateLastActivity();
       setProgress(data);
     };
 
@@ -67,6 +72,7 @@ export const useBattleSocket = (roomId: number) => {
       data: BattleWebSocketEvents[BattleSocketEventKey.NEXT_QUESTION]
     ) => {
       console.log("❓ [NEXT_QUESTION] 다음 문제 수신:", data);
+      updateLastActivity();
       setNextQuestion(data);
     };
 
@@ -74,6 +80,7 @@ export const useBattleSocket = (roomId: number) => {
       data: BattleWebSocketEvents[BattleSocketEventKey.RESULT]
     ) => {
       console.log("📝 [RESULT] 정답 결과 수신:", data);
+      updateLastActivity();
       setResult(data);
     };
 
@@ -81,6 +88,7 @@ export const useBattleSocket = (roomId: number) => {
       data: BattleWebSocketEvents[BattleSocketEventKey.END]
     ) => {
       console.log("🏁 [END] 배틀 종료 수신:", data);
+      updateLastActivity();
       setEndPayload(data);
     };
 
@@ -88,6 +96,7 @@ export const useBattleSocket = (roomId: number) => {
       data: BattleWebSocketEvents[BattleSocketEventKey.ERROR]
     ) => {
       console.error("❌ [ERROR] 에러 수신:", data);
+      updateLastActivity();
       alert(data);
     };
 
@@ -146,5 +155,6 @@ export const useBattleSocket = (roomId: number) => {
     setResult,
     setEndPayload,
     resetStore,
+    updateLastActivity,
   ]);
 };

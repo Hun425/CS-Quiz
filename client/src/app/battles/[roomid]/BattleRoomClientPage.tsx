@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useGetBattleRoom } from "@/lib/api/battle/useGetBattleRoom";
 import { useBattleSocket } from "@/lib/services/websocket/useBattleSocket";
 import { useBattleSocketStore } from "@/store/battleStore";
 import { useProfileStore } from "@/store/profileStore";
 import BattleHeader from "../_components/BattleHeader";
+// import { useBattleHealthCheck } from "@/lib/services/websocket/useBattleHealthCheck";
 import BattleParticipantsList from "../_components/BattleParticipantsList";
 import ReadyStatusIndicator from "../_components/ReadyStatusIndicator";
 import BattleControlButtons from "../_components/BattleControlButtons";
@@ -24,11 +25,10 @@ const BattleRoomClientPage = () => {
   const battleRoom = data?.data;
 
   useBattleSocket(roomId);
-
+  // useBattleHealthCheck(roomId);
   const participantsPayload = useBattleSocketStore(
     (s) => s.participantsPayload
   );
-
   const myParticipant = useMemo(
     () =>
       participantsPayload?.participants.find(
@@ -38,6 +38,16 @@ const BattleRoomClientPage = () => {
   );
 
   const isReady = myParticipant?.ready ?? false;
+
+  useEffect(() => {
+    if (!participantsPayload) {
+      const timeout = setTimeout(() => {
+        battleSocketClient.leaveBattle();
+        router.replace("/battles");
+      }, 3000);
+      return () => clearTimeout(timeout);
+    }
+  }, [participantsPayload, router]);
 
   // 방 떠나는건 버튼 누르는것만으로 가능
   const handleLeave = () => {
@@ -49,7 +59,16 @@ const BattleRoomClientPage = () => {
     battleSocketClient.toggleReady();
   };
 
-  if (!userId || isLoading || !participantsPayload) return <Loading />;
+  if (!userId || isLoading) return <Loading />;
+
+  if (!participantsPayload) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-center space-y-2 text-danger">
+        <p className="text-xl font-semibold">연결에 문제가 발생했어요 😢</p>
+        <p className="text-sm text-muted">잠시 후 배틀 목록으로 이동합니다.</p>
+      </div>
+    );
+  }
 
   if (!battleRoom)
     return (

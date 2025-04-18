@@ -76,7 +76,8 @@ const AuthSection = () => {
               <p className="text-sm text-muted">퀴즈 불러오는 중...</p>
             ) : dailyError ? (
               <p className="text-sm text-muted">퀴즈를 불러올 수 없습니다.</p>
-            ) : dailyQuizzes?.data ? (
+            ) : dailyQuizzes?.data &&
+              Object.keys(dailyQuizzes.data).length > 0 ? (
               <Link href={`/quizzes/${dailyQuizzes.data.id}`} passHref>
                 <button className="text-sm text-primary hover:underline transition">
                   {dailyQuizzes.data.title}
@@ -102,13 +103,11 @@ const AuthSection = () => {
               <p className="text-sm text-muted">퀴즈 불러오는 중...</p>
             ) : recommendedError ? (
               <p className="text-sm text-muted">퀴즈를 불러올 수 없습니다.</p>
-            ) : recommendedQuizzes?.data?.length ? (
-              <Link
-                href={`/quizzes/${recommendedQuizzes.data[0]?.id}`}
-                passHref
-              >
+            ) : recommendedQuizzes?.data?.length &&
+              Object.keys(recommendedQuizzes.data[0] || {}).length > 0 ? (
+              <Link href={`/quizzes/${recommendedQuizzes.data[0].id}`} passHref>
                 <button className="text-sm text-primary hover:underline transition">
-                  {recommendedQuizzes.data[0]?.title}
+                  {recommendedQuizzes.data[0].title}
                 </button>
               </Link>
             ) : (

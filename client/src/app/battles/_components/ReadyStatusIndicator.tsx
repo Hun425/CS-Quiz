@@ -19,7 +19,7 @@ const ReadyStatusIndicator = ({ participantsPayload }: Props) => {
         <Users className="w-4 h-4 text-primary" />
         <span>
           <span className="font-medium text-foreground">{current}</span> / {max}{" "}
-          명 참여중
+          명 참여 중
         </span>
       </div>
       <div className="flex items-center gap-2 text-muted-foreground">

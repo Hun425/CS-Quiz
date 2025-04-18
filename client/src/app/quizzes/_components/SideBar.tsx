@@ -128,45 +128,45 @@ const Sidebar: React.FC = () => {
 
       {/* 🔹 퀴즈 추천 섹션 */}
       <section className="mt-6 space-y-4">
-        <div className="space-y-4">
-          {/* ✅ 오늘의 퀴즈 카드 */}
-          <div className="bg-card border border-border p-4 rounded-lg ">
-            <h3 className="text-md font-semibold mb-2">📅 오늘의 퀴즈</h3>
-            {isLoadingDaily ? (
-              <p className="text-sm text-muted">불러오는 중...</p>
-            ) : dailyQuiz?.data ? (
-              <Link
-                href={`/quiz/daily/${dailyQuiz.data.id}`}
-                className="block text-md font-semibold bg-primary text-white p-2 rounded-md text-center hover:bg-primary/90 transition"
-              >
-                {dailyQuiz.data.title} 🚀
-              </Link>
-            ) : (
-              <p className="text-sm text-muted">오늘의 퀴즈가 없습니다.</p>
-            )}
-          </div>
+        {/* ✅ 오늘의 퀴즈 카드 */}
+        <div className="bg-card border border-border p-4 rounded-lg ">
+          <h3 className="text-md font-semibold mb-2">📅 오늘의 퀴즈</h3>
+          {isLoadingDaily ? (
+            <p className="text-sm text-muted">불러오는 중...</p>
+          ) : dailyQuiz?.data && Object.keys(dailyQuiz.data).length > 0 ? (
+            <Link
+              href={`/quiz/daily/${dailyQuiz.data.id}`}
+              className="block text-md font-semibold bg-primary text-white p-2 rounded-md text-center hover:bg-primary/90 transition"
+            >
+              {dailyQuiz.data.title} 🚀
+            </Link>
+          ) : (
+            <p className="text-sm text-muted">오늘의 퀴즈가 없습니다.</p>
+          )}
+        </div>
 
-          {/* ✅ 추천 퀴즈 카드 */}
-          <div className="bg-card border border-border p-4 rounded-lg ">
-            <h3 className="text-md font-semibold mb-2">🌟 추천 퀴즈</h3>
-            {isLoadingRecommended ? (
-              <p className="text-sm text-muted">불러오는 중...</p>
-            ) : recommendedQuizzes?.data?.length ? (
-              <div className="space-y-2">
-                {recommendedQuizzes.data.map((quiz) => (
-                  <Link
-                    key={quiz.id}
-                    href={`/quiz/recommended/${quiz.id}`}
-                    className="block text-sm bg-secondary text-white p-2 rounded-md hover:bg-secondary/90 transition"
-                  >
-                    {quiz.title}
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted">추천 퀴즈가 없습니다.</p>
-            )}
-          </div>
+        {/* ✅ 추천 퀴즈 카드 */}
+        <div className="bg-card border border-border p-4 rounded-lg ">
+          <h3 className="text-md font-semibold mb-2">🌟 추천 퀴즈</h3>
+
+          {isLoadingRecommended ? (
+            <p className="text-sm text-muted">불러오는 중...</p>
+          ) : Array.isArray(recommendedQuizzes?.data) &&
+            recommendedQuizzes.data.length > 0 ? (
+            recommendedQuizzes.data
+              .filter((quiz) => Object.keys(quiz).length > 0)
+              .map((quiz) => (
+                <Link
+                  key={quiz.id}
+                  href={`/quiz/recommended/${quiz.id}`}
+                  className="block text-sm bg-secondary text-white p-2 rounded-md hover:bg-secondary/90 transition"
+                >
+                  {quiz.title}
+                </Link>
+              ))
+          ) : (
+            <p className="text-sm text-muted">추천 퀴즈가 없습니다.</p>
+          )}
         </div>
       </section>
     </aside>

@@ -130,8 +130,10 @@ class BattleWebSocketService {
    *  → /topic/battle/{roomId}/progress      🔸 "STATUS"로 묶일 수도 있음, 진행상황
    *  → /topic/battle/{roomId}/question      🔸 "NEXT", MoveTo NextQuestion() 호출시
    *   → /topic/battle/{roomId}/end          🔸 "END" 종료
+   *  → /topic/battle/{roomId}/forced-next   🔸 "FORCED_NEXT" 강제 다음 문제로 이동
    *  → /user/{sessionId}/queue/battle/result🔸 "RESULT" 최종결과, 세션아이디별
    *  → /user/{sessionId}/queue/errors      🔸 "ERROR" 에러메시지
+   *
    */
 
   /** ✅ 배틀 이벤트 구독 */
@@ -207,7 +209,7 @@ class BattleWebSocketService {
     console.log("📨 배틀 참가 요청 전송" + "참가 요청 유저ID : " + userId);
   }
 
-  /** ✅ 서버에 준비 상태 전송 */
+  /** ✅ 준비 상태 토글 전송 */
   toggleReady() {
     if (!this.client || !this.connected || !this.roomId) return;
 
@@ -228,8 +230,39 @@ class BattleWebSocketService {
     });
   }
 
+  /** ✅ 문제 당 시간 초과 알림 */
+  timeOut(questionIndex: number) {
+    if (!this.client || !this.connected || !this.roomId) return;
+
+    this.client.publish({
+      destination: "/app/battle/timeout",
+      body: JSON.stringify({
+        roomId: this.roomId,
+        questionIndex: questionIndex,
+      }),
+    });
+
+    console.log("📨 시간초과 이벤트 전송");
+  }
+
+  /** ✅ 강제 다음 문제 진행 */
+  forceNextQuestion() {
+    if (!this.client || !this.connected || !this.roomId) return;
+
+    this.client.publish({
+      destination: "/app/battle/forced-next",
+      body: JSON.stringify({ roomId: this.roomId }),
+    });
+
+    console.log("📨 강제 다음 문제 이벤트 전송");
+  }
+
   /** ✅ 서버에 정답 제출 */
-  submitAnswer(questionId: number, answer: string, timeSpentSeconds: number) {
+  submitAnswer(
+    questionId: number,
+    timeSpentSeconds: number,
+    answer: string | null
+  ) {
     if (!this.client || !this.connected || !this.roomId) return;
 
     const userId = useProfileStore.getState().userProfile?.id;

@@ -18,6 +18,8 @@ export enum BattleSocketEventKey {
   RESULT = "RESULT",
   END = "END",
   ERROR = "ERROR",
+  TIMEOUT = "TIMEOUT",
+  FORCED_NEXT = "FORCED_NEXT",
 }
 
 export interface BattleWebSocketEvents {
@@ -29,6 +31,8 @@ export interface BattleWebSocketEvents {
   [BattleSocketEventKey.RESULT]: BattleAnswerResponse;
   [BattleSocketEventKey.END]: BattleEndResponse;
   [BattleSocketEventKey.ERROR]: string;
+  [BattleSocketEventKey.TIMEOUT]: string;
+  [BattleSocketEventKey.FORCED_NEXT]: string;
 }
 
 /**
@@ -36,13 +40,14 @@ export interface BattleWebSocketEvents {
  * - 배틀룸에 참가한 사용자들의 정보를 포함
  */
 export interface BattleParticipantsResponse {
-  currentParticipants: number; // 현재 참가자 수
-  joinedAt: string; // 참가 시간 (ISO 8601 형식)
-  maxParticipants: number; // 최대 참가자 수
   participants: Participant[]; // 참가자 목록
   roomId: number; // 배틀룸 ID
-  userId: number; // 참가자 ID
-  username: string; // 참가자 이름
+  userId?: number; // 참가자 ID
+  currentParticipants?: number; // 현재 참가자 수
+  joinedAt?: string; // 참가 시간 (ISO 8601 형식)
+  maxParticipants?: number; // 최대 참가자 수
+  username?: string; // 참가자 이름
+  type?: string;
 }
 
 /**

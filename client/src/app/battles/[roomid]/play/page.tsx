@@ -2,34 +2,55 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useBattleSocketStore } from "@/store/battleStore";
+import { useBattleSocket } from "@/lib/services/websocket/useBattleSocket";
+// import { useBattleHealthCheck } from "@/lib/services/websocket/useBattleHealthCheck";
+import { BattleStatus, BattleNextQuestionResponse } from "@/lib/types/battle";
 import Loading from "@/app/_components/Loading";
 import SubmitAnswerButton from "@/app/battles/_components/SubmitAnswerButton";
-import { useBattleSocketStore } from "@/store/battleStore";
-import { BattleStatus, BattleNextQuestionResponse } from "@/lib/types/battle";
-import { useBattleSocket } from "@/lib/services/websocket/useBattleSocket";
-import Image from "next/image";
+import BattleParticipantsList from "./BattleParticipantsList";
 
 const BattleContent = () => {
-  const { roomId } = useParams();
+  const { roomid } = useParams();
   const router = useRouter();
-  useBattleSocket(Number(roomId));
+  const roomId = Number(roomid);
+  useBattleSocket(roomId);
+  // useBattleHealthCheck(roomId);
 
   const {
     nextQuestion,
     startPayload,
-    progress,
     status,
     endPayload,
     participantsPayload,
   } = useBattleSocketStore();
-  console.log("participantsPayload", participantsPayload);
-  console.log(progress);
+
   const [currentQuestion, setCurrentQuestion] =
     useState<BattleNextQuestionResponse | null>(null);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [timeSpent] = useState<number>(5);
 
+  const participants = participantsPayload?.participants || [];
+
+  const isLoading = !(
+    status === BattleStatus.READY || status === BattleStatus.IN_PROGRESS
+  );
+
+  const isDisconnected =
+    !participantsPayload || !currentQuestion || status === undefined;
+
   useEffect(() => {
+    if (isDisconnected) {
+      setCurrentQuestion(null);
+      setSelectedOption(null);
+
+      const timeout = setTimeout(() => {
+        router.replace("/battles");
+      }, 5000); // 5초 후 자동 이동
+
+      return () => clearTimeout(timeout);
+    }
+
     if (nextQuestion) {
       setCurrentQuestion(nextQuestion);
       setSelectedOption(null);
@@ -40,7 +61,7 @@ const BattleContent = () => {
       setCurrentQuestion(startPayload.firstQuestion);
       setSelectedOption(null);
     }
-  }, [nextQuestion, startPayload, status]);
+  }, [nextQuestion, startPayload, status, isDisconnected, router]);
 
   useEffect(() => {
     if (status === BattleStatus.FINISHED && endPayload) {
@@ -48,102 +69,77 @@ const BattleContent = () => {
     }
   }, [status, endPayload, roomId, router]);
 
-  const isLoading =
-    !(status === BattleStatus.READY || status === BattleStatus.IN_PROGRESS) ||
-    !currentQuestion;
+  if (isDisconnected) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-center space-y-3 text-danger">
+        <h2 className="text-2xl font-semibold">⚠️ 연결이 끊어졌어요</h2>
+        <p className="text-muted text-sm">
+          서버와의 연결이 불안정하거나 종료되었어요.
+          <br />
+          잠시 후 배틀 목록으로 돌아갑니다...
+        </p>
+        <button
+          onClick={() => router.replace("/battles")}
+          className="mt-4 px-4 py-2 rounded-md bg-primary text-white hover:bg-primary/90 transition"
+        >
+          지금 이동하기
+        </button>
+      </div>
+    );
+  }
 
   if (isLoading) return <Loading />;
 
   return (
-    <div className="max-w-screen-lg mx-auto px-4 py-6 min-h-screen bg-background flex flex-col md:flex-row md:gap-6">
-      <div className="flex-1 space-y-6">
-        <div className="text-xl md:text-2xl font-bold">
-          {/* 문제 {progress?.currentQuestionIndex + 1} / {progress?.totalQuestions} */}
-        </div>
-
+    <div className="max-w-screen-xl mx-auto px-4 py-8 min-h-screen grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-6">
+      {/* 🧩 문제 영역 */}
+      <div className="bg-card-background rounded-2xl shadow-md p-4 md:p-6 space-y-4">
         <div className="text-sm text-muted">
           배점: {currentQuestion.points}점 · 제한 시간:{" "}
           {currentQuestion.timeLimit}s
         </div>
 
-        <div className="bg-card-background rounded-2xl shadow-md p-4 md:p-6 space-y-4">
-          <p className="text-base md:text-lg font-medium text-foreground">
-            {currentQuestion.questionText}
-          </p>
+        <p className="text-base md:text-lg font-medium text-foreground">
+          {currentQuestion.questionText}
+        </p>
 
-          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {currentQuestion.options?.map((option, idx) => (
-              <li
-                key={idx}
-                onClick={() => setSelectedOption(option)}
-                className={`p-3 rounded-xl border text-center cursor-pointer transition text-foreground
+        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {currentQuestion.options?.map((option, idx) => (
+            <li
+              key={idx}
+              onClick={() => setSelectedOption(option)}
+              className={`p-3 rounded-xl border text-center cursor-pointer transition text-foreground
                   ${
                     selectedOption === option
                       ? "bg-primary text-white border-primary"
                       : "hover:bg-card-hover"
                   }`}
-              >
-                {option}
-              </li>
-            ))}
-          </ul>
-
-          {selectedOption && (
-            <div className="flex justify-end pt-4">
-              <SubmitAnswerButton
-                questionId={currentQuestion.questionId}
-                answer={selectedOption}
-                timeSpentSecond={timeSpent}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* 모바일용 사용자 요약 */}
-        {Array.isArray(participantsPayload) &&
-          participantsPayload.length > 0 && (
-            <div className="block md:hidden">
-              <div className="text-sm font-semibold text-muted mb-2">
-                👥 참가자 목록
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {participantsPayload.map((p) => (
-                  <div
-                    key={p.userId}
-                    className="px-3 py-2 rounded-full bg-white border border-border shadow text-sm text-foreground font-medium"
-                  >
-                    <Image
-                      src={
-                        p.profileImage
-                          ? p.profileImage
-                          : "/images/default_avatar.png"
-                      }
-                      alt={`${p.username} 프로필 이미지`}
-                      className="w-6 h-6 rounded-full inline-block mr-2"
-                      width={24}
-                      height={24}
-                    />
-                    {p.username}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-      </div>
-
-      {/* 데스크탑용 사이드바 */}
-      {/* 
-      <aside className="hidden md:block w-full md:w-80 bg-sub-background rounded-xl p-4 space-y-4">
-        <h2 className="text-lg font-semibold text-foreground">참가자 진행 상황</h2>
-        <ul className="space-y-2">
-          {progressList.map((p) => (
-            <li key={p.participantId} className="...">
-              ...
+            >
+              {option}
             </li>
           ))}
         </ul>
-      </aside>
-      */}
+
+        <div className="flex flex-col md:flex-row justify-between items-center pt-4 gap-2">
+          <p className="text-sm text-muted">
+            ✨ 한번 제출하면 답을 변경할 수 없어요.
+          </p>
+          <SubmitAnswerButton
+            questionId={currentQuestion.questionId}
+            answer={selectedOption}
+            timeSpentSecond={timeSpent}
+          />
+        </div>
+      </div>
+
+      {/* 📱 모바일용 참가자 목록 */}
+      <div className="block md:hidden mt-2">
+        <BattleParticipantsList participants={participants} />
+      </div>
+      {/* 🖥 데스크탑용 참가자 목록 */}
+      <div className="hidden md:block w-full sticky top-24 h-fit">
+        <BattleParticipantsList participants={participants} />
+      </div>
     </div>
   );
 };
