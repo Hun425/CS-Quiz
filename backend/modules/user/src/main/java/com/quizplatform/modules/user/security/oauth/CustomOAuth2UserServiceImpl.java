@@ -1,9 +1,9 @@
 package com.quizplatform.modules.user.security.oauth;
 
 import com.quizplatform.core.exception.OAuth2AuthenticationProcessingException;
-import com.quizplatform.core.security.oauth.CustomOAuth2UserService;
-import com.quizplatform.core.security.oauth.OAuth2UserInfo;
-import com.quizplatform.core.security.oauth.OAuth2UserInfoFactory;
+import com.quizplatform.modules.security.oauth.CustomOAuth2UserService;
+import com.quizplatform.modules.security.oauth.OAuth2UserInfo;
+import com.quizplatform.modules.security.oauth.OAuth2UserInfoFactory;
 import com.quizplatform.modules.user.domain.AuthProvider;
 import com.quizplatform.modules.user.domain.User;
 import com.quizplatform.modules.user.domain.UserLevel;

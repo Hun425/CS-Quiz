@@ -1,10 +1,10 @@
 package com.quizplatform.apigateway.config;
 
 import com.quizplatform.core.config.SecurityConfig;
-import com.quizplatform.core.security.SecurityConfigurer;
-import com.quizplatform.core.security.jwt.JwtAuthenticationFilter;
-import com.quizplatform.core.security.oauth.CustomOAuth2UserService;
-import com.quizplatform.core.security.oauth.OAuth2SuccessHandler;
+import com.quizplatform.modules.security.SecurityConfigurer;
+import com.quizplatform.modules.security.jwt.JwtAuthenticationFilter;
+import com.quizplatform.modules.security.oauth.CustomOAuth2UserService;
+import com.quizplatform.modules.security.oauth.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

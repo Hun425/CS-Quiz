@@ -9,6 +9,7 @@ bootJar { enabled = true }
 dependencies {
     // 모듈 의존성
     implementation project(':core')
+    implementation project(':modules:security')
     implementation project(':modules:user')
     implementation project(':modules:quiz')
     implementation project(':modules:tag')
