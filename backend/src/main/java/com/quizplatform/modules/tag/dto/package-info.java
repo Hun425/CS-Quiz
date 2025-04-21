@@ -1,0 +1,6 @@
+/**
+ * 태그 모듈 DTO 패키지
+ * 
+ * <p>태그 모듈 내부 및 모듈 간 통신에 사용되는 DTO 클래스들을 포함합니다.</p>
+ */
+package com.quizplatform.modules.tag.dto;
