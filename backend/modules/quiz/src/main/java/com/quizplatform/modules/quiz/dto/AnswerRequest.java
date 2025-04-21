@@ -1,4 +1,4 @@
-package com.quizplatform.modules.battle.dto;
+package com.quizplatform.modules.quiz.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -6,17 +6,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 배틀 답변 응답 DTO
+ * 답변 생성/수정 요청 DTO
  * <p>
- * 배틀 질문의 답변 정보를 담는 DTO
+ * 답변 생성 및 수정 시 사용되는 DTO
  * </p>
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BattleAnswerResponse {
-    private Long id;
+public class AnswerRequest {
     private String content;
     private Boolean isCorrect;
 }

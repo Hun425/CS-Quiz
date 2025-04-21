@@ -1,4 +1,4 @@
-package com.quizplatform.modules.quiz.dto;
+package com.quizplatform.modules.battle.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,20 +8,20 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
- * 질문 응답 DTO
+ * 배틀 질문 응답 DTO
  * <p>
- * 퀴즈의 질문 정보를 포함하는 DTO
+ * 배틀에 포함된 질문 정보를 담는 DTO
  * </p>
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class QuestionResponse {
+public class BattleQuestionResponse {
     private Long id;
     private String content;
     private String type;
+    private Integer timeLimit;
     private Integer points;
-    private List<AnswerResponse> answers;
-    private String explanation;
+    private List<BattleAnswerResponse> answers;
 }

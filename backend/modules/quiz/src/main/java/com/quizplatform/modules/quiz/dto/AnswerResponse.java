@@ -5,23 +5,18 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 /**
- * 질문 응답 DTO
+ * 답변 응답 DTO
  * <p>
- * 퀴즈의 질문 정보를 포함하는 DTO
+ * 질문의 답변 정보를 포함하는 DTO
  * </p>
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class QuestionResponse {
+public class AnswerResponse {
     private Long id;
     private String content;
-    private String type;
-    private Integer points;
-    private List<AnswerResponse> answers;
-    private String explanation;
+    private Boolean isCorrect;
 }

@@ -8,20 +8,19 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
- * 질문 응답 DTO
+ * 질문 생성/수정 요청 DTO
  * <p>
- * 퀴즈의 질문 정보를 포함하는 DTO
+ * 질문 생성 및 수정 시 사용되는 DTO
  * </p>
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class QuestionResponse {
-    private Long id;
+public class QuestionRequest {
     private String content;
     private String type;
     private Integer points;
-    private List<AnswerResponse> answers;
+    private List<AnswerRequest> answers;
     private String explanation;
 }

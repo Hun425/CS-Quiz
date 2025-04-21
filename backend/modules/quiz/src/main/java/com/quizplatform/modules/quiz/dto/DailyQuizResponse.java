@@ -5,30 +5,25 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import java.time.LocalDate;
 
 /**
- * 퀴즈 응답 DTO
+ * 일일 퀴즈 응답 DTO
  * <p>
- * 퀴즈 목록 조회 시 사용되는 간략한 퀴즈 정보 DTO
+ * 일일 퀴즈 조회 시 사용되는 DTO
  * </p>
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class QuizResponse {
+public class DailyQuizResponse {
     private Long id;
     private String title;
     private String description;
     private String difficulty;
     private String category;
     private Integer timeLimit;
-    private List<String> tags;
-    private Integer questionCount;
-    private String authorUsername;
-    private LocalDateTime createdAt;
-    private Integer attemptCount;
-    private Double averageScore;
+    private LocalDate date;
+    private QuizDetailResponse quiz;
 }
