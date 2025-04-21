@@ -6,9 +6,9 @@ services:
     image: postgres:15-alpine
     container_name: quiz-postgres
     environment:
-      POSTGRES_DB: quiz_db
-      POSTGRES_USER: quizuser
-      POSTGRES_PASSWORD: quizpass
+      POSTGRES_DB: quizplatform
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
       # 타임존 설정 - 한국 시간 사용
       TZ: Asia/Seoul
     ports:
@@ -20,7 +20,7 @@ services:
       - ./sql:/docker-entrypoint-initdb.d
     healthcheck:
       # 데이터베이스 헬스체크 설정
-      test: ["CMD-SHELL", "pg_isready -U quizuser -d quiz_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d quizplatform"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -68,6 +68,141 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+    networks:
+      - quiz-network
+
+  # API Gateway 서비스
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: quiz-api-gateway
+    depends_on:
+      - postgres
+      - redis
+      - elasticsearch
+      - user-module
+      - quiz-module
+      - tag-module
+      - battle-module
+      - search-module
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/quizplatform
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_REDIS_HOST=redis
+      - MODULE_SERVICES_USER=http://user-module:8081
+      - MODULE_SERVICES_QUIZ=http://quiz-module:8082
+      - MODULE_SERVICES_TAG=http://tag-module:8083
+      - MODULE_SERVICES_BATTLE=http://battle-module:8084
+      - MODULE_SERVICES_SEARCH=http://search-module:8085
+    networks:
+      - quiz-network
+
+  # 사용자 모듈 서비스
+  user-module:
+    build:
+      context: ./modules/user
+      dockerfile: Dockerfile
+    container_name: quiz-user-module
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/quizplatform
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_REDIS_HOST=redis
+    networks:
+      - quiz-network
+
+  # 퀴즈 모듈 서비스
+  quiz-module:
+    build:
+      context: ./modules/quiz
+      dockerfile: Dockerfile
+    container_name: quiz-quiz-module
+    depends_on:
+      - postgres
+      - redis
+      - user-module
+      - tag-module
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/quizplatform
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_REDIS_HOST=redis
+    networks:
+      - quiz-network
+
+  # 태그 모듈 서비스
+  tag-module:
+    build:
+      context: ./modules/tag
+      dockerfile: Dockerfile
+    container_name: quiz-tag-module
+    depends_on:
+      - postgres
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/quizplatform
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+    networks:
+      - quiz-network
+
+  # 배틀 모듈 서비스
+  battle-module:
+    build:
+      context: ./modules/battle
+      dockerfile: Dockerfile
+    container_name: quiz-battle-module
+    depends_on:
+      - postgres
+      - redis
+      - user-module
+      - quiz-module
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/quizplatform
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_REDIS_HOST=redis
+    networks:
+      - quiz-network
+
+  # 검색 모듈 서비스
+  search-module:
+    build:
+      context: ./modules/search
+      dockerfile: Dockerfile
+    container_name: quiz-search-module
+    depends_on:
+      - postgres
+      - elasticsearch
+      - quiz-module
+      - tag-module
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/quizplatform
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_ELASTICSEARCH_REST_URIS=http://elasticsearch:9200
     networks:
       - quiz-network
 

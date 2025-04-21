@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: battle-module
+  datasource:
+    url: jdbc:postgresql://localhost:5432/quizplatform
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  redis:
+    host: localhost
+    port: 6379
+
+server:
+  port: 8084
+  servlet:
+    context-path: /
+
+logging:
+  level:
+    com.quizplatform.modules.battle: DEBUG
+    org.springframework.web.socket: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+battle:
+  websocket:
+    endpoint: /ws-battle
+    destination-prefix: /topic
+    application-prefix: /app
+  room:
+    max-players: 8
+    timeout-seconds: 300
+    result-cache-seconds: 86400

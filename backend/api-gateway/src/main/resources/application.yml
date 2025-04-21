@@ -1,0 +1,102 @@
+spring:
+  application:
+    name: api-gateway
+  datasource:
+    url: jdbc:postgresql://localhost:5432/quizplatform
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  redis:
+    host: localhost
+    port: 6379
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${OAUTH2_GOOGLE_CLIENT_ID:your-google-client-id}
+            client-secret: ${OAUTH2_GOOGLE_CLIENT_SECRET:your-google-client-secret}
+            scope: email, profile
+          kakao:
+            client-id: ${OAUTH2_KAKAO_CLIENT_ID:your-kakao-client-id}
+            client-secret: ${OAUTH2_KAKAO_CLIENT_SECRET:your-kakao-client-secret}
+            redirect-uri: "{baseUrl}/api/oauth2/callback/{registrationId}"
+            authorization-grant-type: authorization_code
+            client-authentication-method: client_secret_post
+            client-name: Kakao
+            scope: profile_nickname, account_email
+          github:
+            client-id: ${OAUTH2_GITHUB_CLIENT_ID:your-github-client-id}
+            client-secret: ${OAUTH2_GITHUB_CLIENT_SECRET:your-github-client-secret}
+            scope: user:email, read:user
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+logging:
+  level:
+    com.quizplatform: INFO
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+jwt:
+  secret: ${JWT_SECRET:eyJhbGciOiJIUzI1NiJ9.eyJSb2xlIjoiQWRtaW4iLCJJc3N1ZXIiOiJJc3N1ZXIiLCJVc2VybmFtZSI6IkphdmFJblVzZSIsImV4cCI6MTY4MjAxNjM3MiwiaWF0IjoxNjgyMDE2MzcyfQ.KjcYsIeytVEPGkS7Sfqvl4HDQ9j-zyHXVcX2hbmDLBQ}
+  expiration: 86400000 # 1일
+  refresh-expiration: 604800000 # 7일
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  api-docs:
+    path: /api/v3/api-docs
+  swagger-ui:
+    path: /api/swagger-ui.html
+    config-url: /api/v3/api-docs/swagger-config
+    urls:
+      - url: /api/v3/api-docs
+        name: API Gateway
+  default-produces-media-type: application/json
+
+cors:
+  allowed-origins: 
+    - http://localhost:5173
+    - http://localhost:3000
+    - http://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com
+    - http://13.125.187.28
+  allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+  allowed-headers: "*"
+  allow-credentials: true
+  max-age: 3600
+
+# 모듈 서비스 URL 설정 (MSA 환경에서 사용)
+module:
+  services:
+    user: http://localhost:8081
+    quiz: http://localhost:8082
+    tag: http://localhost:8083
+    battle: http://localhost:8084
+    search: http://localhost:8085

@@ -1,1 +1,10 @@
 rootProject.name = 'quiz-platform'
+
+// 모듈 정의
+include 'core'
+include 'modules:user'
+include 'modules:quiz'
+include 'modules:tag'
+include 'modules:battle'
+include 'modules:search'
+include 'api-gateway'

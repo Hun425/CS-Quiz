@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: search-module
+  datasource:
+    url: jdbc:postgresql://localhost:5432/quizplatform
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  elasticsearch:
+    rest:
+      uris: http://localhost:9200
+      username: elastic
+      password: ${ELASTICSEARCH_PASSWORD:changeme}
+
+server:
+  port: 8085
+  servlet:
+    context-path: /
+
+logging:
+  level:
+    com.quizplatform.modules.search: DEBUG
+    org.springframework.data.elasticsearch: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+search:
+  index:
+    quiz: quizzes
+    tag: tags
+    user: users
+  indexing:
+    batch-size: 100
+    schedule: "0 0 1 * * ?" # 매일 01:00에 리인덱싱

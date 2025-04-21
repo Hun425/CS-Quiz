@@ -1,0 +1,68 @@
+spring:
+  application:
+    name: user-module
+  datasource:
+    url: jdbc:postgresql://localhost:5432/quizplatform
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${OAUTH2_GOOGLE_CLIENT_ID:your-google-client-id}
+            client-secret: ${OAUTH2_GOOGLE_CLIENT_SECRET:your-google-client-secret}
+            scope: email, profile
+          kakao:
+            client-id: ${OAUTH2_KAKAO_CLIENT_ID:your-kakao-client-id}
+            client-secret: ${OAUTH2_KAKAO_CLIENT_SECRET:your-kakao-client-secret}
+            redirect-uri: "{baseUrl}/api/oauth2/callback/{registrationId}"
+            authorization-grant-type: authorization_code
+            client-authentication-method: client_secret_post
+            client-name: Kakao
+            scope: profile_nickname, account_email
+          github:
+            client-id: ${OAUTH2_GITHUB_CLIENT_ID:your-github-client-id}
+            client-secret: ${OAUTH2_GITHUB_CLIENT_SECRET:your-github-client-secret}
+            scope: user:email, read:user
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
+server:
+  port: 8081
+  servlet:
+    context-path: /
+
+jwt:
+  secret: ${JWT_SECRET:eyJhbGciOiJIUzI1NiJ9.eyJSb2xlIjoiQWRtaW4iLCJJc3N1ZXIiOiJJc3N1ZXIiLCJVc2VybmFtZSI6IkphdmFJblVzZSIsImV4cCI6MTY4MjAxNjM3MiwiaWF0IjoxNjgyMDE2MzcyfQ.KjcYsIeytVEPGkS7Sfqvl4HDQ9j-zyHXVcX2hbmDLBQ}
+  expiration: 86400000 # 1일
+  refresh-expiration: 604800000 # 7일
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.quizplatform.modules.user: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
