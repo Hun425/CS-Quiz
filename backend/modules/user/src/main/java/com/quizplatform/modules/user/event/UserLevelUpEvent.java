@@ -1,20 +1,20 @@
 package com.quizplatform.modules.user.event;
 
+import com.quizplatform.core.event.BaseDomainEvent;
 import com.quizplatform.modules.user.domain.User;
 import com.quizplatform.modules.user.domain.UserLevel;
 import lombok.Getter;
-import org.springframework.context.ApplicationEvent;
 
 /**
  * 사용자가 레벨업 했을 때 발생하는 도메인 이벤트 클래스입니다.
  * 이 이벤트는 레벨업한 사용자 정보, 이전 레벨, 새로운 레벨 정보를 포함합니다.
- * Spring의 ApplicationEvent를 상속받아 이벤트 발행 메커니즘을 활용합니다.
+ * BaseDomainEvent를 상속받아 공통 이벤트 기능을 활용합니다.
  *
  * @author 채기훈
  * @since JDK 17
  */
 @Getter
-public class UserLevelUpEvent extends ApplicationEvent {
+public class UserLevelUpEvent extends BaseDomainEvent {
     /** 레벨업한 사용자 엔티티 */
     private final User user;
     /** 레벨업 이전의 레벨 */
@@ -31,7 +31,7 @@ public class UserLevelUpEvent extends ApplicationEvent {
      * @param oldLevel  레벨업 이전의 레벨
      */
     public UserLevelUpEvent(UserLevel userLevel, int oldLevel) {
-        super(userLevel); // ApplicationEvent의 source로 UserLevel 객체를 전달
+        super(userLevel); // BaseDomainEvent의 생성자에 UserLevel 객체를 전달
         this.user = userLevel.getUser(); // UserLevel 객체에서 사용자 정보 추출
         this.oldLevel = oldLevel;
         this.newLevel = userLevel.getLevel(); // UserLevel 객체에서 새로운 레벨 정보 추출

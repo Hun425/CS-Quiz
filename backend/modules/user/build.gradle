@@ -26,9 +26,16 @@ dependencies {
     // JPA
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     
+    // MapStruct
+    implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+    
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+    
+    // Lombok과 MapStruct 통합을 위한 의존성
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
     
     // 테스트
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
