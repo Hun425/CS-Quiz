@@ -1,9 +1,23 @@
 rootProject.name = 'quiz-platform'
 
-include 'quiz'
-include 'battle'
-include 'user'
-include 'common'
-include 'infra'
-// include 'core' // 주석 처리 또는 삭제
-// include 'modules' // Elasticsearch 모듈 유지가 필요하면 남겨두고, 아니면 주석 처리/삭제
+// 모듈 경로를 정확히 지정합니다
+include 'modules:common'
+include 'modules:quiz'
+include 'modules:battle'
+include 'modules:user'
+include 'modules:infra'
+// include 'modules:core' // 주석 처리 또는 삭제
+
+// 각 모듈의 프로젝트 이름을 설정합니다
+project(':modules:common').projectDir = file('modules/common')
+project(':modules:quiz').projectDir = file('modules/quiz')
+project(':modules:battle').projectDir = file('modules/battle')
+project(':modules:user').projectDir = file('modules/user')
+project(':modules:infra').projectDir = file('modules/infra')
+
+// 모듈 간 의존성 해결을 위한 이름 매핑
+project(':modules:common').name = 'common'
+project(':modules:quiz').name = 'quiz'
+project(':modules:battle').name = 'battle'
+project(':modules:user').name = 'user'
+project(':modules:infra').name = 'infra'

@@ -1,0 +1,104 @@
+plugins {
+    id 'java-library'
+    id 'org.springframework.boot' version '3.2.5'
+    id 'io.spring.dependency-management' version '1.1.4'
+    id 'idea'
+}
+
+// Add Java compatibility setting
+java {
+    sourceCompatibility = '17'
+}
+
+// 소스 세트 설정 - 두 가지 패키지 구조를 모두 지원하도록 설정
+sourceSets {
+    main {
+        java {
+            srcDirs = ['./', './src/main/java'] 
+        }
+        resources {
+            srcDirs = ['./', './src/main/resources'] 
+            exclude '**/*.java'  // Java 파일은 제외
+        }
+    }
+    test {
+        java {
+            srcDirs = ['./src/test/java']
+        }
+        resources {
+            srcDirs = ['./src/test/resources']
+        }
+    }
+}
+
+// IntelliJ IDEA 설정 추가
+idea {
+    module {
+        inheritOutputDirs = false
+        outputDir = file("$buildDir/classes/java/main")
+        testOutputDir = file("$buildDir/classes/java/test")
+        
+        // 짧은 패키지명(adapter...)과 긴 패키지명(com.quizplatform.battle.adapter...) 모두 지원
+        excludeDirs = [file(".gradle"), file("build"), file("out")]
+    }
+}
+
+// 이 모듈을 실행 가능한 JAR로 만듭니다
+bootJar {
+    enabled = true
+    mainClass = 'com.quizplatform.battle.BattleModuleApplication'
+}
+jar {
+    enabled = true
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Depend on the common module
+    implementation project(':modules:common')
+
+    // Spring Boot dependencies
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    
+    // Kafka 의존성 추가
+    implementation 'org.springframework.kafka:spring-kafka'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
+    
+    // MySQL Connector
+    runtimeOnly 'com.mysql:mysql-connector-j:8.0.33'
+    
+    // QueryDSL
+    implementation 'com.querydsl:querydsl-jpa:5.1.0:jakarta'
+    annotationProcessor "com.querydsl:querydsl-apt:5.1.0:jakarta"
+    annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+    annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+
+    // Testing
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+// Annotation processor 설정 추가
+tasks.withType(JavaCompile) {
+    options.annotationProcessorPath = configurations.annotationProcessor
+    options.compilerArgs += [
+        '-Aquerydsl.generatedAnnotationClass=javax.annotation.Generated'
+    ]
+}

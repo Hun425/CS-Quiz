@@ -2,11 +2,58 @@ plugins {
     id 'org.springframework.boot' version '3.2.5'
     id 'io.spring.dependency-management' version '1.1.4'
     id 'java'
+    id 'idea'
 }
 
 group = 'com.quizplatform'
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '17'
+
+// IDEA 설정 추가
+idea {
+    module {
+        inheritOutputDirs = false
+        outputDir = file("$buildDir/classes/java/main")
+        testOutputDir = file("$buildDir/classes/java/test")
+    }
+}
+
+// 모든 프로젝트에 적용될 설정
+allprojects {
+    apply plugin: 'idea'
+    
+    repositories {
+        mavenCentral()
+    }
+}
+
+// 서브 프로젝트/모듈에 적용될 설정
+subprojects {
+    // 각 모듈이 Java 라이브러리일 경우
+    if (name != 'infra') { // infra 모듈 제외
+        apply plugin: 'java-library'
+        apply plugin: 'org.springframework.boot'
+        apply plugin: 'io.spring.dependency-management'
+        
+        // 소스셋 설정을 IDE에도 반영
+        idea {
+            module {
+                // 2가지 패키지 구조 모두 인식
+                sourceDirs += file(".")
+            }
+        }
+    }
+}
+
+// 루트 프로젝트에서는 bootJar 비활성화
+bootJar {
+    enabled = false
+}
+
+// 일반 JAR 활성화
+jar {
+    enabled = true
+}
 
 configurations {
     compileOnly {
@@ -33,7 +80,7 @@ dependencies {
     implementation 'org.springframework.kafka:spring-kafka'
     
     // Database
-    runtimeOnly 'mysql:mysql-connector-java'
+    runtimeOnly 'com.mysql:mysql-connector-j:8.0.33'
     
     // Lombok
     compileOnly 'org.projectlombok:lombok'
@@ -50,10 +97,10 @@ dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
 
     // Add project dependencies for the new modules
-    implementation project(':common')
-    implementation project(':quiz')
-    implementation project(':battle')
-    implementation project(':user')
+    implementation project(':modules:common')
+    implementation project(':modules:quiz')
+    implementation project(':modules:battle')
+    implementation project(':modules:user')
     // Remove or comment out core if it's no longer needed as a direct dependency
     // implementation project(':core')
 }
