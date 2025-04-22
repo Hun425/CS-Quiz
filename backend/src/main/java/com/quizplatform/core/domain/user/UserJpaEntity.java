@@ -1,4 +1,4 @@
-package com.quizplatform.core.domain.user;
+package com.quizplatform.user.adapter.out.persistence.entity;
 
 import com.quizplatform.core.domain.quiz.QuizAttempt;
 import jakarta.persistence.*;
@@ -29,7 +29,7 @@ import java.util.List;
 @EntityListeners({AuditingEntityListener.class})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class User {
+public class UserJpaEntity {
 
     /**
      * 사용자 ID
@@ -206,7 +206,7 @@ public class User {
      * @param profileImage 프로필 이미지 URL
      */
     @Builder
-    public User(AuthProvider provider, String providerId, String email, String username, String profileImage) {
+    public UserJpaEntity(AuthProvider provider, String providerId, String email, String username, String profileImage) {
         this.provider = provider;
         this.providerId = providerId;
         this.email = email;

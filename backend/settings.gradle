@@ -1,1 +1,9 @@
 rootProject.name = 'quiz-platform'
+
+include 'quiz'
+include 'battle'
+include 'user'
+include 'common'
+include 'infra'
+// include 'core' // 주석 처리 또는 삭제
+// include 'modules' // Elasticsearch 모듈 유지가 필요하면 남겨두고, 아니면 주석 처리/삭제

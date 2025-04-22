@@ -1,4 +1,4 @@
-package com.quizplatform.core.domain.user;
+package com.quizplatform.user.adapter.out.persistence.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserLevelHistory {
+public class UserLevelHistoryJpaEntity {
 
     /**
      * 이력 ID
@@ -37,7 +37,7 @@ public class UserLevelHistory {
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private User user;
+    private UserJpaEntity user;
 
     /**
      * 변경 전 레벨
@@ -65,7 +65,7 @@ public class UserLevelHistory {
      * @param previousLevel 변경 전 레벨
      * @param level 변경 후 레벨
      */
-    public UserLevelHistory(User user, int previousLevel, int level) {
+    public UserLevelHistoryJpaEntity(UserJpaEntity user, int previousLevel, int level) {
         this.user = user;
         this.previousLevel = previousLevel;
         this.level = level;

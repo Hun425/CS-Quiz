@@ -1,4 +1,4 @@
-package com.quizplatform.core.domain.user;
+package com.quizplatform.user.adapter.out.persistence.entity;
 
 import com.quizplatform.core.domain.quiz.Achievement;
 import com.quizplatform.core.service.event.DomainEventPublisher;
@@ -28,7 +28,7 @@ import java.util.Set;
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor
-public class UserLevel {
+public class UserLevelJpaEntity {
 
     /**
      * 사용자 레벨 ID
@@ -113,7 +113,7 @@ public class UserLevel {
      * 
      * @param user 레벨 정보를 관리할 사용자
      */
-    public UserLevel(User user) {
+    public UserLevelJpaEntity(User user) {
         this.user = user;
         this.level = 1; // 초기 레벨
         this.currentExp = 0; // 초기 경험치
