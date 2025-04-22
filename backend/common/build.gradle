@@ -1,0 +1,124 @@
+plugins {
+    id 'java-library' // Use java-library for common modules
+    id 'org.springframework.boot' version '3.2.5' // Align with the project's existing Spring Boot version
+    id 'io.spring.dependency-management' version '1.1.4'
+    // id 'com.ewerk.gradle.plugins.querydsl' version '1.0.10' // QueryDSL APT 플러그인 (필요 시 활성화 및 설정)
+}
+
+group = 'com.quizplatform' // Adjust group ID if needed
+version = '0.0.1-SNAPSHOT' // Adjust version if needed
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17 // Assuming Java 17, adjust if needed
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+// Define versions in properties for easier management
+ext {
+    set('springdocVersion', "2.5.0") // For Swagger/OpenAPI if used in common (check SwaggerConfig)
+    set('jjwtVersion', "0.11.5") // Check for latest compatible version
+    // Add other common version definitions if necessary
+}
+
+// 공통 모듈은 일반적으로 실행 가능한 JAR 파일이 아님
+bootJar {
+    enabled = false
+}
+jar {
+    enabled = true
+}
+
+dependencies {
+    // Spring Boot Starters
+    implementation 'org.springframework.boot:spring-boot-starter-web' // Servlet API, Jackson 등 포함
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa' // JPA, Hibernate, Jakarta Persistence/Transaction 포함
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket' // Spring Messaging 포함
+
+    // QueryDSL
+    implementation 'com.querydsl:querydsl-jpa:5.1.0:jakarta' // Use jakarta classifier for Spring Boot 3+
+    annotationProcessor "com.querydsl:querydsl-apt:5.1.0:jakarta"
+    annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+    annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+
+    // Elasticsearch (Assuming Spring Data Elasticsearch is used)
+    // If using the low-level RestClient directly, dependencies might differ slightly
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+    // implementation 'org.elasticsearch.client:elasticsearch-rest-client:...' // Only if RestClient needed directly
+
+    // Jakarta Persistence API (needed for JPA annotations)
+    implementation 'jakarta.persistence:jakarta.persistence-api:3.1.0'
+    implementation 'jakarta.transaction:jakarta.transaction-api:2.0.1' // For @Transactional
+    implementation 'jakarta.servlet:jakarta.servlet-api:6.0.0' // For HttpServletRequest/Response etc.
+
+    // JWT Support
+    implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
+    runtimeOnly "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
+    runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}" // or jjwt-gson if you prefer
+
+    // Lombok (Annotation Processor 로도 설정 필요)
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok' // 테스트 코드용
+    testAnnotationProcessor 'org.projectlombok:lombok' // 테스트 코드용
+
+    // SpringDoc OpenAPI (Swagger) - If SwaggerConfig is moved to common
+    // implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
+
+    // Validation (if needed in common)
+    // implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Testing (optional, but good practice)
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+// Optional: Configure QueryDSL annotation processing output directory if needed
+// tasks.withType(JavaCompile) {
+//     options.getGeneratedSourceOutputDirectory().set(file("${buildDir}/generated/sources/annotationProcessor/java/main"))
+// }
+
+// QueryDSL APT 설정 (플러그인 사용 안 할 경우) - 프로젝트 구조에 맞게 경로 수정 필요
+/*
+def querydslDir = layout.buildDirectory.dir("generated/querydsl")
+
+sourceSets {
+    main.java.srcDirs += [ querydslDir ]
+}
+
+tasks.withType(JavaCompile) {
+    options.getGeneratedSourceOutputDirectory().set(querydslDir)
+}
+
+clean {
+    delete querydslDir
+}
+*/
+
+// Lombok 설정 (Gradle 7 이상)
+// compileJava {
+//     options.compilerArgs += [
+//         '-Amapstruct.defaultComponentModel=spring'
+//     ]
+// } 
