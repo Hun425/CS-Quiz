@@ -16,12 +16,12 @@ public enum UserRole {
     /**
      * 일반 사용자 권한
      */
-    USER("USER"),
+    ROLE_USER,
 
     /**
      * 관리자 권한
      */
-    ADMIN("ADMIN"),
+    ROLE_ADMIN,
 
     /**
      * 중재자 권한
@@ -40,5 +40,9 @@ public enum UserRole {
      */
     UserRole(String roleName) {
         this.roleName = roleName;
+    }
+
+    UserRole() {
+        this.roleName = name();
     }
 } 
