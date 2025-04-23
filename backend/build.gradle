@@ -48,6 +48,9 @@ dependencies {
 	//WebSocket
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
+	// Kafka
+	implementation 'org.springframework.kafka:spring-kafka'
+
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'
@@ -55,6 +58,7 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	testImplementation 'org.springframework.kafka:spring-kafka-test' // Kafka test dependency
 }
 
 tasks.named('test') {

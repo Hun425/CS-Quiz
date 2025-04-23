@@ -9,6 +9,7 @@ import java.util.List;
 @Builder
 public class BattleReadyResponse {
     private Long roomId;
+    @Builder.Default
     private String type = "PARTICIPANTS";
     private List<ParticipantInfo> participants;
 

@@ -94,6 +94,28 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
 
+  # Kafka Configuration (Moved under existing spring block)
+  kafka:
+    producer:
+      bootstrap-servers: localhost:9092 # 기본값, 환경별로 재정의 필요
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false # JSON 메시지에 타입 헤더 추가 여부 (필요에 따라 true로 변경)
+    consumer:
+      bootstrap-servers: localhost:9092 # 기본값, 환경별로 재정의 필요
+      group-id: quizplatform-group # 기본 Consumer Group ID, 필요시 변경
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*" # 모든 패키지의 JSON 역직렬화 허용 (보안상 주의 필요, 특정 패키지 명시 권장)
+        spring.json.use.type.headers: false # 타입 헤더 사용 여부
+    # Kafka Listener 설정 (필요에 따라 추가)
+    # listener:
+    #   type: batch # 또는 single
+    #   ack-mode: record # 또는 batch, manual 등
+
 app:
   oauth2:
     authorized-redirect-uri: ${OAUTH2_AUTHORIZED_REDIRECT_URI:http://localhost:3000/api/oauth2/redirect}
