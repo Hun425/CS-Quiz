@@ -40,6 +40,7 @@ public class Quiz {
     /**
      * 퀴즈 제목
      */
+    @Column(nullable = false, length = 100)
     private String title;
 
     /**
@@ -47,6 +48,42 @@ public class Quiz {
      */
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    /**
+     * 퀴즈 주제/카테고리
+     */
+    @Column(nullable = false, length = 50)
+    private String category;
+
+    /**
+     * 난이도 (1-5)
+     */
+    @Column(nullable = false)
+    private int difficulty;
+
+    /**
+     * 제한 시간(분)
+     */
+    @Column(name = "time_limit")
+    private Integer timeLimit;
+
+    /**
+     * 합격 점수(%)
+     */
+    @Column(name = "passing_score", nullable = false)
+    private int passingScore;
+
+    /**
+     * 퀴즈 활성화 여부
+     */
+    @Column(nullable = false)
+    private boolean active;
+
+    /**
+     * 퀴즈 공개 여부
+     */
+    @Column(nullable = false)
+    private boolean published;
 
     /**
      * 퀴즈 유형 (REGULAR, DAILY 등)
@@ -67,18 +104,6 @@ public class Quiz {
      */
     @Column(name = "question_count")
     private int questionCount;
-
-    /**
-     * 퀴즈 제한 시간 (분 단위)
-     */
-    @Column(name = "time_limit")
-    private Integer timeLimit;
-
-    /**
-     * 퀴즈 공개 여부
-     */
-    @Column(name = "is_public")
-    private boolean isPublic = true;
 
     /**
      * 퀴즈 조회수
@@ -116,14 +141,11 @@ public class Quiz {
     /**
      * 퀴즈에 연결된 태그 목록
      */
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-        name = "quiz_tags", 
-        joinColumns = @JoinColumn(name = "quiz_id"), 
-        inverseJoinColumns = @JoinColumn(name = "tag_id"),
-        schema = "quiz_schema"
-    )
-    private Set<Tag> tags = new HashSet<>();
+    @ElementCollection
+    @CollectionTable(name = "quiz_tags", schema = "quiz_schema", 
+                    joinColumns = @JoinColumn(name = "quiz_id"))
+    @Column(name = "tag")
+    private List<String> tags = new ArrayList<>();
 
     /**
      * 퀴즈 생성 시간
@@ -143,19 +165,23 @@ public class Quiz {
      * @param creatorId 퀴즈 생성자(사용자) ID
      * @param title 퀴즈 제목
      * @param description 퀴즈 설명
-     * @param quizType 퀴즈 유형
-     * @param difficultyLevel 퀴즈 난이도
-     * @param timeLimit 퀴즈 제한 시간 (분 단위)
+     * @param category 카테고리
+     * @param difficulty 난이도
+     * @param timeLimit 제한 시간
+     * @param passingScore 합격 점수
      */
     @Builder
-    public Quiz(Long creatorId, String title, String description, QuizType quizType, 
-               DifficultyLevel difficultyLevel, Integer timeLimit) {
+    public Quiz(Long creatorId, String title, String description, String category, int difficulty, 
+                Integer timeLimit, int passingScore) {
         this.creatorId = creatorId;
         this.title = title;
         this.description = description;
-        this.quizType = quizType;
-        this.difficultyLevel = difficultyLevel;
+        this.category = category;
+        this.difficulty = difficulty;
         this.timeLimit = timeLimit;
+        this.passingScore = passingScore;
+        this.active = true;
+        this.published = false;
     }
 
     /**
@@ -163,14 +189,19 @@ public class Quiz {
      * 
      * @param title 새 제목
      * @param description 새 설명
-     * @param difficultyLevel 새 난이도
+     * @param category 새 카테고리
+     * @param difficulty 새 난이도
      * @param timeLimit 새 제한 시간
+     * @param passingScore 새 합격 점수
      */
-    public void update(String title, String description, DifficultyLevel difficultyLevel, Integer timeLimit) {
+    public void updateInfo(String title, String description, String category, 
+                         int difficulty, Integer timeLimit, int passingScore) {
         this.title = title;
         this.description = description;
-        this.difficultyLevel = difficultyLevel;
+        this.category = category;
+        this.difficulty = difficulty;
         this.timeLimit = timeLimit;
+        this.passingScore = passingScore;
     }
 
     /**
@@ -185,22 +216,26 @@ public class Quiz {
     }
 
     /**
-     * 퀴즈 태그 업데이트
-     * 
-     * @param newTags 새 태그 세트
-     */
-    public void updateTags(Set<Tag> newTags) {
-        this.tags.clear();
-        this.tags.addAll(newTags);
-    }
-
-    /**
      * 퀴즈에 태그 추가
      * 
      * @param tag 추가할 태그
      */
-    public void addTag(Tag tag) {
-        this.tags.add(tag);
+    public void addTag(String tag) {
+        if (tags == null) {
+            tags = new ArrayList<>();
+        }
+        tags.add(tag);
+    }
+
+    /**
+     * 퀴즈에 태그 제거
+     * 
+     * @param tag 제거할 태그
+     */
+    public void removeTag(String tag) {
+        if (tags != null) {
+            tags.remove(tag);
+        }
     }
 
     /**
@@ -242,9 +277,10 @@ public class Quiz {
                 .creatorId(this.creatorId)
                 .title("[Daily] " + this.title)
                 .description(this.description)
-                .quizType(QuizType.DAILY)
-                .difficultyLevel(this.difficultyLevel)
+                .category(this.category)
+                .difficulty(this.difficulty)
                 .timeLimit(this.timeLimit)
+                .passingScore(this.passingScore)
                 .build();
         
         // 유효기간 설정 (하루)
@@ -266,9 +302,10 @@ public class Quiz {
                 .creatorId(this.creatorId)
                 .title("[Battle] " + this.title)
                 .description(this.description)
-                .quizType(QuizType.BATTLE)
-                .difficultyLevel(this.difficultyLevel)
+                .category(this.category)
+                .difficulty(this.difficulty)
                 .timeLimit(this.timeLimit)
+                .passingScore(this.passingScore)
                 .build();
         
         return battleQuiz;
@@ -289,9 +326,18 @@ public class Quiz {
     /**
      * 퀴즈 공개 여부 설정
      * 
-     * @param isPublic 공개 여부
+     * @param published 공개 여부
      */
-    public void setPublic(boolean isPublic) {
-        this.isPublic = isPublic;
+    public void setPublished(boolean published) {
+        this.published = published;
+    }
+
+    /**
+     * 퀴즈 활성화 상태 변경
+     * 
+     * @param active 활성화 여부
+     */
+    public void setActive(boolean active) {
+        this.active = active;
     }
 } 

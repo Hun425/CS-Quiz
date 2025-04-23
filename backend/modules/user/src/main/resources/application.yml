@@ -1,5 +1,7 @@
 server:
-  port: 8081
+  port: ${SERVER_PORT:8081}
+  servlet:
+    context-path: /
 
 spring:
   application:
@@ -7,9 +9,9 @@ spring:
   
   # 데이터베이스 설정
   datasource:
-    url: jdbc:postgresql://localhost:5432/quiz_platform
-    username: quizuser
-    password: quizpass
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/quizplatform?currentSchema=user_schema}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
   
   # JPA 설정  
@@ -21,13 +23,19 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: user_schema
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
   
   # Kafka 설정
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
       group-id: user-service
       auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.quizplatform.*
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -36,13 +44,14 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_SERVICE_URL:http://localhost:8761/eureka/}
   instance:
-    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.uuid}
 
 # 로깅 설정
 logging:
   level:
-    root: INFO
     com.quizplatform: DEBUG
-    org.hibernate.SQL: DEBUG 
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.springframework.kafka: INFO 

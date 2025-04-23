@@ -8,8 +8,14 @@ package com.quizplatform.quiz.domain.model;
  */
 public enum QuestionType {
     /**
-     * 객관식 문제
-     * 여러 선택지 중 하나를 선택
+     * 객관식 단일 선택
+     * 한 개의 정답만 선택할 수 있는 문제
+     */
+    SINGLE_CHOICE,
+    
+    /**
+     * 객관식 다중 선택
+     * 여러 개의 정답을 선택할 수 있는 문제
      */
     MULTIPLE_CHOICE,
     
@@ -20,26 +26,26 @@ public enum QuestionType {
     CHECKBOX,
     
     /**
-     * 단답형 문제
-     * 짧은 텍스트 답변
+     * 단답형
+     * 짧은 텍스트 답변을 입력
      */
     SHORT_ANSWER,
     
     /**
-     * 서술형 문제
-     * 긴 텍스트 답변
+     * 서술형
+     * 긴 텍스트 답변을 작성
      */
     ESSAY,
     
     /**
      * 참/거짓 문제
-     * 참과 거짓 중 하나를 선택
+     * True 또는 False 중 하나를 선택
      */
     TRUE_FALSE,
     
     /**
      * 코드 작성 문제
-     * 프로그래밍 코드를 작성하는 문제
+     * 프로그래밍 코드를 작성
      */
     CODE,
     
