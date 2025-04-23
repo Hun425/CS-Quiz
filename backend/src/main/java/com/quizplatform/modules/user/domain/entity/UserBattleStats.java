@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
  * @since JDK 21 eclipse temurin 21.0.6
  */
 @Entity
-@Table(name = "user_battle_stats")
+@Table(name = "user_battle_stats", schema = "user_schema")
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

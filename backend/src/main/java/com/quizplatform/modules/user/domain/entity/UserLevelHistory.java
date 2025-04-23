@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
  * @since JDK 21 eclipse temurin 21.0.6
  */
 @Entity
-@Table(name = "user_level_history")
+@Table(name = "user_level_history", schema = "user_schema")
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

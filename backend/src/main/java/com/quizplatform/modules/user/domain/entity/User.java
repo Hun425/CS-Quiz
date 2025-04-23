@@ -25,7 +25,7 @@ import java.util.List;
  * @since JDK 21 eclipse temurin 21.0.6
  */
 @Entity
-@Table(name = "users")
+@Table(name = "users", schema = "user_schema")
 @EntityListeners({AuditingEntityListener.class})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
