@@ -1,8 +1,11 @@
 package com.quizplatform.core.config.websocket;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
@@ -48,7 +51,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // /topic: 브로드캐스트 메시지를 위한 prefix
         // /queue: 특정 사용자를 위한 메시지 prefix
         registry.enableSimpleBroker("/topic", "/queue")
-                .setHeartbeatValue(new long[] {4000,4000});
+                .setHeartbeatValue(new long[] {4000,4000})
+                .setTaskScheduler(heartbeatScheduler());;
 
         // 클라이언트에서 서버로 메시지를 보낼 때 사용할 prefix
         registry.setApplicationDestinationPrefixes("/app");
@@ -56,6 +60,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // 유저별 구독 prefix 설정
         registry.setUserDestinationPrefix("/user");
 
+    }
+
+    /**
+     * 하트비트 스케줄러 등록
+     *
+     * @return ThreadPoolTaskScheduler
+     */
+    @Bean
+    public TaskScheduler heartbeatScheduler() {
+        return new ThreadPoolTaskScheduler();
     }
 
     /**

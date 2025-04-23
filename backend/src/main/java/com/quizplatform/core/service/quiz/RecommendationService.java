@@ -204,17 +204,19 @@ public class RecommendationService {
                     "유효하지 않은 난이도입니다: " + difficultyStr);
         }
 
-        // 2. 해당 난이도의 일반, 공개 퀴즈를 인기도 순으로 정렬하여 선택
-        List<Quiz> difficultyQuizzes = quizRepository.findByQuizTypeAndIsPublicTrue(QuizType.REGULAR)
-                .stream()
-                .filter(quiz -> quiz.getDifficultyLevel() == difficulty) // 해당 난이도 퀴즈 필터링
-                .sorted((q1, q2) -> {
-                    // 인기도 점수 계산 및 내림차순 정렬
-                    double score1 = calculatePopularityScore(q1);
-                    double score2 = calculatePopularityScore(q2);
-                    return Double.compare(score2, score1);
-                })
-                .limit(limit) // 요청된 개수만큼 제한
+        // 2. 해당 난이도의 일반, 공개 퀴즈 조회
+        List<Quiz> quizzes = quizRepository.findAll().stream()
+                .filter(quiz -> quiz.getQuizType() == QuizType.REGULAR 
+                        && quiz.isPublic() 
+                        && quiz.getDifficultyLevel() == difficulty)
+                .collect(Collectors.toList());
+        
+        // 랜덤하게 섞기
+        Collections.shuffle(quizzes);
+        
+        // 결과 제한
+        List<Quiz> difficultyQuizzes = quizzes.stream()
+                .limit(limit)
                 .collect(Collectors.toList());
 
         log.debug("난이도 기반 퀴즈 선택 완료 - 선택된 퀴즈 수: {}", difficultyQuizzes.size());

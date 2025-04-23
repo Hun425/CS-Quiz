@@ -16,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -210,6 +212,29 @@ public class BattleController {
 
         BattleRoomResponse battleRoom = battleService.leaveBattleRoom(roomId, userPrincipal.getUser());
         return ResponseEntity.ok(CommonApiResponse.success(battleRoom));
+    }
+
+    /**
+     * 배틀방 참가자 목록 조회 API
+     * 
+     * <p>특정 배틀방의 현재 참가자 목록을 조회합니다. 
+     * 웹소켓을 통해 받는 정보와 동일한 형식의 데이터를 제공합니다.</p>
+     * 
+     * @param roomId 조회할 배틀방 ID
+     * @return 참가자 목록 정보
+     * @throws BusinessException 방을 찾을 수 없거나 참가자가 없는 경우
+     */
+    @Operation(summary = "대결방 참가자 목록 조회", description = "특정 대결방의 현재 참가자 목록을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "참가자 목록이 성공적으로 조회되었습니다."),
+            @ApiResponse(responseCode = "404", description = "대결방을 찾을 수 없습니다.")
+    })
+    @GetMapping("/{roomId}/participants")
+    public ResponseEntity<CommonApiResponse<com.quizplatform.core.dto.battle.BattleJoinResponse>> getBattleParticipants(
+            @Parameter(description = "대결방 ID") @PathVariable Long roomId) {
+            
+        com.quizplatform.core.dto.battle.BattleJoinResponse participants = battleService.getCurrentBattleParticipants(roomId);
+        return ResponseEntity.ok(CommonApiResponse.success(participants));
     }
 
     /**
