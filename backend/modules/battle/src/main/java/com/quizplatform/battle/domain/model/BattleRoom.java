@@ -20,6 +20,9 @@ import java.util.stream.Collectors;
  * 
  * <p>사용자 간 퀴즈 대결을 진행하는 가상의 방을 관리합니다.
  * 참가자, 문제, 상태, 타이머 등 배틀 진행에 필요한 모든 정보를 포함합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Entity
 @Table(name = "battle_rooms", schema = "battle_schema")

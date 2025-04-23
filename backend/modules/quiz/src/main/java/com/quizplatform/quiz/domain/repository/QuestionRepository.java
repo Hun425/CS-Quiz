@@ -10,6 +10,9 @@ import java.util.List;
 
 /**
  * 문제 리포지토리
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Repository
 public interface QuestionRepository extends JpaRepository<Question, Long> {

@@ -4,6 +4,9 @@ package com.quizplatform.user.domain.model;
  * 사용자 권한 열거형
  * 
  * <p>시스템에서 사용되는 사용자 권한 수준을 정의합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 public enum UserRole {
     /**

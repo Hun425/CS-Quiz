@@ -13,6 +13,9 @@ import org.springframework.stereotype.Service;
  * 
  * <p>User 모듈에서 발생한 이벤트를 처리하고
  * Quiz 모듈에 필요한 사용자 정보를 관리합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Slf4j
 @Service

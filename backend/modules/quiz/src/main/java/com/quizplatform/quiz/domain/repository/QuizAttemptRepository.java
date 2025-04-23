@@ -9,6 +9,9 @@ import java.util.Optional;
 
 /**
  * 퀴즈 시도 리포지토리 인터페이스
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Repository
 public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, Long> {

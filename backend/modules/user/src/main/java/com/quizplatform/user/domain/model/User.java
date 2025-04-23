@@ -18,6 +18,9 @@ import java.util.List;
  * 
  * <p>퀴즈 플랫폼의 사용자 정보를 관리합니다.
  * 개인 정보, 인증 정보, 레벨, 경험치, 권한 등 사용자와 관련된 모든 데이터를 포함합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Entity
 @Table(name = "users", schema = "user_schema")

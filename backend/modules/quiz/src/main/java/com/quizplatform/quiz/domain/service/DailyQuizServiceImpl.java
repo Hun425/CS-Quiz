@@ -20,6 +20,9 @@ import java.util.stream.StreamSupport;
 
 /**
  * 데일리 퀴즈 서비스 구현
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Slf4j
 @Service

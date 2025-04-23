@@ -14,6 +14,9 @@ import java.util.List;
  * 
  * <p>퀴즈 관련 비즈니스 로직을 처리하는 애플리케이션 서비스입니다.
  * 컨트롤러와 도메인 서비스 사이의 중간 계층으로 작동합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 public interface QuizApplicationService {
     

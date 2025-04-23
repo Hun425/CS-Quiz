@@ -19,6 +19,8 @@ import java.util.Optional;
  * 
  * <p>배틀에 참여한 사용자 정보와 배틀 내 활동을 관리합니다.
  * 점수, 답변, 준비 상태 등의 정보를 포함합니다.</p>
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Entity
 @Table(name = "battle_participants", schema = "battle_schema")

@@ -11,6 +11,9 @@ import java.util.Optional;
  * 
  * <p>퀴즈 도메인의 핵심 비즈니스 로직을 정의한 인터페이스입니다.
  * 퀴즈 관리, 추천, 시도 등의 기능을 제공합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 public interface QuizService {
     

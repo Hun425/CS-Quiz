@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
  * 
  * <p>배틀이 완료되었을 때 발생하는 이벤트입니다.
  * 다른 모듈에서 배틀 결과를 처리할 때 사용됩니다.</p>
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Getter
 public class BattleCompletedEvent implements BattleEvent {

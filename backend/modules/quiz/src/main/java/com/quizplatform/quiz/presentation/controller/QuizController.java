@@ -24,6 +24,9 @@ import org.springframework.web.bind.annotation.*;
  * 
  * <p>퀴즈 관련 API 엔드포인트를 정의합니다.
  * 퀴즈 생성, 조회, 수정, 삭제, 검색 등의 기능을 제공합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Tag(name = "Quiz Controller", description = "퀴즈 관련 API를 제공합니다")
 @RestController

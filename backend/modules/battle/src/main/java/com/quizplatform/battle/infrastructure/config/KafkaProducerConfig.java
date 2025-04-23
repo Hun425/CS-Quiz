@@ -14,6 +14,9 @@ import java.util.Map;
 
 /**
  * Kafka 프로듀서 설정 클래스
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Configuration
 public class KafkaProducerConfig {

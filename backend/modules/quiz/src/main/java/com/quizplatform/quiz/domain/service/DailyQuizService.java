@@ -9,6 +9,9 @@ import java.util.Optional;
  * 데일리 퀴즈 서비스 인터페이스
  * 
  * <p>매일 새로운 퀴즈를 생성하고 관리하는 기능을 제공합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 public interface DailyQuizService {
     

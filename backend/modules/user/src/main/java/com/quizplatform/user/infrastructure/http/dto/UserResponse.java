@@ -11,6 +11,9 @@ import java.time.ZonedDateTime;
 
 /**
  * 사용자 응답 DTO
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Data
 @Builder

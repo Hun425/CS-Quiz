@@ -15,6 +15,9 @@ import java.time.ZonedDateTime;
  * 
  * <p>사용자의 배틀 관련 통계 정보를 관리합니다.
  * 승/패/무승부 횟수, 연승 기록, ELO 점수 등의 정보를 포함합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Entity
 @Table(name = "user_battle_stats", schema = "user_schema")

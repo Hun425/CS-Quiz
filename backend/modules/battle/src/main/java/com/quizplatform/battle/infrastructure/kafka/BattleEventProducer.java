@@ -13,6 +13,9 @@ import org.springframework.stereotype.Component;
  * 배틀 관련 이벤트를 Kafka 토픽으로 발행하는 프로듀서 클래스
  * 
  * <p>다른 서비스 모듈과의 비동기 통신을 위해 이벤트를 발행합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Component
 @RequiredArgsConstructor

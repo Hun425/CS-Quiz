@@ -12,6 +12,9 @@ import java.util.Optional;
 
 /**
  * 배틀 참가자 엔티티에 대한 데이터 액세스를 제공하는 리포지토리 인터페이스
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Repository
 public interface BattleParticipantRepository extends JpaRepository<BattleParticipant, Long> {

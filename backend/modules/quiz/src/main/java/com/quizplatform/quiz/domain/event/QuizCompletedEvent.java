@@ -11,6 +11,9 @@ import java.util.UUID;
  * 
  * <p>사용자가 퀴즈를 완료했을 때 발생하는 이벤트입니다.
  * 사용자 모듈에서 이 이벤트를 수신하여 경험치와 포인트를 부여합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Getter
 public class QuizCompletedEvent implements QuizEvent {

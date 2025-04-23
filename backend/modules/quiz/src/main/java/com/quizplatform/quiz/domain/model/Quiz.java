@@ -20,6 +20,9 @@ import java.util.*;
  * 
  * <p>퀴즈 정보, 문제 목록, 태그, 통계 등을 관리하는 핵심 엔티티입니다.
  * 일반 퀴즈와 데일리 퀴즈 두 가지 유형을 지원합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Entity
 @Table(name = "quizzes", schema = "quiz_schema")

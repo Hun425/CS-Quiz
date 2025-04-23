@@ -16,6 +16,9 @@ import java.time.LocalDateTime;
  * 
  * <p>사용자의 레벨 정보를 관리합니다. 각 레벨에 필요한 경험치와
  * 레벨업 시 부여되는 혜택 등을 포함합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Entity
 @Table(name = "user_levels", schema = "user_schema")

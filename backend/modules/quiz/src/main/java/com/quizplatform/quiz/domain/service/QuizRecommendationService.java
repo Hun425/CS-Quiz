@@ -5,6 +5,9 @@ package com.quizplatform.quiz.domain.service;
  * 
  * <p>사용자에게 적합한 퀴즈를 추천하기 위한 서비스입니다.
  * 사용자의 레벨, 선호도, 학습 이력 등을 고려하여 퀴즈를 추천합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 public interface QuizRecommendationService {
     

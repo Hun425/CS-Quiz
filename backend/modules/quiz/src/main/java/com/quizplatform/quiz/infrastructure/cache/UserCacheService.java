@@ -6,6 +6,9 @@ import com.quizplatform.quiz.domain.dto.UserDTO;
  * 사용자 캐시 서비스 인터페이스
  * 
  * <p>Quiz 모듈에서 필요한 사용자 정보를 캐싱하는 기능을 제공합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 public interface UserCacheService {
     

@@ -12,6 +12,9 @@ import java.util.List;
 
 /**
  * Swagger(OpenAPI) 문서화 설정 클래스
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Configuration
 public class SwaggerConfig {

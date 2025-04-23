@@ -15,6 +15,9 @@ import java.util.Set;
 
 /**
  * 태그 도메인 모델
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Entity
 @Table(name = "tags", schema = "quiz_schema")

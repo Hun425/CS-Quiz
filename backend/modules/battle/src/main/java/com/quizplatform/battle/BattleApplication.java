@@ -7,6 +7,9 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 /**
  * 대전 서비스 애플리케이션 진입점
  * 실시간 퀴즈 대전 기능 담당
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @SpringBootApplication
 @EnableDiscoveryClient

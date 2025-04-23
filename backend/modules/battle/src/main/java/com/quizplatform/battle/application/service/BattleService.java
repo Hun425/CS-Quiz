@@ -23,6 +23,9 @@ import java.util.stream.Collectors;
  * 
  * <p>배틀의 생성, 참가, 진행, 종료 등 전체 생명주기를 관리합니다.
  * 모듈화된 아키텍처에서 이벤트 기반으로 다른 모듈과 통신합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Service
 @RequiredArgsConstructor

@@ -14,6 +14,9 @@ import java.util.Optional;
 
 /**
  * 사용자 서비스 구현체
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Slf4j
 @Service

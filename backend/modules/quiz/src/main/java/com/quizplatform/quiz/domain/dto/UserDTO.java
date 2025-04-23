@@ -9,6 +9,9 @@ import lombok.NoArgsConstructor;
  * 
  * <p>다른 모듈에서 전달받은 사용자 정보를 담는 DTO 객체입니다.
  * User 모듈과의 의존성 분리를 위해 사용합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Data
 @NoArgsConstructor

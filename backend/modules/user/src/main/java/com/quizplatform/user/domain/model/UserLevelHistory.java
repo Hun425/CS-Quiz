@@ -12,6 +12,9 @@ import java.time.ZonedDateTime;
  * 
  * <p>사용자의 레벨 변경 이력을 저장하는 엔티티입니다.
  * 언제 어떤 레벨로 변경되었는지 기록합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Entity
 @Table(name = "user_level_history", schema = "user_schema")

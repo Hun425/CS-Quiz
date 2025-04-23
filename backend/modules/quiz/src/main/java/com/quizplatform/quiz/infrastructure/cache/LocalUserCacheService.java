@@ -13,6 +13,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * 
  * <p>분산 환경이 아닌 단일 인스턴스 환경에서 사용 가능한
  * 메모리 기반 캐시 서비스입니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Slf4j
 @Service

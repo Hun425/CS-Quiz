@@ -5,6 +5,9 @@ package com.quizplatform.quiz.domain.model;
  * 
  * <p>퀴즈 유형을 정의합니다.
  * 플랫폼에서 지원하는 다양한 퀴즈 형태를 나타냅니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 public enum QuizType {
     /**

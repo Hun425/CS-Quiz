@@ -4,6 +4,9 @@ package com.quizplatform.quiz.domain.model;
  * 난이도 수준 열거형
  * 
  * <p>퀴즈의 난이도 수준을 정의합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 public enum DifficultyLevel {
     /**

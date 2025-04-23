@@ -12,6 +12,9 @@ import org.springframework.stereotype.Service;
  * 퀴즈 이벤트 발행 서비스
  * 
  * <p>퀴즈 모듈에서 발생하는 이벤트를 카프카 토픽으로 발행합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Slf4j
 @Service

@@ -22,6 +22,9 @@ import java.util.NoSuchElementException;
 
 /**
  * 배틀 관련 API 요청을 처리하는 컨트롤러 클래스
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @RestController
 @RequestMapping("/api/battles")

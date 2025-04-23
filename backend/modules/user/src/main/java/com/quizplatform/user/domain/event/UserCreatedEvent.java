@@ -13,6 +13,9 @@ import java.util.UUID;
  * 
  * <p>새로운 사용자가 생성되었을 때 발생하는 이벤트입니다.
  * 다른 모듈에서 새 사용자 정보를 필요로 할 때 사용됩니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Getter
 public class UserCreatedEvent implements UserEvent {

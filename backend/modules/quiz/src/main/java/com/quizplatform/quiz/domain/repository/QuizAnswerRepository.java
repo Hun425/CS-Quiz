@@ -8,6 +8,9 @@ import java.util.List;
 
 /**
  * 퀴즈 답변 리포지토리
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Repository
 public interface QuizAnswerRepository extends JpaRepository<QuizAnswer, Long> {

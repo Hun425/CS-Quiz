@@ -16,6 +16,9 @@ import java.time.LocalDateTime;
  * 
  * <p>객관식 문제의 선택지 정보를 저장합니다.
  * 선택지 내용, 정답 여부 등을 관리합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Entity
 @Table(name = "question_options", schema = "quiz_schema")

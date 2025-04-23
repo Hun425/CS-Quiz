@@ -15,6 +15,9 @@ import java.util.List;
 
 /**
  * 퀴즈 생성 요청 DTO
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Data
 @Builder

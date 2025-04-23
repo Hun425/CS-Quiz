@@ -5,6 +5,8 @@ package com.quizplatform.battle.domain.model;
  * 
  * <p>배틀 방의 생명주기 상태를 정의합니다. 
  * 방 생성부터 완료까지의 모든 상태를 표현합니다.</p>
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 public enum BattleRoomStatus {
     /**

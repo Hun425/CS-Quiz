@@ -18,6 +18,9 @@ import java.util.Map;
 
 /**
  * Quiz 모듈 Kafka 설정
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @EnableKafka
 @Configuration

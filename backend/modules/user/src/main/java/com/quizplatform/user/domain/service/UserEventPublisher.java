@@ -14,6 +14,9 @@ import org.springframework.stereotype.Service;
  * 
  * <p>사용자 도메인에서 발생하는 이벤트를 발행하는 서비스입니다.
  * 다른 모듈과의 통신을 위해 Kafka 토픽으로 이벤트를 발행합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Slf4j
 @Service

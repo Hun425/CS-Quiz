@@ -4,6 +4,9 @@ package com.quizplatform.quiz.domain.model;
  * 문제 유형 열거형
  * 
  * <p>퀴즈 문제의 다양한 유형을 정의합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 public enum QuestionType {
     /**

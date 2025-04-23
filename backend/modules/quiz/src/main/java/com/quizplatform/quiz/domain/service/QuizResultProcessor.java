@@ -6,6 +6,9 @@ import com.quizplatform.quiz.domain.model.QuizAttempt;
  * 퀴즈 결과 처리 서비스 인터페이스
  * 
  * <p>퀴즈 시도 결과를 처리하고 통계, 점수, 보상 등을 계산합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 public interface QuizResultProcessor {
     

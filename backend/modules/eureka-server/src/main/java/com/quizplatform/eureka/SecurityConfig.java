@@ -9,6 +9,9 @@ import org.springframework.security.web.SecurityFilterChain;
 /**
  * Eureka 서버의 보안 설정
  * CSRF 보호를 비활성화하고 기본 접근을 허용
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Configuration
 @EnableWebSecurity

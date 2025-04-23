@@ -15,6 +15,8 @@ import java.time.LocalDateTime;
  * 
  * <p>배틀 참가자가 문제에 제출한 답변 정보를 저장합니다.
  * 문제 인덱스, 답변 내용, 정답 여부, 소요 시간, 획득 점수 등을 포함합니다.</p>
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Entity
 @Table(name = "battle_answers", schema = "battle_schema")

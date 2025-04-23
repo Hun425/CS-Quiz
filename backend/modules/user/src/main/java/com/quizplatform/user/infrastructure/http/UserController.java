@@ -24,6 +24,9 @@ import java.util.stream.Collectors;
 
 /**
  * 사용자 API 컨트롤러
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Slf4j
 @RestController

@@ -12,6 +12,9 @@ import org.springframework.stereotype.Component;
  * Quiz 모듈 이벤트 리스너
  * 
  * <p>다른 모듈에서 발행한 이벤트를 수신하여 처리합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Slf4j
 @Component

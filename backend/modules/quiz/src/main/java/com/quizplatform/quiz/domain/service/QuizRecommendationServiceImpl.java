@@ -10,6 +10,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 퀴즈 추천 서비스 구현
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Slf4j
 @Service

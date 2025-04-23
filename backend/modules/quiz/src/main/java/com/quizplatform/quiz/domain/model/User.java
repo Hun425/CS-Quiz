@@ -10,6 +10,9 @@ import lombok.NoArgsConstructor;
  * 
  * <p>다른 모듈(User 모듈)에서 수신한 사용자 정보를 나타냅니다.
  * 이 모델은 퀴즈 모듈 내에서 사용자 정보를 참조하기 위한 목적으로만 사용됩니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Getter
 @Builder

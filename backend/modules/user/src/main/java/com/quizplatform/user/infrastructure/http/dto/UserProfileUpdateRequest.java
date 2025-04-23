@@ -9,6 +9,9 @@ import jakarta.validation.constraints.Size;
 
 /**
  * 사용자 프로필 업데이트 요청 DTO
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Data
 @Builder

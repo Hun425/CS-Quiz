@@ -5,6 +5,9 @@ import java.time.LocalDateTime;
 
 /**
  * 퀴즈 답변 모델
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Entity
 @Table(name = "quiz_answers")
