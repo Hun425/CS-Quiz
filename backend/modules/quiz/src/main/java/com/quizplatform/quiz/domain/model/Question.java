@@ -9,15 +9,15 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 문제 엔티티 클래스
+ * 퀴즈 문제 엔티티
  * 
- * <p>퀴즈를 구성하는 개별 문제를 관리합니다.
- * 여러 유형의 문제와 답변 옵션을 지원합니다.</p>
+ * <p>퀴즈에 포함된 문제 정보를 저장합니다.
+ * 문제 내용, 정답, 설명, 배점 등을 관리합니다.</p>
  */
 @Entity
 @Table(name = "questions", schema = "quiz_schema")
@@ -37,7 +37,7 @@ public class Question {
      * 연결된 퀴즈
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "quiz_id", nullable = false)
+    @JoinColumn(name = "quiz_id")
     private Quiz quiz;
 
     /**
@@ -47,7 +47,7 @@ public class Question {
     private String content;
 
     /**
-     * 문제 유형
+     * 문제 타입 (객관식, 주관식, 참/거짓 등)
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "question_type", nullable = false)
@@ -56,7 +56,7 @@ public class Question {
     /**
      * 정답 설명
      */
-    @Column(name = "explanation", columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String explanation;
 
     /**
@@ -72,48 +72,40 @@ public class Question {
     private int order;
 
     /**
-     * 정답 옵션 (MULTIPLE_CHOICE, SINGLE_CHOICE 유형용)
+     * 주관식 정답 (주관식 문제인 경우에만 사용)
+     */
+    @Column(name = "correct_answer", columnDefinition = "TEXT")
+    private String correctAnswer;
+
+    /**
+     * 코드 스니펫 (코딩 문제의 경우)
+     */
+    @Column(name = "code_snippet", columnDefinition = "TEXT")
+    private String codeSnippet;
+
+    /**
+     * 문제 선택지 목록
      */
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("optionOrder ASC")
     private List<QuestionOption> options = new ArrayList<>();
 
     /**
-     * 주관식 정답 (TEXT, CODE 유형용)
-     */
-    @Column(name = "correct_answer")
-    private String correctAnswer;
-
-    /**
-     * 코드 스니펫 (프로그래밍 문제용)
-     */
-    @Column(name = "code_snippet", columnDefinition = "TEXT")
-    private String codeSnippet;
-
-    /**
      * 생성 시간
      */
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    private ZonedDateTime createdAt;
+    private LocalDateTime createdAt;
 
     /**
      * 수정 시간
      */
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
-    private ZonedDateTime updatedAt;
+    private LocalDateTime updatedAt;
 
     /**
-     * 문제 생성자
-     * 
-     * @param content 문제 내용
-     * @param questionType 문제 유형
-     * @param explanation 정답 설명
-     * @param points 배점
-     * @param order 문제 순서
-     * @param correctAnswer 주관식 정답
-     * @param codeSnippet 코드 스니펫
+     * 생성자
      */
     @Builder
     public Question(String content, QuestionType questionType, String explanation, 
@@ -168,6 +160,9 @@ public class Question {
             return options.stream()
                     .filter(QuestionOption::isCorrect)
                     .anyMatch(o -> o.getId().toString().equals(answer));
+        } else if (questionType == QuestionType.TRUE_FALSE) {
+            // 참/거짓 문제
+            return correctAnswer.equalsIgnoreCase(answer.trim());
         } else {
             // 주관식일 경우 텍스트 비교
             return correctAnswer.equalsIgnoreCase(answer.trim());
@@ -183,8 +178,8 @@ public class Question {
      * @param correctAnswer 주관식 정답
      * @param codeSnippet 코드 스니펫
      */
-    public void updateInfo(String content, String explanation, 
-                         int points, String correctAnswer, String codeSnippet) {
+    public void update(String content, String explanation, int points, 
+                     String correctAnswer, String codeSnippet) {
         this.content = content;
         this.explanation = explanation;
         this.points = points;

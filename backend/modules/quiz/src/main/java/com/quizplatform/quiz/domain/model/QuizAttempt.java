@@ -14,7 +14,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 퀴즈 시도 엔티티 클래스
+ * 퀴즈 시도 엔티티
+ * 
+ * <p>사용자가 퀴즈를 시도한 기록을 저장합니다.
+ * 여러 개의 문제 시도(QuestionAttempt)를 포함합니다.</p>
  */
 @Entity
 @Table(name = "quiz_attempts", schema = "quiz_schema")
@@ -33,7 +36,7 @@ public class QuizAttempt {
     /**
      * 퀴즈 ID
      */
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "quiz_id", nullable = false)
     private Quiz quiz;
     
@@ -106,6 +109,12 @@ public class QuizAttempt {
     private ZonedDateTime updatedAt;
     
     /**
+     * 총 소요 시간(초)
+     */
+    @Column(name = "time_taken")
+    private Integer timeTaken;
+    
+    /**
      * 퀴즈 시도 생성자
      * 
      * @param quiz 퀴즈
@@ -133,6 +142,16 @@ public class QuizAttempt {
     }
     
     /**
+     * 문제 답변 제거
+     * 
+     * @param questionAttempt 제거할 문제 답변
+     */
+    public void removeQuestionAttempt(QuestionAttempt questionAttempt) {
+        questionAttempts.remove(questionAttempt);
+        questionAttempt.setQuizAttempt(null);
+    }
+    
+    /**
      * 퀴즈 완료 처리 및 점수 계산
      * 
      * @return 통과 여부
@@ -145,24 +164,53 @@ public class QuizAttempt {
         this.completedAt = ZonedDateTime.now();
         this.completed = true;
         
+        // 소요 시간 계산 (초 단위)
+        this.timeTaken = (int) (completedAt.toEpochSecond() - startedAt.toEpochSecond());
+        
         // 점수 계산
-        int totalScore = 0;
-        int maxScore = 0;
-        
-        for (QuestionAttempt attempt : questionAttempts) {
-            if (attempt.isCorrect()) {
-                totalScore += attempt.getQuestion().getPoints();
-            }
-            maxScore += attempt.getQuestion().getPoints();
-        }
-        
-        this.score = maxScore > 0 ? totalScore : 0;
+        calculateScore();
         
         // 통과 여부 계산
-        int scorePercentage = maxScore > 0 ? (totalScore * 100) / maxScore : 0;
-        this.passed = scorePercentage >= quiz.getPassingScore();
+        this.passed = isPassed();
         
         return this.passed;
+    }
+    
+    /**
+     * 점수 계산
+     */
+    private void calculateScore() {
+        if (questionAttempts.isEmpty()) {
+            this.score = 0;
+            return;
+        }
+
+        int totalCorrect = 0;
+        for (QuestionAttempt attempt : questionAttempts) {
+            if (attempt.isCorrect()) {
+                totalCorrect += attempt.getQuestion().getPoints();
+            }
+        }
+
+        // 총점 대비 획득 점수의 비율 계산 (100점 만점)
+        int totalPoints = questionAttempts.stream()
+                .mapToInt(qa -> qa.getQuestion().getPoints())
+                .sum();
+        
+        if (totalPoints > 0) {
+            this.score = (totalCorrect * 100) / totalPoints;
+        } else {
+            this.score = 0;
+        }
+    }
+    
+    /**
+     * 통과 여부 확인
+     * 
+     * @return 통과 여부
+     */
+    private boolean isPassed() {
+        return score >= quiz.getPassingScore();
     }
     
     /**

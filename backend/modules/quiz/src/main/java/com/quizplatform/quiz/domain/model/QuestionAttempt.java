@@ -12,7 +12,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.ZonedDateTime;
 
 /**
- * 문제 답변 엔티티 클래스
+ * 문제 시도 엔티티
+ * 
+ * <p>사용자가 개별 문제에 대한 답변을 시도한 정보를 저장합니다.
+ * 퀴즈 시도(QuizAttempt)에 포함됩니다.</p>
  */
 @Entity
 @Table(name = "question_attempts", schema = "quiz_schema")
@@ -22,7 +25,7 @@ import java.time.ZonedDateTime;
 public class QuestionAttempt {
     
     /**
-     * 문제 답변 ID
+     * 문제 시도 ID
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,7 +41,7 @@ public class QuestionAttempt {
     /**
      * 연결된 문제
      */
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "question_id", nullable = false)
     private Question question;
     
@@ -55,7 +58,7 @@ public class QuestionAttempt {
     private boolean correct;
     
     /**
-     * 답변 제출 시간
+     * 응답 시간
      */
     @Column(name = "answered_at")
     private ZonedDateTime answeredAt;
@@ -75,7 +78,7 @@ public class QuestionAttempt {
     private ZonedDateTime updatedAt;
     
     /**
-     * 문제 답변 생성자
+     * 생성자
      * 
      * @param question 문제
      * @param userAnswer 사용자 답변
@@ -108,5 +111,51 @@ public class QuestionAttempt {
         this.correct = question.checkAnswer(userAnswer);
         this.answeredAt = ZonedDateTime.now();
         return this.correct;
+    }
+
+    // Getters and Setters
+    
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public QuizAttempt getQuizAttempt() {
+        return quizAttempt;
+    }
+
+    public Question getQuestion() {
+        return question;
+    }
+
+    public void setQuestion(Question question) {
+        this.question = question;
+    }
+
+    public String getUserAnswer() {
+        return userAnswer;
+    }
+
+    public void setUserAnswer(String userAnswer) {
+        this.userAnswer = userAnswer;
+    }
+
+    public boolean isCorrect() {
+        return correct;
+    }
+
+    public void setCorrect(boolean correct) {
+        this.correct = correct;
+    }
+
+    public ZonedDateTime getAnsweredAt() {
+        return answeredAt;
+    }
+
+    public void setAnsweredAt(ZonedDateTime answeredAt) {
+        this.answeredAt = answeredAt;
     }
 } 

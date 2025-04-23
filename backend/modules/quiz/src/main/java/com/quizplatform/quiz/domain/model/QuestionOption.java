@@ -9,10 +9,13 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
 
 /**
- * 문제 선택지 엔티티 클래스
+ * 문제 선택지 엔티티
+ * 
+ * <p>객관식 문제의 선택지 정보를 저장합니다.
+ * 선택지 내용, 정답 여부 등을 관리합니다.</p>
  */
 @Entity
 @Table(name = "question_options", schema = "quiz_schema")
@@ -44,7 +47,7 @@ public class QuestionOption {
     /**
      * 정답 여부
      */
-    @Column(nullable = false)
+    @Column(name = "is_correct", nullable = false)
     private boolean correct;
     
     /**
@@ -54,31 +57,34 @@ public class QuestionOption {
     private int optionOrder;
     
     /**
+     * 설명 (옵션 선택 시 표시할 추가 설명)
+     */
+    @Column(columnDefinition = "TEXT")
+    private String explanation;
+    
+    /**
      * 생성 시간
      */
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    private ZonedDateTime createdAt;
+    private LocalDateTime createdAt;
     
     /**
      * 수정 시간
      */
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
-    private ZonedDateTime updatedAt;
+    private LocalDateTime updatedAt;
     
     /**
-     * 선택지 생성자
-     * 
-     * @param content 선택지 내용
-     * @param correct 정답 여부
-     * @param optionOrder 선택지 순서
+     * 생성자
      */
     @Builder
-    public QuestionOption(String content, boolean correct, int optionOrder) {
+    public QuestionOption(String content, boolean correct, int optionOrder, String explanation) {
         this.content = content;
         this.correct = correct;
         this.optionOrder = optionOrder;
+        this.explanation = explanation;
     }
     
     /**
@@ -93,11 +99,13 @@ public class QuestionOption {
     /**
      * 선택지 내용 업데이트
      * 
-     * @param content 새 내용
-     * @param correct 새 정답 여부
+     * @param content 선택지 내용
+     * @param correct 정답 여부
+     * @param explanation 선택지 설명
      */
-    public void update(String content, boolean correct) {
+    public void update(String content, boolean correct, String explanation) {
         this.content = content;
         this.correct = correct;
+        this.explanation = explanation;
     }
 } 

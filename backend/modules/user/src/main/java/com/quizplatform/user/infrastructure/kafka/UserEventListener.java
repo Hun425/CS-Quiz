@@ -2,10 +2,13 @@ package com.quizplatform.user.infrastructure.kafka;
 
 import com.quizplatform.common.event.quiz.QuizCompletedEvent;
 import com.quizplatform.common.event.quiz.UserAchievementEvent;
+import com.quizplatform.user.domain.event.UserCreatedEvent;
 import com.quizplatform.user.domain.service.UserService;
+import com.quizplatform.common.event.Topics;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 /**
@@ -19,6 +22,7 @@ import org.springframework.stereotype.Component;
 public class UserEventListener {
 
     private final UserService userService;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
     
     /**
      * 퀴즈 완료 이벤트 처리
@@ -75,6 +79,34 @@ public class UserEventListener {
                     event.getBonusExperience(), event.getBonusPoints());
         } catch (Exception e) {
             log.error("Error processing user achievement event", e);
+        }
+    }
+    
+    /**
+     * 사용자 생성 이벤트 처리
+     * 
+     * <p>사용자가 생성되면 해당 이벤트를 다른 모듈로 발행합니다.</p>
+     * 
+     * @param event 사용자 생성 이벤트
+     */
+    public void handleUserCreatedEvent(UserCreatedEvent event) {
+        log.info("Publishing user created event: {}", event);
+        
+        try {
+            // 도메인 이벤트를 common 모듈의 이벤트로 변환
+            com.quizplatform.common.event.user.UserRegisteredEvent commonEvent = 
+                new com.quizplatform.common.event.user.UserRegisteredEvent(
+                    event.getUserId().toString(), 
+                    event.getUsername(), 
+                    event.getEmail()
+                );
+            
+            // Kafka로 이벤트 발행
+            kafkaTemplate.send(Topics.USER_REGISTERED, commonEvent.getEventId(), commonEvent);
+            
+            log.info("User created event published for user: {}", event.getUserId());
+        } catch (Exception e) {
+            log.error("Error publishing user created event", e);
         }
     }
 } 
