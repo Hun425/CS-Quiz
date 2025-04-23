@@ -4,6 +4,13 @@ server:
 spring:
   application:
     name: api-gateway
+  
+  main:
+    web-application-type: reactive
+    
+  # 데이터소스 자동 구성 비활성화
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
     
   cloud:
     gateway:

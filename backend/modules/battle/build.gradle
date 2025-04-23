@@ -12,4 +12,7 @@ dependencies {
     
     // Eureka Client
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    
+    // PostgreSQL 드라이버
+    runtimeOnly 'org.postgresql:postgresql'
 }

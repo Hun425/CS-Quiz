@@ -22,4 +22,9 @@ dependencies {
     // Resilience4j Circuit Breaker - Spring Boot 3.x 호환 버전
     implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.1.0'
     implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
+    
+    // Spring MVC 의존성 제외
+    configurations {
+        all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-web'
+    }
 }

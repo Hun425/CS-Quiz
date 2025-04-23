@@ -8,8 +8,8 @@ spring:
   # 데이터베이스 설정
   datasource:
     url: jdbc:postgresql://localhost:5432/quiz_platform
-    username: postgres
-    password: postgres
+    username: quizuser
+    password: quizpass
     driver-class-name: org.postgresql.Driver
   
   # JPA 설정  
