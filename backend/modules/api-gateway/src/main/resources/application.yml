@@ -1,0 +1,63 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+    
+  cloud:
+    gateway:
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - RewritePath=/api/users/(?<path>.*), /$\{path}
+            
+        - id: quiz-service
+          uri: lb://quiz-service
+          predicates:
+            - Path=/api/quizzes/**
+          filters:
+            - RewritePath=/api/quizzes/(?<path>.*), /$\{path}
+            
+        - id: battle-service
+          uri: lb://battle-service
+          predicates:
+            - Path=/api/battles/**
+          filters:
+            - RewritePath=/api/battles/(?<path>.*), /$\{path}
+            
+  # Kafka 설정
+  kafka:
+    bootstrap-servers: localhost:9092
+    
+# Eureka 클라이언트 설정
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    
+# 로깅 설정
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.http.server.reactive: DEBUG
+    org.springframework.web.reactive: DEBUG
+    reactor.netty: DEBUG
+    
+# Actuator 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,gateway
+  endpoint:
+    health:
+      show-details: always

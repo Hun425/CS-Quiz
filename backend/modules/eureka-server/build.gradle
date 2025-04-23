@@ -1,0 +1,15 @@
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:2023.0.0"
+    }
+}
+
+dependencies {
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-server'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+}
+
+bootJar {
+    enabled = true
+    mainClass.set('com.quizplatform.eureka.EurekaServerApplication')
+} 

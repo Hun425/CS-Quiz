@@ -1,1 +1,17 @@
 rootProject.name = 'quiz-platform'
+
+// 모듈 프로젝트 포함
+include 'modules:common'
+include 'modules:user'
+include 'modules:quiz'
+include 'modules:battle'
+include 'modules:api-gateway'
+include 'modules:eureka-server'
+
+// 프로젝트 경로 설정
+project(':modules:common').projectDir = file('modules/common')
+project(':modules:user').projectDir = file('modules/user')
+project(':modules:quiz').projectDir = file('modules/quiz')
+project(':modules:battle').projectDir = file('modules/battle')
+project(':modules:api-gateway').projectDir = file('modules/api-gateway')
+project(':modules:eureka-server').projectDir = file('modules/eureka-server')

@@ -1,0 +1,8 @@
+// modules은 단순 그룹핑을 위한 프로젝트이므로 bootJar 비활성화
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+}

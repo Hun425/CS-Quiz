@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/modules/api-gateway/quiz-platform.modules.api-gateway.main.iml" filepath="$PROJECT_DIR$/.idea/modules/modules/api-gateway/quiz-platform.modules.api-gateway.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/modules/battle/quiz-platform.modules.battle.main.iml" filepath="$PROJECT_DIR$/.idea/modules/modules/battle/quiz-platform.modules.battle.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/modules/common/quiz-platform.modules.common.main.iml" filepath="$PROJECT_DIR$/.idea/modules/modules/common/quiz-platform.modules.common.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/modules/eureka-server/quiz-platform.modules.eureka-server.main.iml" filepath="$PROJECT_DIR$/.idea/modules/modules/eureka-server/quiz-platform.modules.eureka-server.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/modules/quiz/quiz-platform.modules.quiz.main.iml" filepath="$PROJECT_DIR$/.idea/modules/modules/quiz/quiz-platform.modules.quiz.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/modules/user/quiz-platform.modules.user.main.iml" filepath="$PROJECT_DIR$/.idea/modules/modules/user/quiz-platform.modules.user.main.iml" />
+    </modules>
+  </component>
+</project>
