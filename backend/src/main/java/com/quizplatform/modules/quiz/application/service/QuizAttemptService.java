@@ -6,6 +6,7 @@ import com.quizplatform.modules.quiz.domain.entity.Quiz;
 import com.quizplatform.modules.quiz.domain.entity.QuizAttempt;
 import com.quizplatform.modules.quiz.domain.entity.QuizType;
 import com.quizplatform.modules.user.domain.entity.User;
+import com.quizplatform.modules.quiz.application.event.QuizAttemptCompletedEvent;
 import com.quizplatform.modules.quiz.presentation.dto.QuestionAttemptDto;
 import com.quizplatform.modules.quiz.presentation.dto.QuizResultResponse;
 import com.quizplatform.modules.quiz.presentation.dto.QuizSubmitRequest;
@@ -18,10 +19,14 @@ import com.quizplatform.core.service.common.EntityMapperService;
 import com.quizplatform.core.service.level.LevelingService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 퀴즈 시도(QuizAttempt)와 관련된 비즈니스 로직을 처리하는 서비스입니다.
@@ -33,12 +38,16 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class QuizAttemptService {
     private final QuizAttemptRepository quizAttemptRepository;
     private final QuestionAttemptRepository questionAttemptRepository;
     private final QuizRepository quizRepository;
     private final LevelingService levelingService;
     private final EntityMapperService entityMapperService;
+
+    private final KafkaTemplate<String, QuizAttemptCompletedEvent> kafkaTemplate;
+    private static final String QUIZ_COMPLETED_TOPIC = "quiz-attempt-completed-topic";
 
     /**
      * 사용자가 특정 퀴즈에 대한 시도를 시작합니다.
@@ -233,6 +242,38 @@ public class QuizAttemptService {
         levelingService.calculateQuizExp(quizAttempt); // 경험치 계산 및 사용자 레벨 업데이트
         int experienceAfter = user.getExperience(); // 경험치 부여 후 경험치 기록
         int experienceGained = experienceAfter - experienceBefore; // 실제 획득 경험치 계산
+
+        // --- Publish QuizAttemptCompletedEvent to Kafka ---
+        try {
+            // Prepare data for the event
+            List<QuizAttemptCompletedEvent.QuestionAnswerInfo> answerInfoList = quizAttempt.getQuestionAttempts().stream()
+                    .map(qa -> new QuizAttemptCompletedEvent.QuestionAnswerInfo(
+                            qa.getQuestion().getId(),
+                            qa.getUserAnswer(),
+                            qa.isCorrect()
+                    ))
+                    .collect(Collectors.toList());
+
+            QuizAttemptCompletedEvent event = new QuizAttemptCompletedEvent(
+                    quizAttempt.getId(),
+                    userId,
+                    quizId,
+                    quizAttempt.getScore(),
+                    quizAttempt.getTimeTaken(),
+                    quizAttempt.getEndTime() != null ? quizAttempt.getEndTime() : LocalDateTime.now(), // Use endTime if available
+                    answerInfoList
+            );
+
+            // Send the event to Kafka
+            kafkaTemplate.send(QUIZ_COMPLETED_TOPIC, String.valueOf(userId), event); // Use userId as key for partitioning
+            log.info("Published QuizAttemptCompletedEvent for attemptId: {}, userId: {}", quizAttempt.getId(), userId);
+
+        } catch (Exception e) {
+            // Log error but don't fail the main operation (or decide based on policy)
+            log.error("Failed to publish QuizAttemptCompletedEvent for attemptId: {}", quizAttempt.getId(), e);
+            // Consider adding monitoring/alerting here
+        }
+        // --- End of Kafka event publishing ---
 
         // 최종 결과 응답 생성 (EntityMapperService 사용)
         return entityMapperService.mapToQuizResultResponse(quizAttempt, experienceGained);

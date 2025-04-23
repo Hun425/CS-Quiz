@@ -1,5 +1,7 @@
 package com.quizplatform.core.domain.battle;
 
+import com.quizplatform.modules.battle.domain.entity.BattleProgressBuilder;
+import com.quizplatform.modules.battle.domain.entity.BattleRoomStatus;
 import com.quizplatform.modules.quiz.domain.entity.Question;
 import com.quizplatform.modules.quiz.domain.entity.Quiz;
 import com.quizplatform.modules.user.domain.entity.User;

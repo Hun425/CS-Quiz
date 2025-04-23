@@ -1,12 +1,12 @@
 package com.quizplatform.core.controller.battle;
 
 import com.quizplatform.core.config.security.UserPrincipal;
-import com.quizplatform.core.domain.battle.BattleRoomStatus;
-import com.quizplatform.core.dto.battle.*;
+import com.quizplatform.modules.battle.domain.entity.BattleRoomStatus;
 import com.quizplatform.core.dto.common.CommonApiResponse;
 import com.quizplatform.core.exception.BusinessException;
 import com.quizplatform.core.exception.ErrorCode;
 import com.quizplatform.core.service.battle.BattleService;
+import com.quizplatform.modules.battle.presentation.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

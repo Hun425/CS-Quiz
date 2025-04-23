@@ -3,6 +3,7 @@ package com.quizplatform.modules.quiz.application.service;
 import com.quizplatform.modules.quiz.domain.entity.question.Question;
 import com.quizplatform.modules.quiz.domain.entity.tag.Tag;
 import com.quizplatform.modules.quiz.domain.entity.*;
+import com.quizplatform.modules.quiz.application.port.in.QuizQueryPort;
 import com.quizplatform.modules.quiz.presentation.dto.*;
 import com.quizplatform.modules.quiz.presentation.dto.question.QuestionCreateRequest;
 import com.quizplatform.modules.user.application.port.in.UserQueryPort;
@@ -33,7 +34,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class QuizService {
+public class QuizService implements QuizQueryPort {
     private final QuizRepository quizRepository;
     private final TagRepository tagRepository;
     private final UserQueryPort userQueryPort;
@@ -635,5 +636,20 @@ public class QuizService {
         } else {
             return DifficultyLevel.BEGINNER;
         }
+    }
+
+    // --- QuizQueryPort Implementation ---
+
+    /**
+     * 퀴즈 ID로 문제를 포함한 퀴즈 정보를 조회합니다.
+     * @param quizId 조회할 퀴즈 ID
+     * @return 퀴즈 정보 DTO (QuizResponse), 퀴즈가 없거나 접근 불가 시 Optional.empty()
+     */
+    @Override
+    public Optional<QuizResponse> getQuizWithQuestionsById(Long quizId) {
+        // Use existing method logic, wrap result in Optional
+        // Consider adding access control logic here if needed
+        return quizRepository.findByIdWithAllDetails(quizId)
+               .map(entityMapperService::mapToQuizResponse); // Map if found
     }
 }

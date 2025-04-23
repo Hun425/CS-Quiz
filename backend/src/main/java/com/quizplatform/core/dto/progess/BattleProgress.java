@@ -1,6 +1,6 @@
 package com.quizplatform.core.dto.progess;
 
-import com.quizplatform.core.domain.battle.BattleRoomStatus;
+import com.quizplatform.modules.battle.domain.entity.BattleRoomStatus;
 import lombok.Getter;
 import lombok.*;
 

@@ -6,7 +6,7 @@ import com.quizplatform.modules.user.domain.entity.User;
 import com.quizplatform.modules.user.domain.entity.UserAchievementHistory;
 import com.quizplatform.modules.user.domain.entity.UserLevel;
 import com.quizplatform.modules.user.domain.entity.UserLevelHistory;
-import com.quizplatform.core.dto.battle.BattleResult;
+import com.quizplatform.modules.battle.presentation.dto.BattleResult;
 import com.quizplatform.modules.user.infrastructure.repository.UserRepository;
 import com.quizplatform.modules.quiz.infrastructure.repository.QuizAttemptRepository;
 import com.quizplatform.modules.user.infrastructure.repository.AchievementRepository;

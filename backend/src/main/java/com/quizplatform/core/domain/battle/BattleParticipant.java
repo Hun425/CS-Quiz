@@ -1,5 +1,6 @@
 package com.quizplatform.core.domain.battle;
 
+import com.quizplatform.modules.battle.domain.entity.BattleRoomStatus;
 import com.quizplatform.modules.quiz.domain.entity.Question;
 import com.quizplatform.modules.user.domain.entity.User;
 import com.quizplatform.core.exception.BusinessException;

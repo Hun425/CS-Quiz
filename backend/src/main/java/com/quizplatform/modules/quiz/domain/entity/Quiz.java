@@ -1,6 +1,6 @@
 package com.quizplatform.modules.quiz.domain.entity;
 
-import com.quizplatform.core.dto.battle.BattleResult;
+import com.quizplatform.modules.battle.presentation.dto.BattleResult;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
