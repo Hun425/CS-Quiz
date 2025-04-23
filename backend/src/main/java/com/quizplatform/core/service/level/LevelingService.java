@@ -1,14 +1,14 @@
 package com.quizplatform.core.service.level;
 
 import com.quizplatform.modules.user.domain.entity.Achievement;
-import com.quizplatform.core.domain.quiz.QuizAttempt;
+import com.quizplatform.modules.quiz.domain.entity.QuizAttempt;
 import com.quizplatform.modules.user.domain.entity.User;
 import com.quizplatform.modules.user.domain.entity.UserAchievementHistory;
 import com.quizplatform.modules.user.domain.entity.UserLevel;
 import com.quizplatform.modules.user.domain.entity.UserLevelHistory;
 import com.quizplatform.core.dto.battle.BattleResult;
 import com.quizplatform.modules.user.infrastructure.repository.UserRepository;
-import com.quizplatform.core.repository.quiz.QuizAttemptRepository;
+import com.quizplatform.modules.quiz.infrastructure.repository.QuizAttemptRepository;
 import com.quizplatform.modules.user.infrastructure.repository.AchievementRepository;
 import com.quizplatform.modules.user.infrastructure.repository.UserLevelHistoryRepository;
 import com.quizplatform.modules.user.infrastructure.repository.UserLevelRepository;

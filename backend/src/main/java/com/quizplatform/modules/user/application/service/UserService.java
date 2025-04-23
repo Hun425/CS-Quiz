@@ -1,13 +1,12 @@
 package com.quizplatform.modules.user.application.service;
 
 import com.quizplatform.modules.user.domain.entity.Achievement;
-import com.quizplatform.core.domain.quiz.QuizAttempt;
 import com.quizplatform.modules.user.domain.entity.User;
 import com.quizplatform.modules.user.domain.entity.UserLevel;
 import com.quizplatform.core.exception.BusinessException;
 import com.quizplatform.core.exception.ErrorCode;
 import com.quizplatform.modules.user.infrastructure.repository.UserRepository;
-import com.quizplatform.core.repository.question.QuestionAttemptRepository;
+import com.quizplatform.modules.quiz.infrastructure.repository.QuestionAttemptRepository;
 import com.quizplatform.modules.user.infrastructure.repository.AchievementRepository;
 import com.quizplatform.modules.user.infrastructure.repository.UserLevelHistoryRepository;
 import com.quizplatform.modules.user.infrastructure.repository.UserLevelRepository;

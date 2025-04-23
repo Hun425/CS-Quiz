@@ -1,6 +1,6 @@
 package com.quizplatform.modules.user.domain.entity;
 
-import com.quizplatform.core.domain.quiz.QuizAttempt;
+import com.quizplatform.modules.quiz.domain.entity.QuizAttempt;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

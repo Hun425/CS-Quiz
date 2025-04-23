@@ -1,6 +1,6 @@
 package com.quizplatform.core.domain.battle;
 
-import com.quizplatform.core.domain.question.Question;
+import com.quizplatform.modules.quiz.domain.entity.Question;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
