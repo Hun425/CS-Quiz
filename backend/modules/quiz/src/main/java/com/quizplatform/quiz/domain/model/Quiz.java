@@ -25,7 +25,7 @@ import java.util.*;
 @Table(name = "quizzes", schema = "quiz_schema")
 @EntityListeners(AuditingEntityListener.class)
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 public class Quiz {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -132,31 +132,30 @@ public class Quiz {
     /**
      * 퀴즈에 포함된 문제 목록
      */
+    @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("order ASC")
     @Fetch(FetchMode.SUBSELECT)
-    @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @BatchSize(size = 30)
-    @OrderBy("id ASC")
-    private Set<Question> questions = new LinkedHashSet<>();
+    @BatchSize(size = 20)
+    private List<Question> questions = new ArrayList<>();
 
     /**
      * 퀴즈에 연결된 태그 목록
      */
-    @ElementCollection
-    @CollectionTable(name = "quiz_tags", schema = "quiz_schema", 
-                    joinColumns = @JoinColumn(name = "quiz_id"))
-    @Column(name = "tag")
-    private List<String> tags = new ArrayList<>();
+    @ManyToMany(mappedBy = "quizzes")
+    private Set<Tag> tags = new HashSet<>();
 
     /**
      * 퀴즈 생성 시간
      */
     @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     /**
      * 퀴즈 최종 수정 시간
      */
     @LastModifiedDate
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     /**
@@ -172,7 +171,8 @@ public class Quiz {
      */
     @Builder
     public Quiz(Long creatorId, String title, String description, String category, int difficulty, 
-                Integer timeLimit, int passingScore) {
+                Integer timeLimit, int passingScore, QuizType quizType, DifficultyLevel difficultyLevel,
+                LocalDateTime validUntil) {
         this.creatorId = creatorId;
         this.title = title;
         this.description = description;
@@ -180,8 +180,12 @@ public class Quiz {
         this.difficulty = difficulty;
         this.timeLimit = timeLimit;
         this.passingScore = passingScore;
-        this.active = true;
+        this.quizType = quizType;
+        this.difficultyLevel = difficultyLevel;
+        this.validUntil = validUntil;
+        this.active = false;
         this.published = false;
+        this.questionCount = 0;
     }
 
     /**
@@ -195,13 +199,15 @@ public class Quiz {
      * @param passingScore 새 합격 점수
      */
     public void updateInfo(String title, String description, String category, 
-                         int difficulty, Integer timeLimit, int passingScore) {
+                         int difficulty, Integer timeLimit, int passingScore,
+                         DifficultyLevel difficultyLevel) {
         this.title = title;
         this.description = description;
         this.category = category;
         this.difficulty = difficulty;
         this.timeLimit = timeLimit;
         this.passingScore = passingScore;
+        this.difficultyLevel = difficultyLevel;
     }
 
     /**
@@ -220,11 +226,17 @@ public class Quiz {
      * 
      * @param tag 추가할 태그
      */
-    public void addTag(String tag) {
-        if (tags == null) {
-            tags = new ArrayList<>();
-        }
+    public void addTag(Tag tag) {
         tags.add(tag);
+        tag.addQuiz(this);
+    }
+
+    /**
+     * 퀴즈에 문자열 태그 추가
+     */
+    public void addTag(String tagName) {
+        // 문자열 태그는 ElementCollection으로 처리되지 않음
+        // 이 메서드는 하위 호환성을 위해 유지하되, 태그 서비스에서 Tag 객체를 찾아 addTag(Tag) 호출 필요
     }
 
     /**
@@ -232,10 +244,17 @@ public class Quiz {
      * 
      * @param tag 제거할 태그
      */
-    public void removeTag(String tag) {
-        if (tags != null) {
-            tags.remove(tag);
-        }
+    public void removeTag(Tag tag) {
+        tags.remove(tag);
+        tag.removeQuiz(this);
+    }
+
+    /**
+     * 퀴즈에 문자열 태그 제거
+     */
+    public void removeTag(String tagName) {
+        // 문자열 태그는 ElementCollection으로 처리되지 않음
+        // 이 메서드는 하위 호환성을 위해 유지하되, 태그 서비스에서 Tag 객체를 찾아 removeTag(Tag) 호출 필요
     }
 
     /**
@@ -243,10 +262,12 @@ public class Quiz {
      * 
      * @param score 이번 시도의 점수
      */
-    public void recordAttempt(double score) {
+    public void recordAttempt(int score) {
         this.attemptCount++;
-        // 가중 평균 계산
-        this.avgScore = ((this.avgScore * (this.attemptCount - 1)) + score) / this.attemptCount;
+        
+        // 평균 점수 업데이트 (현재까지의 평균과 새로운 점수를 가중 평균)
+        double totalScore = this.avgScore * (this.attemptCount - 1) + score;
+        this.avgScore = totalScore / this.attemptCount;
     }
 
     /**
@@ -339,5 +360,19 @@ public class Quiz {
      */
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    /**
+     * 퀴즈 공개 처리
+     */
+    public void publish() {
+        this.published = true;
+    }
+    
+    /**
+     * 퀴즈 활성화 처리
+     */
+    public void activate() {
+        this.active = true;
     }
 } 

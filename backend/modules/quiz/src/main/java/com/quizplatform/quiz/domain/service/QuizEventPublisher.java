@@ -1,6 +1,7 @@
 package com.quizplatform.quiz.domain.service;
 
 import com.quizplatform.common.event.EventPublisher;
+import com.quizplatform.common.event.Topics;
 import com.quizplatform.common.event.quiz.QuizCompletedEvent;
 import com.quizplatform.common.event.quiz.UserAchievementEvent;
 import lombok.RequiredArgsConstructor;
@@ -19,10 +20,6 @@ public class QuizEventPublisher {
     
     private final EventPublisher eventPublisher;
     
-    // Kafka 토픽 상수
-    private static final String QUIZ_COMPLETED_TOPIC = "quiz.completed";
-    private static final String USER_ACHIEVEMENT_TOPIC = "user.achievement";
-    
     /**
      * 퀴즈 완료 이벤트 발행
      * 
@@ -40,7 +37,7 @@ public class QuizEventPublisher {
                 quizId, userId, score, totalQuestions, 
                 experienceGained, pointsGained, passed
         );
-        eventPublisher.publish(event, QUIZ_COMPLETED_TOPIC);
+        eventPublisher.publish(event, Topics.QUIZ_COMPLETED);
         log.info("Quiz completed event published for quiz: {}, user: {}", quizId, userId);
     }
     
@@ -59,8 +56,19 @@ public class QuizEventPublisher {
                 userId, achievementType, achievementDescription,
                 bonusExperience, bonusPoints
         );
-        eventPublisher.publish(event, USER_ACHIEVEMENT_TOPIC);
+        eventPublisher.publish(event, Topics.USER_ACHIEVEMENT_EARNED);
         log.info("User achievement event published for user: {}, achievement: {}", 
                 userId, achievementType);
+    }
+    
+    /**
+     * 데일리 퀴즈 생성 이벤트 발행
+     * 
+     * @param quizId 퀴즈 ID
+     * @param date 날짜 (YYYY-MM-DD 형식)
+     */
+    public void publishDailyQuizCreated(String quizId, String date) {
+        // 데일리 퀴즈 생성 이벤트 구현 (필요시)
+        log.info("Daily quiz created event published for quiz: {}, date: {}", quizId, date);
     }
 } 

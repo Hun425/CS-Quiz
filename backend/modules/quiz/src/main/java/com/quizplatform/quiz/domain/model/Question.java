@@ -1,7 +1,7 @@
 package com.quizplatform.quiz.domain.model;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,176 +14,156 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 퀴즈 문제 엔티티
- * 
- * <p>퀴즈에 포함된 문제 정보를 저장합니다.
- * 문제 내용, 정답, 설명, 배점 등을 관리합니다.</p>
+ * 문제 도메인 모델
  */
 @Entity
 @Table(name = "questions", schema = "quiz_schema")
 @EntityListeners(AuditingEntityListener.class)
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Question {
-
     /**
      * 문제 ID
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    
     /**
-     * 연결된 퀴즈
+     * 연관된 퀴즈
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "quiz_id")
+    @JoinColumn(name = "quiz_id", nullable = false)
     private Quiz quiz;
-
+    
     /**
      * 문제 내용
      */
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(nullable = false, length = 500)
     private String content;
-
+    
     /**
-     * 문제 타입 (객관식, 주관식, 참/거짓 등)
+     * 문제 유형
      */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "question_type", nullable = false)
-    private QuestionType questionType;
-
+    @Column(nullable = false)
+    private String type;
+    
     /**
      * 정답 설명
      */
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 1000)
     private String explanation;
-
+    
     /**
      * 배점
      */
     @Column(nullable = false)
-    private int points;
-
+    private Integer points;
+    
     /**
-     * 문제 순서
+     * 보기 목록
      */
-    @Column(name = "question_order", nullable = false)
-    private int order;
-
+    @ElementCollection
+    @CollectionTable(
+        name = "question_options",
+        schema = "quiz_schema",
+        joinColumns = @JoinColumn(name = "question_id")
+    )
+    @Column(name = "option_text", nullable = false)
+    private List<String> options = new ArrayList<>();
+    
     /**
-     * 주관식 정답 (주관식 문제인 경우에만 사용)
+     * 정답
      */
-    @Column(name = "correct_answer", columnDefinition = "TEXT")
-    private String correctAnswer;
-
-    /**
-     * 코드 스니펫 (코딩 문제의 경우)
-     */
-    @Column(name = "code_snippet", columnDefinition = "TEXT")
-    private String codeSnippet;
-
-    /**
-     * 문제 선택지 목록
-     */
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("optionOrder ASC")
-    private List<QuestionOption> options = new ArrayList<>();
-
+    @Column(nullable = false)
+    private String answer;
+    
     /**
      * 생성 시간
      */
     @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
+    
     /**
      * 수정 시간
      */
     @LastModifiedDate
-    @Column(name = "updated_at", nullable = false)
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
-
+    
     /**
-     * 생성자
+     * 문제 순서
      */
-    @Builder
-    public Question(String content, QuestionType questionType, String explanation, 
-                   int points, int order, String correctAnswer, String codeSnippet) {
-        this.content = content;
-        this.questionType = questionType;
-        this.explanation = explanation;
-        this.points = points;
-        this.order = order;
-        this.correctAnswer = correctAnswer;
-        this.codeSnippet = codeSnippet;
-    }
-
+    @Column(name = "question_order")
+    private Integer order;
+    
     /**
-     * 문제에 퀴즈 설정
-     * 
-     * @param quiz 연결할 퀴즈
+     * 코드 스니펫
+     */
+    @Column(name = "code_snippet", length = 2000)
+    private String codeSnippet;
+    
+    /**
+     * 연관 퀴즈 설정
      */
     public void setQuiz(Quiz quiz) {
         this.quiz = quiz;
     }
-
+    
     /**
-     * 선택지 추가
-     * 
-     * @param option 추가할 선택지
+     * 문제 유형 반환
      */
-    public void addOption(QuestionOption option) {
-        options.add(option);
-        option.setQuestion(this);
+    public String getQuestionType() {
+        return this.type;
     }
-
+    
     /**
-     * 선택지 제거
-     * 
-     * @param option 제거할 선택지
+     * 정답 반환
      */
-    public void removeOption(QuestionOption option) {
-        options.remove(option);
-        option.setQuestion(null);
+    public String getCorrectAnswer() {
+        return this.answer;
     }
-
+    
     /**
-     * 정답 확인
-     * 
-     * @param answer 사용자 답변
-     * @return 정답 여부
+     * 보기 추가
      */
-    public boolean checkAnswer(String answer) {
-        if (questionType == QuestionType.MULTIPLE_CHOICE || questionType == QuestionType.SINGLE_CHOICE) {
-            // 객관식일 경우 선택지 ID로 확인
-            return options.stream()
-                    .filter(QuestionOption::isCorrect)
-                    .anyMatch(o -> o.getId().toString().equals(answer));
-        } else if (questionType == QuestionType.TRUE_FALSE) {
-            // 참/거짓 문제
-            return correctAnswer.equalsIgnoreCase(answer.trim());
-        } else {
-            // 주관식일 경우 텍스트 비교
-            return correctAnswer.equalsIgnoreCase(answer.trim());
+    public void addOption(String option) {
+        if (this.options == null) {
+            this.options = new ArrayList<>();
         }
+        this.options.add(option);
     }
-
+    
     /**
-     * 문제 정보 업데이트
-     * 
-     * @param content 문제 내용
-     * @param explanation 정답 설명
-     * @param points 배점
-     * @param correctAnswer 주관식 정답
-     * @param codeSnippet 코드 스니펫
+     * 문제 복사
      */
-    public void update(String content, String explanation, int points, 
-                     String correctAnswer, String codeSnippet) {
-        this.content = content;
-        this.explanation = explanation;
-        this.points = points;
-        this.correctAnswer = correctAnswer;
-        this.codeSnippet = codeSnippet;
+    public Question copy() {
+        Question copy = Question.builder()
+                .content(this.content)
+                .type(this.type)
+                .explanation(this.explanation)
+                .points(this.points)
+                .answer(this.answer)
+                .order(this.order)
+                .codeSnippet(this.codeSnippet)
+                .build();
+                
+        // 보기 복사
+        copy.getOptions().addAll(this.options);
+        
+        return copy;
+    }
+    
+    /**
+     * 빌더 패턴용 questionType 메서드 (type 필드와 매핑)
+     * 
+     * @param type 문제 유형
+     * @return Question.QuestionBuilder
+     */
+    public static Question.QuestionBuilder questionType(String type) {
+        return Question.builder().type(type);
     }
 } 

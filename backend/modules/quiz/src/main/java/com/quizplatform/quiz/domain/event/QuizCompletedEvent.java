@@ -36,7 +36,7 @@ public class QuizCompletedEvent implements QuizEvent {
         this.eventId = UUID.randomUUID().toString();
         this.timestamp = System.currentTimeMillis();
         this.quizId = quiz.getId().toString();
-        this.userId = quizAttempt.getUser().getId().toString();
+        this.userId = quizAttempt.getUserId().toString();
         this.score = quizAttempt.getScore();
         this.totalQuestions = quizAttempt.getTotalQuestions();
         this.experienceGained = experienceGained;

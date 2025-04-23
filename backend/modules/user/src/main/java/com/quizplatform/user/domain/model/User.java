@@ -254,11 +254,7 @@ public class User {
         this.requiredExperience = calculateNextLevelExp();
         
         // 레벨 히스토리 추가
-        UserLevelHistory history = UserLevelHistory.builder()
-                .user(this)
-                .previousLevel(oldLevel)
-                .newLevel(this.level)
-                .build();
+        UserLevelHistory history = new UserLevelHistory(this, oldLevel, this.level);
         this.levelHistories.add(history);
     }
 

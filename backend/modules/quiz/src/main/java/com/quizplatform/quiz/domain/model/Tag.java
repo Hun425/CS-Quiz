@@ -1,7 +1,7 @@
 package com.quizplatform.quiz.domain.model;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,91 +10,84 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
- * 태그 엔티티 클래스
- * 
- * <p>퀴즈 분류와 검색에 사용되는 태그를 관리합니다.
- * 주제, 기술, 난이도 등의 정보를 태그로 제공합니다.</p>
+ * 태그 도메인 모델
  */
 @Entity
 @Table(name = "tags", schema = "quiz_schema")
 @EntityListeners(AuditingEntityListener.class)
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Tag {
-
     /**
      * 태그 ID
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    
     /**
      * 태그 이름
      */
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 50)
     private String name;
-
+    
     /**
      * 태그 설명
      */
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 255)
     private String description;
-
+    
     /**
-     * 태그 색상
+     * 태그와 연관된 퀴즈 목록
      */
-    @Column(length = 20)
-    private String color;
-
-    /**
-     * 태그 그룹
-     */
-    @Column(name = "tag_group")
-    private String tagGroup;
-
+    @ManyToMany
+    @JoinTable(
+        name = "quiz_tag_mapping",
+        schema = "quiz_schema",
+        joinColumns = @JoinColumn(name = "tag_id"),
+        inverseJoinColumns = @JoinColumn(name = "quiz_id")
+    )
+    private Set<Quiz> quizzes = new HashSet<>();
+    
     /**
      * 생성 시간
      */
     @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
+    
     /**
-     * 최종 수정 시간
+     * 수정 시간
      */
     @LastModifiedDate
-    @Column(name = "updated_at", nullable = false)
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
-
-    /**
-     * 태그 생성자
-     * 
-     * @param name 태그 이름
-     * @param description 태그 설명
-     * @param color 태그 색상
-     * @param tagGroup 태그 그룹
-     */
-    @Builder
-    public Tag(String name, String description, String color, String tagGroup) {
-        this.name = name;
-        this.description = description;
-        this.color = color;
-        this.tagGroup = tagGroup;
-    }
-
+    
     /**
      * 태그 정보 업데이트
-     * 
-     * @param description 새 태그 설명
-     * @param color 새 태그 색상
-     * @param tagGroup 새 태그 그룹
      */
-    public void update(String description, String color, String tagGroup) {
+    public void update(String name, String description) {
+        this.name = name;
         this.description = description;
-        this.color = color;
-        this.tagGroup = tagGroup;
+    }
+    
+    /**
+     * 퀴즈 추가
+     */
+    public void addQuiz(Quiz quiz) {
+        this.quizzes.add(quiz);
+    }
+    
+    /**
+     * 퀴즈 제거
+     */
+    public void removeQuiz(Quiz quiz) {
+        this.quizzes.remove(quiz);
     }
 } 

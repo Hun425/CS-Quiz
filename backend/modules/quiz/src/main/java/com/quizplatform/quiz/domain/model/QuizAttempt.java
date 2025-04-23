@@ -1,7 +1,7 @@
 package com.quizplatform.quiz.domain.model;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,23 +9,22 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.ZonedDateTime;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 퀴즈 시도 엔티티
- * 
- * <p>사용자가 퀴즈를 시도한 기록을 저장합니다.
- * 여러 개의 문제 시도(QuestionAttempt)를 포함합니다.</p>
+ * 퀴즈 시도 도메인 모델
  */
 @Entity
 @Table(name = "quiz_attempts", schema = "quiz_schema")
 @EntityListeners(AuditingEntityListener.class)
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class QuizAttempt {
-    
     /**
      * 퀴즈 시도 ID
      */
@@ -34,41 +33,34 @@ public class QuizAttempt {
     private Long id;
     
     /**
-     * 퀴즈 ID
+     * 시도한 퀴즈
      */
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiz_id", nullable = false)
     private Quiz quiz;
     
     /**
-     * 사용자 ID
+     * 시도한 사용자 ID
      */
-    @Column(name = "user_id", nullable = false)
+    @Column(nullable = false)
     private Long userId;
     
     /**
-     * 사용자 엔티티 (Quiz 모듈에는 User 참조 정보만 저장)
-     */
-    @Transient
-    private UserInfo user;
-    
-    /**
-     * 문제 답변 목록
-     */
-    @OneToMany(mappedBy = "quizAttempt", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<QuestionAttempt> questionAttempts = new ArrayList<>();
-    
-    /**
-     * 획득 점수
+     * 시작 시간
      */
     @Column(nullable = false)
-    private int score;
+    private LocalDateTime startTime;
     
     /**
-     * 총 문제 수
+     * 종료 시간
      */
-    @Column(name = "total_questions", nullable = false)
-    private int totalQuestions;
+    private LocalDateTime endTime;
+    
+    /**
+     * 완료 여부
+     */
+    @Column(nullable = false)
+    private boolean completed;
     
     /**
      * 통과 여부
@@ -77,64 +69,51 @@ public class QuizAttempt {
     private boolean passed;
     
     /**
-     * 완료 여부
+     * 총점
      */
-    @Column(name = "is_completed", nullable = false)
-    private boolean completed;
+    @Column(nullable = false)
+    private int score;
     
     /**
-     * 시작 시간
+     * 총 문제 수
      */
-    @Column(name = "started_at", nullable = false)
-    private ZonedDateTime startedAt;
-    
-    /**
-     * 완료 시간
-     */
-    @Column(name = "completed_at")
-    private ZonedDateTime completedAt;
+    @Column(nullable = false)
+    private int totalQuestions;
     
     /**
      * 생성 시간
      */
     @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private ZonedDateTime createdAt;
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
     
     /**
      * 수정 시간
      */
     @LastModifiedDate
-    @Column(name = "updated_at", nullable = false)
-    private ZonedDateTime updatedAt;
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
     
     /**
-     * 총 소요 시간(초)
+     * 퀴즈 시도 중 각 문제에 대한 시도 목록
      */
-    @Column(name = "time_taken")
-    private Integer timeTaken;
+    @OneToMany(mappedBy = "quizAttempt", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<QuestionAttempt> questionAttempts = new ArrayList<>();
     
     /**
-     * 퀴즈 시도 생성자
-     * 
-     * @param quiz 퀴즈
-     * @param userId 사용자 ID
+     * 퀴즈 시도 시작
      */
-    @Builder
-    public QuizAttempt(Quiz quiz, Long userId) {
-        this.quiz = quiz;
-        this.userId = userId;
-        this.score = 0;
-        this.totalQuestions = quiz.getQuestions().size();
-        this.passed = false;
+    @PrePersist
+    public void prePersist() {
+        this.startTime = LocalDateTime.now();
         this.completed = false;
-        this.startedAt = ZonedDateTime.now();
+        this.passed = false;
+        this.score = 0;
+        this.totalQuestions = this.quiz.getQuestions().size();
     }
     
     /**
-     * 문제 답변 추가
-     * 
-     * @param questionAttempt 문제 답변
+     * 문제 시도 추가
      */
     public void addQuestionAttempt(QuestionAttempt questionAttempt) {
         questionAttempts.add(questionAttempt);
@@ -142,17 +121,7 @@ public class QuizAttempt {
     }
     
     /**
-     * 문제 답변 제거
-     * 
-     * @param questionAttempt 제거할 문제 답변
-     */
-    public void removeQuestionAttempt(QuestionAttempt questionAttempt) {
-        questionAttempts.remove(questionAttempt);
-        questionAttempt.setQuizAttempt(null);
-    }
-    
-    /**
-     * 퀴즈 완료 처리 및 점수 계산
+     * 퀴즈 시도 완료 처리
      * 
      * @return 통과 여부
      */
@@ -161,89 +130,51 @@ public class QuizAttempt {
             return this.passed;
         }
         
-        this.completedAt = ZonedDateTime.now();
+        this.endTime = LocalDateTime.now();
         this.completed = true;
         
-        // 소요 시간 계산 (초 단위)
-        this.timeTaken = (int) (completedAt.toEpochSecond() - startedAt.toEpochSecond());
-        
         // 점수 계산
-        calculateScore();
+        int totalPoints = 0;
+        int earnedPoints = 0;
         
-        // 통과 여부 계산
-        this.passed = isPassed();
+        for (Question question : this.quiz.getQuestions()) {
+            totalPoints += question.getPoints();
+            
+            // 해당 문제에 대한 시도 찾기
+            questionAttempts.stream()
+                    .filter(attempt -> attempt.getQuestionId().equals(question.getId()))
+                    .findFirst()
+                    .ifPresent(attempt -> {
+                        if (attempt.isCorrect()) {
+                            this.score += question.getPoints();
+                        }
+                    });
+        }
+        
+        // 통과 기준: 60% 이상 정답
+        double percentage = (double) this.score / totalPoints * 100;
+        this.passed = percentage >= 60;
         
         return this.passed;
     }
     
     /**
-     * 점수 계산
-     */
-    private void calculateScore() {
-        if (questionAttempts.isEmpty()) {
-            this.score = 0;
-            return;
-        }
-
-        int totalCorrect = 0;
-        for (QuestionAttempt attempt : questionAttempts) {
-            if (attempt.isCorrect()) {
-                totalCorrect += attempt.getQuestion().getPoints();
-            }
-        }
-
-        // 총점 대비 획득 점수의 비율 계산 (100점 만점)
-        int totalPoints = questionAttempts.stream()
-                .mapToInt(qa -> qa.getQuestion().getPoints())
-                .sum();
-        
-        if (totalPoints > 0) {
-            this.score = (totalCorrect * 100) / totalPoints;
-        } else {
-            this.score = 0;
-        }
-    }
-    
-    /**
-     * 통과 여부 확인
+     * 퀴즈 시도 소요 시간 계산
      * 
-     * @return 통과 여부
+     * @return 소요 시간 (초)
      */
-    private boolean isPassed() {
-        return score >= quiz.getPassingScore();
-    }
-    
-    /**
-     * 남은 미답변 문제 수 반환
-     * 
-     * @return 미답변 문제 수
-     */
-    public int getRemainingQuestions() {
-        return totalQuestions - questionAttempts.size();
-    }
-    
-    /**
-     * 사용자 정보 설정 (UserInfo 객체로부터)
-     * 
-     * @param userInfo 사용자 정보
-     */
-    public void setUser(UserInfo userInfo) {
-        this.user = userInfo;
-    }
-    
-    /**
-     * UserInfo 내부 클래스 - User 모듈과의 의존성 분리를 위한 Value Object
-     */
-    @Getter
-    public static class UserInfo {
-        private final Long id;
-        private final String username;
-        private final String email;
-        
-        public UserInfo(Long id, String username, String email) {
-            this.id = id;
-            this.username = username;
-            this.email = email;
+    public long getDurationInSeconds() {
+        if (endTime == null) {
+            return Duration.between(startTime, LocalDateTime.now()).getSeconds();
         }
+        return Duration.between(startTime, endTime).getSeconds();
+    }
+    
+    /**
+     * 시도 소요 시간 반환 (초)
+     * QuizResultProcessor에서 사용
+     */
+    public Long getTimeTaken() {
+        return getDurationInSeconds();
     }
 } 

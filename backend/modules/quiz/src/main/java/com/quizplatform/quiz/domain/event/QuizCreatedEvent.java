@@ -3,6 +3,7 @@ package com.quizplatform.quiz.domain.event;
 import com.quizplatform.quiz.domain.model.DifficultyLevel;
 import com.quizplatform.quiz.domain.model.Quiz;
 import com.quizplatform.quiz.domain.model.QuizType;
+import com.quizplatform.quiz.domain.model.Tag;
 import lombok.Getter;
 
 import java.util.List;
@@ -42,7 +43,7 @@ public class QuizCreatedEvent implements QuizEvent {
         this.difficultyLevel = quiz.getDifficultyLevel();
         this.questionCount = quiz.getQuestionCount();
         this.tagNames = quiz.getTags().stream()
-                .map(tag -> tag.getName())
+                .map(Tag::getName)
                 .collect(Collectors.toList());
     }
     
@@ -59,5 +60,12 @@ public class QuizCreatedEvent implements QuizEvent {
     @Override
     public String getEventType() {
         return "QUIZ_CREATED";
+    }
+    
+    /**
+     * 이벤트 이름 반환
+     */
+    public String getName() {
+        return "퀴즈 생성: " + this.title;
     }
 } 

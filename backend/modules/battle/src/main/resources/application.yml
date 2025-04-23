@@ -1,5 +1,5 @@
 server:
-  port: 8083
+  port: ${PORT:8083}
 
 spring:
   application:
@@ -7,47 +7,46 @@ spring:
   
   # 데이터베이스 설정
   datasource:
-    url: jdbc:postgresql://localhost:5432/quiz_platform
-    username: quizuser
-    password: quizpass
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/quizplatform}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
   
   # JPA 설정
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
-    show-sql: true
     properties:
       hibernate:
+        default_schema: battle_schema
         format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        show_sql: false
   
   # Redis 설정
   redis:
-    host: localhost
-    port: 6379
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    timeout: 10000
   
   # Kafka 설정
   kafka:
-    bootstrap-servers: localhost:9092
-    consumer:
-      group-id: battle-service
-      auto-offset-reset: earliest
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
 # Eureka 클라이언트 설정
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
   instance:
-    prefer-ip-address: true
+    preferIpAddress: true
 
 # 로깅 설정
 logging:
   level:
     root: INFO
-    com.quizplatform: DEBUG
-    org.hibernate.SQL: DEBUG 
+    com.quizplatform.battle: DEBUG
+    org.springframework.kafka: INFO 

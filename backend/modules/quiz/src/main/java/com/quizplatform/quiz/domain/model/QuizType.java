@@ -1,7 +1,7 @@
 package com.quizplatform.quiz.domain.model;
 
 /**
- * 퀴즈 유형 열거형
+ * 퀴즈 타입 열거형
  * 
  * <p>퀴즈 유형을 정의합니다.
  * 플랫폼에서 지원하는 다양한 퀴즈 형태를 나타냅니다.</p>
@@ -11,7 +11,7 @@ public enum QuizType {
      * 일반 퀴즈
      * 사용자가 생성한 기본 퀴즈
      */
-    REGULAR,
+    NORMAL,
     
     /**
      * 데일리 퀴즈
@@ -26,20 +26,14 @@ public enum QuizType {
     CHALLENGE,
     
     /**
-     * 배틀 퀴즈
+     * 대회 퀴즈
      * 사용자 간 대결을 위한 퀴즈
      */
-    BATTLE,
+    COMPETITION,
     
     /**
      * 학습 퀴즈
      * 개념 학습을 위한 퀴즈
      */
-    LEARNING,
-    
-    /**
-     * 시험 퀴즈
-     * 평가 목적의 퀴즈
-     */
-    EXAM
+    LEARNING
 } 
