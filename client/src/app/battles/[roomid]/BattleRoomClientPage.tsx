@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useEffect } from "react";
+import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useGetBattleRoom } from "@/lib/api/battle/useGetBattleRoom";
 import { useBattleSocket } from "@/lib/services/websocket/useBattleSocket";
@@ -13,7 +13,6 @@ import ReadyStatusIndicator from "../_components/ReadyStatusIndicator";
 import BattleControlButtons from "../_components/BattleControlButtons";
 import battleSocketClient from "@/lib/services/websocket/battleWebSocketService";
 import Loading from "@/app/_components/Loading";
-import { Participant } from "@/lib/types/battle";
 
 const BattleRoomClientPage = () => {
   const router = useRouter();
@@ -29,15 +28,6 @@ const BattleRoomClientPage = () => {
   const participantsPayload = useBattleSocketStore(
     (s) => s.participantsPayload
   );
-  const myParticipant = useMemo(
-    () =>
-      participantsPayload?.participants.find(
-        (p: Participant) => p.userId === userId
-      ),
-    [participantsPayload, userId]
-  );
-
-  const isReady = myParticipant?.ready ?? false;
 
   useEffect(() => {
     if (!participantsPayload) {
@@ -76,6 +66,10 @@ const BattleRoomClientPage = () => {
         배틀룸을 찾을 수 없습니다.
       </div>
     );
+
+  const participants = participantsPayload?.participants ?? [];
+  const myStatus = participants.find((p) => p.userId === userId);
+  const isReady = myStatus?.ready ?? false;
 
   return (
     <div className="max-w-full mx-auto p-6 py-16 space-y-6 min-h-screen">

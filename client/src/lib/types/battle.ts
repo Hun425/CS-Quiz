@@ -11,6 +11,7 @@ import BattleParticipantsList from './../../app/battles/_components/BattlePartic
 
 export enum BattleSocketEventKey {
   PARTICIPANTS = "PARTICIPANTS",
+  READY = "READY",
   START = "START",
   STATUS = "STATUS",
   PROGRESS = "PROGRESS",
@@ -24,6 +25,7 @@ export enum BattleSocketEventKey {
 
 export interface BattleWebSocketEvents {
   [BattleSocketEventKey.PARTICIPANTS]: BattleParticipantsResponse; // 참가자 목록
+  [BattleSocketEventKey.READY]: BattleReadyResponse; // 참가자 준비 상태
   [BattleSocketEventKey.START]: BattleStartResponse;
   [BattleSocketEventKey.STATUS]: { status: BattleStatus };
   [BattleSocketEventKey.PROGRESS]: BattleProgressResponse;
@@ -48,6 +50,15 @@ export interface BattleParticipantsResponse {
   maxParticipants?: number; // 최대 참가자 수
   username?: string; // 참가자 이름
   type?: string;
+}
+
+/**
+ * ✅ 배틀 준비 상태 응답 타입
+ * - 배틀룸 내 참가자의 준비 상태가 변경될 때 서버에서 받는 응답
+ */
+export interface BattleReadyResponse {
+  roomId: number; // 배틀룸 ID
+  participants: Participant[]; // 현재 참가자 목록
 }
 
 /**
@@ -243,14 +254,4 @@ export interface BattleEndResponse {
 export interface BattleReadyRequest {
   userId: number; // 사용자 ID
   roomId: number; // 배틀룸 ID
-}
-
-/**
- * ✅ 배틀 준비 상태 응답 타입
- * - 배틀룸 내 참가자의 준비 상태가 변경될 때 서버에서 받는 응답
- */
-export interface BattleReadyResponse {
-  roomId: number; // 배틀룸 ID
-  type: string; // 응답 타입 (예: "READY_UPDATE")
-  participants: Participant[]; // 현재 참가자 목록
 }

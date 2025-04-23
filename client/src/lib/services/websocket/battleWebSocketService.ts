@@ -7,6 +7,7 @@ import { BattleWebSocketEvents } from "@/lib/types/battle";
 import {
   BattleParticipantsResponse,
   BattleSocketEventKey,
+  BattleReadyResponse,
 } from "@/lib/types/battle";
 
 type EventHandlerMap = {
@@ -145,6 +146,11 @@ class BattleWebSocketService {
       this.triggerEvent(BattleSocketEventKey.PARTICIPANTS, data);
     });
 
+    this.client.subscribe(`/topic/battle/${roomId}/ready`, (msg) => {
+      const data: BattleReadyResponse = JSON.parse(msg.body);
+      this.triggerEvent(BattleSocketEventKey.READY, data);
+    });
+
     this.client.subscribe(`/topic/battle/${roomId}/start`, (msg) => {
       const data = JSON.parse(msg.body);
       this.triggerEvent(BattleSocketEventKey.START, data);
@@ -160,7 +166,7 @@ class BattleWebSocketService {
       this.triggerEvent(BattleSocketEventKey.PROGRESS, data);
     });
 
-    this.client.subscribe(`/topic/battle/${roomId}/question`, (msg) => {
+    this.client.subscribe(`/topic/battle/${roomId}/next-question`, (msg) => {
       const data = JSON.parse(msg.body);
       this.triggerEvent(BattleSocketEventKey.NEXT_QUESTION, data);
     });

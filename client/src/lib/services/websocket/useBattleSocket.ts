@@ -41,6 +41,23 @@ export const useBattleSocket = (roomId: number) => {
       setParticipantsPayload({ ...data });
     };
 
+    const handleReady = (
+      data: BattleWebSocketEvents[BattleSocketEventKey.READY]
+    ) => {
+      console.log("✅ [READY] 준비 상태 수신:", data);
+      updateLastActivity();
+
+      // 1) 현재 저장된 payload 가져오기
+      const prev = useBattleSocketStore.getState().participantsPayload;
+
+      // 2) participants 배열만 data.participants로 교체
+      setParticipantsPayload({
+        ...prev,
+        roomId: data.roomId,
+        participants: data.participants,
+      });
+    };
+
     const handleStart = (
       data: BattleWebSocketEvents[BattleSocketEventKey.START]
     ) => {
@@ -110,6 +127,7 @@ export const useBattleSocket = (roomId: number) => {
           BattleSocketEventKey.PARTICIPANTS,
           handleParticipants
         );
+        battleWebSocketService.on(BattleSocketEventKey.READY, handleReady);
         battleWebSocketService.on(BattleSocketEventKey.START, handleStart);
         battleWebSocketService.on(BattleSocketEventKey.STATUS, handleStatus);
         battleWebSocketService.on(
