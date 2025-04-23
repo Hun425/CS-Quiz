@@ -3,7 +3,7 @@ package com.quizplatform.core.config.security.oauth;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quizplatform.core.config.security.UserPrincipal;
 import com.quizplatform.core.config.security.jwt.JwtTokenProvider;
-import com.quizplatform.core.dto.AuthResponse;
+import com.quizplatform.modules.user.presentation.dto.AuthResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

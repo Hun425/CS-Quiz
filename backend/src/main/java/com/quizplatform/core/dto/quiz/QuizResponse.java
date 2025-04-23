@@ -3,7 +3,7 @@ package com.quizplatform.core.dto.quiz;
 import com.quizplatform.core.domain.quiz.DifficultyLevel;
 import com.quizplatform.core.domain.quiz.Quiz;
 import com.quizplatform.core.domain.quiz.QuizType;
-import com.quizplatform.core.dto.user.UserSummaryResponse;
+import com.quizplatform.modules.user.presentation.dto.UserSummaryResponse;
 import com.quizplatform.core.dto.question.QuestionResponse;
 import com.quizplatform.core.dto.tag.TagResponse;
 import lombok.Builder;

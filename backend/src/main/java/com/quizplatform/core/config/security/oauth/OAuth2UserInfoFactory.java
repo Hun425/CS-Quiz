@@ -1,6 +1,6 @@
 package com.quizplatform.core.config.security.oauth;
 
-import com.quizplatform.core.domain.user.AuthProvider;
+import com.quizplatform.modules.user.domain.entity.AuthProvider;
 
 import java.util.Map;
 

@@ -1,11 +1,12 @@
 package com.quizplatform.core.config.security.oauth;
 
 import com.quizplatform.core.config.security.UserPrincipal;
-import com.quizplatform.core.domain.user.AuthProvider;
-import com.quizplatform.core.domain.user.User;
-import com.quizplatform.core.repository.UserRepository;
+import com.quizplatform.modules.user.domain.entity.AuthProvider;
+import com.quizplatform.modules.user.domain.entity.User;
+import com.quizplatform.modules.user.infrastructure.repository.UserRepository;
 // UserLevelRepository import 추가
-import com.quizplatform.core.repository.user.UserLevelRepository;
+import com.quizplatform.modules.user.infrastructure.repository.UserLevelRepository;
+import com.quizplatform.modules.user.domain.entity.UserLevel;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -229,7 +230,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             // UserLevelRepository를 사용하여 이미 존재하는지 확인 (중복 생성 방지)
             if (!userLevelRepository.findByUserId(user.getId()).isPresent()) {
                 // UserLevel 객체 생성 (기본 레벨 1, 경험치 0)
-                com.quizplatform.core.domain.user.UserLevel userLevel = new com.quizplatform.core.domain.user.UserLevel(user);
+                UserLevel userLevel = new UserLevel(user);
 
                 log.info("Creating initial UserLevel for new user: userId={}, initialLevel={}", user.getId(), userLevel.getLevel());
 

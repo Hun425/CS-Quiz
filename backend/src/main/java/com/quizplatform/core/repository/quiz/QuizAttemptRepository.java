@@ -2,7 +2,7 @@ package com.quizplatform.core.repository.quiz;
 
 import com.quizplatform.core.domain.quiz.Quiz;
 import com.quizplatform.core.domain.quiz.QuizAttempt;
-import com.quizplatform.core.domain.user.User;
+import com.quizplatform.modules.user.domain.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

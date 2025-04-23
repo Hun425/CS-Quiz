@@ -1,7 +1,7 @@
 package com.quizplatform.core.service.event;
 
-import com.quizplatform.core.domain.user.User;
-import com.quizplatform.core.domain.user.UserLevel;
+import com.quizplatform.modules.user.domain.entity.User;
+import com.quizplatform.modules.user.domain.entity.UserLevel;
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
 

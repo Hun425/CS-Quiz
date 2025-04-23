@@ -40,7 +40,7 @@ public class QBattleParticipant extends EntityPathBase<BattleParticipant> {
 
     public final BooleanPath ready = createBoolean("ready");
 
-    public final com.quizplatform.core.domain.user.QUser user;
+    public final com.quizplatform.modules.user.domain.entity.QUser user;
 
     public QBattleParticipant(String variable) {
         this(BattleParticipant.class, forVariable(variable), INITS);
@@ -61,7 +61,7 @@ public class QBattleParticipant extends EntityPathBase<BattleParticipant> {
     public QBattleParticipant(Class<? extends BattleParticipant> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
         this.battleRoom = inits.isInitialized("battleRoom") ? new QBattleRoom(forProperty("battleRoom"), inits.get("battleRoom")) : null;
-        this.user = inits.isInitialized("user") ? new com.quizplatform.core.domain.user.QUser(forProperty("user"), inits.get("user")) : null;
+        this.user = inits.isInitialized("user") ? new com.quizplatform.modules.user.domain.entity.QUser(forProperty("user"), inits.get("user")) : null;
     }
 
 }

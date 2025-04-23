@@ -1,10 +1,10 @@
 package com.quizplatform.core.controller.quiz;
 
-import com.quizplatform.core.domain.user.User;
+import com.quizplatform.modules.user.domain.entity.User;
 import com.quizplatform.core.dto.common.CommonApiResponse;
 import com.quizplatform.core.dto.quiz.QuizSummaryResponse;
 import com.quizplatform.core.service.quiz.RecommendationService;
-import com.quizplatform.core.service.user.UserService;
+import com.quizplatform.modules.user.application.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

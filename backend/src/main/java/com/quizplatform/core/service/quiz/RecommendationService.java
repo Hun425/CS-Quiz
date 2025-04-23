@@ -5,7 +5,7 @@ import com.quizplatform.core.domain.quiz.Quiz;
 import com.quizplatform.core.domain.quiz.QuizAttempt;
 import com.quizplatform.core.domain.quiz.QuizType;
 import com.quizplatform.core.domain.tag.Tag;
-import com.quizplatform.core.domain.user.User;
+import com.quizplatform.modules.user.domain.entity.User;
 import com.quizplatform.core.dto.quiz.QuizSummaryResponse;
 import com.quizplatform.core.exception.BusinessException;
 import com.quizplatform.core.exception.ErrorCode;
@@ -16,8 +16,6 @@ import com.quizplatform.core.service.common.EntityMapperService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

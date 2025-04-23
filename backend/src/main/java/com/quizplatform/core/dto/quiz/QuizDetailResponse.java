@@ -4,7 +4,7 @@ import com.quizplatform.core.domain.quiz.DifficultyLevel;
 import com.quizplatform.core.domain.quiz.Quiz;
 import com.quizplatform.core.domain.quiz.QuizStatistics;
 import com.quizplatform.core.domain.quiz.QuizType;
-import com.quizplatform.core.dto.user.UserSummaryResponse;
+import com.quizplatform.modules.user.presentation.dto.UserSummaryResponse;
 import com.quizplatform.core.dto.tag.TagResponse;
 import lombok.Builder;
 import lombok.Getter;

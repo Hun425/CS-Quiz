@@ -34,7 +34,7 @@ public class QQuizReview extends EntityPathBase<QuizReview> {
 
     public final NumberPath<Integer> rating = createNumber("rating", Integer.class);
 
-    public final com.quizplatform.core.domain.user.QUser reviewer;
+    public final com.quizplatform.modules.user.domain.entity.QUser reviewer;
 
     public QQuizReview(String variable) {
         this(QuizReview.class, forVariable(variable), INITS);
@@ -55,7 +55,7 @@ public class QQuizReview extends EntityPathBase<QuizReview> {
     public QQuizReview(Class<? extends QuizReview> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
         this.quiz = inits.isInitialized("quiz") ? new QQuiz(forProperty("quiz"), inits.get("quiz")) : null;
-        this.reviewer = inits.isInitialized("reviewer") ? new com.quizplatform.core.domain.user.QUser(forProperty("reviewer"), inits.get("reviewer")) : null;
+        this.reviewer = inits.isInitialized("reviewer") ? new com.quizplatform.modules.user.domain.entity.QUser(forProperty("reviewer"), inits.get("reviewer")) : null;
     }
 
 }

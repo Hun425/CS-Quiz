@@ -5,7 +5,7 @@ import com.quizplatform.core.domain.question.QuestionAttempt;
 import com.quizplatform.core.domain.quiz.Quiz;
 import com.quizplatform.core.domain.quiz.QuizAttempt;
 import com.quizplatform.core.domain.quiz.QuizType;
-import com.quizplatform.core.domain.user.User;
+import com.quizplatform.modules.user.domain.entity.User;
 import com.quizplatform.core.dto.question.QuestionAttemptDto;
 import com.quizplatform.core.dto.quiz.QuizResultResponse;
 import com.quizplatform.core.dto.quiz.QuizSubmitRequest;
@@ -20,10 +20,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * 퀴즈 시도(QuizAttempt)와 관련된 비즈니스 로직을 처리하는 서비스입니다.

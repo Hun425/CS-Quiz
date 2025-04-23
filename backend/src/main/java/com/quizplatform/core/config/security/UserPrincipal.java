@@ -1,8 +1,8 @@
 package com.quizplatform.core.config.security;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.quizplatform.core.domain.user.AuthProvider;
-import com.quizplatform.core.domain.user.User;
+import com.quizplatform.modules.user.domain.entity.AuthProvider;
+import com.quizplatform.modules.user.domain.entity.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.ToString;

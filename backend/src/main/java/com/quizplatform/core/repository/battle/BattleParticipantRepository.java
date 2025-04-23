@@ -2,7 +2,7 @@ package com.quizplatform.core.repository.battle;
 
 import com.quizplatform.core.domain.battle.BattleParticipant;
 import com.quizplatform.core.domain.battle.BattleRoom;
-import com.quizplatform.core.domain.user.User;
+import com.quizplatform.modules.user.domain.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

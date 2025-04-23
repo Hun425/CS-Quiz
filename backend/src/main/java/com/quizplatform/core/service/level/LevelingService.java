@@ -1,17 +1,17 @@
 package com.quizplatform.core.service.level;
 
-import com.quizplatform.core.domain.quiz.Achievement;
+import com.quizplatform.modules.user.domain.entity.Achievement;
 import com.quizplatform.core.domain.quiz.QuizAttempt;
-import com.quizplatform.core.domain.user.User;
-import com.quizplatform.core.domain.user.UserAchievementHistory;
-import com.quizplatform.core.domain.user.UserLevel;
-import com.quizplatform.core.domain.user.UserLevelHistory;
+import com.quizplatform.modules.user.domain.entity.User;
+import com.quizplatform.modules.user.domain.entity.UserAchievementHistory;
+import com.quizplatform.modules.user.domain.entity.UserLevel;
+import com.quizplatform.modules.user.domain.entity.UserLevelHistory;
 import com.quizplatform.core.dto.battle.BattleResult;
-import com.quizplatform.core.repository.UserRepository;
+import com.quizplatform.modules.user.infrastructure.repository.UserRepository;
 import com.quizplatform.core.repository.quiz.QuizAttemptRepository;
-import com.quizplatform.core.repository.user.AchievementRepository;
-import com.quizplatform.core.repository.user.UserLevelHistoryRepository;
-import com.quizplatform.core.repository.user.UserLevelRepository;
+import com.quizplatform.modules.user.infrastructure.repository.AchievementRepository;
+import com.quizplatform.modules.user.infrastructure.repository.UserLevelHistoryRepository;
+import com.quizplatform.modules.user.infrastructure.repository.UserLevelRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

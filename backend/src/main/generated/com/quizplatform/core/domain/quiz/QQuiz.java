@@ -28,7 +28,7 @@ public class QQuiz extends EntityPathBase<Quiz> {
 
     public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
 
-    public final com.quizplatform.core.domain.user.QUser creator;
+    public final com.quizplatform.modules.user.domain.entity.QUser creator;
 
     public final StringPath description = createString("description");
 
@@ -74,7 +74,7 @@ public class QQuiz extends EntityPathBase<Quiz> {
 
     public QQuiz(Class<? extends Quiz> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.creator = inits.isInitialized("creator") ? new com.quizplatform.core.domain.user.QUser(forProperty("creator"), inits.get("creator")) : null;
+        this.creator = inits.isInitialized("creator") ? new com.quizplatform.modules.user.domain.entity.QUser(forProperty("creator"), inits.get("creator")) : null;
     }
 
 }

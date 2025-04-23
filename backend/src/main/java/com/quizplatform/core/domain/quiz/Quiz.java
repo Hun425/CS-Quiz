@@ -2,7 +2,7 @@ package com.quizplatform.core.domain.quiz;
 
 import com.quizplatform.core.domain.question.Question;
 import com.quizplatform.core.domain.tag.Tag;
-import com.quizplatform.core.domain.user.User;
+import com.quizplatform.modules.user.domain.entity.User;
 import com.quizplatform.core.dto.battle.BattleResult;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

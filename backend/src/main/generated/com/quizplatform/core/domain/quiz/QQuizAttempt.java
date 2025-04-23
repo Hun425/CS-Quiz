@@ -42,7 +42,7 @@ public class QQuizAttempt extends EntityPathBase<QuizAttempt> {
 
     public final NumberPath<Integer> timeTaken = createNumber("timeTaken", Integer.class);
 
-    public final com.quizplatform.core.domain.user.QUser user;
+    public final com.quizplatform.modules.user.domain.entity.QUser user;
 
     public QQuizAttempt(String variable) {
         this(QuizAttempt.class, forVariable(variable), INITS);
@@ -63,7 +63,7 @@ public class QQuizAttempt extends EntityPathBase<QuizAttempt> {
     public QQuizAttempt(Class<? extends QuizAttempt> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
         this.quiz = inits.isInitialized("quiz") ? new QQuiz(forProperty("quiz"), inits.get("quiz")) : null;
-        this.user = inits.isInitialized("user") ? new com.quizplatform.core.domain.user.QUser(forProperty("user"), inits.get("user")) : null;
+        this.user = inits.isInitialized("user") ? new com.quizplatform.modules.user.domain.entity.QUser(forProperty("user"), inits.get("user")) : null;
     }
 
 }
