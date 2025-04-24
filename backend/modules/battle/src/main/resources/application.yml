@@ -19,6 +19,16 @@ spring:
       operations-sorter: alpha
     default-consumes-media-type: application/json
     default-produces-media-type: application/json
+    
+  # 프로필 포함
+  profiles:
+    include:
+      - jwt
+      
+# JWT 설정
+jwt:
+  secret: ${JWT_SECRET:quizplatform_default_secret_key_change_in_production}
+  expiration: ${JWT_EXPIRATION:86400000} # 24시간 (milliseconds)
   
   # 데이터베이스 설정
   datasource:

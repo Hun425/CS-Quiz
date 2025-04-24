@@ -13,24 +13,6 @@ spring:
     exclude: 
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
   
-  # OAuth2 설정
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: ${GOOGLE_CLIENT_ID:your-client-id}
-            client-secret: ${GOOGLE_CLIENT_SECRET:your-client-secret}
-            scope:
-              - email
-              - profile
-          github:
-            client-id: ${GITHUB_CLIENT_ID:your-github-client-id}
-            client-secret: ${GITHUB_CLIENT_SECRET:your-github-client-secret}
-            scope:
-              - user:email
-              - read:user
-  
   # Redis 설정
   data:
     redis:
@@ -48,16 +30,6 @@ spring:
     swagger-ui:
       enabled: true
       path: /swagger-ui.html
-      config-url: /api-docs/swagger-config
-      urls:
-        - url: /api-docs
-          name: API Gateway
-        - url: /api/users/api-docs
-          name: User Service
-        - url: /api/battles/api-docs
-          name: Battle Service
-        - url: /api/quizzes/api-docs
-          name: Quiz Service
     
   cloud:
     gateway:
@@ -125,18 +97,10 @@ spring:
             - Path=/swagger-ui/quizzes/**
           filters:
             - RewritePath=/swagger-ui/quizzes/(?<path>.*), /swagger-ui/$\{path}
-      
-      # 레이트 리미팅 설정
-      default-filters:
-        - name: RequestRateLimiter
-          args:
-            redis-rate-limiter.replenishRate: 20
-            redis-rate-limiter.burstCapacity: 40
-            redis-rate-limiter.requestedTokens: 1
             
   # Kafka 설정
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
     
 # JWT 설정
 jwt:
@@ -148,7 +112,7 @@ jwt:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE:http://eureka-server:8761/eureka/}
     register-with-eureka: true
     fetch-registry: true
   instance:

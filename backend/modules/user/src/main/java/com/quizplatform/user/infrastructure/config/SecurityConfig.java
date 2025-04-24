@@ -1,8 +1,8 @@
-package com.quizplatform.battle.infrastructure.config;
+package com.quizplatform.user.infrastructure.config;
 
 import com.quizplatform.common.security.JwtTokenUtil;
-import com.quizplatform.battle.infrastructure.security.JwtAuthenticationFilter;
-import com.quizplatform.battle.infrastructure.security.JwtAuthenticationProvider;
+import com.quizplatform.user.infrastructure.security.JwtAuthenticationFilter;
+import com.quizplatform.user.infrastructure.security.JwtAuthenticationProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,7 +21,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 
 /**
- * Battle 서비스의 Spring Security 설정 클래스
+ * User 서비스의 Spring Security 설정 클래스
  */
 @Configuration
 @EnableWebSecurity
@@ -38,18 +38,16 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        // API 엔드포인트 허용
-                        .requestMatchers("/api/**").permitAll()
-                        // Swagger UI 허용 (확장된 경로)
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/swagger-resources/**").permitAll()
-                        // Actuator 엔드포인트 허용
+                        // Public 리소스 접근 허용
+                        .requestMatchers("/public/**").permitAll()
+                        .requestMatchers("/login", "/register").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
-                        // WebSocket 엔드포인트 허용
-                        .requestMatchers("/ws-battle/**").permitAll()
-                        .requestMatchers("/topic/**").permitAll()
-                        .requestMatchers("/app/**").permitAll()
-                        // 개발 중에는 모든 요청 허용 (나중에 authenticated로 변경)
-                        .anyRequest().permitAll()
+                        
+                        // Swagger UI 허용
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/api-docs/**").permitAll()
+                        
+                        // 그 외 모든 요청은 인증 필요
+                        .anyRequest().authenticated()
                 )
                 .authenticationProvider(jwtAuthenticationProvider)
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenUtil), UsernamePasswordAuthenticationFilter.class)

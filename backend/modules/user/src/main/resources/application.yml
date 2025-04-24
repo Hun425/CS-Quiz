@@ -50,6 +50,16 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      
+  # 프로필 포함
+  profiles:
+    include:
+      - jwt
+
+# JWT 설정
+jwt:
+  secret: ${JWT_SECRET:quizplatform_default_secret_key_change_in_production}
+  expiration: ${JWT_EXPIRATION:86400000} # 24시간 (milliseconds)
 
 # Eureka 클라이언트 설정
 eureka:
@@ -65,4 +75,5 @@ logging:
     com.quizplatform: DEBUG
     org.springframework.web: INFO
     org.hibernate.SQL: DEBUG
-    org.springframework.kafka: INFO 
+    org.springframework.kafka: INFO
+    org.springframework.security: DEBUG
