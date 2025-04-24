@@ -16,11 +16,11 @@ spring:
     default-consumes-media-type: application/json
     default-produces-media-type: application/json
   
-  # 데이터베이스 설정  
+  # 데이터베이스 설정
   datasource:
-    url: jdbc:postgresql://localhost:5432/quiz_platform
-    username: quizuser
-    password: quizpass
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/quizplatform?currentSchema=user_schema}
+    username: ${SPRING_DATASOURCE_USERNAME:quizuser}
+    password: ${SPRING_DATASOURCE_PASSWORD:quizpass}
     driver-class-name: org.postgresql.Driver
   
   # JPA 설정

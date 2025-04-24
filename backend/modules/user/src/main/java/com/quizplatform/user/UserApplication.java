@@ -11,7 +11,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
  * @author 채기훈
  * @since JDK 21.0.6 Eclipse Temurin
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.quizplatform.user", "com.quizplatform.common"})
 @EnableDiscoveryClient
 public class UserApplication {
 

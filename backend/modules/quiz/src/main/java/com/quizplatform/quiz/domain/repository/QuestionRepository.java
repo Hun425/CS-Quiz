@@ -37,10 +37,10 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
      * 퀴즈 ID와 문제 유형으로 문제 목록 조회
      * 
      * @param quizId 퀴즈 ID
-     * @param questionType 문제 유형
+     * @param type 문제 유형
      * @return 문제 목록
      */
-    List<Question> findByQuizIdAndQuestionType(Long quizId, QuestionType questionType);
+    List<Question> findByQuizIdAndType(Long quizId, String type);
     
     /**
      * 퀴즈의 평균 난이도 조회

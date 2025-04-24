@@ -49,7 +49,7 @@ public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, Long> 
      * @param quizId 퀴즈 ID
      * @return 가장 최근의 퀴즈 시도
      */
-    Optional<QuizAttempt> findTopByUserIdAndQuizIdOrderByStartedAtDesc(Long userId, Long quizId);
+    Optional<QuizAttempt> findTopByUserIdAndQuizIdOrderByStartTimeDesc(Long userId, Long quizId);
     
     /**
      * 사용자 ID와 완료 여부로 시도 수 조회
