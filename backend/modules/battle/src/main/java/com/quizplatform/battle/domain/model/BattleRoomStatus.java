@@ -1,7 +1,7 @@
 package com.quizplatform.battle.domain.model;
 
 /**
- * 배틀 방 상태 열거형
+ * 배틀 방 상태를 나타내는 열거형
  * 
  * <p>배틀 방의 생명주기 상태를 정의합니다. 
  * 방 생성부터 완료까지의 모든 상태를 표현합니다.</p>

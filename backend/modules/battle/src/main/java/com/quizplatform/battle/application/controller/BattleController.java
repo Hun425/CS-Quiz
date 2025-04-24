@@ -1,6 +1,6 @@
 package com.quizplatform.battle.application.controller;
 
-import com.quizplatform.battle.application.service.BattleService;
+import com.quizplatform.battle.application.service.BattleServiceAdapter;
 import com.quizplatform.battle.domain.model.BattleAnswer;
 import com.quizplatform.battle.domain.model.BattleRoom;
 import com.quizplatform.battle.domain.model.BattleRoomStatus;
@@ -33,7 +33,7 @@ import java.util.NoSuchElementException;
 @Tag(name = "Battle Controller", description = "퀴즈 대결 관련 API를 제공합니다")
 public class BattleController {
 
-    private final BattleService battleService;
+    private final BattleServiceAdapter battleService;
     
     /**
      * 새 배틀방 생성 API
@@ -310,10 +310,10 @@ public class BattleController {
             boolean isCorrect = Boolean.parseBoolean(request.get("isCorrect").toString());
             long answerTime = Long.parseLong(request.get("answerTimeMs").toString());
             
-            BattleAnswer battleAnswer = battleService.processAnswer(
+            Object result = battleService.processAnswer(
                     roomId, userId, questionIndex, answer, isCorrect, answerTime);
             
-            return ResponseEntity.ok(battleAnswer);
+            return ResponseEntity.ok(result);
         } catch (NoSuchElementException e) {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {

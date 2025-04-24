@@ -9,10 +9,11 @@ dependencies {
     
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-    
+
     // Eureka Client
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
-    
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
     // PostgreSQL 드라이버
     runtimeOnly 'org.postgresql:postgresql'
 }
