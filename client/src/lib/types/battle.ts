@@ -191,6 +191,19 @@ export interface BattleAnswerResponse {
 }
 
 /**
+ * ✅ 배틀 진행 상황 응답 타입
+ * - 배틀 진행 중 참가자의 상태를 전달하는 응답
+ */
+export interface BattleProgressResponse {
+  currentQuestionIndex: number;
+  participantProgress: { [userId: number]: ParticipantProgress };
+  remainingTimeSeconds: number;
+  status: BattleStatus; // 배틀 진행 상태
+  roomId: number;
+  totalQuestions: number;
+}
+
+/**
  * ✅ 참가자의 배틀 진행 상황 타입
  * - 배틀 중 각 참가자의 현재 진행 상태를 나타냄
  */
@@ -202,37 +215,20 @@ export interface ParticipantProgress {
   hasAnsweredCurrent: boolean; // 현재 문제에 답변했는지 여부
   currentStreak: number; // 연속 정답 개수
 }
-/**
- * ✅ 배틀 진행 상황 응답 타입
- * - 배틀 진행 중 참가자의 상태를 전달하는 응답
- */
-export interface BattleProgressResponse {
-  roomId: number;
-  currentQuestionIndex: number;
-  totalQuestions: number;
-  remainingTimeSeconds: number;
-  participantProgress: { [userId: number]: ParticipantProgress };
-  status: BattleStatus; // 배틀 진행 상태
-}
 
 /**
  * ✅ 배틀 결과 타입
  * - 배틀이 종료된 후 참가자의 최종 성적을 포함
  */
 export interface BattleResult {
-  userId: number; // 참가자 ID
-  username: string; // 참가자 이름
-  finalScore: number; // 최종 점수
-  correctAnswers: number; // 맞춘 문제 개수
-  totalQuestions?: number; // 총 문제 개수 (선택 사항)
-  experienceGained: number; // 획득한 경험치
-  isWinner: boolean; // 승리 여부
-  questionResults?: {
-    questionId: number;
-    isCorrect: boolean;
-    earnedPoints: number;
-    timeSpentSeconds: number;
-  }[]; // 개별 문제 결과 (선택 사항)
+  userId: number;
+  username: string;
+  finalScore: number;
+  correctAnswers: number;
+  averageTimeSeconds: number;
+  experienceGained: number;
+  winner: boolean;
+  questionResults: Record<number, boolean>; // 예: { 31: false, 32: true, ... }
 }
 
 /**

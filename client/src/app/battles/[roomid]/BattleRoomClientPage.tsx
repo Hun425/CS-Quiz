@@ -29,6 +29,13 @@ const BattleRoomClientPage = () => {
     (s) => s.participantsPayload
   );
 
+  //뒤로가기 했을때도 방 나가게 추가 설정하기
+  // useEffect(() => {
+  //   return () => {
+  //     battleSocketClient.leaveBattle();
+  //   };
+  // }, []);
+
   useEffect(() => {
     if (!participantsPayload) {
       const timeout = setTimeout(() => {

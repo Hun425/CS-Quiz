@@ -166,7 +166,7 @@ class BattleWebSocketService {
       this.triggerEvent(BattleSocketEventKey.PROGRESS, data);
     });
 
-    this.client.subscribe(`/topic/battle/${roomId}/next-question`, (msg) => {
+    this.client.subscribe(`/topic/battle/${roomId}/question`, (msg) => {
       const data = JSON.parse(msg.body);
       this.triggerEvent(BattleSocketEventKey.NEXT_QUESTION, data);
     });
