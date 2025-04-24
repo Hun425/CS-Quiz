@@ -113,7 +113,7 @@ project(':modules:user') {
 project(':modules:quiz') {
     bootJar {
         enabled = true
-        mainClass.set('NONE')
+        mainClass.set('com.quizplatform.quiz.QuizApplication')
     }
     
     dependencies {
@@ -130,7 +130,7 @@ project(':modules:quiz') {
 project(':modules:battle') {
     bootJar {
         enabled = true
-        mainClass.set('NONE')
+        mainClass.set('com.quizplatform.battle.BattleApplication')
     }
     
     dependencies {

@@ -18,9 +18,9 @@ spring:
   
   # 데이터베이스 설정
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/quizplatform?currentSchema=user_schema}
-    username: ${SPRING_DATASOURCE_USERNAME:quizuser}
-    password: ${SPRING_DATASOURCE_PASSWORD:quizpass}
+    url: jdbc:postgresql://postgres:5432/quiz_platform?currentSchema=quiz_schema
+    username: quizuser
+    password: quizpass
     driver-class-name: org.postgresql.Driver
   
   # JPA 설정
@@ -36,11 +36,11 @@ spring:
   # Elasticsearch 설정
   elasticsearch:
     rest:
-      uris: localhost:9200
+      uris: elasticsearch:9200
   
   # Kafka 설정
   kafka:
-    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    bootstrap-servers: kafka:29092
     consumer:
       group-id: quiz-service
       auto-offset-reset: earliest
@@ -52,7 +52,7 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: http://eureka-server:8761/eureka/
   instance:
     prefer-ip-address: true
 

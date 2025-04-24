@@ -1,12 +1,11 @@
 package com.quizplatform.battle.infrastructure.kafka;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quizplatform.battle.domain.event.BattleCompletedEvent;
-import com.quizplatform.battle.domain.event.BattleEvent;
+import com.quizplatform.battle.domain.model.BattleRoom;
+import com.quizplatform.common.event.EventPublisher;
+import com.quizplatform.common.event.Topics;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 /**
@@ -22,38 +21,55 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class BattleEventProducer {
 
-    private final KafkaTemplate<String, String> kafkaTemplate;
-    private final ObjectMapper objectMapper;
-    
-    // Kafka 토픽 이름 상수
-    private static final String BATTLE_COMPLETED_TOPIC = "battle-completed-events";
-    private static final String BATTLE_STARTED_TOPIC = "battle-started-events";
+    private final EventPublisher eventPublisher;
     
     /**
      * 배틀 완료 이벤트를 Kafka 토픽으로 발행합니다.
      * 
-     * @param event 발행할 배틀 완료 이벤트
+     * @param battleRoom 완료된 배틀 방
      */
-    public void publishBattleCompletedEvent(BattleCompletedEvent event) {
-        publishEvent(event, BATTLE_COMPLETED_TOPIC);
+    public void publishBattleCompletedEvent(BattleRoom battleRoom) {
+        try {
+            // 도메인 이벤트 생성
+            BattleCompletedEvent battleCompletedEvent = new BattleCompletedEvent(battleRoom);
+            
+            // 공통 모듈의 이벤트 객체로 변환
+            com.quizplatform.common.event.battle.BattleCompletedEvent commonEvent = 
+                new com.quizplatform.common.event.battle.BattleCompletedEvent(
+                    battleRoom.getId().toString(),
+                    battleRoom.getWinner() != null ? battleRoom.getWinner().getUserId().toString() : null
+                );
+            
+            // 이벤트 발행
+            eventPublisher.publish(commonEvent, Topics.BATTLE_COMPLETED);
+            
+            log.info("배틀 완료 이벤트 발행 완료 - 배틀 ID: {}, 이벤트 ID: {}", 
+                    battleRoom.getId(), commonEvent.getEventId());
+        } catch (Exception e) {
+            log.error("배틀 완료 이벤트 발행 실패: {}", e.getMessage(), e);
+        }
     }
     
     /**
-     * 이벤트를 JSON으로 직렬화하여 지정된 Kafka 토픽으로 발행합니다.
+     * 배틀 시작 이벤트를 Kafka 토픽으로 발행합니다.
      * 
-     * @param event 발행할 이벤트
-     * @param topic 발행할 토픽
+     * @param battleRoom 시작된 배틀 방
      */
-    private void publishEvent(BattleEvent event, String topic) {
+    public void publishBattleStartedEvent(BattleRoom battleRoom) {
         try {
-            String eventJson = objectMapper.writeValueAsString(event);
-            kafkaTemplate.send(topic, event.getEventId(), eventJson);
-            log.info("이벤트 발행 완료 - 토픽: {}, 이벤트 타입: {}, 이벤트 ID: {}", 
-                    topic, event.getEventType(), event.getEventId());
-        } catch (JsonProcessingException e) {
-            log.error("이벤트 직렬화 실패: {}", e.getMessage(), e);
+            // 공통 모듈의 이벤트 객체 생성
+            com.quizplatform.common.event.battle.BattleStartedEvent commonEvent = 
+                new com.quizplatform.common.event.battle.BattleStartedEvent(
+                    battleRoom.getId().toString()
+                );
+            
+            // 이벤트 발행
+            eventPublisher.publish(commonEvent, Topics.BATTLE_STARTED);
+            
+            log.info("배틀 시작 이벤트 발행 완료 - 배틀 ID: {}, 이벤트 ID: {}", 
+                    battleRoom.getId(), commonEvent.getEventId());
         } catch (Exception e) {
-            log.error("이벤트 발행 실패: {}", e.getMessage(), e);
+            log.error("배틀 시작 이벤트 발행 실패: {}", e.getMessage(), e);
         }
     }
 } 

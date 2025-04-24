@@ -1,73 +1,73 @@
 package com.quizplatform.battle.infrastructure.config;
 
+import com.quizplatform.common.security.BaseSecurityConfig;
 import com.quizplatform.common.security.JwtTokenUtil;
 import com.quizplatform.battle.infrastructure.security.JwtAuthenticationFilter;
 import com.quizplatform.battle.infrastructure.security.JwtAuthenticationProvider;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.Arrays;
 
 /**
  * Battle 서비스의 Spring Security 설정 클래스
  */
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
-public class SecurityConfig {
+public class SecurityConfig extends BaseSecurityConfig {
 
-    private final JwtTokenUtil jwtTokenUtil;
     private final JwtAuthenticationProvider jwtAuthenticationProvider;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(authorize -> authorize
-                        // API 엔드포인트 허용
-                        .requestMatchers("/api/**").permitAll()
-                        // Swagger UI 허용 (확장된 경로)
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/swagger-resources/**").permitAll()
-                        // Actuator 엔드포인트 허용
-                        .requestMatchers("/actuator/**").permitAll()
-                        // WebSocket 엔드포인트 허용
-                        .requestMatchers("/ws-battle/**").permitAll()
-                        .requestMatchers("/topic/**").permitAll()
-                        .requestMatchers("/app/**").permitAll()
-                        // 개발 중에는 모든 요청 허용 (나중에 authenticated로 변경)
-                        .anyRequest().permitAll()
-                )
-                .authenticationProvider(jwtAuthenticationProvider)
-                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenUtil), UsernamePasswordAuthenticationFilter.class)
-                .build();
+    public SecurityConfig(JwtTokenUtil jwtTokenUtil, JwtAuthenticationProvider jwtAuthenticationProvider) {
+        super(jwtTokenUtil);
+        this.jwtAuthenticationProvider = jwtAuthenticationProvider;
+        this.jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtTokenUtil);
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://localhost:5173"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        // 공통 보안 설정 적용
+        return configureCommonSecurity(http)
+                .build();
+    }
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
+    @Override
+    @SuppressWarnings("unchecked")
+    protected void configureAuthorization(Object authorize) {
+        // Battle 서비스에 특화된 추가 보안 설정
+        try {
+            // 개별 경로 허용 설정
+            String[][] paths = {
+                {"/api/**"}, 
+                {"/ws-battle/**"}, 
+                {"/topic/**"}, 
+                {"/app/**"}
+            };
+            
+            for (String[] path : paths) {
+                var requestMatchers = authorize.getClass().getMethod("requestMatchers", String[].class)
+                        .invoke(authorize, (Object) path);
+                requestMatchers.getClass().getMethod("permitAll").invoke(requestMatchers);
+            }
+            
+            // 개발 중에는 모든 요청 허용
+            var registry = authorize.getClass().getMethod("anyRequest").invoke(authorize);
+            registry.getClass().getMethod("permitAll").invoke(registry);
+        } catch (Exception e) {
+            throw new RuntimeException("Security configuration error", e);
+        }
+    }
+
+    @Override
+    protected void configureAdditionalSecurity(HttpSecurity http) throws Exception {
+        // 인증 제공자 및 필터 설정
+        http.authenticationProvider(jwtAuthenticationProvider)
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
     }
 
     @Bean

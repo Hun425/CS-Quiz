@@ -1,3 +1,5 @@
+# JWT 설정
 jwt:
   secret: ${JWT_SECRET:quizplatform_default_secret_key_change_in_production}
   expiration: ${JWT_EXPIRATION:86400000} # 24시간 (milliseconds)
+  refreshExpiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7일 (milliseconds)

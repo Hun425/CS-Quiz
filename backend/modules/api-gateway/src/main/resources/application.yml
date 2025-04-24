@@ -125,6 +125,24 @@ spring:
             - Path=/swagger-ui/quizzes/**
           filters:
             - RewritePath=/swagger-ui/quizzes/(?<path>.*), /swagger-ui/$\{path}
+            
+        # Swagger UI 웹자(webjars) 관련 경로 추가
+        - id: swagger-webjars
+          uri: forward:/webjars
+          predicates:
+            - Path=/webjars/**
+          
+        # 스웨거 UI 직접 접근 경로
+        - id: swagger-ui-direct
+          uri: forward:/swagger-ui
+          predicates:
+            - Path=/swagger-ui/**
+            
+        # API-Docs 직접 접근 경로
+        - id: api-docs-direct
+          uri: forward:/api-docs
+          predicates:
+            - Path=/api-docs/**
       
       # 레이트 리미팅 설정
       default-filters:

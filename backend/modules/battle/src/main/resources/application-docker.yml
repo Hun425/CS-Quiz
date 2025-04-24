@@ -1,5 +1,5 @@
 server:
-  port: ${PORT:8083}
+  port: 8083
 
 spring:
   application:
@@ -19,12 +19,12 @@ spring:
       operations-sorter: alpha
     default-consumes-media-type: application/json
     default-produces-media-type: application/json
-      
+    
   # 데이터베이스 설정
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/quizplatform}
-    username: ${DB_USERNAME:quizuser}
-    password: ${DB_PASSWORD:quizpass}
+    url: jdbc:postgresql://postgres:5432/quiz_platform?currentSchema=battle_schema
+    username: quizuser
+    password: quizpass
     driver-class-name: org.postgresql.Driver
   
   # JPA 설정
@@ -40,13 +40,13 @@ spring:
   
   # Redis 설정
   redis:
-    host: ${REDIS_HOST:localhost}
-    port: ${REDIS_PORT:6379}
+    host: redis
+    port: 6379
     timeout: 10000
   
   # Kafka 설정
   kafka:
-    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    bootstrap-servers: kafka:29092
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -55,14 +55,15 @@ spring:
 jwt:
   secret: ${JWT_SECRET:quizplatform_default_secret_key_change_in_production}
   expiration: ${JWT_EXPIRATION:86400000} # 24시간 (milliseconds)
+  refreshExpiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7일 (milliseconds)
 
 # Eureka 클라이언트 설정
 eureka:
   client:
     service-url:
-      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+      defaultZone: http://eureka-server:8761/eureka/
   instance:
-    preferIpAddress: true
+    prefer-ip-address: true
 
 # 로깅 설정
 logging:
