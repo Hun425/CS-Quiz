@@ -56,6 +56,7 @@ public class Tag {
         joinColumns = @JoinColumn(name = "tag_id"),
         inverseJoinColumns = @JoinColumn(name = "quiz_id")
     )
+    @Builder.Default
     private Set<Quiz> quizzes = new HashSet<>();
     
     /**

@@ -101,6 +101,7 @@ public class QuizAttempt {
      * 퀴즈 시도 중 각 문제에 대한 시도 목록
      */
     @OneToMany(mappedBy = "quizAttempt", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<QuestionAttempt> questionAttempts = new ArrayList<>();
     
     /**

@@ -75,6 +75,7 @@ public class Question {
         joinColumns = @JoinColumn(name = "question_id")
     )
     @Column(name = "option_text", nullable = false)
+    @Builder.Default
     private List<String> options = new ArrayList<>();
     
     /**
