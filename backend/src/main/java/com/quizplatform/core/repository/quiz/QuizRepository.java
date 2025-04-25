@@ -135,33 +135,22 @@ public interface QuizRepository extends JpaRepository<Quiz, Long>, CustomQuizRep
     /**
      * 데일리 퀴즈 후보를 찾습니다.
      * 최근에 데일리 퀴즈로 사용된 태그(recentTagIds)나 난이도(recentDifficulties)를 가진 퀴즈를 제외하고,
-     * 공개된(isPublic=true) 일반(REGULAR) 퀴즈 중에서 랜덤하게 하나를 선택합니다.
+     * 공개된(isPublic=true) 일반(REGULAR) 퀴즈 중에서 후보 목록을 반환합니다.
      *
      * @param recentTagIds       최근 데일리 퀴즈에서 사용된 태그 ID Set
      * @param recentDifficulties 최근 데일리 퀴즈에서 사용된 난이도 Set
-     * @return 조건에 맞는 데일리 퀴즈 후보 Optional<Quiz> 객체
+     * @return 조건에 맞는 데일리 퀴즈 후보 리스트
      */
     @Query("SELECT q FROM Quiz q " +
             "LEFT JOIN q.tags t " + // 태그 조인이 필요할 수 있음 (t.id 사용 시)
             "WHERE q.quizType != 'DAILY' " + // 데일리 퀴즈 타입 제외
             "AND q.isPublic = true " + // 공개된 퀴즈만
-            // 아래 조건은 퀴즈가 가진 *모든* 태그가 recentTagIds에 없어야 함을 의미할 수 있음.
-            // 만약 *하나라도* 겹치지 않는 태그가 있으면 된다면 로직 변경 필요.
-            // 현재 쿼리는 q.tags 컬렉션 내 t.id 중 recentTagIds에 없는 것이 하나라도 있는지 확인하는 방식으로 동작 가능.
-            // 명확하게 하려면 서브쿼리나 다른 방식 고려.
-            // 아래 쿼리는 '퀴즈가 가진 태그 중 하나라도 recentTagIds에 포함되지 않는 퀴즈'를 찾는 방식으로 해석될 수 있음.
-            // 의도: '퀴즈가 가진 어떤 태그도 recentTagIds에 포함되지 않아야 함' -> 수정 필요
-            "AND t.id NOT IN :recentTagIds " + // 이 조건은 t가 여러개일 때 의도대로 동작하지 않을 수 있음.
-            "AND q.difficultyLevel NOT IN :recentDifficulties " + // 최근 사용된 난이도 제외
-            "ORDER BY random()") // 랜덤 정렬 (데이터베이스 함수 사용)
-    Optional<Quiz> findQuizForDaily(
+            "AND t.id NOT IN :recentTagIds " + // 최근 사용된 태그 제외
+            "AND q.difficultyLevel NOT IN :recentDifficulties") // 최근 사용된 난이도 제외
+    List<Quiz> findQuizCandidatesForDaily(
             @Param("recentTagIds") Set<Long> recentTagIds,
             @Param("recentDifficulties") Set<DifficultyLevel> recentDifficulties
     );
-    // 참고: 위 findQuizForDaily 쿼리의 태그 조건(t.id NOT IN :recentTagIds)은
-    //       "퀴즈가 가진 태그 중 적어도 하나가 recentTagIds에 포함되지 않으면 선택"될 수 있습니다.
-    //       만약 "퀴즈가 가진 모든 태그가 recentTagIds에 포함되지 않아야 한다"는 의도라면
-    //       NOT EXISTS 또는 다른 방식의 서브쿼리를 사용해야 합니다.
 
     /**
      * 특정 태그(Tag)를 포함하는 퀴즈 목록을 제목(title) 오름차순으로 페이징 처리하여 조회합니다.
@@ -173,8 +162,7 @@ public interface QuizRepository extends JpaRepository<Quiz, Long>, CustomQuizRep
      */
     @Query("SELECT DISTINCT q FROM Quiz q " + // 태그가 여러 개일 경우 퀴즈 중복 방지
             "JOIN FETCH q.tags t " + // 태그 정보 즉시 로딩 (파라미터 tag와 비교 위해 필요)
-            "WHERE :tag MEMBER OF q.tags " + // 퀴즈의 tags 컬렉션에 파라미터 tag가 포함되어 있는지 확인
-            "ORDER BY q.title ASC") // 제목 오름차순 정렬
+            "WHERE :tag MEMBER OF q.tags") // 퀴즈의 tags 컬렉션에 파라미터 tag가 포함되어 있는지 확인
     Page<Quiz> findByTags(@Param("tag") Tag tag, Pageable pageable);
 
     // ===== 데일리 퀴즈 서비스 추가 메서드 =====

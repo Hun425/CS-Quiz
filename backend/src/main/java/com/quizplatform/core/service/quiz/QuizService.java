@@ -142,8 +142,12 @@ public class QuizService {
         });
 
         // 적절한 퀴즈 선택
-        Quiz selectedQuiz = quizRepository.findQuizForDaily(recentTagIds, recentDifficulties)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_READY_TO_START, "No quiz available for daily creation based on recent data"));
+        List<Quiz> quizCandidates = quizRepository.findQuizCandidatesForDaily(recentTagIds, recentDifficulties);
+        if (quizCandidates.isEmpty()) {
+            throw new BusinessException(ErrorCode.NOT_READY_TO_START, "No quiz available for daily creation based on recent data");
+        }
+        // 후보 목록에서 랜덤하게 하나 선택
+        Quiz selectedQuiz = quizCandidates.get(new Random().nextInt(quizCandidates.size()));
 
         // 데일리 퀴즈로 설정
         Quiz dailyQuiz = selectedQuiz.createDailyCopy();

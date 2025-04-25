@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * CustomQuizRepository 인터페이스의 QueryDSL 기반 구현체입니다.
@@ -197,7 +198,7 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
         QTag tag = QTag.tag; // 사용되지는 않지만 조인을 위해 선언
 
         // 추천 퀴즈 조회 쿼리
-        return queryFactory
+        List<Quiz> quizzes = queryFactory
                 .selectFrom(quiz)
                 .leftJoin(quiz.tags, tag) // 태그 정보 조인을 위해 필요
                 .where(
@@ -205,14 +206,16 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
                                 .and(quiz.difficultyLevel.eq(difficulty)) // 지정된 난이도
                                 .and(quiz.tags.any().in(tags)) // 주어진 태그 중 하나라도 포함
                 )
-                .orderBy(
-                        // 데이터베이스 함수를 이용한 랜덤 정렬 (DB 종류에 따라 함수명 변경 필요)
-                        // PostgreSQL: random(), MySQL: rand(), H2: rand()
-                        Expressions.numberTemplate(Double.class, "random()").asc()
-                )
-                .limit(limit) // 개수 제한
                 .distinct() // 태그 중복으로 인한 퀴즈 중복 제거
                 .fetch();
+        
+        // 애플리케이션 레벨에서 랜덤하게 섞기 (DB의 ORDER BY random() 대신)
+        Collections.shuffle(quizzes);
+        
+        // 제한된 개수만큼 반환
+        return quizzes.stream()
+                .limit(limit)
+                .collect(Collectors.toList());
     }
 
     /**

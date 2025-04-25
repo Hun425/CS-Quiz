@@ -211,7 +211,7 @@ public class RecommendationService {
                         && quiz.getDifficultyLevel() == difficulty)
                 .collect(Collectors.toList());
         
-        // 랜덤하게 섞기
+        // 랜덤하게 섞기 (데이터베이스에서 ORDER BY random() 대신 Java에서 섞기)
         Collections.shuffle(quizzes);
         
         // 결과 제한
