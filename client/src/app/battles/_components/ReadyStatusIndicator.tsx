@@ -14,7 +14,7 @@ const ReadyStatusIndicator = ({ participantsPayload }: Props) => {
   const ready = participants.filter((p) => p.ready).length;
 
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 px-4 py-3 border border-border rounded-lg bg-sub-background text-sm shadow-sm">
+    <div className="flex flex-wrap justify-between items-center gap-x-4 gap-y-2 px-4 py-3 border border-border rounded-lg bg-sub-background text-sm shadow-sm">
       <div className="flex items-center gap-2 text-muted-foreground">
         <Users className="w-4 h-4 text-primary" />
         <span>

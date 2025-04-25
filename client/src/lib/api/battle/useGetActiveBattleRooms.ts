@@ -19,5 +19,6 @@ export const useGetActiveBattleRooms = () => {
       >("/battles/active");
       return response.data;
     },
+    refetchOnWindowFocus: true,
   });
 };

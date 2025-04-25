@@ -87,6 +87,7 @@ const QuizSearchHeader: React.FC<Props> = ({ onSearch }) => {
       <div className="relative w-full mb-4">
         <input
           type="search"
+          aria-label="퀴즈 제목 검색"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="제목을 검색하세요"
@@ -97,12 +98,14 @@ const QuizSearchHeader: React.FC<Props> = ({ onSearch }) => {
 
       {/* 🔹 필터 선택 */}
       <div className="grid grid-cols-2 gap-4 mb-4">
+        {/* 난이도 선택 */}
         <select
+          aria-label="난이도 선택"
           value={selectedDifficulty}
           onChange={(e) =>
             setSelectedDifficulty(e.target.value as QuizDifficultyType)
           }
-          className="w-full p-3 border border-border rounded-md bg-background text-foreground"
+          className="w-full p-2 sm:p-3 border border-border rounded-md bg-background text-sm sm:text-base text-foreground"
         >
           <option value="">난이도 선택</option>
           <option value={QuizDifficultyType.BEGINNER}>Lv. 1 입문</option>
@@ -110,10 +113,12 @@ const QuizSearchHeader: React.FC<Props> = ({ onSearch }) => {
           <option value={QuizDifficultyType.ADVANCED}>Lv. 3 고급</option>
         </select>
 
+        {/* 퀴즈 유형 선택 */}
         <select
+          aria-label="퀴즈 유형 선택"
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value as QuizType)}
-          className="w-full p-3 border border-border rounded-md bg-background text-foreground"
+          className="w-full p-2 sm:p-3 border border-border rounded-md bg-background text-sm sm:text-base text-foreground"
         >
           <option value="">퀴즈 유형 선택</option>
           {Object.entries(QUIZ_TYPE_LABEL).map(([key, label]) => (

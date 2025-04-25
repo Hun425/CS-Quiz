@@ -20,7 +20,7 @@ const QuizResultPage: React.FC = () => {
       alert("잘못된 접근입니다.");
       router.replace("/quizzes");
     }
-  }, [attemptId]);
+  }, [attemptId, router]);
 
   // ✅ 퀴즈 결과 조회
   const {
@@ -138,8 +138,12 @@ const QuizResultPage: React.FC = () => {
 
       {/* ✅ 다시 풀기 / 홈으로 이동 버튼 */}
       <div className="flex justify-center gap-4 flex-wrap mt-6">
-        <Button variant="secondary" onClick={() => router.push("/quizzes")}>
-          🔙 퀴즈 목록으로
+        <Button
+          variant="secondary"
+          onClick={() => router.push("/quizzes")}
+          className="text-black"
+        >
+          퀴즈 목록으로
         </Button>
         <RetryQuizButton quizId={quizId} />
       </div>

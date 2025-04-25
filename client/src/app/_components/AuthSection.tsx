@@ -23,15 +23,18 @@ const AuthSection = () => {
   } = useGetRecommendedQuizzes({ limit: 3 });
 
   return (
-    <section className="bg-background border border-card-border shadow-sm max-w-screen-xl mx-auto text-foreground p-12 rounded-xl shadow-lg flex flex-col items-center text-center">
+    <section className="bg-background border border-card-border shadow-sm max-w-screen-xl mx-auto text-foreground p-12 rounded-xl  flex flex-col items-center text-center">
       {isAuthenticated ? (
         <>
-          <h1 className="text-4xl font-bold mb-4 text-primary drop-shadow-md">
-            🎉 반가워요! 오늘도 학습을 시작해볼까요?
+          <h1 className="text-3xl sm:text-4xl font-bold mb-3 text-primary drop-shadow-md leading-snug">
+            반가워요🎉
+            <br />
+            오늘도 퀴즈 한 걸음!
           </h1>
-          <p className="text-xl text-neutral max-w-3xl leading-relaxed">
-            계속해서 퀴즈를 풀며 CS 지식을 쌓아보세요!
+          <p className="text-base sm:text-xl text-neutral max-w-xl leading-relaxed">
+            짧은 시간, 깊이 있는 CS 학습을 시작해보세요!
           </p>
+
           <Link href="/quizzes">
             <Button
               variant="primary"

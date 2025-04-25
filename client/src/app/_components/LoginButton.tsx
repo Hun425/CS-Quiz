@@ -21,7 +21,7 @@ const LoginButton = () => {
   const handleRefreshToken = async () => {
     const accessToken = await refreshAccessToken();
     if (accessToken) {
-      alert("✅ 토큰이 갱신되었습니다.");
+      alert("✅ 로그인 시간이 갱신되었습니다.");
     } else if (wasLoggedOut) {
       alert("❗ 로그아웃 상태입니다. 다시 로그인 해주세요.");
     } else {
