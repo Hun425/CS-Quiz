@@ -12,6 +12,9 @@ import java.util.UUID;
  * 
  * <p>사용자가 레벨업 했을 때 발생하는 이벤트입니다.
  * User 모듈에서 발행하고, 다른 모듈에서 수신하여 처리합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Getter
 @ToString

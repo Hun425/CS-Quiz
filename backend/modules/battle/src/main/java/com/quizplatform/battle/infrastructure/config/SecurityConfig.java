@@ -39,28 +39,28 @@ public class SecurityConfig extends BaseSecurityConfig {
     @Override
     @SuppressWarnings("unchecked")
     protected void configureAuthorization(Object authorize) {
-        // Battle 서비스에 특화된 추가 보안 설정
-        try {
-            // 개별 경로 허용 설정
-            String[][] paths = {
-                {"/api/**"}, 
-                {"/ws-battle/**"}, 
-                {"/topic/**"}, 
-                {"/app/**"}
-            };
-            
-            for (String[] path : paths) {
-                var requestMatchers = authorize.getClass().getMethod("requestMatchers", String[].class)
-                        .invoke(authorize, (Object) path);
-                requestMatchers.getClass().getMethod("permitAll").invoke(requestMatchers);
-            }
-            
-            // 개발 중에는 모든 요청 허용
-            var registry = authorize.getClass().getMethod("anyRequest").invoke(authorize);
-            registry.getClass().getMethod("permitAll").invoke(registry);
-        } catch (Exception e) {
-            throw new RuntimeException("Security configuration error", e);
-        }
+        // // Battle 서비스에 특화된 추가 보안 설정
+        // try {
+        //     // 개별 경로 허용 설정
+        //     String[][] paths = {
+        //         {"/api/**"},
+        //         {"/ws-battle/**"},
+        //         {"/topic/**"},
+        //         {"/app/**"}
+        //     };
+        //
+        //     for (String[] path : paths) {
+        //         var requestMatchers = authorize.getClass().getMethod("requestMatchers", String[].class)
+        //                 .invoke(authorize, (Object) path);
+        //         requestMatchers.getClass().getMethod("permitAll").invoke(requestMatchers);
+        //     }
+        //
+        //     // 개발 중에는 모든 요청 허용
+        //     var registry = authorize.getClass().getMethod("anyRequest").invoke(authorize);
+        //     registry.getClass().getMethod("permitAll").invoke(registry);
+        // } catch (Exception e) {
+        //     throw new RuntimeException("Security configuration error", e);
+        // }
     }
 
     @Override

@@ -21,6 +21,9 @@ import java.util.stream.Collectors;
 
 /**
  * JWT 토큰 생성 및 검증을 담당하는 클래스
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Slf4j
 @Component

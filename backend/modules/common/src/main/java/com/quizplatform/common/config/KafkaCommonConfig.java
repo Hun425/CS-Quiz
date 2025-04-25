@@ -16,6 +16,9 @@ import java.util.Map;
 /**
  * Kafka 공통 설정 클래스
  * 모든 모듈에서 공통으로 사용하는 Kafka 설정을 제공
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Configuration
 public class KafkaCommonConfig {

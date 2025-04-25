@@ -39,19 +39,19 @@ public class SecurityConfig extends BaseSecurityConfig {
     @Override
     @SuppressWarnings("unchecked")
     protected void configureAuthorization(Object authorize) {
-        // User 서비스에 특화된 추가 보안 설정
-        try {
-            // login과 register 경로 허용
-            var requestMatchers = authorize.getClass().getMethod("requestMatchers", String[].class)
-                    .invoke(authorize, (Object) new String[]{"/login", "/register"});
-            requestMatchers.getClass().getMethod("permitAll").invoke(requestMatchers);
-            
-            // 나머지 경로는 인증 필요
-            var registry = authorize.getClass().getMethod("anyRequest").invoke(authorize);
-            registry.getClass().getMethod("authenticated").invoke(registry);
-        } catch (Exception e) {
-            throw new RuntimeException("Security configuration error", e);
-        }
+        // // User 서비스에 특화된 추가 보안 설정
+        // try {
+        //     // login과 register 경로 허용
+        //     var requestMatchers = authorize.getClass().getMethod("requestMatchers", String[].class)
+        //             .invoke(authorize, (Object) new String[]{"/login", "/register"});
+        //     requestMatchers.getClass().getMethod("permitAll").invoke(requestMatchers);
+        //
+        //     // 나머지 경로는 인증 필요
+        //     var registry = authorize.getClass().getMethod("anyRequest").invoke(authorize);
+        //     registry.getClass().getMethod("authenticated").invoke(registry);
+        // } catch (Exception e) {
+        //     throw new RuntimeException("Security configuration error", e);
+        // }
     }
 
     @Override

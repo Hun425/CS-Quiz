@@ -2,7 +2,6 @@ package com.quizplatform.apigateway.security;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
@@ -15,6 +14,9 @@ import reactor.core.publisher.Mono;
 
 /**
  * OAuth2 인증 성공 후 JWT 토큰을 발급하고 응답에 추가하는 핸들러
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Slf4j
 @Component

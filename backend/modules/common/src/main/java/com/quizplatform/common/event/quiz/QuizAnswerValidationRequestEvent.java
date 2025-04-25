@@ -9,6 +9,9 @@ import java.util.UUID;
 
 /**
  * 퀴즈 답변 검증 요청 이벤트
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Getter
 @ToString

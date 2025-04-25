@@ -30,7 +30,20 @@ spring:
     swagger-ui:
       enabled: true
       path: /swagger-ui.html
-    
+      config-url: /api-docs/swagger-config
+      urls:
+        - url: /api-docs
+          name: API Gateway
+        - url: /users/v3/api-docs
+          name: User Service
+        - url: /battles/v3/api-docs
+          name: Battle Service
+        - url: /quizzes/v3/api-docs
+          name: Quiz Service
+      disable-swagger-default-url: true
+      use-root-path: true
+      url: /swagger-ui/index.html
+  
   cloud:
     gateway:
       routes:
@@ -55,48 +68,63 @@ spring:
           filters:
             - RewritePath=/api/battles/(?<path>.*), /$\{path}
             
-        # Swagger API 문서 접근을 위한 경로
-        - id: openapi-user
+        # Swagger API 문서 접근을 위한 경로 수정
+        - id: user-service-api-docs
           uri: lb://user-service
           predicates:
-            - Path=/api-docs/users/**
+            - Path=/users/v3/api-docs/**
           filters:
-            - RewritePath=/api-docs/users/(?<path>.*), /api-docs/$\{path}
+            - RewritePath=/users/v3/api-docs/(?<path>.*), /v3/api-docs/$\{path}
             
-        - id: swagger-ui-user
-          uri: lb://user-service
-          predicates:
-            - Path=/swagger-ui/users/**
-          filters:
-            - RewritePath=/swagger-ui/users/(?<path>.*), /swagger-ui/$\{path}
-            
-        - id: openapi-battle
+        - id: battle-service-api-docs
           uri: lb://battle-service
           predicates:
-            - Path=/api-docs/battles/**
+            - Path=/battles/v3/api-docs/**
           filters:
-            - RewritePath=/api-docs/battles/(?<path>.*), /api-docs/$\{path}
+            - RewritePath=/battles/v3/api-docs/(?<path>.*), /v3/api-docs/$\{path}
             
-        - id: swagger-ui-battle
-          uri: lb://battle-service
-          predicates:
-            - Path=/swagger-ui/battles/**
-          filters:
-            - RewritePath=/swagger-ui/battles/(?<path>.*), /swagger-ui/$\{path}
-            
-        - id: openapi-quiz
+        - id: quiz-service-api-docs
           uri: lb://quiz-service
           predicates:
-            - Path=/api-docs/quizzes/**
+            - Path=/quizzes/v3/api-docs/**
           filters:
-            - RewritePath=/api-docs/quizzes/(?<path>.*), /api-docs/$\{path}
+            - RewritePath=/quizzes/v3/api-docs/(?<path>.*), /v3/api-docs/$\{path}
             
-        - id: swagger-ui-quiz
-          uri: lb://quiz-service
+        # Swagger UI 웹자(webjars) 관련 경로 추가
+        - id: swagger-webjars
+          uri: forward:/webjars
           predicates:
-            - Path=/swagger-ui/quizzes/**
-          filters:
-            - RewritePath=/swagger-ui/quizzes/(?<path>.*), /swagger-ui/$\{path}
+            - Path=/webjars/**
+          
+        # 스웨거 UI 직접 접근 경로
+        - id: swagger-ui-direct
+          uri: forward:/swagger-ui
+          predicates:
+            - Path=/swagger-ui/**
+            
+        # API-Docs 직접 접근 경로
+        - id: api-docs-direct
+          uri: forward:/api-docs
+          predicates:
+            - Path=/api-docs/**
+            
+        # 추가: Swagger UI 인덱스 페이지 직접 접근
+        - id: swagger-ui-index
+          uri: forward:/swagger-ui.html
+          predicates:
+            - Path=/swagger-ui.html
+            
+        # 추가: Root 경로에서 Swagger 리다이렉트
+        - id: swagger-root-redirect
+          uri: forward:/swagger-ui.html
+          predicates:
+            - Path=/
+            
+        # v3/api-docs 접근 경로
+        - id: api-docs-v3
+          uri: forward:/api-docs
+          predicates:
+            - Path=/v3/api-docs/**
             
   # Kafka 설정
   kafka:
@@ -127,6 +155,7 @@ logging:
     org.springframework.web.reactive: DEBUG
     org.springframework.security: DEBUG
     reactor.netty: DEBUG
+    org.springdoc: DEBUG
     
 # Actuator 설정
 management:

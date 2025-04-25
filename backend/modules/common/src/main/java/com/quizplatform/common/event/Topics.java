@@ -3,6 +3,9 @@ package com.quizplatform.common.event;
 /**
  * 카프카 토픽 상수 정의
  * 모든 모듈에서 공유되는 토픽 이름을 관리
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 public class Topics {
     // Battle 모듈 토픽

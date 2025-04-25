@@ -5,6 +5,7 @@ import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.servers.Server;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -18,6 +19,9 @@ import java.util.List;
  */
 @Configuration
 public class SwaggerConfig {
+
+    @Value("${spring.application.name}")
+    private String applicationName;
 
     /**
      * OpenAPI 기본 설정
@@ -37,7 +41,10 @@ public class SwaggerConfig {
                                 .name("Apache 2.0")
                                 .url("http://www.apache.org/licenses/LICENSE-2.0.html")))
                 .servers(List.of(
-                        new Server().url("/").description("현재 서버 URL")
+                        // API Gateway를 통한 경로 추가
+                        new Server().url("/api/battles").description("API Gateway 경로"),
+                        // 직접 접근 경로
+                        new Server().url("/").description("직접 접근 URL")
                 ));
     }
 }

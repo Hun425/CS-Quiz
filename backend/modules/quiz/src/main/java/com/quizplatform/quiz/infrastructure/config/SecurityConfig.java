@@ -31,11 +31,11 @@ public class SecurityConfig extends BaseSecurityConfig {
     protected void configureAuthorization(Object authorize) {
         // Quiz 서비스에 특화된 추가 보안 설정
         // 런타임에는 올바른 타입으로 캐스팅되어 작동함
-        try {
-            var registry = authorize.getClass().getMethod("anyRequest").invoke(authorize);
-            registry.getClass().getMethod("authenticated").invoke(registry);
-        } catch (Exception e) {
-            throw new RuntimeException("Security configuration error", e);
-        }
+        // try {
+        //     var registry = authorize.getClass().getMethod("anyRequest").invoke(authorize);
+        //     registry.getClass().getMethod("authenticated").invoke(registry);
+        // } catch (Exception e) {
+        //     throw new RuntimeException("Security configuration error", e);
+        // }
     }
 } 

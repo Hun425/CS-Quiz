@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.http.HttpCookie;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -17,6 +16,9 @@ import java.util.List;
 
 /**
  * JWT 토큰을 검증하고 헤더에 사용자 정보를 추가하는 전역 필터
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Slf4j
 @Component
@@ -29,8 +31,19 @@ public class JwtAuthenticationFilter implements GlobalFilter {
     
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+
+        String path = exchange.getRequest().getURI().getPath();
+
+        // Swagger UI 및 관련 리소스는 JWT 인증 필터 건너뛰기
+        if (path.startsWith("/swagger-ui") ||
+                path.startsWith("/webjars") ||
+                path.startsWith("/v3/api-docs") ||
+                path.startsWith("/api-docs")) {
+            return chain.filter(exchange);
+        }
+
         String token = resolveToken(exchange.getRequest());
-        
+
         try {
             if (StringUtils.hasText(token) && tokenProvider.validateToken(token)) {
                 Claims claims = tokenProvider.getClaims(token);

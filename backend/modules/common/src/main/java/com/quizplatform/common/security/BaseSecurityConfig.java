@@ -5,16 +5,17 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer;
 
 /**
  * 모든 마이크로서비스에서 공통으로 사용하는 기본 보안 설정 클래스
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @RequiredArgsConstructor
 public abstract class BaseSecurityConfig {
@@ -40,9 +41,13 @@ public abstract class BaseSecurityConfig {
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/webjars/**").permitAll()
                         // Public 리소스 접근 허용
                         .requestMatchers("/public/**").permitAll();
+
                 
-                // 서비스별 추가 권한 설정 위임 (람다식으로 변경)
-                configureAuthorization(authorize);
+                // // 서비스별 추가 권한 설정 위임 (람다식으로 변경)
+                // configureAuthorization(authorize);
+
+                // 모든 요청 허용 (테스트용) - 각 서비스의 configureAuthorization 메소드를 호출한 후에 추가
+                authorize.anyRequest().permitAll();
             });
             
         // 필터 및 추가 설정을 위한 훅 메소드 호출

@@ -7,6 +7,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * Kafka를 사용한 이벤트 발행 구현체
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 @Slf4j
 @Component

@@ -3,6 +3,9 @@ package com.quizplatform.common.event;
 /**
  * 이벤트 발행 인터페이스
  * 모든 이벤트 발행자는 이 인터페이스를 구현해야 함
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
  */
 public interface EventPublisher {
     

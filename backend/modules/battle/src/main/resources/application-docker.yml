@@ -1,5 +1,7 @@
 server:
   port: 8083
+  servlet:
+    context-path: /
 
 spring:
   application:
@@ -12,7 +14,7 @@ spring:
   # Swagger/OpenAPI 설정
   springdoc:
     api-docs:
-      path: /api-docs
+      path: /v3/api-docs
     swagger-ui:
       path: /swagger-ui.html
       tags-sorter: alpha
@@ -29,27 +31,36 @@ spring:
   
   # JPA 설정
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
+    show-sql: true
     properties:
       hibernate:
-        default_schema: battle_schema
         format_sql: true
-        show_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: battle_schema
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
   
   # Redis 설정
-  redis:
-    host: redis
-    port: 6379
-    timeout: 10000
+  data:
+    redis:
+      host: redis
+      port: 6379
+      password: 
   
   # Kafka 설정
   kafka:
     bootstrap-servers: kafka:29092
+    consumer:
+      group-id: battle-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.quizplatform.*
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 # JWT 설정
 jwt:
@@ -64,10 +75,12 @@ eureka:
       defaultZone: http://eureka-server:8761/eureka/
   instance:
     prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.uuid}
 
 # 로깅 설정
 logging:
   level:
-    root: INFO
-    com.quizplatform.battle: DEBUG
-    org.springframework.kafka: INFO 
+    com.quizplatform: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.springframework.data.redis: DEBUG 
