@@ -70,15 +70,17 @@ const QuizDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-screen-lg mx-auto p-4 bg-card-background min-h-screen flex flex-col gap-6 pt-16">
+    <div className="max-w-screen-lg mx-auto p-4 bg-card-background min-h-screen flex flex-col gap-6 pt-8">
       {/* 📌 퀴즈 헤더 */}
       <div className="bg-background p-6 rounded-lg shadow-md border border-border flex flex-col md:flex-row justify-between items-start gap-6">
         {/* 왼쪽: 퀴즈 정보 */}
         <div className="flex-1 flex flex-col gap-3">
           {/* 🏷️ 퀴즈 제목 + 생성일 */}
-          <div className="flex items-end gap-2">
-            <h1 className="text-3xl font-bold text-primary">{quiz.title}</h1>
-            <span className="text-sm text-gray-500">
+          <div className="flex items-end">
+            <h1 className="text-2xl sm:text-3xl font-bold text-primary">
+              {quiz.title}
+            </h1>
+            <span className="text-sm text-gray-500 hidden sm:inline ml-2">
               {new Date(quiz.createdAt).toLocaleDateString()}
             </span>
           </div>
@@ -105,7 +107,7 @@ const QuizDetailPage: React.FC = () => {
           )}
 
           {/* 👤 제작자 정보 */}
-          <div className="flex items-center gap-4 mt-4 border-t border-border pt-4">
+          <div className="flex items-center gap-4 mt-2 border-t border-border pt-4">
             {quiz.creator.profileImage ? (
               <Image
                 src={quiz.creator.profileImage}
@@ -132,12 +134,10 @@ const QuizDetailPage: React.FC = () => {
         </div>
 
         {/* 오른쪽: ⏳ 퀴즈 제한 시간 */}
-        <div className="flex flex-col border border-border items-center justify-center p-3 sm:p-4 md:p-6 bg-background rounded-lg w-full sm:w-40 text-center gap-2 sm:gap-3">
-          <span className="text-2xl sm:text-3xl font-bold text-primary">
-            ⏳
-          </span>
-          <span className="text-xs sm:text-sm text-gray-500">제한 시간</span>
-          <span className="text-xl sm:text-3xl font-bold text-primary">
+        <div className="flex flex-col border border-border items-center justify-center p-3 sm:p-4 bg-background rounded-lg w-full sm:max-w-xs md:max-w-[10rem] text-center gap-1 sm:gap-2">
+          <span className="text-xl sm:text-3xl font-bold text-primary">⏳</span>
+          <span className="text-xs text-gray-500">제한 시간</span>
+          <span className="text-lg sm:text-3xl font-bold text-primary">
             {Math.floor(quiz.timeLimit / 60)}분
           </span>
         </div>

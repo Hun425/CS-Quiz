@@ -266,8 +266,8 @@ class BattleWebSocketService {
   /** ✅ 서버에 정답 제출 */
   submitAnswer(
     questionId: number,
-    timeSpentSeconds: number,
-    answer: string | null
+    answer: string | null,
+    timeSpentSeconds: number
   ) {
     if (!this.client || !this.connected || !this.roomId) return;
 
@@ -282,7 +282,7 @@ class BattleWebSocketService {
       body: JSON.stringify({
         roomId: this.roomId,
         questionId,
-        answer,
+        answer: answer ?? "",
         timeSpentSeconds,
       }),
     });

@@ -52,6 +52,7 @@ export const useAuthStore = create<AuthState>()(
         if (typeof window !== "undefined") {
           localStorage.removeItem("auth");
           localStorage.removeItem("profile");
+          sessionStorage.clear();
           resetQuiz(true);
           sessionStorage.removeItem("battle-socket-store");
           window.location.href = "/login";

@@ -17,11 +17,11 @@ const BattleContent = () => {
 
   useBattleSocket(roomId);
 
-  useEffect(() => {
-    return () => {
-      battleSocketClient.leaveBattle();
-    };
-  }, []);
+  // useEffect(() => {
+  //   return () => {
+  //     battleSocketClient.leaveBattle();
+  //   };
+  // }, []);
 
   // store 상태
   const { status, endPayload } = useBattleSocketStore();
@@ -40,6 +40,7 @@ const BattleContent = () => {
     const ok = window.confirm("정말 배틀을 나가시겠습니까?");
     if (ok) {
       battleSocketClient.leaveBattle();
+      useBattleSocketStore.getState().reset();
       router.replace("/battles");
     }
   };
@@ -70,12 +71,12 @@ const BattleContent = () => {
       </div>
 
       {/* 모바일 전용: 하단 중앙 고정 나가기 버튼 */}
-      <div className="sm:hidden mx-auto w-[90%] max-w-sm bg-white border border-red-500 shadow-md rounded-xl mb-4">
+      <div className="sm:hidden mx-auto w-[90%] max-w-sm bg-red-500 hover:bg-red-200 border border-red-500 shadow-md rounded-xl mb-4">
         <button
           onClick={handleLeave}
-          className="w-full py-3 text-sm font-semibold text-red-500"
+          className="w-full py-3 text-sm font-semibold text-white"
         >
-          🔚 배틀 나가기
+          배틀 나가기
         </button>
       </div>
     </>

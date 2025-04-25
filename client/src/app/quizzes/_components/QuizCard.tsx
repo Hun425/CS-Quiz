@@ -17,7 +17,7 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz }) => {
         <h2 className="text-xl font-bold text-primary mb-2">{quiz.title}</h2>
 
         {/* 퀴즈 메타정보 */}
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div className="flex flex-wrap gap-1 mb-2">
           {/* 난이도 */}
           <Tag difficultyLevel={quiz.difficultyLevel} />
 

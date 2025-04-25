@@ -10,7 +10,7 @@ const BattleHeader: React.FC<Props> = ({ battleRoom }) => {
   return (
     <div className="space-y-2">
       <header
-        className="bg-primary text-white px-6 py-4 rounded-xl shadow-lg flex flex-col sm:flex-row sm:items-center sm:justify-between"
+        className="bg-primary text-white px-6 py-4 rounded-xl  flex flex-col sm:flex-row sm:items-center sm:justify-between"
         aria-label="퀴즈 대기실 헤더"
         role="banner"
       >
@@ -31,14 +31,9 @@ const BattleHeader: React.FC<Props> = ({ battleRoom }) => {
 
       <div className="bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 px-4 py-3 rounded-md shadow-sm">
         <p className="text-sm font-medium">
-          ⚠️ 모든 참가자가 준비 완료되면 대결이{" "}
-          <strong className="text-yellow-900">자동으로 시작</strong>됩니다.
-        </p>
-        <p className="text-sm mt-1">
-          시작되면{" "}
-          <strong className="text-yellow-900">
-            중단하거나 취소할 수 없습니다.
-          </strong>
+          ⚠️ 모든 참가자가 준비 완료되면 대결이
+          <strong className="text-yellow-900"> 5초 후 자동으로 시작</strong>
+          됩니다.
         </p>
         <p className="text-sm mt-1">
           하단의{" "}

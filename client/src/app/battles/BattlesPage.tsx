@@ -45,7 +45,7 @@ const BattlesPage: React.FC = () => {
               실시간 퀴즈 대결
             </h2>
             <p className="text-sm mt-1 opacity-90 text-white">
-              실력과 스피드를 겨루는 실시간 퀴즈 대결에 도전해보세요!
+              실력과 스피드를 겨루는 퀴즈 대결에 도전해보세요!
             </p>
           </div>
           <Button

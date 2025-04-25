@@ -18,8 +18,8 @@ export default function SubmitAnswerButton({
       onClick={() => {
         battleWebSocketService.submitAnswer(
           questionId,
-          timeSpentSecond,
-          answer
+          answer,
+          timeSpentSecond
         );
       }}
     >

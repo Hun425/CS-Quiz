@@ -7,7 +7,6 @@ import { useBattleSocket } from "@/lib/services/websocket/useBattleSocket";
 import { useBattleSocketStore } from "@/store/battleStore";
 import { useProfileStore } from "@/store/profileStore";
 import BattleHeader from "../_components/BattleHeader";
-// import { useBattleHealthCheck } from "@/lib/services/websocket/useBattleHealthCheck";
 import BattleParticipantsList from "../_components/BattleParticipantsList";
 import ReadyStatusIndicator from "../_components/ReadyStatusIndicator";
 import BattleControlButtons from "../_components/BattleControlButtons";
@@ -79,7 +78,7 @@ const BattleRoomClientPage = () => {
   const isReady = myStatus?.ready ?? false;
 
   return (
-    <div className="max-w-full mx-auto p-6 py-16 space-y-6 min-h-screen">
+    <div className="max-w-full mx-auto p-6 py-8 space-y-6 min-h-screen">
       <div className="max-w-screen-lg mx-auto space-y-6 min-h-screen">
         <BattleHeader battleRoom={battleRoom} />
         <ReadyStatusIndicator participantsPayload={participantsPayload} />
