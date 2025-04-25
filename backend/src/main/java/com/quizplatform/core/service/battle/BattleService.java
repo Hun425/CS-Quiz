@@ -970,8 +970,7 @@ public class BattleService {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        BattleParticipant participant = participantRepository
-                .findByBattleRoomAndUser(battleRoom, user)
+        BattleParticipant participant = participantRepository.findByBattleRoomAndUser(battleRoom, user)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND));
 
         // 참가자 상태 비활성화
@@ -1354,5 +1353,35 @@ public class BattleService {
         }
 
         return new BattleLeaveResponse(userId, roomId, room.getStatus());
+    }
+
+    /**
+     * 사용자가 배틀룸의 생성자(방장)인지 확인합니다.
+     * 
+     * <p>주어진 사용자 ID가 배틀룸의 생성자인지 검증합니다.
+     * 강제 진행 등 방장 권한이 필요한 작업에서 사용됩니다.</p>
+     * 
+     * @param roomId 배틀룸 ID
+     * @param userId 확인할 사용자 ID
+     * @return 생성자인 경우 true, 아니면 false
+     */
+    public boolean isRoomCreator(Long roomId, Long userId) {
+        if (roomId == null || userId == null) {
+            return false;
+        }
+        
+        try {
+            BattleRoom battleRoom = battleRoomRepository.findById(roomId)
+                    .orElse(null);
+            
+            if (battleRoom == null) {
+                return false;
+            }
+            
+            return battleRoom.getCreatorId().equals(userId);
+        } catch (Exception e) {
+            log.error("방장 확인 중 오류 발생: roomId={}, userId={}", roomId, userId, e);
+            return false;
+        }
     }
 }

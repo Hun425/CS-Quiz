@@ -454,34 +454,43 @@ public class BattleWebSocketController {
             BattleReadyRequest request,
             @Header("simpSessionId") String sessionId
     ) {
-        log.info("준비 상태 토글 요청: roomId={}, userId={}, sessionId={}",
-                request.getRoomId(), request.getUserId(), sessionId);
+        log.info("준비 상태 토글 요청: roomId={}, sessionId={}", 
+                request.getRoomId(), sessionId);
 
         try {
+            // 배틀방 유효성 검사
+            if (!battleService.isValidBattleRoom(request.getRoomId())) {
+                log.error("유효하지 않은 배틀방: roomId={}", request.getRoomId());
+                messagingTemplate.convertAndSendToUser(
+                        sessionId,
+                        "/queue/errors",
+                        "유효하지 않은 배틀방입니다."
+                );
+                return;
+            }
+
             // 준비 상태 토글 처리
             BattleReadyResponse response = battleService.toggleReadyState(request, sessionId);
 
-            // 대결방의 모든 참가자에게 준비 상태 변경 알림
+            // 모든 참가자에게 준비 상태 변경 알림
             messagingTemplate.convertAndSend(
-                    "/topic/battle/" + request.getRoomId() + "/participants",
+                    "/topic/battle/" + request.getRoomId() + "/ready",
                     response
             );
+            log.info("준비 상태 토글 전송 완료: roomId={}, 준비완료 인원={}/{}",
+                    request.getRoomId(), response.getReadyCount(), response.getTotalParticipants());
 
-            log.info("준비 상태 토글 처리 완료: roomId={}, userId={}, 참가자수={}",
-                    request.getRoomId(), request.getUserId(), response.getParticipants().size());
-
-            // 대결 시작 조건 확인 (경쟁 상태 방지를 위해 synchronized 블록 내에서 처리)
+            // 모든 참가자가 준비 완료되었으면 게임 시작 (로그 추가)
             if (battleService.isReadyToStart(request.getRoomId())) {
-                // 자동 시작을 바로 하지 않고 5초 지연 후 시작하도록 수정
-                log.info("모든 참가자 준비 완료. 5초 후 배틀 시작: roomId={}", request.getRoomId());
+                log.info("모든 참가자 준비 완료. 자동 시작 조건 충족: roomId={}", request.getRoomId());
                 
-                // 대기 상태 메시지 전송
+                // 준비 상태 메시지 전송
                 messagingTemplate.convertAndSend(
                         "/topic/battle/" + request.getRoomId() + "/status",
                         new BattleRoomStatusChangeResponse(request.getRoomId(), BattleRoomStatus.READY)
                 );
                 
-                // 5초 후 시작
+                // 5초 후 시작 (지연 시작)
                 new Thread(() -> {
                     try {
                         Thread.sleep(5000);
@@ -492,14 +501,98 @@ public class BattleWebSocketController {
                 }).start();
             }
         } catch (Exception e) {
-            log.error("준비 상태 토글 처리 중 오류 발생: roomId={}, userId={}",
-                    request.getRoomId(), request.getUserId(), e);
-            
-            // 오류 메시지를 클라이언트에게 전송
+            log.error("준비 상태 토글 처리 중 오류 발생: roomId={}", request.getRoomId(), e);
             messagingTemplate.convertAndSendToUser(
                     sessionId,
                     "/queue/errors",
                     "준비 상태 변경 중 오류가 발생했습니다: " + e.getMessage()
+            );
+        }
+    }
+
+    /**
+     * 배틀 문제 강제 진행 처리
+     * 
+     * <p>방장이나 관리자가 현재 문제를 건너뛰고 다음 문제로 강제 진행하는 기능을 처리합니다.
+     * 모든 참가자가 답변을 제출하지 않았더라도 다음 문제로 넘어갈 수 있습니다.</p>
+     * 
+     * @param request 강제 진행 요청 정보
+     * @param sessionId 웹소켓 세션 ID
+     */
+    @MessageMapping("/battle/force-next")
+    public void forceNextQuestion(BattleForceNextRequest request, @Header("simpSessionId") String sessionId) {
+        log.info("문제 강제 진행 요청: roomId={}, requesterId={}, sessionId={}", 
+                request.getRoomId(), request.getRequesterId(), sessionId);
+        
+        try {
+            // 배틀방 유효성 검사
+            if (!battleService.isValidBattleRoom(request.getRoomId())) {
+                log.error("유효하지 않은 배틀방: roomId={}", request.getRoomId());
+                messagingTemplate.convertAndSendToUser(
+                        sessionId,
+                        "/queue/errors",
+                        "유효하지 않은 배틀방입니다."
+                );
+                return;
+            }
+            
+            // 요청자 권한 검증 (방장이거나 관리자인지 확인)
+            if (!battleService.isRoomCreator(request.getRoomId(), request.getRequesterId())) {
+                log.error("강제 진행 권한 없음: roomId={}, requesterId={}", request.getRoomId(), request.getRequesterId());
+                messagingTemplate.convertAndSendToUser(
+                        sessionId,
+                        "/queue/errors",
+                        "강제 진행할 권한이 없습니다. 방장만 가능합니다."
+                );
+                
+                // 실패 응답 전송
+                messagingTemplate.convertAndSendToUser(
+                        sessionId,
+                        "/queue/battle/force-next",
+                        BattleForceNextResponse.builder()
+                                .roomId(request.getRoomId())
+                                .success(false)
+                                .build()
+                );
+                return;
+            }
+            
+            // 모든 참가자에게 강제 진행 메시지 전송
+            messagingTemplate.convertAndSend(
+                    "/topic/battle/" + request.getRoomId() + "/notification",
+                    "방장에 의해 다음 문제로 강제 진행합니다."
+            );
+            
+            // 다음 문제로 강제 진행
+            moveToNextQuestion(request.getRoomId());
+            
+            // 성공 응답 전송 (개인)
+            messagingTemplate.convertAndSendToUser(
+                    sessionId,
+                    "/queue/battle/force-next", 
+                    BattleForceNextResponse.builder()
+                            .roomId(request.getRoomId())
+                            .success(true)
+                            .build()
+            );
+            
+            log.info("문제 강제 진행 처리 완료: roomId={}", request.getRoomId());
+        } catch (Exception e) {
+            log.error("문제 강제 진행 처리 중 오류 발생: roomId={}", request.getRoomId(), e);
+            messagingTemplate.convertAndSendToUser(
+                    sessionId,
+                    "/queue/errors",
+                    "문제 강제 진행 중 오류가 발생했습니다: " + e.getMessage()
+            );
+            
+            // 실패 응답 전송
+            messagingTemplate.convertAndSendToUser(
+                    sessionId,
+                    "/queue/battle/force-next",
+                    BattleForceNextResponse.builder()
+                            .roomId(request.getRoomId())
+                            .success(false)
+                            .build()
             );
         }
     }
