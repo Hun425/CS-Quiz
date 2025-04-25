@@ -1,16 +1,13 @@
-FROM eclipse-temurin:17-jdk-alpine AS build
+# 빌드 스테이지
+FROM gradle:7.6-jdk17 AS build
+
 WORKDIR /workspace/app
 
-# 루트 디렉토리의 gradlew 파일과 필요한 gradle 디렉토리 모두 복사
-COPY gradlew .
-COPY gradle gradle
-COPY build.gradle .
-COPY settings.gradle .
-COPY modules modules
+# 프로젝트 파일 복사
+COPY . .
 
-# Gradle 빌드
-RUN chmod +x ./gradlew
-RUN ./gradlew :modules:api-gateway:clean :modules:api-gateway:build -x test
+# Gradle 명령으로 직접 빌드 (래퍼 없이)
+RUN gradle :modules:api-gateway:clean :modules:api-gateway:build -x test
 
 # 런타임 이미지
 FROM eclipse-temurin:17-jre-alpine
