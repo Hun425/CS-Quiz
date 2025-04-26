@@ -5,7 +5,8 @@ import com.quizplatform.core.dto.common.CommonApiResponse;
 import com.quizplatform.core.dto.user.TestTokenRequest;
 import com.quizplatform.core.dto.user.TestTokenResponse;
 import com.quizplatform.core.dto.user.UserProfileDto;
-import com.quizplatform.core.service.TestAuthService;
+
+import com.quizplatform.core.service.test.TestAuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

@@ -1,6 +1,5 @@
-package com.quizplatform.core.service;
+package com.quizplatform.core.service.test.impl;
 
-import com.quizplatform.core.config.security.UserPrincipal;
 import com.quizplatform.core.config.security.jwt.JwtTokenProvider;
 import com.quizplatform.core.domain.user.AuthProvider;
 import com.quizplatform.core.domain.user.User;
@@ -10,6 +9,7 @@ import com.quizplatform.core.exception.BusinessException;
 import com.quizplatform.core.exception.ErrorCode;
 import com.quizplatform.core.repository.UserRepository;
 import com.quizplatform.core.repository.user.UserLevelRepository;
+import com.quizplatform.core.service.test.TestAuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 
 /**
- * 테스트 인증 서비스
+ * 테스트 인증 서비스 구현체
  * 
  * <p>개발 및 테스트 환경에서 JWT 토큰 발급 및 관리를 위한 서비스 클래스입니다.
  * 테스트용 사용자를 생성하고 임시 인증 토큰을 발급하는 기능을 제공합니다.</p>
@@ -32,7 +32,7 @@ import java.util.Collections;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class TestAuthService {
+public class TestAuthServiceImpl implements TestAuthService {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
@@ -48,6 +48,7 @@ public class TestAuthService {
      * @return 테스트 토큰 응답 객체 (액세스 토큰, 리프레시 토큰 포함)
      * @throws BusinessException 사용자명이 이미 존재하는 경우 발생
      */
+    @Override
     @Transactional
     public TestTokenResponse generateTestToken(String username) {
         // 사용자 검색 또는 생성
@@ -147,4 +148,4 @@ public class TestAuthService {
                 Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
         );
     }
-}
+} 

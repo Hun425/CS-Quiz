@@ -1,4 +1,4 @@
-package com.quizplatform.core.service;
+package com.quizplatform.core.service.user.impl;
 
 import com.quizplatform.core.config.security.jwt.JwtTokenProvider;
 import com.quizplatform.core.config.security.oauth.CustomOAuth2UserService;
@@ -7,6 +7,7 @@ import com.quizplatform.core.domain.user.User;
 import com.quizplatform.core.dto.AuthResponse;
 import com.quizplatform.core.exception.OAuth2AuthenticationProcessingException;
 import com.quizplatform.core.repository.UserRepository;
+import com.quizplatform.core.service.user.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,18 +36,17 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.*;
 
 /**
- * 인증 관련 서비스 클래스
- * 
- * <p>OAuth2 소셜 로그인 인증, JWT 토큰 발급, 리프레시 및 로그아웃 기능을 제공합니다.
- * 다양한 소셜 로그인 제공자(Google, GitHub, Kakao)에 대한 처리를 지원합니다.</p>
- * 
+ * AuthService 인터페이스의 구현체
+ *
+ * <p>OAuth2 소셜 로그인 인증, JWT 토큰 발급, 리프레시 및 로그아웃 기능을 제공합니다.</p>
+ *
  * @author 채기훈
  * @since JDK 21 eclipse temurin 21.0.6
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AuthService {
+public class AuthServiceImpl implements AuthService {
 
     private final ClientRegistrationRepository clientRegistrationRepository;
     private final OAuth2AuthorizedClientService authorizedClientService;
@@ -57,15 +57,7 @@ public class AuthService {
     @Value("${app.oauth2.authorized-redirect-uri}")
     private String authorizedRedirectUri;
 
-    /**
-     * 소셜 로그인 제공자의 인증 URL을 생성합니다.
-     * 
-     * <p>이 URL로 사용자를 리다이렉트하면 소셜 로그인 프로세스가 시작됩니다.</p>
-     * 
-     * @param provider 소셜 로그인 제공자 (google, github, kakao 등)
-     * @return 인증 URL 문자열
-     * @throws OAuth2AuthenticationProcessingException 지원하지 않는 제공자가 요청된 경우
-     */
+    @Override
     public String getAuthorizationUrl(String provider) {
         ClientRegistration registration = clientRegistrationRepository.findByRegistrationId(provider.toLowerCase());
 
@@ -86,16 +78,7 @@ public class AuthService {
                 .build().toUriString();
     }
 
-    /**
-     * OAuth2 인증 코드를 처리하고 사용자 정보와 토큰을 포함한 인증 응답을 생성합니다.
-     * 
-     * <p>사용자가 존재하지 않으면 새로 생성하고, 이미 존재하면 정보를 업데이트합니다.</p>
-     * 
-     * @param provider 소셜 로그인 제공자
-     * @param code 인증 코드
-     * @return 액세스 토큰, 리프레시 토큰, 사용자 정보를 포함한 인증 응답
-     * @throws OAuth2AuthenticationProcessingException 인증 처리 중 오류 발생 시
-     */
+    @Override
     @Transactional
     public AuthResponse processOAuth2Login(String provider, String code) {
         // OAuth2 인증 처리
@@ -124,19 +107,11 @@ public class AuthService {
                 .build();
     }
 
-    /**
-     * 리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급합니다.
-     * 
-     * <p>사용자 정보도 함께 반환하여 클라이언트가 필요한 정보를 모두 가질 수 있도록 합니다.</p>
-     * 
-     * @param refreshToken 리프레시 토큰
-     * @return 새로운 액세스 토큰과 사용자 정보를 포함한 인증 응답
-     * @throws OAuth2AuthenticationProcessingException 토큰이 유효하지 않거나 처리 중 오류 발생 시
-     */
+    @Override
     @Transactional
     public AuthResponse refreshToken(String refreshToken) {
         log.info("리프레시 토큰 처리 시작");
-        
+
         // 토큰 유효성 검증
         if (!jwtTokenProvider.validateToken(refreshToken)) {
             log.error("유효하지 않은 리프레시 토큰");
@@ -148,9 +123,9 @@ public class AuthService {
             var claims = jwtTokenProvider.getClaimsFromToken(refreshToken);
             String userIdentifier = claims.getSubject();
             log.info("토큰에서 추출한 사용자 식별자: {}", userIdentifier);
-            
+
             User user = null;
-            
+
             // 1. 먼저 ID로 조회 시도
             try {
                 Long userId = Long.parseLong(userIdentifier);
@@ -159,20 +134,20 @@ public class AuthService {
             } catch (NumberFormatException e) {
                 log.info("사용자 식별자가 숫자가 아닙니다: {}", userIdentifier);
             }
-            
+
             // 2. ID로 조회 실패 시 이메일로 조회
             if (user == null) {
                 user = userRepository.findByEmail(userIdentifier).orElse(null);
                 log.info("이메일로 사용자 조회 {}: {}", user != null ? "성공" : "실패", userIdentifier);
             }
-            
+
             // 3. 그래도 못 찾으면 다른 방법 시도 (claims에서 email 필드가 있는지 확인)
             if (user == null && claims.containsKey("email")) {
                 String email = claims.get("email", String.class);
                 user = userRepository.findByEmail(email).orElse(null);
                 log.info("클레임의 이메일로 사용자 조회 {}: {}", user != null ? "성공" : "실패", email);
             }
-            
+
             // 4. 최종적으로 사용자를 찾지 못한 경우
             if (user == null) {
                 throw new OAuth2AuthenticationProcessingException("사용자를 찾을 수 없습니다: " + userIdentifier);
@@ -184,7 +159,7 @@ public class AuthService {
             Authentication auth = createAuthenticationWithId(user);
             String newAccessToken = jwtTokenProvider.generateAccessToken(auth);
             String newRefreshToken = jwtTokenProvider.generateRefreshToken(auth);
-            
+
             log.info("새 토큰 생성 완료");
 
             return AuthResponse.builder()
@@ -200,7 +175,25 @@ public class AuthService {
             throw new OAuth2AuthenticationProcessingException("토큰 갱신 처리 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
-    
+
+    @Override
+    @Transactional
+    public void logout(String userId) {
+        jwtTokenProvider.invalidateToken(Long.parseLong(userId));
+    }
+
+    @Override
+    public String getUserIdFromToken(String token) {
+        return jwtTokenProvider.getUserIdFromToken(
+                token.replace("Bearer ", "")
+        );
+    }
+
+    @Override
+    public String getAuthorizedRedirectUri() {
+        return authorizedRedirectUri;
+    }
+
     /**
      * 사용자 ID를. 명시적으로 subject(sub)로 사용하는 Authentication 객체를 생성합니다.
      * 이는 리프레시 토큰 처리 시 일관성을 유지하기 위함입니다.
@@ -234,41 +227,10 @@ public class AuthService {
     }
 
     /**
-     * 토큰을 무효화하고 사용자를 로그아웃 처리합니다.
-     * 
-     * @param userId 로그아웃할 사용자 ID
-     */
-    @Transactional
-    public void logout(String userId) {
-        jwtTokenProvider.invalidateToken(Long.parseLong(userId));
-    }
-
-    /**
-     * 토큰에서 사용자 ID를 추출합니다.
-     * 
-     * @param token JWT 토큰
-     * @return 추출된 사용자 ID
-     */
-    public String getUserIdFromToken(String token) {
-        return jwtTokenProvider.getUserIdFromToken(
-                token.replace("Bearer ", "")
-        );
-    }
-
-    /**
-     * 승인된 리다이렉트 URI를 반환합니다.
-     * 
-     * @return 승인된 리다이렉트 URI
-     */
-    public String getAuthorizedRedirectUri() {
-        return authorizedRedirectUri;
-    }
-
-    /**
      * OAuth2 인증 코드를 사용하여 액세스 토큰을 요청합니다.
-     * 
+     *
      * <p>각 소셜 로그인 제공자의 토큰 엔드포인트로 요청을 보내 액세스 토큰을 받아옵니다.</p>
-     * 
+     *
      * @param registration 클라이언트 등록 정보
      * @param code 인증 코드
      * @return OAuth2 액세스 토큰
@@ -344,9 +306,9 @@ public class AuthService {
 
     /**
      * OAuth2 사용자 정보를 처리하고 사용자 엔티티를 생성하거나 업데이트합니다.
-     * 
+     *
      * <p>각 소셜 로그인 제공자에서 사용자 정보를 추출하고 DB에 저장합니다.</p>
-     * 
+     *
      * @param oauth2User OAuth2 사용자 정보
      * @param provider 소셜 로그인 제공자
      * @return 생성되거나 업데이트된 사용자 엔티티
@@ -378,9 +340,9 @@ public class AuthService {
 
     /**
      * 사용자 정보를 바탕으로 Authentication 객체를 생성합니다.
-     * 
+     *
      * <p>이 Authentication 객체는 JWT 토큰 생성에 사용됩니다.</p>
-     * 
+     *
      * @param user 사용자 엔티티
      * @return Spring Security Authentication 객체
      */
@@ -411,7 +373,7 @@ public class AuthService {
 
     /**
      * 제공자별 사용자 이메일 추출
-     * 
+     *
      * @param oauth2User OAuth2 사용자 정보
      * @param provider 소셜 로그인 제공자
      * @return 추출된 이메일
@@ -434,7 +396,7 @@ public class AuthService {
 
     /**
      * 제공자별 사용자 이름 추출
-     * 
+     *
      * @param oauth2User OAuth2 사용자 정보
      * @param provider 소셜 로그인 제공자
      * @return 추출된 이름
@@ -457,7 +419,7 @@ public class AuthService {
 
     /**
      * 제공자별 사용자 프로필 이미지 URL 추출
-     * 
+     *
      * @param oauth2User OAuth2 사용자 정보
      * @param provider 소셜 로그인 제공자
      * @return 추출된 프로필 이미지 URL
@@ -480,7 +442,7 @@ public class AuthService {
 
     /**
      * 제공자별 프로바이더 ID 추출
-     * 
+     *
      * @param oauth2User OAuth2 사용자 정보
      * @param provider 소셜 로그인 제공자
      * @return 추출된 프로바이더 ID
@@ -502,7 +464,7 @@ public class AuthService {
 
     /**
      * 기존 사용자 정보 업데이트
-     * 
+     *
      * @param existingUser 기존 사용자 엔티티
      * @param name 새 이름
      * @param imageUrl 새 프로필 이미지 URL
@@ -515,7 +477,7 @@ public class AuthService {
 
     /**
      * 새 사용자 등록
-     * 
+     *
      * @param email 이메일
      * @param name 이름
      * @param imageUrl 프로필 이미지 URL
@@ -535,9 +497,9 @@ public class AuthService {
 
     /**
      * 고유한 사용자명 생성
-     * 
+     *
      * <p>동일한 이름이 이미 존재하는 경우 숫자 접미사를 추가합니다.</p>
-     * 
+     *
      * @param baseName 기본 이름
      * @return 고유한 사용자명
      */
