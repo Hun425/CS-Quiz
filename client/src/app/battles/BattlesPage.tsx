@@ -6,18 +6,27 @@ import { useGetMyActiveBattleRoom } from "@/lib/api/battle/useGetMyActiveBattleR
 import CreateBattleRoomModal from "./_components/CreateBattleRoomModal";
 import BattleRoomCard from "./_components/BattleRoomCard";
 import Button from "../_components/Button";
+import { useQueryClient } from "@tanstack/react-query"; // ✅ 추가
+import { useEffect } from "react";
 
 const BattlesPage: React.FC = () => {
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    // ✅ 페이지 들어올 때 강제 캐시 무효화
+    queryClient.invalidateQueries({ queryKey: ["activeBattleRooms"] });
+    queryClient.invalidateQueries({ queryKey: ["myActiveBattleRoom"] });
+  }, [queryClient]);
+
   const {
     data: activeRoomsData,
     isLoading: isActiveRoomsLoading,
-    refetch: refetchActiveRooms, // 🔁 전체 목록 리패치
+    refetch: refetchActiveRooms,
   } = useGetActiveBattleRooms();
 
   const {
     data: myBattleRoomData,
     isLoading: isMyBattleRoomLoading,
-    refetch: refetchMyRoom, // ✅ 참여중 대결 리패치
+    refetch: refetchMyRoom,
   } = useGetMyActiveBattleRoom();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,7 +48,7 @@ const BattlesPage: React.FC = () => {
   return (
     <div className="bg-sub-background min-h-screen max-w-screen-lg mx-auto px-3 py-6 sm:px-4 lg:px-6">
       <div className="w-full mx-auto space-y-5">
-        <div className="bg-primary text-white p-5 rounded-md shadow-md flex flex-col sm:flex-row justify-between items-center">
+        <div className="bg-primary text-white p-5 rounded-md flex flex-col sm:flex-row justify-between items-center">
           <div className="text-center sm:text-left">
             <h2 className="text-xl font-bold tracking-tight text-white">
               실시간 퀴즈 대결
@@ -87,7 +96,7 @@ const BattlesPage: React.FC = () => {
 
         {/* 내 활성 배틀룸 */}
         <section
-          className="bg-background p-6 rounded-lg shadow-sm border border-card-border transition-all"
+          className="bg-background p-6 rounded-lg  border border-card-border transition-all"
           aria-label="참여 중인 퀴즈 대결"
         >
           <h2 className="text-xl font-bold border-b-2 border-primary pb-2 mb-2">
@@ -104,7 +113,7 @@ const BattlesPage: React.FC = () => {
 
         {/* 활성화된 배틀룸 목록 */}
         <section
-          className="bg-background p-5 rounded-md shadow-sm border border-card-border h-[30rem] sm:h-[26rem]"
+          className="bg-background p-5 rounded-md  border border-card-border h-[30rem] sm:h-[26rem]"
           aria-label="현재 활성화된 퀴즈 대결 목록"
         >
           <div className="flex justify-between items-center mb-3">
@@ -136,13 +145,13 @@ const BattlesPage: React.FC = () => {
           )}
         </section>
         {/* 🔹 새 배틀룸 생성 모달 */}
-        <CreateBattleRoomModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onSuccess={handleCreateRoomSuccess}
-          aria-label="새로운 퀴즈 대결 생성 모달 창"
-        />
       </div>
+      <CreateBattleRoomModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={handleCreateRoomSuccess}
+        aria-label="새로운 퀴즈 대결 생성 모달 창"
+      />
     </div>
   );
 };
