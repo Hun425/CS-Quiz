@@ -1,0 +1,50 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    "./src/**/*.{js,ts,jsx,tsx}",
+    "./pages/**/*.{js,ts,jsx,tsx}",
+    "./components/**/*.{js,ts,jsx,tsx}",
+    "./styles/**/*.css",
+    "./stories/**/*.{js,ts,jsx,tsx,mdx}",
+    "./.storybook/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  theme: {
+    extend: {
+      backgroundImage: {
+        "background-gradient": "var(--theme-color-background-gradient)",
+      },
+      colors: {
+        default: "var(--theme-color-default)",
+        background: "var(--theme-color-background)",
+        foreground: "var(--theme-color-foreground)",
+        "sub-background": "var(--theme-color-sub-background)",
+        primary: "var(--theme-color-primary)",
+        "primary-hover": "var(--theme-color-primary-hover)",
+        secondary: "var(--theme-color-secondary)",
+        "secondary-hover": "var(--theme-color-secondary-hover)",
+        success: "var(--theme-color-success)",
+        "success-light": "var(--theme-color-success-light)",
+        warning: "var(--theme-color-warning)",
+        "warning-light": "var(--theme-color-warning-light)",
+        danger: "var(--theme-color-danger)",
+        "danger-light": "var(--theme-color-danger-light)",
+        neutral: "var(--theme-color-neutral)",
+        border: "var(--theme-color-border)",
+        footer: "var(--theme-color-footer)",
+        "card-background": "var(--theme-color-card-background)",
+        "card-border": "var(--theme-color-card-border)",
+        "card-hover": "var(--theme-color-card-hover)",
+        tertiary: "var(--theme-color-tertiary)",
+        "default-muted": "var(--theme-color-default-muted)",
+        muted: "var(--theme-color-muted)",
+      },
+      safelist: [
+        "background-gradient",
+        "text-foreground",
+        "bg-background",
+        "border-border",
+      ],
+    },
+  },
+  plugins: [],
+};
