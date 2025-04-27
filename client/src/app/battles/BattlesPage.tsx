@@ -8,14 +8,9 @@ import BattleRoomCard from "./_components/BattleRoomCard";
 import Button from "../_components/Button";
 import { useQueryClient } from "@tanstack/react-query"; // ✅ 추가
 import { useEffect } from "react";
-
 const BattlesPage: React.FC = () => {
   const queryClient = useQueryClient();
-  useEffect(() => {
-    // ✅ 페이지 들어올 때 강제 캐시 무효화
-    queryClient.invalidateQueries({ queryKey: ["activeBattleRooms"] });
-    queryClient.invalidateQueries({ queryKey: ["myActiveBattleRoom"] });
-  }, [queryClient]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const {
     data: activeRoomsData,
@@ -29,52 +24,32 @@ const BattlesPage: React.FC = () => {
     refetch: refetchMyRoom,
   } = useGetMyActiveBattleRoom();
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ["activeBattleRooms"] });
+    queryClient.invalidateQueries({ queryKey: ["myActiveBattleRoom"] });
+  }, [queryClient]);
+
   const handleCreateRoomSuccess = async () => {
     await refetchActiveRooms();
     await refetchMyRoom();
     setIsModalOpen(false);
   };
 
-  // 준비
   const myRoom = myBattleRoomData?.data;
   const activeRooms = activeRoomsData?.data;
-
-  // ⛑ 안전하게 검사 (null, undefined, 빈배열, 잘못된 타입 모두 커버)
-  const hasMyRoom = myRoom && !Array.isArray(myRoom); // 단일 객체만 허용
-
+  const hasMyRoom = myRoom && !Array.isArray(myRoom);
   const hasActiveRooms = Array.isArray(activeRooms) && activeRooms.length > 0;
 
   return (
     <div className="bg-sub-background min-h-screen max-w-screen-lg mx-auto px-3 py-6 sm:px-4 lg:px-6">
       <div className="w-full mx-auto space-y-5">
-        <div className="bg-primary text-white p-5 rounded-md flex flex-col sm:flex-row justify-between items-center">
-          <div className="text-center sm:text-left">
-            <h2 className="text-xl font-bold tracking-tight text-white">
-              실시간 퀴즈 대결
-            </h2>
-            <p className="text-sm mt-1 opacity-90 text-white">
-              실력과 스피드를 겨루는 퀴즈 대결에 도전해보세요!
-            </p>
-          </div>
-          <Button
-            variant="danger"
-            size="medium"
-            className="text-white mt-3 sm:mt-0 hover:scale-105 transition-transform duration-200 shadow-md hover:shadow-lg"
-            onClick={() => setIsModalOpen(true)}
-            aria-label="새로운 퀴즈 대결 생성하기"
-          >
-            새 대결 만들기
-          </Button>
-        </div>
-
-        {/* 대결 방법 안내 */}
+        {/* 🔥 게임 설명 섹션 */}
         <section
-          className="bg-background p-6 rounded-lg  border border-card-border"
+          className="bg-primary text-white p-6 rounded-lg border border-card-border"
           aria-label="퀴즈 대결 방법 안내"
         >
-          <h2 className="text-xl font-bold border-b-2 border-primary pb-2 mb-4">
-            📌 대결 방법
+          <h2 className="text-xl text-white font-bold border-b-2 border-white pb-2 mb-4">
+            📌 퀴즈 배틀
           </h2>
           <ol className="list-decimal list-inside space-y-1">
             <li>
@@ -94,31 +69,44 @@ const BattlesPage: React.FC = () => {
           </ol>
         </section>
 
-        {/* 내 활성 배틀룸 */}
+        {/* 🏆 참여 중인 대결 섹션 */}
         <section
-          className="bg-background p-6 rounded-lg  border border-card-border transition-all"
+          className="bg-background p-6 rounded-lg border border-card-border transition-all"
           aria-label="참여 중인 퀴즈 대결"
         >
           <h2 className="text-xl font-bold border-b-2 border-primary pb-2 mb-2">
-            🏆 참여 중인 대결
+            🏆 참여 중인 배틀
           </h2>
+
           {isMyBattleRoomLoading ? (
             <p>로딩 중...</p>
           ) : hasMyRoom ? (
             <BattleRoomCard room={myRoom} />
           ) : (
-            <p>현재 참여 중인 대결이 없습니다.</p>
+            <div className="flex flex-col items-center gap-4">
+              <p>현재 참여 중인 대결이 없습니다.</p>
+              {/* ✅ 새 대결 만들기 버튼 (참여 중인 대결 없을 때만) */}
+              <Button
+                variant="danger"
+                size="medium"
+                className="hover:scale-105 transition-transform duration-200 shadow-md hover:shadow-lg"
+                onClick={() => setIsModalOpen(true)}
+                aria-label="새로운 퀴즈 대결 생성하기"
+              >
+                새 대결 만들기
+              </Button>
+            </div>
           )}
         </section>
 
-        {/* 활성화된 배틀룸 목록 */}
+        {/* 🎯 활성화된 대결 목록 */}
         <section
-          className="bg-background p-5 rounded-md  border border-card-border h-[30rem] sm:h-[26rem]"
+          className="bg-background p-5 rounded-md border border-card-border h-[30rem] sm:h-[26rem]"
           aria-label="현재 활성화된 퀴즈 대결 목록"
         >
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-lg font-bold border-b-2 border-primary pb-2">
-              🎯 활성화된 대결
+              🎯 배틀 목록
             </h2>
             <Button
               variant="outline"
@@ -144,14 +132,15 @@ const BattlesPage: React.FC = () => {
             <p>현재 활성화된 대결이 없습니다.</p>
           )}
         </section>
+
         {/* 🔹 새 배틀룸 생성 모달 */}
+        <CreateBattleRoomModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSuccess={handleCreateRoomSuccess}
+          aria-label="새로운 퀴즈 대결 생성 모달 창"
+        />
       </div>
-      <CreateBattleRoomModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={handleCreateRoomSuccess}
-        aria-label="새로운 퀴즈 대결 생성 모달 창"
-      />
     </div>
   );
 };
