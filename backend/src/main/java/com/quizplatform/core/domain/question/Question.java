@@ -299,14 +299,14 @@ public class Question {
         }
 
         log.info("정답 비교: 문제ID={}, 문제=[{}], 사용자 답변=[{}], 정답=[{}], 문제유형={}",
-                this.id, 
+                this.id,
                 this.questionText.substring(0, Math.min(30, this.questionText.length())) + "...",
-                answer, 
-                correctAnswer, 
+                answer,
+                correctAnswer,
                 questionType);
 
         boolean result = false;
-        
+
         switch (questionType) {
             case MULTIPLE_CHOICE:
                 // 1. 직접 키 비교 (a, b, c, d 등) - 대소문자 무시
@@ -314,12 +314,12 @@ public class Question {
                     log.info("객관식 정답 일치 (키 비교): 문제ID={}", this.id);
                     return true;
                 }
-                
+
                 // 2. 선택지 내용으로 비교 (선택지 내용이 전달된 경우)
                 try {
                     List<OptionDto> options = getOptionDtoList();
                     log.info("객관식 선택지 목록: 문제ID={}, 선택지개수={}", this.id, options.size());
-                    
+
                     // 정답 키(correctAnswer)에 해당하는 선택지 값 찾기
                     String correctOptionValue = null;
                     for (OptionDto option : options) {
@@ -330,53 +330,53 @@ public class Question {
                             break;
                         }
                     }
-                    
+
                     // 사용자가 보낸 답변이 정답 선택지의 내용과 일치하는지 확인
                     if (correctOptionValue != null && correctOptionValue.equals(answer.trim())) {
-                        log.info("객관식 정답 일치 (내용 비교): 문제ID={}, 사용자=[{}], 정답값=[{}]", 
+                        log.info("객관식 정답 일치 (내용 비교): 문제ID={}, 사용자=[{}], 정답값=[{}]",
                                 this.id, answer.trim(), correctOptionValue);
                         return true;
                     }
-                    
+
                     // 정확히 일치하지 않는 경우, 포함 관계 확인 (부분 일치도 허용)
-                    if (correctOptionValue != null && 
+                    if (correctOptionValue != null &&
                         (correctOptionValue.contains(answer.trim()) || answer.trim().contains(correctOptionValue))) {
-                        log.info("객관식 정답 부분 일치: 문제ID={}, 사용자=[{}], 정답값=[{}]", 
+                        log.info("객관식 정답 부분 일치: 문제ID={}, 사용자=[{}], 정답값=[{}]",
                                 this.id, answer.trim(), correctOptionValue);
                         return true;
                     }
-                    
-                    log.info("객관식 정답 불일치: 정답키=[{}], 정답값=[{}], 사용자답변=[{}]", 
+
+                    log.info("객관식 정답 불일치: 정답키=[{}], 정답값=[{}], 사용자답변=[{}]",
                             correctAnswer, correctOptionValue, answer.trim());
-                    
+
                 } catch (Exception e) {
                     log.error("선택지 비교 중 오류: {}", e.getMessage());
                 }
                 return false;
-                
+
             case TRUE_FALSE:
                 result = correctAnswer.equalsIgnoreCase(answer.trim());
                 break;
-                
+
             case SHORT_ANSWER:
                 // 주관식의 경우 공백과 대소문자를 무시하고 비교
                 result = correctAnswer.trim().equalsIgnoreCase(answer.trim());
                 break;
-                
+
             case CODE_ANALYSIS:
                 // 코드 분석 문제는 정확한 일치 필요
                 result = correctAnswer.equals(answer);
                 break;
-                
+
             case DIAGRAM_BASED:
                 // 다이어그램 기반 문제도 정확한 일치 필요
                 result = correctAnswer.equals(answer);
                 break;
-                
+
             default:
                 result = false;
         }
-        
+
         log.info("정답 비교 최종 결과: 문제ID={}, 정답여부={}", this.id, result);
         return result;
     }
