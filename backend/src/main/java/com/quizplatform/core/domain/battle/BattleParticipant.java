@@ -308,16 +308,37 @@ public class BattleParticipant {
      */
     private void processAnswerResult(BattleAnswer battleAnswer) {
         Question question = battleAnswer.getQuestion();
+        
+        log.info("답변 처리 시작: userId={}, 문제ID={}, 제출답변=[{}]",
+                this.user.getId(), question.getId(), battleAnswer.getAnswer());
+        
         boolean isCorrect = question.isCorrectAnswer(battleAnswer.getAnswer());
         battleAnswer.setCorrect(isCorrect);
+        
+        log.info("답변 정답 여부 결정: userId={}, 문제ID={}, 제출답변=[{}], 정답=[{}], 결과={}",
+                this.user.getId(), question.getId(), battleAnswer.getAnswer(), 
+                question.getCorrectAnswer(), isCorrect);
 
         if (isCorrect) {
+            int oldScore = this.currentScore;
             processCorrectAnswer(battleAnswer, question);
+            
+            log.info("정답 처리 완료: userId={}, 문제ID={}, 배점={}, 획득점수={}, 기존점수={}, 새총점={}",
+                    this.user.getId(), question.getId(), question.getPoints(), 
+                    battleAnswer.getEarnedPoints() + battleAnswer.getTimeBonus(), 
+                    oldScore, this.currentScore);
         } else {
             processIncorrectAnswer(battleAnswer);
+            
+            log.info("오답 처리 완료: userId={}, 문제ID={}, 획득점수=0, 현재총점={}",
+                    this.user.getId(), question.getId(), this.currentScore);
         }
 
         answers.add(battleAnswer);
+        
+        log.info("답변 처리 최종결과: userId={}, 문제ID={}, 정답여부={}, 현재점수={}, 정답수={}/{}, 연속정답={}",
+                this.user.getId(), question.getId(), isCorrect, this.currentScore,
+                getCorrectAnswersCount(), answers.size(), this.currentStreak);
     }
 
     /**
@@ -515,5 +536,25 @@ public class BattleParticipant {
 
     public void setCurrentStreak(int i) {
         this.currentStreak = i;
+    }
+    
+    /**
+     * 점수 초기화 - 새 배틀 시작 시 호출
+     */
+    public void resetScore() {
+        int oldScore = this.currentScore;
+        this.currentScore = 0; // 명시적으로 0으로 설정
+        log.info("참가자 점수 초기화: userId={}, 이전점수={}, 현재점수={}",
+                user.getId(), oldScore, this.currentScore);
+    }
+    
+    /**
+     * 연속 정답 초기화 - 새 배틀 시작 시 호출
+     */
+    public void resetStreak() {
+        int oldStreak = this.currentStreak;
+        this.currentStreak = 0; // 명시적으로 0으로 설정
+        log.info("참가자 연속 정답 초기화: userId={}, 이전연속정답={}, 현재연속정답={}",
+                user.getId(), oldStreak, this.currentStreak);
     }
 }

@@ -11,6 +11,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -34,6 +35,7 @@ import java.util.List;
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Slf4j
 public class Question {
     // 기본 시간 제한 상수들
     public static final int DEFAULT_TIME_LIMIT_SECONDS = 60;
@@ -292,26 +294,91 @@ public class Question {
      */
     public boolean isCorrectAnswer(String answer) {
         if (answer == null) {
+            log.info("정답 비교: 문제ID={}, 답변이 null입니다", this.id);
             return false;
         }
 
+        log.info("정답 비교: 문제ID={}, 문제=[{}], 사용자 답변=[{}], 정답=[{}], 문제유형={}",
+                this.id, 
+                this.questionText.substring(0, Math.min(30, this.questionText.length())) + "...",
+                answer, 
+                correctAnswer, 
+                questionType);
+
+        boolean result = false;
+        
         switch (questionType) {
             case MULTIPLE_CHOICE:
-                return correctAnswer.equals(answer.trim());
+                // 1. 직접 키 비교 (a, b, c, d 등) - 대소문자 무시
+                if (correctAnswer.trim().equalsIgnoreCase(answer.trim())) {
+                    log.info("객관식 정답 일치 (키 비교): 문제ID={}", this.id);
+                    return true;
+                }
+                
+                // 2. 선택지 내용으로 비교 (선택지 내용이 전달된 경우)
+                try {
+                    List<OptionDto> options = getOptionDtoList();
+                    log.info("객관식 선택지 목록: 문제ID={}, 선택지개수={}", this.id, options.size());
+                    
+                    // 정답 키(correctAnswer)에 해당하는 선택지 값 찾기
+                    String correctOptionValue = null;
+                    for (OptionDto option : options) {
+                        log.info("선택지 확인: 키=[{}], 값=[{}]", option.getKey(), option.getValue());
+                        if (option.getKey().equalsIgnoreCase(correctAnswer.trim())) {
+                            correctOptionValue = option.getValue();
+                            log.info("정답 선택지 찾음: 키=[{}], 값=[{}]", option.getKey(), correctOptionValue);
+                            break;
+                        }
+                    }
+                    
+                    // 사용자가 보낸 답변이 정답 선택지의 내용과 일치하는지 확인
+                    if (correctOptionValue != null && correctOptionValue.equals(answer.trim())) {
+                        log.info("객관식 정답 일치 (내용 비교): 문제ID={}, 사용자=[{}], 정답값=[{}]", 
+                                this.id, answer.trim(), correctOptionValue);
+                        return true;
+                    }
+                    
+                    // 정확히 일치하지 않는 경우, 포함 관계 확인 (부분 일치도 허용)
+                    if (correctOptionValue != null && 
+                        (correctOptionValue.contains(answer.trim()) || answer.trim().contains(correctOptionValue))) {
+                        log.info("객관식 정답 부분 일치: 문제ID={}, 사용자=[{}], 정답값=[{}]", 
+                                this.id, answer.trim(), correctOptionValue);
+                        return true;
+                    }
+                    
+                    log.info("객관식 정답 불일치: 정답키=[{}], 정답값=[{}], 사용자답변=[{}]", 
+                            correctAnswer, correctOptionValue, answer.trim());
+                    
+                } catch (Exception e) {
+                    log.error("선택지 비교 중 오류: {}", e.getMessage());
+                }
+                return false;
+                
             case TRUE_FALSE:
-                return correctAnswer.equalsIgnoreCase(answer.trim());
+                result = correctAnswer.equalsIgnoreCase(answer.trim());
+                break;
+                
             case SHORT_ANSWER:
                 // 주관식의 경우 공백과 대소문자를 무시하고 비교
-                return correctAnswer.trim().equalsIgnoreCase(answer.trim());
+                result = correctAnswer.trim().equalsIgnoreCase(answer.trim());
+                break;
+                
             case CODE_ANALYSIS:
                 // 코드 분석 문제는 정확한 일치 필요
-                return correctAnswer.equals(answer);
+                result = correctAnswer.equals(answer);
+                break;
+                
             case DIAGRAM_BASED:
                 // 다이어그램 기반 문제도 정확한 일치 필요
-                return correctAnswer.equals(answer);
+                result = correctAnswer.equals(answer);
+                break;
+                
             default:
-                return false;
+                result = false;
         }
+        
+        log.info("정답 비교 최종 결과: 문제ID={}, 정답여부={}", this.id, result);
+        return result;
     }
 
     /**

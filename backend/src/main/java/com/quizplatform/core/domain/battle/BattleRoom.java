@@ -231,6 +231,18 @@ public class BattleRoom {
         if (!isReadyToStart()) {
             throw new BusinessException(ErrorCode.NOT_READY_TO_START);
         }
+        
+        // 명시적으로 모든 참가자의 점수와 상태를 초기화
+        for (BattleParticipant participant : this.participants) {
+            if (participant.isActive()) {
+                int oldScore = participant.getCurrentScore();
+                participant.resetScore();
+                participant.resetStreak();
+                log.info("배틀 시작 시 참가자 점수 초기화: roomId={}, userId={}, 이전점수={}, 현재점수={}",
+                        this.getId(), participant.getUser().getId(), oldScore, participant.getCurrentScore());
+            }
+        }
+        
         this.currentQuestionIndex = -1; // 인덱스 초기화
         this.status = BattleRoomStatus.IN_PROGRESS;
         this.startTime = LocalDateTime.now();

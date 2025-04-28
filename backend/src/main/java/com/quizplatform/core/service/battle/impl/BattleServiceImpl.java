@@ -273,8 +273,9 @@ public class BattleServiceImpl implements BattleService {
         BattleRoom battleRoom = battleRoomRepository.findByIdWithQuizQuestions(participant.getBattleRoom().getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
-        log.info("답변 처리: roomId={}, questionId={}, userId={}, 현재문제인덱스={}",
+        log.info("답변 처리 시작: roomId={}, questionId={}, userId={}, answer=[{}], 현재문제인덱스={}",
                 request.getRoomId(), request.getQuestionId(), participant.getUser().getId(),
+                request.getAnswer(),
                 battleRoom.getCurrentQuestionIndex());
 
         // 요청으로 전달된 방 ID와 참가자의 방 ID가 일치하는지 확인
@@ -305,9 +306,10 @@ public class BattleServiceImpl implements BattleService {
             throw new BusinessException(ErrorCode.INVALID_QUESTION, "요청한 문제를 찾을 수 없습니다.");
         }
 
-        log.info("답변 처리 상세: roomId={}, 문제번호={}/{}, 인덱스={}, 현재인덱스={}, userId={}",
+        log.info("답변 처리 상세: roomId={}, 문제번호={}/{}, 인덱스={}, 현재인덱스={}, userId={}, 정답=[{}]",
                 request.getRoomId(), questionIndex + 1, battleRoom.getQuestions().size(),
-                questionIndex, battleRoom.getCurrentQuestionIndex(), participant.getUser().getId());
+                questionIndex, battleRoom.getCurrentQuestionIndex(), participant.getUser().getId(),
+                targetQuestion.getCorrectAnswer());
 
         // 현재 진행중인 문제와 요청한 문제 ID가 일치하는지 확인
         boolean isCurrentQuestion = false;
@@ -342,13 +344,29 @@ public class BattleServiceImpl implements BattleService {
 
         // 시간 검증 (최대 시간 제한 적용)
         int timeSpentSeconds = Math.min(request.getTimeSpentSeconds(), targetQuestion.getTimeLimitSeconds());
+        
+        // 답변 처리 직전 점수 상태 로깅
+        log.info("답변 처리 직전 점수 상태: roomId={}, userId={}, 현재점수={}, 연속정답={}",
+                request.getRoomId(), participant.getUser().getId(), 
+                participant.getCurrentScore(), participant.getCurrentStreak());
+        
+        log.info("답변 제출 직전: userId={}, 문제ID={}, 제출답변=[{}], 정답=[{}], 소요시간={}초",
+                participant.getUser().getId(), targetQuestion.getId(), 
+                request.getAnswer(), targetQuestion.getCorrectAnswer(), timeSpentSeconds);
 
         // 답변 제출 및 점수 계산
+        int oldScore = participant.getCurrentScore();
         BattleAnswer answer = participant.submitAnswer(
                 targetQuestion,
                 request.getAnswer(),
                 timeSpentSeconds
         );
+        
+        // 점수 변화 로깅
+        log.info("점수 계산 결과: userId={}, 문제ID={}, 정답여부={}, 기존점수={}, 획득점수={}, 새총점={}, 연속정답={}",
+                participant.getUser().getId(), targetQuestion.getId(), answer.isCorrect(),
+                oldScore, answer.getEarnedPoints() + answer.getTimeBonus(),
+                participant.getCurrentScore(), participant.getCurrentStreak());
 
         // 결과 저장
         participant = participantRepository.save(participant);
@@ -357,7 +375,7 @@ public class BattleServiceImpl implements BattleService {
         saveParticipantToRedis(participant, sessionId);
 
         // 응답 생성
-        return BattleAnswerResponse.builder()
+        BattleAnswerResponse response = BattleAnswerResponse.builder()
                 .questionId(answer.getQuestion().getId())
                 .isCorrect(answer.isCorrect())
                 .earnedPoints(answer.getEarnedPoints())
@@ -366,6 +384,12 @@ public class BattleServiceImpl implements BattleService {
                 .correctAnswer(answer.getQuestion().getCorrectAnswer())
                 .explanation(answer.getQuestion().getExplanation())
                 .build();
+        
+        log.info("답변 처리 완료: roomId={}, userId={}, questionId={}, 정답여부={}, 현재총점={}",
+                request.getRoomId(), participant.getUser().getId(), request.getQuestionId(),
+                answer.isCorrect(), participant.getCurrentScore());
+                
+        return response;
     }
 
     @Override
@@ -392,10 +416,30 @@ public class BattleServiceImpl implements BattleService {
         if (room.getStatus() != BattleRoomStatus.WAITING && room.getStatus() != BattleRoomStatus.READY) {
             throw new BusinessException(ErrorCode.BATTLE_ALREADY_STARTED, "이미 시작된 배틀입니다.");
         }
+        
+        // 모든 참가자의 점수와 답변 초기화 (중요: 새 배틀 시작 시 이전 데이터 리셋)
+        log.info("배틀 시작 - 참가자 점수 초기화 시작: roomId={}", roomId);
+        for (BattleParticipant participant : room.getParticipants()) {
+            // 활성 상태인 참가자만 초기화
+            if (participant.isActive()) {
+                // 점수 초기화 (이전 배틀의 점수가 누적되는 문제 방지)
+                int oldScore = participant.getCurrentScore();
+                participant.resetScore();
+                participant.resetStreak();
+                
+                // 답변 상태는 유지 (이력 보존)
+                participantRepository.save(participant);
+                log.info("참가자 점수 초기화 완료: roomId={}, userId={}, 이전점수={}, 현재점수={}",
+                    roomId, participant.getUser().getId(), oldScore, participant.getCurrentScore());
+            }
+        }
 
         // 대결 시작 상태로 변경
         room.startBattle();
         battleRoomRepository.save(room);
+
+        log.info("배틀 시작 처리 완료: roomId={}, 문제수={}, 참가자수={}",
+                roomId, room.getQuestions().size(), room.getParticipants().size());
 
         return createBattleStartResponse(room);
     }
