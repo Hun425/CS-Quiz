@@ -55,7 +55,6 @@ const QuizResultPage: React.FC = () => {
     score,
     totalPossibleScore,
     timeTaken,
-    experienceGained,
     newTotalExperience, // ✅ 총 경험치
     questions,
   } = quizResult;
@@ -78,7 +77,7 @@ const QuizResultPage: React.FC = () => {
           ⏳ 시간: <b>{timeTaken}</b>초
         </span>
         <span>
-          🎖️ 경험치: <b>{experienceGained}</b> (총 {newTotalExperience})
+          🎖️ 경험치: <b> {newTotalExperience} </b>
         </span>
       </div>
 

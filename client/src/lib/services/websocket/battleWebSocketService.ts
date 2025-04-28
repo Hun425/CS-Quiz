@@ -251,13 +251,22 @@ class BattleWebSocketService {
     console.log("📨 시간초과 이벤트 전송");
   }
 
-  /** ✅ 강제 다음 문제 진행 */
+  /** ✅ 강제 다음 문제 진행 //방장 아이디 전송 */
   forceNextQuestion() {
     if (!this.client || !this.connected || !this.roomId) return;
 
+    const userId = useProfileStore.getState().userProfile?.id;
+
+    if (!userId) {
+      console.error("❌ 요청 실패");
+      return;
+    }
     this.client.publish({
-      destination: "/app/battle/forced-next",
-      body: JSON.stringify({ roomId: this.roomId }),
+      destination: "/app/battle/force-next",
+      body: JSON.stringify({
+        roomId: this.roomId,
+        requesterId: userId,
+      }),
     });
 
     console.log("📨 강제 다음 문제 이벤트 전송");

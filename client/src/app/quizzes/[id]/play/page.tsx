@@ -7,17 +7,14 @@ import { useQuizStore } from "@/store/quizStore";
 import Timer from "./_components/Timer";
 import Button from "@/app/_components/Button";
 import useLoadQuizPlayData from "@/lib/hooks/useLoadQuizPlayData";
-import useBeforeRouteLeave from "@/lib/hooks/useBerforeRouteLeave";
 
 export default function QuizPlayPage() {
   const { id } = useParams();
   const quizId = Number(id);
   const router = useRouter();
   const submitQuizMutation = useSubmitQuiz();
-  // 라우팅 이동 전 제거
-  const [shouldBlock, setShouldBlock] = useState(true); // 퀴즈 제출 후에는 false로 변경
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 퀴즈 상태 관리
   const {
     attemptId,
     currentQuestionIndex,
@@ -30,43 +27,47 @@ export default function QuizPlayPage() {
     getElapsedTime,
   } = useQuizStore();
 
-  // ✅ 퀴즈 상태 초기화
   const { quizPlayData, error, isLoading } = useLoadQuizPlayData(quizId);
 
-  // ✅ 뒤로가기 버튼 처리
+  // ✅ 뒤로가기 감지 + confirm
   useEffect(() => {
     const handlePopState = () => {
-      const confirmLeave = window.confirm(
-        "퀴즈가 초기화됩니다. 나가시겠습니까?"
-      );
-      if (confirmLeave) {
-        resetQuiz();
-        router.replace("/quizzes");
-      } else {
-        // 뒤로가기를 취소: push로 다시 현재 위치 고정
-        router.push(`/quizzes/${quizId}/play`);
+      const currentPath = window.location.pathname;
+      // ❗ "/quizzes/[id]/play"를 벗어나려 할 때만
+      if (!currentPath.includes(`/quizzes/${id}/play`)) {
+        const confirmLeave = window.confirm(
+          "퀴즈가 초기화됩니다. 나가시겠습니까?"
+        );
+        if (confirmLeave) {
+          resetQuiz(true); // 나가기 허용
+        } else {
+          setTimeout(() => {
+            window.history.forward(); // 취소했으면 앞으로 다시 밀기
+          }, 0);
+        }
       }
     };
 
     window.addEventListener("popstate", handlePopState);
+
     return () => {
       window.removeEventListener("popstate", handlePopState);
+      resetQuiz(true); // 컴포넌트 언마운트 시 세션 정리
     };
-  }, [resetQuiz, router, quizId, shouldBlock]);
+  }, [id, resetQuiz]);
 
+  // ✅ 새로고침 방지용 beforeunload
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       e.returnValue = "";
     };
-
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, []);
 
-  // ✅ 퀴즈 제출
   const handleSubmitQuiz = async () => {
     if (!quizPlayData) return;
 
@@ -82,8 +83,9 @@ export default function QuizPlayPage() {
     }
 
     try {
-      const elapsedTime = getElapsedTime();
+      setIsSubmitting(true);
 
+      const elapsedTime = getElapsedTime();
       await submitQuizMutation.mutateAsync({
         quizId,
         submitData: {
@@ -93,32 +95,34 @@ export default function QuizPlayPage() {
         },
       });
 
-      setShouldBlock(false);
-      // 퀴즈 결과 페이지로 이동
-      alert("문제가 제출되었습니다.");
       router.push(`/quizzes/${quizId}/results?attemptId=${attemptId}`);
     } catch {
       alert("퀴즈 제출 중 오류가 발생했습니다.");
       router.push(`/quizzes/${quizId}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  useBeforeRouteLeave(shouldBlock, () => {
-    resetQuiz(true); // 세션까지 제거
-  });
-
-  // ✅ 로딩 / 에러 상태 처리
   if (error) {
     return (
-      <div className="text-red-500 text-center py-12 min-h-screen">
+      <div className="flex items-center justify-center text-red-500 py-12 min-h-screen">
         ❌ 퀴즈 로딩 실패
+      </div>
+    );
+  }
+
+  if (isSubmitting) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-lg">
+        ✍️ 퀴즈를 제출하는 중입니다...
       </div>
     );
   }
 
   if (isLoading || !quizPlayData) {
     return (
-      <div className="text-center py-12 min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-screen text-lg">
         🔄 퀴즈 데이터를 불러오는 중...
       </div>
     );
@@ -127,10 +131,8 @@ export default function QuizPlayPage() {
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-sub-background">
       {/* 사이드바 */}
-      <aside className="hidden lg:flex flex-col w-64 bg-background shadow-lg rounded-xl p-4 border-r border-border space-y-4">
-        <h3 className="text-lg font-semibold text-primary mb-3">
-          📌 진행 상황
-        </h3>
+      <aside className="hidden lg:flex flex-col w-64 bg-background rounded-xl p-4 border-r border-border space-y-4">
+        <h3 className="text-lg font-bold text-primary mb-4">📌 진행 상황</h3>
         <div className="space-y-2">
           {quizPlayData.questions.map((_, index) => {
             const isSelected = index === currentQuestionIndex;
@@ -139,13 +141,15 @@ export default function QuizPlayPage() {
             return (
               <button
                 key={index}
-                className={`w-full px-4 py-2 text-sm rounded-lg text-left transition-all ${
-                  isSelected
-                    ? "bg-primary text-white shadow-md"
-                    : isAnswered
-                    ? "bg-green-500 text-white"
-                    : "bg-sub-background hover:bg-gray-400"
-                }`}
+                className={`w-full px-4 py-2 text-sm rounded-md text-left transition-colors
+                  ${
+                    isSelected
+                      ? "bg-primary text-white"
+                      : isAnswered
+                      ? "bg-green-500 text-white"
+                      : "bg-sub-background hover:bg-muted"
+                  }
+                `}
                 onClick={() => setCurrentQuestionIndex(index)}
               >
                 문제 {index + 1}
@@ -156,7 +160,7 @@ export default function QuizPlayPage() {
         <Button
           variant="primary"
           onClick={handleSubmitQuiz}
-          className="text-white shadow-md hover:shadow-lg transition-all"
+          className="text-white mt-6"
         >
           ✅ 제출하기
         </Button>
@@ -165,44 +169,52 @@ export default function QuizPlayPage() {
       {/* 본문 */}
       <section className="flex-1 min-w-xl max-w-2xl w-full mx-auto p-6 bg-background rounded-lg">
         <div className="flex flex-col gap-6">
-          <div className="flex justify-between items-center bg-sub-background p-4 rounded-lg">
-            <h2 className="text-2xl font-semibold text-primary">
+          {/* 문제 */}
+          <div className="flex justify-between items-center bg-sub-background px-4 py-2 rounded-lg">
+            <h3 className="text-md font-bold text-primary">
               문제 {currentQuestionIndex + 1} / {quizPlayData.questions.length}
-            </h2>
+            </h3>
             <Timer onTimeUp={handleSubmitQuiz} />
           </div>
 
-          <p className="text-lg text-foreground">
+          <div className="text-lg sm:text-xl font-semibold text-foreground leading-relaxed">
             {quizPlayData.questions[currentQuestionIndex].questionText}
-          </p>
+          </div>
 
-          <div className="space-y-4">
+          {/* 보기 */}
+          <div className="space-y-3">
             {quizPlayData.questions[currentQuestionIndex].options.map(
-              (option) => (
-                <button
-                  key={option.key}
-                  className={`block w-full text-left px-4 py-3 text-lg rounded-lg border border-border transition-all shadow-sm ${
-                    answers[quizPlayData.questions[currentQuestionIndex].id] ===
-                    option.key
-                      ? "bg-primary text-white border-primary shadow-md"
-                      : "bg-sub-background hover:bg-gray-400"
-                  }`}
-                  onClick={() =>
-                    setAnswer(
-                      quizPlayData.questions[currentQuestionIndex].id,
-                      option.key
-                    )
-                  }
-                >
-                  {option.key}. {option.value}
-                </button>
-              )
+              (option) => {
+                const selected =
+                  answers[quizPlayData.questions[currentQuestionIndex].id] ===
+                  option.key;
+                return (
+                  <button
+                    key={option.key}
+                    className={`w-full text-left px-4 py-3 rounded-md border text-base sm:text-lg transition-colors
+                    ${
+                      selected
+                        ? "bg-primary text-white border-primary"
+                        : "bg-background hover:bg-muted"
+                    }
+                  `}
+                    onClick={() =>
+                      setAnswer(
+                        quizPlayData.questions[currentQuestionIndex].id,
+                        option.key
+                      )
+                    }
+                  >
+                    {option.key}. {option.value}
+                  </button>
+                );
+              }
             )}
           </div>
         </div>
 
         {/* 모바일용 문제 네비 */}
-        <div className="lg:hidden flex justify-center gap-2 my-4">
+        <div className="lg:hidden flex justify-center gap-4 my-6">
           {quizPlayData.questions.map((_, index) => {
             const isSelected = index === currentQuestionIndex;
             const isAnswered = !!answers[quizPlayData.questions[index].id];
@@ -210,13 +222,15 @@ export default function QuizPlayPage() {
             return (
               <button
                 key={index}
-                className={`w-3 h-3 rounded-full transition-all ${
-                  isSelected
-                    ? "bg-primary scale-125"
-                    : isAnswered
-                    ? "bg-green-500"
-                    : "bg-gray-400"
-                }`}
+                className={`w-4 h-4 rounded-full transition-colors
+                  ${
+                    isSelected
+                      ? "bg-primary scale-125"
+                      : isAnswered
+                      ? "bg-green-500"
+                      : "bg-gray-300"
+                  }
+                `}
                 onClick={() => setCurrentQuestionIndex(index)}
               />
             );
@@ -224,11 +238,11 @@ export default function QuizPlayPage() {
         </div>
 
         {/* 이전/다음 버튼 */}
-        <div className="flex justify-between gap-4 mt-6">
+        <div className="flex justify-between gap-4 mt-8">
           <Button
             disabled={currentQuestionIndex === 0}
             variant="secondary"
-            className="shadow-md hover:shadow-lg transition-all w-full md:w-auto"
+            className="w-full md:w-auto"
             onClick={() => setCurrentQuestionIndex((prev) => prev - 1)}
           >
             ⬅ 이전 문제
@@ -237,7 +251,7 @@ export default function QuizPlayPage() {
           {currentQuestionIndex === quizPlayData.questions.length - 1 ? (
             <Button
               variant="primary"
-              className="text-white shadow-md hover:shadow-lg transition-all w-full md:w-auto"
+              className="text-white w-full md:w-auto"
               onClick={handleSubmitQuiz}
             >
               ✅ 제출하기
@@ -245,7 +259,7 @@ export default function QuizPlayPage() {
           ) : (
             <Button
               variant="primary"
-              className="text-white shadow-md hover:shadow-lg transition-all w-full md:w-auto"
+              className="text-white w-full md:w-auto"
               onClick={() => setCurrentQuestionIndex((prev) => prev + 1)}
             >
               다음 문제 ➡

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useBattleSocketStore } from "@/store/battleStore";
+import battleSocketClient from "@/lib/services/websocket/battleWebSocketService";
 import SubmitAnswerButton from "@/app/battles/_components/SubmitAnswerButton";
 
 const BattleQuestion = () => {
@@ -63,7 +64,16 @@ const BattleQuestion = () => {
     const timer = setInterval(() => {
       const remaining = getRemainingTime();
       setTimeLeft(remaining);
-      if (remaining <= 0) clearInterval(timer);
+
+      if (remaining <= 0) {
+        clearInterval(timer);
+
+        if (roomId && currentQuestion) {
+          // ✅ 타임아웃 → force next 호출
+          battleSocketClient.forceNextQuestion();
+          console.log("✅ 시간 초과로 강제 다음 문제 요청 보냄");
+        }
+      }
     }, 1000);
 
     return () => clearInterval(timer);
@@ -104,13 +114,13 @@ const BattleQuestion = () => {
             key={idx}
             onClick={() => setSelectedOption(option)}
             className={`px-3 py-2 sm:px-4 sm:py-3 rounded-lg border text-center cursor-pointer transition text-foreground break-keep
-        ${
-          selectedOption === option
-            ? "bg-primary text-white border-primary"
-            : "hover:bg-card-hover"
-        }`}
+            ${
+              selectedOption === option
+                ? "bg-primary text-white border-primary"
+                : "hover:bg-card-hover"
+            }`}
           >
-            <span className="inline-block w-full text-sm sm:text-base truncate">
+            <span className="inline-block w-full text-sm sm:text-base break-words">
               {option}
             </span>
           </li>
