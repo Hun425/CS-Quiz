@@ -297,7 +297,7 @@ public class Question {
 
         switch (questionType) {
             case MULTIPLE_CHOICE:
-                return correctAnswer.equals(answer.trim());
+                return correctAnswer.trim().equalsIgnoreCase(answer.trim());
             case TRUE_FALSE:
                 return correctAnswer.equalsIgnoreCase(answer.trim());
             case SHORT_ANSWER:
