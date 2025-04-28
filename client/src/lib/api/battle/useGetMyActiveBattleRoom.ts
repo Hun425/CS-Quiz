@@ -18,5 +18,6 @@ export const useGetMyActiveBattleRoom = () => {
       return response.data;
     },
     refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 };

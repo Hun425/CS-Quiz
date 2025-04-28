@@ -7,6 +7,7 @@ const CramMainPage = () => {
   return (
     <div className="bg-background-gradient min-h-screen max-w-screen-full px-4 md:px-8 lg:px-20 py-8 text-white transition-colors duration-300">
       <AuthSection />
+
       <section className="max-w-screen-xl mx-auto my-16">
         <h1 className="text-3xl foreground font-bold text-center mb-8">
           <div className="text-foreground">

@@ -73,23 +73,35 @@ const BattleRoomCard = ({ room }: { room: BattleRoomResponse }) => {
     >
       {/* 정보 */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 flex-1">
-        <h3 className="text-sm sm:text-base font-semibold text-primary truncate">
-          {room.quizTitle}
-        </h3>
+        {/* 룸코드 + 퀴즈 제목 */}
+        <div className="flex items-center gap-2 overflow-hidden">
+          {/* 룸코드 박스 */}
+          <span className="text-xs sm:text-sm font-semibold bg-sub-background px-2 py-1 rounded text-primary flex-shrink-0">
+            {room.roomCode}
+          </span>
 
-        {/* 모바일에서는 감춤 */}
+          {/* 퀴즈 제목 */}
+          <h3 className="text-sm sm:text-base font-semibold text-foreground truncate">
+            {room.quizTitle}
+          </h3>
+        </div>
+
+        {/* 문제 수 */}
         <span className="text-xs text-neutral sm:inline hidden">
           🧩 {room.questionCount}문제
         </span>
 
+        {/* 제한시간 */}
         <span className="text-xs text-neutral sm:inline hidden">
           ⏱ {room.timeLimit}초
         </span>
 
+        {/* 대결 상태 */}
         <span className={`text-xs font-medium ${statusColor[room.status]}`}>
           ⚡ {getStatusText()}
         </span>
 
+        {/* 참가자 수 */}
         <span className="text-xs text-neutral">
           👥 {room.currentParticipants}/{room.maxParticipants}
         </span>
