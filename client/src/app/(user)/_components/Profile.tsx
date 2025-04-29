@@ -1,26 +1,39 @@
 "use client";
 
+import { useEffect } from "react";
 import Image from "next/image";
 import { format } from "date-fns";
 import { useGetMyProfile } from "@/lib/api/user/useGetMyProfile";
 import Button from "@/app/_components/Button";
 import { useParams } from "next/navigation";
+import { useProfileStore } from "@/store/profileStore"; // ✅ 추가
 
 export default function Profile() {
   const params = useParams();
   const userId = params?.userId ? Number(params.userId) : undefined;
+
   const {
-    data: userProfile,
+    data: fetchedProfile,
     isLoading,
     error,
     refetch,
   } = useGetMyProfile(userId);
 
-  if (isLoading) {
+  const { userProfile, setUserProfile } = useProfileStore();
+
+  // 프로필을 처음 불러왔을 때 store에 저장
+  useEffect(() => {
+    if (fetchedProfile) {
+      setUserProfile(fetchedProfile);
+    }
+  }, [fetchedProfile, setUserProfile]);
+
+  // ✅ 스토어에 데이터가 없는 경우만 로딩/에러 처리
+  if (isLoading && !userProfile) {
     return <p className="text-center">프로필 정보를 불러오는 중...</p>;
   }
 
-  if (error) {
+  if (error && !userProfile) {
     return (
       <div className="text-center text-red-500">
         오류 발생: 프로필 정보를 불러오지 못했습니다.
@@ -43,7 +56,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="max-w-full min-w-200 rounded-md mx-auto text-foreground p-4 border border-border rounded bg-background shadow-sm">
+    <div className="max-w-full min-w-200 rounded-md mx-auto text-foreground p-4 border border-border bg-background shadow-sm">
       {/* ✅ 프로필 정보 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -66,7 +79,7 @@ export default function Profile() {
                 : "정보 없음"}
             </p>
             <p className="text-xs text-foreground">
-              마지막 로그인:
+              마지막 로그인:{" "}
               {userProfile.lastLogin
                 ? format(new Date(userProfile.lastLogin), "yyyy-MM-dd HH:mm")
                 : "정보 없음"}

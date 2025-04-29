@@ -1,44 +1,46 @@
-import { useRouter } from "next/navigation";
+"use client";
+
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 /**
- * router.push를 가로채서 라우팅 전 confirm 창을 띄우는 훅
+ * @param shouldBlock true이면 confirm 띄우고, false이면 confirm 없이 이동
+ * @param onLeave 이동 시 해야 할 행동 (ex: resetQuiz)
  */
 export default function useBeforeRouteLeave(
   shouldBlock: boolean,
   onLeave: () => void
-): void {
+) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!shouldBlock) return;
-
-    const originalPush = router.push.bind(router);
-
-    const wrappedPush: typeof router.push = (url, options) => {
-      const confirmLeave = window.confirm(
-        "퀴즈가 초기화됩니다. 나가시겠습니까?"
-      );
-      if (confirmLeave) {
-        onLeave();
-        return originalPush(url, options);
-      } else {
-        // 라우팅 취소
-        return Promise.resolve(); // router.push는 Promise 반환
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (shouldBlock) {
+        e.preventDefault();
+        e.returnValue = "";
       }
     };
 
-    // 타입스크립트는 push가 readonly라 생각할 수 있음, 이때 Object.defineProperty로 우회
-    Object.defineProperty(router, "push", {
-      value: wrappedPush,
-      writable: true,
-    });
+    const handlePopState = () => {
+      if (shouldBlock) {
+        const confirmLeave = window.confirm(
+          "퀴즈가 초기화됩니다. 나가시겠습니까?"
+        );
+        if (!confirmLeave) {
+          // 뒤로가기 막기: push로 다시 현재 경로 고정
+          router.push(window.location.pathname);
+        } else {
+          onLeave();
+        }
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("popstate", handlePopState);
 
     return () => {
-      Object.defineProperty(router, "push", {
-        value: originalPush,
-        writable: true,
-      });
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("popstate", handlePopState);
     };
   }, [shouldBlock, onLeave, router]);
 }

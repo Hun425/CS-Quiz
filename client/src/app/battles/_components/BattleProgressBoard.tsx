@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useBattleSocketStore } from "@/store/battleStore";
 import { motion, AnimatePresence } from "framer-motion";
 import { Users, Activity } from "lucide-react";
@@ -7,12 +8,23 @@ import InfoTooltip from "./InfoTooltip";
 
 const BattleProgressBoard = () => {
   const progress = useBattleSocketStore((state) => state.progress);
+  const [currentIndex, setCurrentIndex] = useState(1);
+  const nextQuestion = useBattleSocketStore((s) => s.nextQuestion);
+
   const hasLoaded = !!progress;
   const participants = hasLoaded
     ? Object.values(progress.participantProgress || {}).sort(
         (a, b) => b.correctAnswers - a.correctAnswers
       )
     : [];
+
+  useEffect(() => {
+    if (nextQuestion) {
+      setCurrentIndex((prev) => prev + 1);
+    } else {
+      setCurrentIndex(1);
+    }
+  }, [nextQuestion]);
 
   return (
     <motion.div
@@ -32,8 +44,7 @@ const BattleProgressBoard = () => {
             <>
               <Users className="w-4 h-4 text-gray-500" />
               <span>
-                문제 {progress.currentQuestionIndex + 1} /{" "}
-                {progress.totalQuestions}
+                문제 {currentIndex} / {progress.totalQuestions}
               </span>
             </>
           )}
