@@ -27,7 +27,7 @@ import java.util.NoSuchElementException;
  * @since JDK 21.0.6 Eclipse Temurin
  */
 @RestController
-@RequestMapping("/api/battles")
+@RequestMapping("/")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Battle Controller", description = "퀴즈 대결 관련 API를 제공합니다")

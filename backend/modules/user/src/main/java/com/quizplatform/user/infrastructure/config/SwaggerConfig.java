@@ -47,4 +47,16 @@ public class SwaggerConfig {
                         new Server().url("/").description("직접 접근 URL")
                 ));
     }
+    
+    /**
+     * PathSelectors 설정으로 원하는 API 경로만 문서화
+     * Security 설정을 추가하여 인증 정보를 노출
+     */
+    /*@Bean
+    public GroupedOpenApi userApi() {
+        return GroupedOpenApi.builder()
+                .group("user-api")
+                .pathsToMatch("/**")
+                .build();
+    }*/
 }

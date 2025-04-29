@@ -17,18 +17,13 @@ import org.springframework.cloud.gateway.route.RouteDefinitionLocator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
-import static org.springframework.web.reactive.function.server.RequestPredicates.accept;
 
 /**
  * API 게이트웨이의 Swagger(OpenAPI) 문서화 설정 클래스
@@ -68,7 +63,7 @@ public class SwaggerConfig {
                                 .name("Apache 2.0")
                                 .url("http://www.apache.org/licenses/LICENSE-2.0.html")))
                 .servers(List.of(
-                        new Server().url("/").description("게이트웨이 URL"),
+                        new Server().url("").description("게이트웨이 URL"),
                         new Server().url("/api/users").description("사용자 서비스 API"),
                         new Server().url("/api/quizzes").description("퀴즈 서비스 API"),
                         new Server().url("/api/battles").description("배틀 서비스 API")
@@ -82,48 +77,48 @@ public class SwaggerConfig {
                                 .bearerFormat("JWT")));
     }
     
+    /**
+     * 마이크로서비스 API 문서 그룹 구성
+     * 각 서비스의 라우트 정의를 기반으로 동적으로 API 그룹 생성
+     */
     @Bean
     @Lazy(false)
     public List<GroupedOpenApi> apis(SwaggerUiConfigParameters swaggerUiConfigParameters,
-                                     SpringDocConfigProperties springDocConfigProperties,
-                                     RouteDefinitionLocator routeDefinitionLocator) {
+                                    RouteDefinitionLocator routeDefinitionLocator) {
         List<RouteDefinition> definitions = routeDefinitionLocator.getRouteDefinitions().collectList().block();
         List<GroupedOpenApi> groups = new ArrayList<>();
-        
-        definitions.stream()
-                .filter(routeDefinition -> routeDefinition.getId().matches(".*-service"))
-                .forEach(routeDefinition -> {
-                    String name = routeDefinition.getId().replaceAll("-service", "");
-                    swaggerUiConfigParameters.addGroup(name);
-                    GroupedOpenApi.builder()
-                            .pathsToMatch("/" + name + "/**")
-                            .group(name)
-                            .build();
-                });
-                
+
+        if (definitions != null) {
+            definitions.stream()
+                    .filter(routeDefinition -> routeDefinition.getId().matches(".*-service$")) // -service로 끝나는 ID만 필터링
+                    .forEach(routeDefinition -> {
+                        String name = routeDefinition.getId().replaceAll("-service", "");
+                        swaggerUiConfigParameters.addGroup(name);
+                        
+                        // 각 서비스별 API 문서 그룹 생성
+                        GroupedOpenApi group = GroupedOpenApi.builder()
+                                .pathsToMatch("/api/" + name + "/**")
+                                .group(name)
+                                .build();
+                        groups.add(group);
+                    });
+        }
+
         return groups;
     }
-
+    
     /**
-     * Swagger UI 리소스를 서빙하기 위한 라우터 함수
+     * API Gateway 자체 API 그룹 설정
+     * 이름을 "api-gateway"로 변경하여 중복을 피함
      */
     @Bean
-    public RouterFunction<ServerResponse> swaggerUiRouterFunction(ResourceLoader resourceLoader) {
-        try {
-            Resource indexHtml = resourceLoader.getResource("classpath:META-INF/resources/webjars/swagger-ui/index.html");
-            
-            return RouterFunctions
-                .route(GET("/").and(accept(MediaType.TEXT_HTML)), 
-                    req -> ServerResponse.ok().contentType(MediaType.TEXT_HTML).bodyValue(indexHtml))
-                .andRoute(GET("/swagger-ui.html").and(accept(MediaType.TEXT_HTML)), 
-                    req -> ServerResponse.ok().contentType(MediaType.TEXT_HTML).bodyValue(indexHtml));
-        } catch (Exception e) {
-            // 개발 중에만 로그 남기기
-            e.printStackTrace();
-            return RouterFunctions.route(GET("/**"), request -> ServerResponse.notFound().build());
-        }
+    public GroupedOpenApi gatewayApiGroup() {
+        return GroupedOpenApi.builder()
+                .group("api-gateway")  // "gateway"에서 "api-gateway"로 변경
+                .pathsToMatch("/api/gateway/**")
+                .build();
     }
-
+    
     /**
      * 인증 관련 API 그룹 설정
      */
@@ -134,7 +129,7 @@ public class SwaggerConfig {
                 .pathsToMatch("/api/auth/**")
                 .build();
     }
-
+    
     /**
      * 사용자 관련 API 그룹 설정
      */
@@ -145,7 +140,7 @@ public class SwaggerConfig {
                 .pathsToMatch("/api/users/**")
                 .build();
     }
-
+    
     /**
      * 퀴즈 관련 API 그룹 설정
      */
@@ -156,7 +151,7 @@ public class SwaggerConfig {
                 .pathsToMatch("/api/quizzes/**")
                 .build();
     }
-
+    
     /**
      * 배틀 관련 API 그룹 설정
      */

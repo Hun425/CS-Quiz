@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @Tag(name = "Quiz Controller", description = "퀴즈 관련 API를 제공합니다")
 @RestController
-@RequestMapping("/api/v1/quizzes")
+@RequestMapping("/")
 @RequiredArgsConstructor
 public class QuizController {
 

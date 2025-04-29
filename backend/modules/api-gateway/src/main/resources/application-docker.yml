@@ -7,6 +7,7 @@ spring:
   
   main:
     web-application-type: reactive
+    allow-bean-definition-overriding: true
     
   # 데이터소스 자동 구성 비활성화
   autoconfigure:
@@ -21,32 +22,59 @@ spring:
       password: ${REDIS_PASSWORD:}
       client-name: ${spring.application.name}
       connect-timeout: 5s
+      
+
   
   # Swagger/OpenAPI 설정
   springdoc:
     api-docs:
       enabled: true
-      path: /api-docs
+      path: /v3/api-docs
     swagger-ui:
       enabled: true
       path: /swagger-ui.html
-      config-url: /api-docs/swagger-config
+      configUrl: /v3/api-docs/swagger-config
       urls:
-        - url: /api-docs
+        - url: /v3/api-docs/api-gateway
           name: API Gateway
-        - url: /users/v3/api-docs
-          name: User Service
-        - url: /battles/v3/api-docs
-          name: Battle Service
-        - url: /quizzes/v3/api-docs
+        - url: /v3/api-docs/users
+          name: User Service 
+        - url: /v3/api-docs/quizzes
           name: Quiz Service
-      disable-swagger-default-url: true
+        - url: /v3/api-docs/battles
+          name: Battle Service
       use-root-path: true
-      url: /swagger-ui/index.html
-  
+      urls-primary-name: API Gateway # 기본으로 표시될 API 문서
+      layout: BaseLayout
+      groups-order: DESC
+      operationsSorter: alpha
+      tagsSorter: alpha
+      display-request-duration: true
+      deep-linking: true
+      persistent-authorization: true
+      disable-swagger-default-url: false
+      supported-submit-methods: ["get", "put", "post", "delete", "options", "head", "patch", "trace"]
+      try-it-out-enabled: true
+    # API 그룹 기본 포함 여부 설정
+    group-configs:
+      - group: api-gateway
+        paths-to-match: /api/gateway/**
+      - group: auth
+        paths-to-match: /api/auth/** 
+      - group: users
+        paths-to-match: /api/users/**
+      - group: quizzes
+        paths-to-match: /api/quizzes/**
+      - group: battles
+        paths-to-match: /api/battles/**
+    show-actuator: true
+    cache:
+      disabled: true
+    
   cloud:
     gateway:
       routes:
+        # 마이크로서비스 API 라우팅
         - id: user-service
           uri: lb://user-service
           predicates:
@@ -68,67 +96,106 @@ spring:
           filters:
             - RewritePath=/api/battles/(?<path>.*), /$\{path}
             
-        # Swagger API 문서 접근을 위한 경로 수정
-        - id: user-service-api-docs
+        # Swagger 문서 라우팅
+        - id: user-openapi
           uri: lb://user-service
           predicates:
-            - Path=/users/v3/api-docs/**
+            - Path=/v3/api-docs/users/**
           filters:
-            - RewritePath=/users/v3/api-docs/(?<path>.*), /v3/api-docs/$\{path}
-            
-        - id: battle-service-api-docs
-          uri: lb://battle-service
-          predicates:
-            - Path=/battles/v3/api-docs/**
-          filters:
-            - RewritePath=/battles/v3/api-docs/(?<path>.*), /v3/api-docs/$\{path}
-            
-        - id: quiz-service-api-docs
+            - RewritePath=/v3/api-docs/users/(?<path>.*), /v3/api-docs/$\{path}
+            - RewritePath=/v3/api-docs/users$, /v3/api-docs
+          metadata:
+            response-timeout: 10000
+            connect-timeout: 10000
+
+        - id: quiz-openapi
           uri: lb://quiz-service
           predicates:
-            - Path=/quizzes/v3/api-docs/**
+            - Path=/v3/api-docs/quizzes/**
           filters:
-            - RewritePath=/quizzes/v3/api-docs/(?<path>.*), /v3/api-docs/$\{path}
+            - RewritePath=/v3/api-docs/quizzes/(?<path>.*), /v3/api-docs/$\{path}
+            - RewritePath=/v3/api-docs/quizzes$, /v3/api-docs
+          metadata:
+            response-timeout: 10000
+            connect-timeout: 10000
+
+        - id: battle-openapi
+          uri: lb://battle-service
+          predicates:
+            - Path=/v3/api-docs/battles/**
+          filters:
+            - RewritePath=/v3/api-docs/battles/(?<path>.*), /v3/api-docs/$\{path}
+            - RewritePath=/v3/api-docs/battles$, /v3/api-docs
+          metadata:
+            response-timeout: 10000
+            connect-timeout: 10000
+
+        # API Gateway 자체 OpenAPI 문서
+        - id: gateway-openapi
+          uri: forward:/v3/api-docs
+          predicates:
+            - Path=/v3/api-docs/api-gateway
+          filters:
+            - SetPath=/v3/api-docs
+        
+        # Swagger UI 리소스 라우팅
+        - id: openapi-swagger-ui
+          uri: forward:/swagger-ui
+          predicates:
+            - Path=/swagger-ui/**
+          filters:
+            - RemoveRequestHeader=Cookie
+          order: -10000
             
-        # Swagger UI 웹자(webjars) 관련 경로 추가
+        - id: openapi-api-docs
+          uri: forward:/v3/api-docs
+          predicates:
+            - Path=/v3/api-docs
+          filters:
+            - RemoveRequestHeader=Cookie
+            - SetPath=/v3/api-docs
+          order: -10000
+            
+        - id: swagger-ui-redirect
+          uri: forward:/swagger-ui/index.html
+          predicates:
+            - Path=/swagger-ui.html
+          filters:
+            - RemoveRequestHeader=Cookie
+          order: -10000
+            
+        # Swagger UI 리소스 라우팅
         - id: swagger-webjars
           uri: forward:/webjars
           predicates:
             - Path=/webjars/**
-          
-        # 스웨거 UI 직접 접근 경로
-        - id: swagger-ui-direct
-          uri: forward:/swagger-ui
-          predicates:
-            - Path=/swagger-ui/**
+          filters:
+            - RemoveRequestHeader=Cookie
+          order: -10000
             
-        # API-Docs 직접 접근 경로
-        - id: api-docs-direct
-          uri: forward:/api-docs
-          predicates:
-            - Path=/api-docs/**
-            
-        # 추가: Swagger UI 인덱스 페이지 직접 접근
-        - id: swagger-ui-index
-          uri: forward:/swagger-ui.html
-          predicates:
-            - Path=/swagger-ui.html
-            
-        # 추가: Root 경로에서 Swagger 리다이렉트
-        - id: swagger-root-redirect
-          uri: forward:/swagger-ui.html
+        # 루트 경로를 Swagger UI로 리디렉션
+        - id: swagger-root
+          uri: forward:/swagger-ui/index.html
           predicates:
             - Path=/
-            
-        # v3/api-docs 접근 경로
-        - id: api-docs-v3
-          uri: forward:/api-docs
-          predicates:
-            - Path=/v3/api-docs/**
+      
+      # 서비스 발견 관련 설정
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+          
+      # 레이트 리미팅 설정
+      default-filters:
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 20
+            redis-rate-limiter.burstCapacity: 40
+            redis-rate-limiter.requestedTokens: 1
             
   # Kafka 설정
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:29092}
     
 # JWT 설정
 jwt:
@@ -150,12 +217,13 @@ eureka:
 logging:
   level:
     root: INFO
-    org.springframework.cloud.gateway: DEBUG
+    org.springframework.cloud.gateway: TRACE
     org.springframework.http.server.reactive: DEBUG
     org.springframework.web.reactive: DEBUG
-    org.springframework.security: DEBUG
+    org.springframework.security: TRACE
     reactor.netty: DEBUG
-    org.springdoc: DEBUG
+    org.springdoc: TRACE
+    com.quizplatform: DEBUG
     
 # Actuator 설정
 management:

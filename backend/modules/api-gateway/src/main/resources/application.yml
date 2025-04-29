@@ -7,29 +7,14 @@ spring:
   
   main:
     web-application-type: reactive
+    allow-bean-definition-overriding: true
     
   # 데이터소스 자동 구성 비활성화
   autoconfigure:
     exclude: 
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
   
-  # OAuth2 설정
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: ${GOOGLE_CLIENT_ID:your-client-id}
-            client-secret: ${GOOGLE_CLIENT_SECRET:your-client-secret}
-            scope:
-              - email
-              - profile
-          github:
-            client-id: ${GITHUB_CLIENT_ID:your-github-client-id}
-            client-secret: ${GITHUB_CLIENT_SECRET:your-github-client-secret}
-            scope:
-              - user:email
-              - read:user
+  # OAuth2 설정 제거
   
   # Redis 설정
   data:
@@ -44,26 +29,42 @@ spring:
   springdoc:
     api-docs:
       enabled: true
-      path: /api-docs
+      path: /v3/api-docs
     swagger-ui:
       enabled: true
       path: /swagger-ui.html
-      config-url: /api-docs/swagger-config
+      configUrl: /v3/api-docs/swagger-config
       urls:
-        - url: /api-docs
+        - url: /v3/api-docs/gateway
           name: API Gateway
-        - url: /users/v3/api-docs
-          name: User Service
-        - url: /battles/v3/api-docs
-          name: Battle Service
-        - url: /quizzes/v3/api-docs
+        - url: /v3/api-docs/users
+          name: User Service 
+        - url: /v3/api-docs/quizzes
           name: Quiz Service
-      disable-swagger-default-url: true
+        - url: /v3/api-docs/battles
+          name: Battle Service
       use-root-path: true
+      urls-primary-name: API Gateway # 기본으로 표시될 API 문서
+    # API 그룹 기본 포함 여부 설정 (false로 설정하여 선택적으로 표시)
+    group-configs:
+      - group: gateway
+        paths-to-match: /api/gateway/**
+      - group: auth
+        paths-to-match: /api/auth/** 
+      - group: users
+        paths-to-match: /api/users/**
+      - group: quizzes
+        paths-to-match: /api/quizzes/**
+      - group: battles
+        paths-to-match: /api/battles/**
+    show-actuator: false
+    cache:
+      disabled: true
     
   cloud:
     gateway:
       routes:
+        # 마이크로서비스 API 라우팅
         - id: user-service
           uri: lb://user-service
           predicates:
@@ -85,59 +86,68 @@ spring:
           filters:
             - RewritePath=/api/battles/(?<path>.*), /$\{path}
             
-        # Swagger API 문서 접근을 위한 경로 수정
-        - id: user-service-api-docs
+        # Swagger 문서 라우팅
+        - id: user-openapi
           uri: lb://user-service
           predicates:
-            - Path=/users/v3/api-docs/**
+            - Path=/v3/api-docs/users/**
           filters:
-            - RewritePath=/users/v3/api-docs/(?<path>.*), /v3/api-docs/$\{path}
-            
-        - id: battle-service-api-docs
-          uri: lb://battle-service
-          predicates:
-            - Path=/battles/v3/api-docs/**
-          filters:
-            - RewritePath=/battles/v3/api-docs/(?<path>.*), /v3/api-docs/$\{path}
-            
-        - id: quiz-service-api-docs
+            - RewritePath=/v3/api-docs/users/(?<path>.*), /v3/api-docs/$\{path}
+            - RewritePath=/v3/api-docs/users$, /v3/api-docs
+
+        - id: quiz-openapi
           uri: lb://quiz-service
           predicates:
-            - Path=/quizzes/v3/api-docs/**
+            - Path=/v3/api-docs/quizzes/**
           filters:
-            - RewritePath=/quizzes/v3/api-docs/(?<path>.*), /v3/api-docs/$\{path}
-            
-        # Swagger 관련 경로 설정
-        - id: swagger-ui
+            - RewritePath=/v3/api-docs/quizzes/(?<path>.*), /v3/api-docs/$\{path}
+            - RewritePath=/v3/api-docs/quizzes$, /v3/api-docs
+
+        - id: battle-openapi
+          uri: lb://battle-service
+          predicates:
+            - Path=/v3/api-docs/battles/**
+          filters:
+            - RewritePath=/v3/api-docs/battles/(?<path>.*), /v3/api-docs/$\{path}
+            - RewritePath=/v3/api-docs/battles$, /v3/api-docs
+
+        # API Gateway 자체 OpenAPI 문서
+        - id: gateway-openapi
+          uri: forward:/v3/api-docs
+          predicates:
+            - Path=/v3/api-docs/gateway
+          filters:
+            - SetPath=/v3/api-docs
+        
+        # Swagger UI 리소스 라우팅
+        - id: openapi-swagger-ui
           uri: forward:/swagger-ui
           predicates:
             - Path=/swagger-ui/**
             
-        - id: swagger-api-docs
+        - id: openapi-api-docs
           uri: forward:/v3/api-docs
           predicates:
-            - Path=/v3/api-docs/**
+            - Path=/v3/api-docs
+          filters:
+            - SetPath=/v3/api-docs
+            
+        - id: swagger-ui-redirect
+          uri: forward:/swagger-ui/index.html
+          predicates:
+            - Path=/swagger-ui.html
             
         - id: swagger-webjars
           uri: forward:/webjars
           predicates:
             - Path=/webjars/**
-            
-        - id: api-docs-direct
-          uri: forward:/api-docs
-          predicates:
-            - Path=/api-docs/**
-        
-        - id: swagger-ui-html
-          uri: forward:/swagger-ui/index.html
-          predicates:
-            - Path=/swagger-ui.html
-            
-        - id: swagger-root
-          uri: forward:/swagger-ui/index.html
-          predicates:
-            - Path=/
       
+      # 서비스 발견 관련 설정
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+          
       # 레이트 리미팅 설정
       default-filters:
         - name: RequestRateLimiter
@@ -150,11 +160,7 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
     
-# JWT 설정
-jwt:
-  secret: ${JWT_SECRET:quizplatform_default_secret_key_change_in_production}
-  expiration: ${JWT_EXPIRATION:86400000} # 24시간 (milliseconds)
-  refreshExpiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7일 (milliseconds)
+# JWT 설정 제거
     
 # Eureka 클라이언트 설정
 eureka:
@@ -173,7 +179,6 @@ logging:
     org.springframework.cloud.gateway: DEBUG
     org.springframework.http.server.reactive: DEBUG
     org.springframework.web.reactive: DEBUG
-    org.springframework.security: DEBUG
     reactor.netty: DEBUG
     
 # Actuator 설정

@@ -6,7 +6,7 @@ dependencyManagement {
 
 dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-server'
-    implementation 'org.springframework.boot:spring-boot-starter-security'
+    // 시큐리티 의존성 제거
     
 
 }

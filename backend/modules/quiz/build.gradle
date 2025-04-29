@@ -20,10 +20,7 @@ dependencies {
     
     // Eureka Client
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
-    implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+    // 시큐리티 및 JWT 의존성 제거
     
     // PostgreSQL 드라이버
     runtimeOnly 'org.postgresql:postgresql'

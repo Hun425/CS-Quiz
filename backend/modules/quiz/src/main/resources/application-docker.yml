@@ -11,12 +11,22 @@ spring:
   springdoc:
     api-docs:
       path: /v3/api-docs
+      enabled: true
+      groups:
+        enabled: true
     swagger-ui:
       path: /swagger-ui.html
       tags-sorter: alpha
       operations-sorter: alpha
+      disable-swagger-default-url: true
+      use-root-path: true
+      display-request-duration: true
     default-consumes-media-type: application/json
     default-produces-media-type: application/json
+    paths-to-match: /**
+    group-configs:
+      - group: quizzes
+        paths-to-match: /**
   
   # 데이터베이스 설정
   datasource:
@@ -63,6 +73,9 @@ eureka:
   instance:
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${random.uuid}
+    metadata-map:
+      group: quizzes
+      swagger-url: /v3/api-docs
 
 # 로깅 설정
 logging:
@@ -71,6 +84,7 @@ logging:
     org.springframework.web: INFO
     org.hibernate.SQL: DEBUG
     org.springframework.data.elasticsearch: DEBUG
+    org.springdoc: DEBUG
 
 # JWT 설정
 jwt:

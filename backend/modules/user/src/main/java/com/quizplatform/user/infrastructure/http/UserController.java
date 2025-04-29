@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/")
 @RequiredArgsConstructor
 @Tag(name = "User Controller", description = "사용자 관리 API를 제공합니다")
 public class UserController {

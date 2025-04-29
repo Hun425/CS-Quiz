@@ -11,12 +11,21 @@ spring:
   springdoc:
     api-docs:
       path: /v3/api-docs
+      enabled: true
+      groups:
+        enabled: true
     swagger-ui:
       path: /swagger-ui.html
       tags-sorter: alpha
       operations-sorter: alpha
+      display-request-duration: true
+      groups-order: DESC
     default-consumes-media-type: application/json
     default-produces-media-type: application/json
+    paths-to-match: /**
+    group-configs:
+      - group: users
+        paths-to-match: /**
   
   # 데이터베이스 설정
   datasource:
@@ -65,6 +74,9 @@ eureka:
       defaultZone: ${EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE:http://localhost:8761/eureka/}
   instance:
     prefer-ip-address: true
+    metadata-map:
+      group: users
+      swagger-url: /v3/api-docs
 
 # 로깅 설정
 logging:

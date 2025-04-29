@@ -15,12 +15,22 @@ spring:
   springdoc:
     api-docs:
       path: /v3/api-docs
+      enabled: true
+      groups:
+        enabled: true
     swagger-ui:
       path: /swagger-ui.html
       tags-sorter: alpha
       operations-sorter: alpha
+      disable-swagger-default-url: true
+      use-root-path: true
+      display-request-duration: true
     default-consumes-media-type: application/json
     default-produces-media-type: application/json
+    paths-to-match: /**
+    group-configs:
+      - group: battles
+        paths-to-match: /**
     
   # 데이터베이스 설정
   datasource:
@@ -76,6 +86,9 @@ eureka:
   instance:
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${random.uuid}
+    metadata-map:
+      group: battles
+      swagger-url: /v3/api-docs
 
 # 로깅 설정
 logging:
@@ -84,9 +97,9 @@ logging:
     org.springframework.web: INFO
     org.hibernate.SQL: DEBUG
     org.springframework.data.redis: DEBUG
+    org.springdoc: DEBUG
 
+# WebSocket 설정
 websocket:
-  allowed-origins:
-    - http://localhost:3000  # 프론트엔드 개발 서버 주소 (예시)
-    - https://your-frontend.com # 실제 배포될 프론트엔드 주소 (예시)
-  disconnect-delay: 30000 # 필요시 설정 (기본값 있음)
+  allowed-origins: http://localhost:3000,http://localhost:8080,${FRONTEND_URL:*}
+  disconnect-delay: 30000 
