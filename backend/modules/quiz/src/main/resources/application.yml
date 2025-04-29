@@ -18,7 +18,7 @@ spring:
   
   # 데이터베이스 설정
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/quizplatform?currentSchema=user_schema}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/quiz_platform}
     username: ${SPRING_DATASOURCE_USERNAME:quizuser}
     password: ${SPRING_DATASOURCE_PASSWORD:quizpass}
     driver-class-name: org.postgresql.Driver
@@ -36,11 +36,11 @@ spring:
   # Elasticsearch 설정
   elasticsearch:
     rest:
-      uris: localhost:9200
+      uris: ${SPRING_ELASTICSEARCH_REST_URIS:http://localhost:9200}
   
   # Kafka 설정
   kafka:
-    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
       group-id: quiz-service
       auto-offset-reset: earliest
@@ -51,8 +51,8 @@ spring:
 # Eureka 클라이언트 설정
 eureka:
   client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
+    serviceUrl:
+      defaultZone: ${EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE:http://localhost:8761/eureka/}
   instance:
     prefer-ip-address: true
 
@@ -68,3 +68,9 @@ jwt:
   secret: ${JWT_SECRET:quizplatform_default_secret_key_change_in_production}
   expiration: ${JWT_EXPIRATION:86400000} # 24시간 (milliseconds)
   refreshExpiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7일 (milliseconds)
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

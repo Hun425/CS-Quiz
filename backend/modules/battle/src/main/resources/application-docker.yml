@@ -83,4 +83,10 @@ logging:
     com.quizplatform: DEBUG
     org.springframework.web: INFO
     org.hibernate.SQL: DEBUG
-    org.springframework.data.redis: DEBUG 
+    org.springframework.data.redis: DEBUG
+
+websocket:
+  allowed-origins:
+    - http://localhost:3000  # 프론트엔드 개발 서버 주소 (예시)
+    - https://your-frontend.com # 실제 배포될 프론트엔드 주소 (예시)
+  disconnect-delay: 30000 # 필요시 설정 (기본값 있음)

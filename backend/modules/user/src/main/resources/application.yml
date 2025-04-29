@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:8081}
+  port: 8081
   servlet:
     context-path: /
 
@@ -20,7 +20,7 @@ spring:
   
   # 데이터베이스 설정
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/quizplatform?currentSchema=user_schema}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/quiz_platform}
     username: ${SPRING_DATASOURCE_USERNAME:quizuser}
     password: ${SPRING_DATASOURCE_PASSWORD:quizpass}
     driver-class-name: org.postgresql.Driver
@@ -39,7 +39,7 @@ spring:
   
   # Kafka 설정
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
       group-id: user-service
       auto-offset-reset: earliest
@@ -61,10 +61,10 @@ jwt:
 # Eureka 클라이언트 설정
 eureka:
   client:
-    service-url:
-      defaultZone: ${EUREKA_SERVICE_URL:http://localhost:8761/eureka/}
+    serviceUrl:
+      defaultZone: ${EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE:http://localhost:8761/eureka/}
   instance:
-    instance-id: ${spring.application.name}:${random.uuid}
+    prefer-ip-address: true
 
 # 로깅 설정
 logging:
@@ -74,3 +74,9 @@ logging:
     org.hibernate.SQL: DEBUG
     org.springframework.kafka: INFO
     org.springframework.security: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

@@ -1,23 +1,6 @@
 version: '3.8'
 
 services:
-  # 설정 서버
-  config-server:
-    build:
-      context: .
-      dockerfile: ./modules/config-server/Dockerfile
-    volumes:
-      - ./:/app
-      - ~/.gradle:/root/.gradle
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - CONFIG_GIT_URI=file:///app/config-repo
-    ports:
-      - "8888:8888"
-    command: java -jar /app/modules/config-server/build/libs/config-server-0.0.1-SNAPSHOT.jar
-    networks:
-      - quiz-network
-
   # API 게이트웨이 서비스
   api-gateway:
     build:
@@ -34,11 +17,9 @@ services:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5080
     volumes:
-      - ./:/app
-      - ~/.gradle:/root/.gradle
-    command: java -jar /app/modules/api-gateway/build/libs/api-gateway-0.0.1-SNAPSHOT.jar
+      - ./modules/api-gateway:/workspace/app
+      - maven-repo:/root/.m2
     depends_on:
-      - config-server
       - eureka-server
       - redis
       - kafka
@@ -59,9 +40,8 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5761
     volumes:
-      - ./:/app
-      - ~/.gradle:/root/.gradle
-    command: java -jar /app/modules/eureka-server/build/libs/eureka-server-0.0.1-SNAPSHOT.jar
+      - ./modules/eureka-server:/workspace/app
+      - maven-repo:/root/.m2
     networks:
       - quiz-network
     restart: unless-stopped
@@ -77,13 +57,17 @@ services:
       - "5081:5081"  # 디버깅 포트
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/quiz_platform
+      - SPRING_DATASOURCE_USERNAME=quizuser
+      - SPRING_DATASOURCE_PASSWORD=quizpass
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5081
     volumes:
       - ./modules/user:/workspace/app
       - maven-repo:/root/.m2
     depends_on:
       - postgres
-      - config-server
       - eureka-server
       - kafka
     networks:
@@ -101,13 +85,18 @@ services:
       - "5082:5082"  # 디버깅 포트
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/quiz_platform
+      - SPRING_DATASOURCE_USERNAME=quizuser
+      - SPRING_DATASOURCE_PASSWORD=quizpass
+      - SPRING_ELASTICSEARCH_REST_URIS=http://elasticsearch:9200
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5082
     volumes:
       - ./modules/quiz:/workspace/app
       - maven-repo:/root/.m2
     depends_on:
       - postgres
-      - config-server
       - eureka-server
       - elasticsearch
       - kafka
@@ -126,6 +115,13 @@ services:
       - "5083:5083"  # 디버깅 포트
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/quiz_platform
+      - SPRING_DATASOURCE_USERNAME=quizuser
+      - SPRING_DATASOURCE_PASSWORD=quizpass
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5083
     volumes:
       - ./modules/battle:/workspace/app
@@ -133,7 +129,6 @@ services:
     depends_on:
       - postgres
       - redis
-      - config-server
       - eureka-server
       - kafka
     networks:

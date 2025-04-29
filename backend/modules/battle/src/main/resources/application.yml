@@ -69,4 +69,9 @@ logging:
   level:
     root: INFO
     com.quizplatform.battle: DEBUG
-    org.springframework.kafka: INFO 
+    org.springframework.kafka: INFO
+
+# WebSocket 설정
+websocket:
+  allowed-origins: http://localhost:3000,http://localhost:8080,${FRONTEND_URL:*}
+  disconnect-delay: 30000 

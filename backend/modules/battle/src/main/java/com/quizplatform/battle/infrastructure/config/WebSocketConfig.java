@@ -9,6 +9,7 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 import org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -18,7 +19,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final StompChannelInterceptor stompChannelInterceptor;
     
     @Value("${websocket.allowed-origins}")
-    private List<String> allowedOrigins;
+    private String allowedOriginsString;
     
     @Value("${websocket.disconnect-delay:30000}")
     private int disconnectDelay;
@@ -42,8 +43,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        // 문자열을 쉼표로 분할하여 배열로 변환
+        String[] allowedOriginsArray = allowedOriginsString.split(",");
+        
         registry.addEndpoint("/ws-battle")
-                .setAllowedOrigins(allowedOrigins.toArray(new String[0]))
+                .setAllowedOrigins(allowedOriginsArray)
                 .addInterceptors(new HttpSessionHandshakeInterceptor())
                 .withSockJS()
                 .setDisconnectDelay(disconnectDelay)

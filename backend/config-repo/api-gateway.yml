@@ -1,0 +1,33 @@
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+        - id: quiz-service
+          uri: lb://quiz-service
+          predicates:
+            - Path=/api/quizzes/**
+        - id: battle-service
+          uri: lb://battle-service
+          predicates:
+            - Path=/api/battles/**,/ws/**
+
+  redis:
+    host: redis
+    port: 6379
+
+  kafka:
+    bootstrap-servers: kafka:29092
+    consumer:
+      group-id: api-gateway
+      auto-offset-reset: earliest 
