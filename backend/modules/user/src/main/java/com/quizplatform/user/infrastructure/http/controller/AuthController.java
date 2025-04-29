@@ -2,14 +2,9 @@ package com.quizplatform.user.infrastructure.http.controller;
 
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
+
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 인증된 사용자 정보를 다루는 컨트롤러 예제
