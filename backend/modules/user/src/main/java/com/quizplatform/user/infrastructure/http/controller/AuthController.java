@@ -1,6 +1,6 @@
 package com.quizplatform.user.infrastructure.http.controller;
 
-import com.quizplatform.user.infrastructure.security.JwtUserDetails;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,23 +19,23 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
 
-    /**
-     * 인증된 사용자 정보 조회 API
-     * @param userDetails 인증된 사용자 정보
-     * @return 사용자 정보
-     */
-    @GetMapping("/me")
-    public ResponseEntity<Map<String, Object>> getCurrentUser(@AuthenticationPrincipal JwtUserDetails userDetails) {
-        if (userDetails == null) {
-            return ResponseEntity.status(401).build();
-        }
-        
-        Map<String, Object> userInfo = new HashMap<>();
-        userInfo.put("userId", userDetails.getUserId());
-        userInfo.put("name", userDetails.getName());
-        userInfo.put("provider", userDetails.getProvider());
-        userInfo.put("authorities", userDetails.getAuthorities());
-        
-        return ResponseEntity.ok(userInfo);
-    }
+    // /**
+    //  * 인증된 사용자 정보 조회 API
+    //  * @param userDetails 인증된 사용자 정보
+    //  * @return 사용자 정보
+    //  */
+    // @GetMapping("/me")
+    // public ResponseEntity<Map<String, Object>> getCurrentUser(@AuthenticationPrincipal JwtUserDetails userDetails) {
+    //     if (userDetails == null) {
+    //         return ResponseEntity.status(401).build();
+    //     }
+    //
+    //     Map<String, Object> userInfo = new HashMap<>();
+    //     userInfo.put("userId", userDetails.getUserId());
+    //     userInfo.put("name", userDetails.getName());
+    //     userInfo.put("provider", userDetails.getProvider());
+    //     userInfo.put("authorities", userDetails.getAuthorities());
+    //
+    //     return ResponseEntity.ok(userInfo);
+    // }
 }
