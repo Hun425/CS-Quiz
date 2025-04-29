@@ -1,9 +1,26 @@
 version: '3.8'
 
 services:
+  # 설정 서버
+  config-server:
+    build:
+      context: .
+      dockerfile: ./modules/config-server/Dockerfile
+    volumes:
+      - ./:/app
+      - ~/.gradle:/root/.gradle
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_GIT_URI=file:///app/config-repo
+    ports:
+      - "8888:8888"
+    command: java -jar /app/modules/config-server/build/libs/config-server-0.0.1-SNAPSHOT.jar
+    networks:
+      - quiz-network
+
   # API 게이트웨이 서비스
   api-gateway:
-    build: 
+    build:
       context: .
       dockerfile: ./modules/api-gateway/Dockerfile
     container_name: quiz-api-gateway-dev
@@ -17,20 +34,21 @@ services:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5080
     volumes:
-      - ./modules/api-gateway/src:/workspace/app/src
-      - ./modules/api-gateway/build.gradle:/workspace/app/build.gradle
-      - maven-repo:/root/.m2
+      - ./:/app
+      - ~/.gradle:/root/.gradle
+    command: java -jar /app/modules/api-gateway/build/libs/api-gateway-0.0.1-SNAPSHOT.jar
     depends_on:
+      - config-server
+      - eureka-server
       - redis
       - kafka
-      - eureka-server
     networks:
       - quiz-network
     restart: unless-stopped
 
   # Eureka Server 서비스
   eureka-server:
-    build: 
+    build:
       context: .
       dockerfile: ./modules/eureka-server/Dockerfile
     container_name: quiz-eureka-server-dev
@@ -41,8 +59,9 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5761
     volumes:
-      - ./modules/eureka-server:/workspace/app
-      - maven-repo:/root/.m2
+      - ./:/app
+      - ~/.gradle:/root/.gradle
+    command: java -jar /app/modules/eureka-server/build/libs/eureka-server-0.0.1-SNAPSHOT.jar
     networks:
       - quiz-network
     restart: unless-stopped
@@ -64,6 +83,7 @@ services:
       - maven-repo:/root/.m2
     depends_on:
       - postgres
+      - config-server
       - eureka-server
       - kafka
     networks:
@@ -87,6 +107,7 @@ services:
       - maven-repo:/root/.m2
     depends_on:
       - postgres
+      - config-server
       - eureka-server
       - elasticsearch
       - kafka
@@ -112,6 +133,7 @@ services:
     depends_on:
       - postgres
       - redis
+      - config-server
       - eureka-server
       - kafka
     networks:

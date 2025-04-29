@@ -2,11 +2,14 @@ package com.quizplatform.battle.application.service;
 
 import com.quizplatform.battle.application.dto.*;
 import com.quizplatform.battle.domain.model.BattleRoomStatus;
+import com.quizplatform.battle.domain.event.SessionDisconnectEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.event.EventListener;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -22,6 +25,19 @@ import java.util.concurrent.ConcurrentHashMap;
 @Transactional
 public class BattleServiceImpl implements BattleService {
 
+    // Config Server에서 관리되는 중앙화된 설정값 주입
+    @Value("${battle.max-participants:4}")
+    private int maxParticipants;
+    
+    @Value("${battle.question-time-limit:30}")
+    private int questionTimeLimit;
+    
+    @Value("${battle.result-display-time:5}")
+    private int resultDisplayTime;
+    
+    @Value("${battle.timeout-check-interval:1000}")
+    private long timeoutCheckInterval;
+    
     // 실제 Repository 주입 필요
     // private final BattleRoomRepository battleRoomRepository;
     
@@ -56,7 +72,7 @@ public class BattleServiceImpl implements BattleService {
             BattleJoinResponse room = new BattleJoinResponse();
             room.setRoomId(roomId);
             room.setStatus(BattleRoomStatus.WAITING);
-            room.setMaxParticipants(4); // 기본값
+            room.setMaxParticipants(maxParticipants);
             room.setCreatorId(request.getCreatorUserId());
             room.setParticipants(new ArrayList<>());
             roomsMap.put(roomId, room);
@@ -96,7 +112,7 @@ public class BattleServiceImpl implements BattleService {
     public BattleJoinResponse getCurrentBattleParticipants(Long roomId) {
         return roomsMap.getOrDefault(roomId, 
                 new BattleJoinResponse(roomId, new ArrayList<>(), BattleRoomStatus.WAITING, 
-                        "일반", 4, null));
+                        "일반", maxParticipants, null));
     }
 
     @Override
@@ -185,7 +201,7 @@ public class BattleServiceImpl implements BattleService {
         return new BattleNextQuestionResponse(
                 roomId, questionId, questionText, options,
                 newIndex, progress.getTotalQuestions(),
-                false, 20 // 20초 제한시간
+                false, questionTimeLimit // 20초 제한시간
         );
     }
 
@@ -384,7 +400,7 @@ public class BattleServiceImpl implements BattleService {
                         .creatorId(room.getCreatorId())
                         .createdAt(LocalDateTime.now()) // 실제 구현에서는 DB에서 생성 시간 가져와야 함
                         .totalQuestions(progress != null ? progress.getTotalQuestions() : 0)
-                        .questionTimeLimitSeconds(30) // 기본값
+                        .questionTimeLimitSeconds(questionTimeLimit) // 기본값
                         .participants(room.getParticipants())
                         .build();
                 
@@ -393,5 +409,23 @@ public class BattleServiceImpl implements BattleService {
         }
         
         return result;
+    }
+
+    /**
+     * 세션 연결 해제 이벤트 처리
+     * StompChannelInterceptor에서 발행한 이벤트를 구독하여 처리
+     */
+    @EventListener
+    public void handleSessionDisconnectEvent(SessionDisconnectEvent event) {
+        log.info("세션 연결 해제 이벤트 처리: userId={}, roomId={}, sessionId={}",
+                event.getUserId(), event.getRoomId(), event.getSessionId());
+        
+        try {
+            // 배틀룸 나가기 처리
+            BattleLeaveRequest request = new BattleLeaveRequest(event.getRoomId(), event.getUserId());
+            leaveBattle(request, event.getSessionId());
+        } catch (Exception e) {
+            log.error("세션 연결 해제 이벤트 처리 중 오류 발생", e);
+        }
     }
 } 

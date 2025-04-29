@@ -1,5 +1,6 @@
 package com.quizplatform.battle.infrastructure.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -8,11 +9,19 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 import org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor;
 
+import java.util.List;
+
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final StompChannelInterceptor stompChannelInterceptor;
+    
+    @Value("${websocket.allowed-origins}")
+    private List<String> allowedOrigins;
+    
+    @Value("${websocket.disconnect-delay:30000}")
+    private int disconnectDelay;
 
     public WebSocketConfig(StompChannelInterceptor stompChannelInterceptor) {
         this.stompChannelInterceptor = stompChannelInterceptor;
@@ -34,10 +43,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-battle")
-                .setAllowedOrigins("http://localhost:5173", "http://localhost:3000")
+                .setAllowedOrigins(allowedOrigins.toArray(new String[0]))
                 .addInterceptors(new HttpSessionHandshakeInterceptor())
                 .withSockJS()
-                .setDisconnectDelay(30 * 1000)
+                .setDisconnectDelay(disconnectDelay)
                 .setClientLibraryUrl("https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js");
     }
 

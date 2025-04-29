@@ -44,4 +44,8 @@
         configurations {
             all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-web'
         }
+
+        // Config Client
+        implementation 'org.springframework.cloud:spring-cloud-starter-config'
+        implementation 'org.springframework.cloud:spring-cloud-starter-bootstrap'
     }

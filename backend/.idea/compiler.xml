@@ -15,6 +15,7 @@
         <module name="quiz-platform.modules.common.main" />
         <module name="quiz-platform.main" />
         <module name="quiz-platform.modules.user.main" />
+        <module name="quiz-platform.modules.config-server.main" />
       </profile>
       <profile name="Gradle Imported" enabled="true">
         <outputRelativeToContentRoot value="true" />

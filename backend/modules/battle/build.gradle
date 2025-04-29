@@ -22,4 +22,7 @@ dependencies {
 
     // PostgreSQL 드라이버
     runtimeOnly 'org.postgresql:postgresql'
+
+    implementation 'org.springframework.cloud:spring-cloud-starter-config'
+    implementation 'org.springframework.cloud:spring-cloud-starter-bootstrap'
 }

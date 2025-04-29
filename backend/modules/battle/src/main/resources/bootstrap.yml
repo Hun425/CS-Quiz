@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: battle-service
+  cloud:
+    config:
+      uri: http://localhost:8888
+      fail-fast: true
+      username: ${CONFIG_SERVER_USER:configuser}
+      password: ${CONFIG_SERVER_PASSWORD:configpassword}
+      retry:
+        initial-interval: 1000
+        max-attempts: 6
+        max-interval: 2000
+        multiplier: 1.1 

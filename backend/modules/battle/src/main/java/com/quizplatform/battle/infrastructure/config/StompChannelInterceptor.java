@@ -1,11 +1,8 @@
 package com.quizplatform.battle.infrastructure.config;
 
-import com.quizplatform.battle.application.dto.BattleLeaveRequest;
-import com.quizplatform.battle.application.service.BattleService;
+import com.quizplatform.battle.domain.event.SessionDisconnectEvent;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
@@ -15,21 +12,17 @@ import org.springframework.stereotype.Component;
 
 /**
  * STOMP 채널 인터셉터 - 클라이언트 연결/해제 처리
+ * 이벤트 기반 아키텍처 적용으로 순환 의존성 제거
  */
 @Slf4j
 @Component
 public class StompChannelInterceptor implements ChannelInterceptor {
 
-    // 지연 주입을 위해 ApplicationContext 사용
-    private final ApplicationContext applicationContext;
-    private final BattleService battleService;
+    private final ApplicationEventPublisher eventPublisher;
 
-    // 생성자 주입 방식을 사용하고, BattleService 파라미터에 @Lazy 추가
-    @Autowired
-    public StompChannelInterceptor(ApplicationContext applicationContext, @Lazy BattleService battleService) {
-        this.applicationContext = applicationContext;
-        this.battleService = battleService;
-        log.info("StompChannelInterceptor: BattleService 지연 주입 설정 완료");
+    public StompChannelInterceptor(ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
+        log.info("StompChannelInterceptor: 이벤트 발행자 주입 완료");
     }
 
     @Override
@@ -47,18 +40,17 @@ public class StompChannelInterceptor implements ChannelInterceptor {
             Object roomId = accessor.getSessionAttributes() != null ?
                     accessor.getSessionAttributes().get("roomId") : null;
 
-            if (userId != null && roomId != null && battleService != null) {
+            if (userId != null && roomId != null) {
                 Long userIdLong = (Long) userId;
                 Long roomIdLong = (Long) roomId;
 
-                log.info("사용자 연결 해제 처리: userId={}, roomId={}", userIdLong, roomIdLong);
+                log.info("사용자 연결 해제 이벤트 발행: userId={}, roomId={}", userIdLong, roomIdLong);
 
                 try {
-                    // 배틀룸 나가기 처리
-                    BattleLeaveRequest request = new BattleLeaveRequest(roomIdLong, userIdLong);
-                    battleService.leaveBattle(request, sessionId);
+                    // 세션 연결 해제 이벤트 발행
+                    eventPublisher.publishEvent(new SessionDisconnectEvent(this, userIdLong, roomIdLong, sessionId));
                 } catch (Exception e) {
-                    log.error("연결 해제 시 배틀룸 나가기 처리 중 오류 발생", e);
+                    log.error("연결 해제 이벤트 발행 중 오류 발생", e);
                 }
             }
         }
