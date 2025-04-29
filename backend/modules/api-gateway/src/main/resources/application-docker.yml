@@ -13,15 +13,12 @@ spring:
   autoconfigure:
     exclude: 
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.reactive.ReactiveSecurityAutoConfiguration
   
-  # Redis 설정
+  # Redis 설정 완전 비활성화
   data:
     redis:
-      host: ${REDIS_HOST:redis}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-      client-name: ${spring.application.name}
-      connect-timeout: 5s
+      enabled: false
       
 
   
@@ -73,6 +70,12 @@ spring:
     
   cloud:
     gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
       routes:
         # 마이크로서비스 API 라우팅
         - id: user-service
@@ -138,13 +141,13 @@ spring:
           filters:
             - SetPath=/v3/api-docs
         
-        # Swagger UI 리소스 라우팅
+        # Swagger UI 리소스 라우팅 (보안 및 레이트 리미팅 필터 제거)
         - id: openapi-swagger-ui
           uri: forward:/swagger-ui
           predicates:
             - Path=/swagger-ui/**
           filters:
-            - RemoveRequestHeader=Cookie
+            - name: PreserveHostHeader
           order: -10000
             
         - id: openapi-api-docs
@@ -152,8 +155,8 @@ spring:
           predicates:
             - Path=/v3/api-docs
           filters:
-            - RemoveRequestHeader=Cookie
             - SetPath=/v3/api-docs
+            - name: PreserveHostHeader
           order: -10000
             
         - id: swagger-ui-redirect
@@ -161,7 +164,7 @@ spring:
           predicates:
             - Path=/swagger-ui.html
           filters:
-            - RemoveRequestHeader=Cookie
+            - name: PreserveHostHeader
           order: -10000
             
         # Swagger UI 리소스 라우팅
@@ -170,7 +173,7 @@ spring:
           predicates:
             - Path=/webjars/**
           filters:
-            - RemoveRequestHeader=Cookie
+            - name: PreserveHostHeader
           order: -10000
             
         # 루트 경로를 Swagger UI로 리디렉션
@@ -178,6 +181,8 @@ spring:
           uri: forward:/swagger-ui/index.html
           predicates:
             - Path=/
+          filters:
+            - name: PreserveHostHeader
       
       # 서비스 발견 관련 설정
       discovery:
@@ -185,23 +190,18 @@ spring:
           enabled: true
           lower-case-service-id: true
           
-      # 레이트 리미팅 설정
-      default-filters:
-        - name: RequestRateLimiter
-          args:
-            redis-rate-limiter.replenishRate: 20
-            redis-rate-limiter.burstCapacity: 40
-            redis-rate-limiter.requestedTokens: 1
+      # 레이트 리미팅 설정 완전히 비활성화
+      default-filters: []
             
   # Kafka 설정
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:29092}
     
-# JWT 설정
-jwt:
-  secret: ${JWT_SECRET:quizplatform_default_secret_key_change_in_production}
-  expiration: ${JWT_EXPIRATION:86400000} # 24시간 (milliseconds)
-  refreshExpiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7일 (milliseconds)
+# JWT 설정 (비활성화됨)
+# jwt:
+#   secret: ${JWT_SECRET:quizplatform_default_secret_key_change_in_production}
+#   expiration: ${JWT_EXPIRATION:86400000} # 24시간 (milliseconds)
+#   refreshExpiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7일 (milliseconds)
     
 # Eureka 클라이언트 설정
 eureka:
@@ -220,7 +220,7 @@ logging:
     org.springframework.cloud.gateway: TRACE
     org.springframework.http.server.reactive: DEBUG
     org.springframework.web.reactive: DEBUG
-    org.springframework.security: TRACE
+    # org.springframework.security: TRACE # 삭제됨
     reactor.netty: DEBUG
     org.springdoc: TRACE
     com.quizplatform: DEBUG

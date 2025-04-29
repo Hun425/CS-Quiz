@@ -13,17 +13,14 @@ spring:
   autoconfigure:
     exclude: 
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.reactive.ReactiveSecurityAutoConfiguration
   
   # OAuth2 설정 제거
   
-  # Redis 설정
+  # Redis 설정 완전 비활성화
   data:
     redis:
-      host: ${REDIS_HOST:redis}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-      client-name: ${spring.application.name}
-      connect-timeout: 5s
+      enabled: false
   
   # Swagger/OpenAPI 설정
   springdoc:
@@ -63,6 +60,12 @@ spring:
     
   cloud:
     gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
       routes:
         # 마이크로서비스 API 라우팅
         - id: user-service
@@ -124,6 +127,8 @@ spring:
           uri: forward:/swagger-ui
           predicates:
             - Path=/swagger-ui/**
+          filters:
+            - name: PreserveHostHeader
             
         - id: openapi-api-docs
           uri: forward:/v3/api-docs
@@ -131,16 +136,21 @@ spring:
             - Path=/v3/api-docs
           filters:
             - SetPath=/v3/api-docs
+            - name: PreserveHostHeader
             
         - id: swagger-ui-redirect
           uri: forward:/swagger-ui/index.html
           predicates:
             - Path=/swagger-ui.html
+          filters:
+            - name: PreserveHostHeader
             
         - id: swagger-webjars
           uri: forward:/webjars
           predicates:
             - Path=/webjars/**
+          filters:
+            - name: PreserveHostHeader
       
       # 서비스 발견 관련 설정
       discovery:
@@ -148,13 +158,8 @@ spring:
           enabled: true
           lower-case-service-id: true
           
-      # 레이트 리미팅 설정
-      default-filters:
-        - name: RequestRateLimiter
-          args:
-            redis-rate-limiter.replenishRate: 20
-            redis-rate-limiter.burstCapacity: 40
-            redis-rate-limiter.requestedTokens: 1
+      # 레이트 리미팅 설정 비활성화
+      default-filters: []
             
   # Kafka 설정
   kafka:

@@ -102,11 +102,11 @@ project(':modules:user') {
     dependencies {
         implementation project(':modules:common')
         
-        implementation 'org.springframework.boot:spring-boot-starter-security'
-        implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
-        implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
-        runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
-        runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+//        implementation 'org.springframework.boot:spring-boot-starter-security'
+//        implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+//        implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+//        runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+//        runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
     }
 }
 
@@ -154,15 +154,21 @@ project(':modules:api-gateway') {
         implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
         implementation 'org.springframework.boot:spring-boot-starter-actuator'
         
-        // Rate Limiting
-        implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
+        // Swagger/OpenAPI 설정
+        implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.3.0'
+        implementation 'org.webjars:swagger-ui:5.11.8'
+        implementation 'org.webjars:webjars-locator-core:0.55'
         
         // Circuit Breaker - 직접 버전 지정
         implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j:3.0.0'
         
-        // Spring MVC 의존성 제외
+        // Rate Limiting과 Redis 의존성 제외
         configurations {
+            all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-data-redis-reactive'
             all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-web'
+            all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-security'
+            all*.exclude group: 'org.springframework.security', module: 'spring-security-config'
+            all*.exclude group: 'org.springframework.security', module: 'spring-security-web'
         }
     }
 }
@@ -175,7 +181,7 @@ project(':modules:eureka-server') {
     
     dependencies {
         implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-server'
-        implementation 'org.springframework.boot:spring-boot-starter-security'
+//        implementation 'org.springframework.boot:spring-boot-starter-security'
     }
 }
 
@@ -188,7 +194,7 @@ dependencies {
     implementation project(':modules:eureka-server')
     
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-security'
+//    implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.kafka:spring-kafka'
