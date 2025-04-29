@@ -221,14 +221,14 @@ export interface ParticipantProgress {
  * - 배틀이 종료된 후 참가자의 최종 성적을 포함
  */
 export interface BattleResult {
+  averageTimeSeconds: number;
+  correctAnswers: number;
+  experienceGained: number;
+  finalScore: number;
+  questionResults: Record<number, boolean>; // 예: { 31: false, 32: true, ... }
   userId: number;
   username: string;
-  finalScore: number;
-  correctAnswers: number;
-  averageTimeSeconds: number;
-  experienceGained: number;
   winner: boolean;
-  questionResults: Record<number, boolean>; // 예: { 31: false, 32: true, ... }
 }
 
 /**

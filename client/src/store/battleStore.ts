@@ -49,8 +49,29 @@ export const useBattleSocketStore = create<BattleSocketState>()(
         set({ startPayload: data, lastUpdatedAt: Date.now() }),
       setStatus: (status) => set({ status, lastUpdatedAt: Date.now() }),
       setProgress: (data) => set({ progress: data, lastUpdatedAt: Date.now() }),
-      setNextQuestion: (data) =>
-        set({ nextQuestion: data, lastUpdatedAt: Date.now() }),
+      setNextQuestion: (data) => {
+        set((state) => ({
+          nextQuestion: data,
+          progress: state.progress
+            ? {
+                ...state.progress,
+                participantProgress: Object.fromEntries(
+                  Object.entries(state.progress.participantProgress).map(
+                    ([userId, p]) => [
+                      userId,
+                      {
+                        ...p,
+                        hasAnsweredCurrent: false,
+                      },
+                    ]
+                  )
+                ),
+              }
+            : null,
+          lastUpdatedAt: Date.now(),
+        }));
+      },
+
       setResult: (data) => set({ result: data, lastUpdatedAt: Date.now() }),
       setEndPayload: (data) =>
         set({ endPayload: data, lastUpdatedAt: Date.now() }),

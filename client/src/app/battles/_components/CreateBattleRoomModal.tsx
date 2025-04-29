@@ -128,7 +128,7 @@ const CreateBattleRoomModal: React.FC<CreateBattleRoomModalProps> = ({
         )}
 
         {/* ✅ 버튼 영역 */}
-        <div className="flex justify-end gap-3 mt-2">
+        <div className="flex justify-end gap-4 mt-1">
           <Button variant="outline" size="small" onClick={onClose}>
             취소
           </Button>
