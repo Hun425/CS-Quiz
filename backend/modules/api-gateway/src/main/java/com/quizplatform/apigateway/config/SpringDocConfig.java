@@ -8,6 +8,10 @@ import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.cloud.gateway.route.RouteDefinition;
+import org.springframework.cloud.gateway.route.RouteDefinitionLocator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -16,6 +20,8 @@ import java.util.List;
  */
 @Configuration
 public class SpringDocConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(SpringDocConfig.class);
 
     @Value("${server.port:8080}")
     private String serverPort;
@@ -42,4 +48,6 @@ public class SpringDocConfig {
                                 .url("http://localhost:" + serverPort)
                                 .description("로컬 개발 서버")));
     }
+
+    // 오류가 발생하는 Bean 제거 - SwaggerConfigController로 대체
 }

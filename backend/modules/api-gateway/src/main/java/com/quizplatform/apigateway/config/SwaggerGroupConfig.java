@@ -11,7 +11,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.HashMap;
 
 @Configuration
 public class SwaggerGroupConfig {
@@ -30,50 +32,71 @@ public class SwaggerGroupConfig {
         }
 
         log.info("Dynamically creating GroupedOpenApi beans from {} route definitions...", definitions.size());
+        
+        // 주요 서비스 ID와 경로를 매핑
+        Map<String, String> servicePathMapping = new HashMap<>();
+        
+        // 모든 라우트를 순회하면서 디버깅
+        for (RouteDefinition route : definitions) {
+            log.debug("Examining route: id={}, uri={}, predicates={}", 
+                      route.getId(), route.getUri(), route.getPredicates());
+        }
 
+        // OpenAPI 문서 라우트 검색 ("-openapi"로 끝나는 ID)
         definitions.stream()
-            // '-service'로 끝나는 ID를 가진 라우트만 필터링 (자동화를 위해)
-            .filter(routeDefinition -> routeDefinition.getId() != null && routeDefinition.getId().matches(".*-service"))
+            .filter(routeDefinition -> routeDefinition.getId() != null && routeDefinition.getId().endsWith("-openapi"))
             .forEach(routeDefinition -> {
-                String serviceId = routeDefinition.getId();
-                // 라우트 정의에서 Path Predicate를 찾아 경로 패턴 추출 시도
+                String serviceId = routeDefinition.getId().replace("-openapi", "-service");
+                
+                // Path Predicate 찾기
                 Optional<String> pathPredicate = routeDefinition.getPredicates().stream()
                         .filter(pd -> "Path".equalsIgnoreCase(pd.getName()))
                         .flatMap(pd -> pd.getArgs().values().stream())
                         .findFirst();
-
-                // Path Predicate가 있으면 해당 패턴 사용, 없으면 기본 패턴 사용 (예: /serviceId/**)
-                // 현재 설정에서는 /api/users/** 등을 사용하므로 pathPredicate 사용이 적절
-                String pathPattern = pathPredicate.orElse("/" + serviceId.replace("-service", "") + "/**"); // 기본값 fallback
-
-                log.info("Creating GroupedOpenApi for route: id={}, pathPattern={}", serviceId, pathPattern);
-                groups.add(GroupedOpenApi.builder()
-                        // `pathsToMatch`는 게이트웨이로 들어오는 요청 경로 기준이어야 함
-                        .pathsToMatch(pathPattern)
-                        .group(serviceId) // 그룹 이름은 서비스 ID 그대로 사용
-                        .build());
+                
+                if (pathPredicate.isPresent()) {
+                    String path = pathPredicate.get();
+                    log.debug("Found OpenAPI route: id={}, path={}", routeDefinition.getId(), path);
+                    
+                    // 서비스 이름 추출 (예: /v3/api-docs/users -> users)
+                    String serviceName = path.replaceAll("/v3/api-docs/", "");
+                    
+                    // 명시적으로 그룹 생성
+                    groups.add(GroupedOpenApi.builder()
+                            .group(serviceId)
+                            .pathsToMatch("/api/" + serviceName + "/**") // 실제 API 경로와 일치
+                            .build());
+                }
             });
 
-        // 게이트웨이 자체 API 그룹 추가 (필요하다면)
-        // 주의: 게이트웨이 자체 API를 위한 라우트가 application.yml에 정의되어 있어야 함
-        // 예: id: api-gateway-internal, uri: http://localhost:${server.port}, predicates: Path=/api/internal/**
-        // definitions.stream()
-        //     .filter(routeDefinition -> "api-gateway-internal".equals(routeDefinition.getId())) // 게이트웨이 라우트 ID
-        //     .findFirst()
-        //     .ifPresent(routeDefinition -> {
-        //         Optional<String> pathPredicate = routeDefinition.getPredicates().stream()
-        //                 .filter(pd -> "Path".equalsIgnoreCase(pd.getName()))
-        //                 .flatMap(pd -> pd.getArgs().values().stream())
-        //                 .findFirst();
-        //         String pathPattern = pathPredicate.orElse("/api/internal/**"); // 기본값
-        //         log.info("Creating GroupedOpenApi for gateway itself: id={}, pathPattern={}", routeDefinition.getId(), pathPattern);
-        //         groups.add(GroupedOpenApi.builder()
-        //                 .pathsToMatch(pathPattern)
-        //                 .group("api-gateway") // 그룹 이름
-        //                 .build());
-        //     });
-
-
+        // 서비스 라우트 처리 ("-service"로 끝나는 ID)
+        definitions.stream()
+            .filter(routeDefinition -> routeDefinition.getId() != null && routeDefinition.getId().endsWith("-service"))
+            .forEach(routeDefinition -> {
+                String serviceId = routeDefinition.getId();
+                
+                // Path Predicate 찾기
+                Optional<String> pathPredicate = routeDefinition.getPredicates().stream()
+                        .filter(pd -> "Path".equalsIgnoreCase(pd.getName()))
+                        .flatMap(pd -> pd.getArgs().values().stream())
+                        .findFirst();
+                
+                if (pathPredicate.isPresent()) {
+                    String originalPath = pathPredicate.get();
+                    log.info("Creating GroupedOpenApi for route: id={}, originalPath={}", serviceId, originalPath);
+                    
+                    // 원래 경로 그대로 사용 (API Gateway 라우팅 설정과 일치)
+                    if (!groups.stream().anyMatch(api -> api.getGroup().equals(serviceId))) {
+                        groups.add(GroupedOpenApi.builder()
+                                .pathsToMatch(originalPath)
+                                .group(serviceId)
+                                .build());
+                    }
+                } else {
+                    log.warn("No Path predicate found for route: {}", serviceId);
+                }
+            });
+        
         log.info("Successfully created {} GroupedOpenApi beans.", groups.size());
         return groups;
     }
