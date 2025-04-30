@@ -1,23 +1,18 @@
 package com.quizplatform.apigateway.config;
 
-import org.springdoc.core.models.GroupedOpenApi;
-import org.springdoc.core.properties.AbstractSwaggerUiConfigProperties;
-import org.springdoc.core.properties.SwaggerUiConfigParameters;
-import org.springdoc.core.properties.SwaggerUiConfigProperties;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 /**
- * SpringDoc과 Swagger UI의 통합 설정을 담당하는 클래스
- * 시큐리티와 레이트 리미팅이 제거된 간소화된 버전
- *
- * @author 채기훈
- * @since JDK 21.0.6 Eclipse Temurin
+ * OpenAPI 문서화 설정 클래스 (간소화 버전)
  */
 @Configuration
 public class SpringDocConfig {
@@ -26,46 +21,25 @@ public class SpringDocConfig {
     private String serverPort;
 
     /**
-     * 각 마이크로서비스의 API 문서를 Swagger UI에 통합하는 설정
-     * @param swaggerUiConfig Swagger UI 설정 속성
-     * @return 설정된 SwaggerUiConfigParameters 객체
+     * API Gateway OpenAPI 설정
      */
-    @Primary
     @Bean
-    public SwaggerUiConfigParameters swaggerUiConfigParameters(
-            SwaggerUiConfigProperties swaggerUiConfig) {
-        
-        // 기존 설정된 URL 목록 가져오기 (또는 새로운 Set 생성)
-        Set<AbstractSwaggerUiConfigProperties.SwaggerUrl> urls = new HashSet<>();
-        
-        // API Gateway 자체 문서 URL 추가
-        AbstractSwaggerUiConfigProperties.SwaggerUrl gatewayUrl = new AbstractSwaggerUiConfigProperties.SwaggerUrl();
-        gatewayUrl.setName("API Gateway");
-        gatewayUrl.setUrl("/v3/api-docs/api-gateway");
-        urls.add(gatewayUrl);
-        
-        // 사용자 서비스 API 문서 URL 추가
-        AbstractSwaggerUiConfigProperties.SwaggerUrl userUrl = new AbstractSwaggerUiConfigProperties.SwaggerUrl();
-        userUrl.setName("User Service");
-        userUrl.setUrl("/v3/api-docs/users");
-        urls.add(userUrl);
-        
-        // 퀴즈 서비스 API 문서 URL 추가
-        AbstractSwaggerUiConfigProperties.SwaggerUrl quizUrl = new AbstractSwaggerUiConfigProperties.SwaggerUrl();
-        quizUrl.setName("Quiz Service");
-        quizUrl.setUrl("/v3/api-docs/quizzes");
-        urls.add(quizUrl);
-        
-        // 배틀 서비스 API 문서 URL 추가
-        AbstractSwaggerUiConfigProperties.SwaggerUrl battleUrl = new AbstractSwaggerUiConfigProperties.SwaggerUrl();
-        battleUrl.setName("Battle Service");
-        battleUrl.setUrl("/v3/api-docs/battles");
-        urls.add(battleUrl);
-        
-        // 설정된 URL 목록 적용
-        swaggerUiConfig.setUrls(urls);
-        
-        // SwaggerUiConfigParameters 객체 생성 및 반환
-        return new SwaggerUiConfigParameters(swaggerUiConfig);
+    public OpenAPI apiGatewayOpenAPI() {
+        return new OpenAPI()
+                .info(new Info()
+                        .title("Quiz Platform API")
+                        .description("Quiz Platform 마이크로서비스 API 문서")
+                        .version("v0.1.0")
+                        .contact(new Contact()
+                                .name("채기훈")
+                                .email("deokdory@gmail.com")
+                                .url("https://github.com/deokdory"))
+                        .license(new License()
+                                .name("MIT")
+                                .url("https://opensource.org/licenses/MIT")))
+                .servers(List.of(
+                        new Server()
+                                .url("http://localhost:" + serverPort)
+                                .description("로컬 개발 서버")));
     }
 }

@@ -6,6 +6,25 @@
 
     dependencies {
         implementation project(':modules:common')
+        
+        // SpringDoc OpenAPI (WebFlux) - Spring Boot 3.2.x 호환 버전
+        implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.3.0'
+        
+        implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
+        implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+        implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
+        // Circuit Breaker - 직접 버전 지정
+        implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j:3.0.0'
 
+        // Rate Limiting과 Redis 의존성 제외
+        configurations {
+            all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-data-redis-reactive'
+            all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-web'
+            all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-security'
+            all*.exclude group: 'org.springframework.security', module: 'spring-security-config'
+            all*.exclude group: 'org.springframework.security', module: 'spring-security-web'
+            // 다른 모듈에서 오는 2.2.0 버전 제외
+            all*.exclude group: 'org.springdoc', module: 'springdoc-openapi-starter-webmvc-ui'
+        }
     }

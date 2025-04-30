@@ -20,53 +20,27 @@ spring:
     redis:
       enabled: false
       
-
-  
-  # Swagger/OpenAPI 설정
+  # 간소화된 SpringDoc 설정 -> 자동 설정을 위해 제거 또는 주석 처리
   springdoc:
     api-docs:
-      enabled: true
-      path: /v3/api-docs
+      enabled: true # API 문서 생성 자체는 활성화
     swagger-ui:
-      enabled: true
-      path: /swagger-ui.html
-      configUrl: /v3/api-docs/swagger-config
-      urls:
-        - url: /v3/api-docs/api-gateway
-          name: API Gateway
-        - url: /v3/api-docs/users
-          name: User Service 
-        - url: /v3/api-docs/quizzes
-          name: Quiz Service
-        - url: /v3/api-docs/battles
-          name: Battle Service
-      use-root-path: true
-      urls-primary-name: API Gateway # 기본으로 표시될 API 문서
-      layout: BaseLayout
-      groups-order: DESC
-      operationsSorter: alpha
-      tagsSorter: alpha
-      display-request-duration: true
-      deep-linking: true
-      persistent-authorization: true
-      disable-swagger-default-url: false
-      supported-submit-methods: ["get", "put", "post", "delete", "options", "head", "patch", "trace"]
-      try-it-out-enabled: true
-    # API 그룹 기본 포함 여부 설정
-    group-configs:
-      - group: api-gateway
-        paths-to-match: /api/gateway/**
-      - group: auth
-        paths-to-match: /api/auth/** 
-      - group: users
-        paths-to-match: /api/users/**
-      - group: quizzes
-        paths-to-match: /api/quizzes/**
-      - group: battles
-        paths-to-match: /api/battles/**
-    show-actuator: true
-    cache:
-      disabled: true
+      enabled: true # Swagger UI 자체는 활성화
+      # 다른 서비스 문서 표시를 위한 URL 설정 -> 자동 설정을 위해 제거
+      # urls:
+      #   - url: /v3/api-docs/api-gateway
+      #     name: API Gateway
+      #   - url: /v3/api-docs/users
+      #     name: User Service
+      #   - url: /v3/api-docs/quizzes
+      #     name: Quiz Service
+      #   - url: /v3/api-docs/battles
+      #     name: Battle Service
+      # urls.primaryName: API Gateway
+      # configUrl: /v3/api-docs/swagger-config
+    # Springdoc의 서비스 검색 기능 비활성화 설정 제거 (기본값은 활성화)
+    # discovery:
+    #   enabled: false
     
   cloud:
     gateway:
@@ -99,91 +73,64 @@ spring:
           filters:
             - RewritePath=/api/battles/(?<path>.*), /$\{path}
             
-        # Swagger 문서 라우팅
+        # Swagger 문서 라우팅 - 복원
         - id: user-openapi
           uri: lb://user-service
           predicates:
-            - Path=/v3/api-docs/users/**
+            - Path=/v3/api-docs/users
           filters:
-            - RewritePath=/v3/api-docs/users/(?<path>.*), /v3/api-docs/$\{path}
-            - RewritePath=/v3/api-docs/users$, /v3/api-docs
-          metadata:
-            response-timeout: 10000
-            connect-timeout: 10000
-
+            - RewritePath=/v3/api-docs/users, /v3/api-docs
+          
         - id: quiz-openapi
           uri: lb://quiz-service
           predicates:
-            - Path=/v3/api-docs/quizzes/**
+            - Path=/v3/api-docs/quizzes
           filters:
-            - RewritePath=/v3/api-docs/quizzes/(?<path>.*), /v3/api-docs/$\{path}
-            - RewritePath=/v3/api-docs/quizzes$, /v3/api-docs
-          metadata:
-            response-timeout: 10000
-            connect-timeout: 10000
-
+            - RewritePath=/v3/api-docs/quizzes, /v3/api-docs
+          
         - id: battle-openapi
           uri: lb://battle-service
           predicates:
-            - Path=/v3/api-docs/battles/**
+            - Path=/v3/api-docs/battles
           filters:
-            - RewritePath=/v3/api-docs/battles/(?<path>.*), /v3/api-docs/$\{path}
-            - RewritePath=/v3/api-docs/battles$, /v3/api-docs
-          metadata:
-            response-timeout: 10000
-            connect-timeout: 10000
+            - RewritePath=/v3/api-docs/battles, /v3/api-docs
+          
+        # API Gateway 자체 OpenAPI 문서 라우팅 - 제거
+        # - id: gateway-openapi
+        #   uri: forward:/v3/api-docs # 게이트웨이 내부의 /v3/api-docs 엔드포인트로 포워딩
+        #   predicates:
+        #     - Path=/v3/api-docs/api-gateway
 
-        # API Gateway 자체 OpenAPI 문서
-        - id: gateway-openapi
-          uri: forward:/v3/api-docs
-          predicates:
-            - Path=/v3/api-docs/api-gateway
-          filters:
-            - SetPath=/v3/api-docs
-        
-        # Swagger UI 리소스 라우팅 (보안 및 레이트 리미팅 필터 제거)
-        - id: openapi-swagger-ui
-          uri: forward:/swagger-ui
-          predicates:
-            - Path=/swagger-ui/**
-          filters:
-            - name: PreserveHostHeader
-          order: -10000
-            
-        - id: openapi-api-docs
-          uri: forward:/v3/api-docs
-          predicates:
-            - Path=/v3/api-docs
-          filters:
-            - SetPath=/v3/api-docs
-            - name: PreserveHostHeader
-          order: -10000
-            
-        - id: swagger-ui-redirect
-          uri: forward:/swagger-ui/index.html
-          predicates:
-            - Path=/swagger-ui.html
-          filters:
-            - name: PreserveHostHeader
-          order: -10000
-            
-        # Swagger UI 리소스 라우팅
-        - id: swagger-webjars
-          uri: forward:/webjars
-          predicates:
-            - Path=/webjars/**
-          filters:
-            - name: PreserveHostHeader
-          order: -10000
-            
-        # 루트 경로를 Swagger UI로 리디렉션
-        - id: swagger-root
-          uri: forward:/swagger-ui/index.html
-          predicates:
-            - Path=/
-          filters:
-            - name: PreserveHostHeader
-      
+        # Swagger Config Endpoint Routing - 제거
+        # - id: swagger-config
+        #   uri: forward:/v3/api-docs/swagger-config # 게이트웨이 내부 엔드포인트로 포워딩
+        #   predicates:
+        #     - Path=/v3/api-docs/swagger-config
+        #   filters:
+        #     - name: PreserveHostHeader
+
+        # Swagger UI Resources Routing - 기본적으로 Spring Boot가 처리하므로 주석 유지
+#        - id: swagger-ui-html
+#          uri: forward:///swagger-ui.html # 게이트웨이 내부 리소스로 포워딩
+#          predicates:
+#            - Path=/swagger-ui.html
+#          filters:
+#            - name: PreserveHostHeader
+#
+#        - id: swagger-ui-resources
+#          uri: forward:///swagger-ui # 게이트웨이 내부 리소스로 포워딩
+#          predicates:
+#            - Path=/swagger-ui/**
+#          filters:
+#            - name: PreserveHostHeader
+#
+#        - id: swagger-webjars
+#          uri: forward:///webjars # 게이트웨이 내부 리소스로 포워딩
+#          predicates:
+#            - Path=/webjars/**
+#          filters:
+#            - name: PreserveHostHeader
+
       # 서비스 발견 관련 설정
       discovery:
         locator:
@@ -196,12 +143,6 @@ spring:
   # Kafka 설정
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:29092}
-    
-# JWT 설정 (비활성화됨)
-# jwt:
-#   secret: ${JWT_SECRET:quizplatform_default_secret_key_change_in_production}
-#   expiration: ${JWT_EXPIRATION:86400000} # 24시간 (milliseconds)
-#   refreshExpiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7일 (milliseconds)
     
 # Eureka 클라이언트 설정
 eureka:
@@ -217,12 +158,11 @@ eureka:
 logging:
   level:
     root: INFO
-    org.springframework.cloud.gateway: TRACE
-    org.springframework.http.server.reactive: DEBUG
-    org.springframework.web.reactive: DEBUG
-    # org.springframework.security: TRACE # 삭제됨
-    reactor.netty: DEBUG
-    org.springdoc: TRACE
+    org.springframework.cloud.gateway: INFO
+    org.springframework.http.server.reactive: INFO
+    org.springframework.web.reactive: INFO
+    reactor.netty: INFO
+    org.springdoc: INFO
     com.quizplatform: DEBUG
     
 # Actuator 설정
