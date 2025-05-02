@@ -17,6 +17,7 @@ import com.quizplatform.core.service.quiz.DailyQuizService;
 import com.quizplatform.core.service.quiz.RecommendationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -112,6 +113,7 @@ public class RecommendationServiceImpl implements RecommendationService {
      * @return 인기 퀴즈 요약 정보 DTO 리스트
      */
     @Override
+    @Cacheable(value = "popularQuizzes", key = "'popular:' + #limit", cacheResolver = "trackedCacheResolver")
     public List<QuizSummaryResponse> getPopularQuizzes(int limit) {
         log.debug("인기 퀴즈 추천 시작 - limit: {}", limit);
 
@@ -144,6 +146,7 @@ public class RecommendationServiceImpl implements RecommendationService {
      * @throws BusinessException 해당 tagId의 태그를 찾을 수 없을 경우 (TAG_NOT_FOUND)
      */
     @Override
+    @Cacheable(value = "quizRecommendations", key = "'category:' + #tagId + ':limit-' + #limit", cacheResolver = "trackedCacheResolver")
     public List<QuizSummaryResponse> getCategoryRecommendations(Long tagId, int limit) {
         log.debug("카테고리 기반 퀴즈 추천 시작 - tagId: {}, limit: {}", tagId, limit);
 
@@ -195,6 +198,7 @@ public class RecommendationServiceImpl implements RecommendationService {
      * @throws BusinessException 유효하지 않은 난이도 문자열이 입력된 경우 (INVALID_INPUT_VALUE)
      */
     @Override
+    @Cacheable(value = "quizRecommendations", key = "'difficulty:' + #difficultyStr + ':limit-' + #limit", cacheResolver = "trackedCacheResolver")
     public List<QuizSummaryResponse> getDifficultyBasedRecommendations(String difficultyStr, int limit) {
         log.debug("난이도 기반 퀴즈 추천 시작 - difficulty: {}, limit: {}", difficultyStr, limit);
 
@@ -237,6 +241,7 @@ public class RecommendationServiceImpl implements RecommendationService {
      * @return 데일리 퀴즈 관련 추천 퀴즈 요약 정보 DTO 리스트
      */
     @Override
+    @Cacheable(value = "quizRecommendations", key = "'daily:limit-' + #limit", cacheResolver = "trackedCacheResolver")
     public List<QuizSummaryResponse> getDailyRelatedRecommendations(int limit) {
         log.debug("데일리 퀴즈 관련 추천 시작 - limit: {}", limit);
 

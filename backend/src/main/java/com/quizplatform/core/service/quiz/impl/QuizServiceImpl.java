@@ -16,6 +16,8 @@ import com.quizplatform.core.service.common.EntityMapperService;
 import com.quizplatform.core.service.quiz.QuizAttemptService;
 import com.quizplatform.core.service.quiz.QuizService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -45,6 +47,7 @@ public class QuizServiceImpl implements QuizService {
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = {"quizzes", "quizSearch", "quizRecommendations", "popularQuizzes"}, allEntries = true)
     public QuizResponse createQuiz(Long creatorId, QuizCreateRequest request) {
         // 퀴즈 생성자 조회
         User creator = userRepository.findById(creatorId)
@@ -79,6 +82,7 @@ public class QuizServiceImpl implements QuizService {
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = {"quizzes", "quizDetails", "quizSearch", "quizRecommendations", "popularQuizzes", "quizStatistics"}, allEntries = true)
     public QuizResponse updateQuiz(Long quizId, QuizCreateRequest request) {
         Quiz quiz = quizRepository.findByIdWithAllDetails(quizId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND, "Quiz not found with id: " + quizId));
@@ -140,6 +144,7 @@ public class QuizServiceImpl implements QuizService {
     }
 
     @Override
+    @Cacheable(value = "quizSearch", key = "'search:' + #condition.toString() + ':page-' + #pageable.pageNumber + ':size-' + #pageable.pageSize", cacheResolver = "trackedCacheResolver")
     public Page<QuizSummaryResponse> searchQuizzesDto(QuizSubmitRequest.QuizSearchCondition condition, Pageable pageable) {
         // 조건 유효성 검사
         condition.validate();
@@ -150,6 +155,7 @@ public class QuizServiceImpl implements QuizService {
     }
 
     @Override
+    @Cacheable(value = "quizDetails", key = "'quiz:' + #quizId", cacheResolver = "trackedCacheResolver")
     public QuizDetailResponse getQuizWithoutQuestions(Long quizId) {
         Quiz quiz = quizRepository.findByIdWithDetails(quizId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND));
@@ -158,6 +164,7 @@ public class QuizServiceImpl implements QuizService {
     }
 
     @Override
+    @Cacheable(value = "quizzes", key = "'full:' + #quizId", cacheResolver = "trackedCacheResolver")
     public QuizResponse getQuizWithQuestions(Long quizId) {
         Quiz quiz = quizRepository.findByIdWithAllDetails(quizId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND));
@@ -175,6 +182,7 @@ public class QuizServiceImpl implements QuizService {
     }
 
     @Override
+    @Cacheable(value = "quizSearch", key = "'tag:' + #tagId + ':page-' + #pageable.pageNumber + ':size-' + #pageable.pageSize", cacheResolver = "trackedCacheResolver")
     public Page<QuizSummaryResponse> getQuizzesByTag(Long tagId, Pageable pageable) {
         Tag tag = tagRepository.findById(tagId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TAG_NOT_FOUND,
@@ -185,6 +193,7 @@ public class QuizServiceImpl implements QuizService {
     }
 
     @Override
+    @Cacheable(value = "quizStatistics", key = "'stats:' + #quizId", cacheResolver = "trackedCacheResolver")
     public QuizStatisticsResponse getQuizStatistics(Long quizId) {
         Quiz quiz = quizRepository.findByIdWithAllDetails(quizId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND, "Quiz not found with id: " + quizId));

@@ -1,0 +1,21 @@
+# 디버깅을 위한 로깅 설정
+
+spring:
+  # 캐시 관련 설정
+  cache:
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=600s,recordStats=true
+    type: caffeine
+
+# 로깅 설정
+logging:
+  level:
+    com.quizplatform.core.aop.CaffeineCacheAspect: DEBUG
+    com.quizplatform.core.controller.interceptor.CacheStatusInterceptor: DEBUG
+    com.quizplatform.core.filter.ThreadLocalCleanupFilter: DEBUG
+    com.quizplatform.core.service.quiz.impl: DEBUG
+    org.springframework.cache: DEBUG
+    
+    # 기타 로깅은 INFO 유지
+    root: INFO
+    com.quizplatform: INFO 

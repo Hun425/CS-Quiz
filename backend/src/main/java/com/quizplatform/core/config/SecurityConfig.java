@@ -79,8 +79,17 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                // 헤더 설정 - 캐시 컨트롤은 기본 설정 유지
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.sameOrigin())
+                        .xssProtection(xss -> xss.disable())
+                        // .cacheControl(cache -> cache.disable()) // 캐시 컨트롤 비활성화 제거
+                        // 기본 캐시 제어 헤더 비활성화 추가!
+                        .cacheControl(cache -> cache.disable())
+                )
                 // CSRF 보호 비활성화 (REST API는 상태를 유지하지 않으므로)
                 .csrf(AbstractHttpConfigurer::disable)
+
                 // CORS 설정
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
@@ -93,7 +102,13 @@ public class SecurityConfig {
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     config.setAllowedHeaders(List.of("*"));
                     config.setAllowCredentials(true);
-                    config.setExposedHeaders(List.of("Authorization"));
+                    config.setExposedHeaders(List.of(
+                            "Authorization",
+                            "X-Cache-Status",
+                            "x-cache-status",
+                            "X-Cache",
+                            "x-cache"
+                    ));
                     return config;
                 }))
                 // 세션 관리 설정 (무상태 세션 정책)
