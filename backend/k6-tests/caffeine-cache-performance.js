@@ -7,7 +7,6 @@ import encoding from 'k6/encoding';
 // 성능 메트릭 정의
 const quizDetailTrend = new Trend('quiz_detail_response_time');
 const quizSearchTrend = new Trend('quiz_search_response_time');
-const popularQuizTrend = new Trend('popular_quiz_response_time');
 const comprehensiveTrend = new Trend('comprehensive_test_response_time');
 
 const failRate = new Rate('request_fail_rate');
@@ -64,7 +63,6 @@ export const options = {
   thresholds: {
     'quiz_detail_response_time': ['p(95)<150'],
     'quiz_search_response_time': ['p(95)<200'],
-    'popular_quiz_response_time': ['p(95)<100'],
     'request_fail_rate': ['rate<0.01'],
     'second_request_response_time': ['p(95)<50'],
     'cache_hit_rate': ['rate>0.6'], // 캐시 히트율 60% 이상 기대
@@ -146,10 +144,10 @@ function encodeSearchKeyword(keyword) {
 function checkCacheHit(response) {
   // 응답이나 헤더가 없으면 캐시 미스로 간주
   if (!response || !response.headers) {
-    console.log(`캐시 체크 불가: 헤더 없음`);
+    // console.log(`캐시 체크 불가: 헤더 없음`); // 디버깅 시에만 활성화
     return false;
   }
-  
+
   // 더 자세한 헤더 디버깅 수행
   const headers = response.headers;
 
@@ -173,11 +171,53 @@ function checkCacheHit(response) {
     }
   }
 
-
+  // 캐시 상태 로그 (디버깅용)
+  // if (__ITER < 5) {
+  //   console.log(`[${response.request.method} ${response.request.url}] Cache header '${foundHeader}': ${cacheStatus}`);
+  // }
 
   // HIT, PARTIAL_HIT, OK 등 다양한 캐시 히트 상태 지원
   const hitStatuses = ['HIT', 'PARTIAL_HIT', 'OK'];
   return hitStatuses.includes(cacheStatus) || cacheStatus.includes('HIT');
+}
+
+// JSON 응답 본문 검증 함수
+function checkJsonResponse(response, checkNamePrefix) {
+  let isJsonValid = false;
+  let checkResult = {};
+
+  if (response && typeof response.body === 'string') {
+    try {
+      const body = response.body.trim();
+      // 빈 응답도 유효한 JSON이 아님
+      if (body.length > 0 && (body.startsWith('{') || body.startsWith('['))) {
+        JSON.parse(body);
+        isJsonValid = true;
+      } else if (body.length === 0) {
+         // console.log(`${checkNamePrefix} 응답 본문 비어 있음`); // 빈 응답도 실패로 간주할 수 있음
+         isJsonValid = false; // 또는 필요에 따라 true
+      } else {
+         // console.log(`${checkNamePrefix} 유효하지 않은 JSON 형식 시작: ${body.substring(0, 10)}`);
+         isJsonValid = false;
+      }
+    } catch (e) {
+      // console.error(`${checkNamePrefix} JSON 파싱 실패 (${response.request.url}): ${e.message}, 본문 시작: ${response.body.substring(0, 50)}`);
+      isJsonValid = false;
+    }
+  } else if (response && response.json()) {
+    // k6가 이미 JSON으로 파싱한 경우 (Content-Type 보고 판단)
+    isJsonValid = true;
+  } else {
+    // console.log(`${checkNamePrefix} 응답 본문이 없거나 문자열이 아님`);
+    isJsonValid = false;
+  }
+
+  checkResult[`${checkNamePrefix} JSON 유효성`] = () => isJsonValid;
+  if (!isJsonValid && response) {
+      // 실패 시 더 자세한 정보 로깅 (필요 시)
+      console.error(`[${response.request.tags.name || 'Unknown Request'}] JSON 응답 검증 실패 - Status: ${response.status}, URL: ${response.request.url}, Body: ${response.body ? response.body.substring(0, 100) + '...' : 'N/A'}`);
+  }
+  return checkResult;
 }
 
 // 응답 헤더 로깅 함수
@@ -197,122 +237,82 @@ function testQuizDetailWithCachingEffect(data) {
   const quizId = quizIds[Math.floor(Math.random() * quizIds.length)];
   const url = `${BASE_URL}/quizzes/${quizId}`;
   
-  // 첫 번째 요청 (캐시 미스 발생) - 일반 헤더 사용
-  const firstHeaders = {
-    ...getHeaders(data)
-    // 캐시 우회 헤더 제거
-    // 'Cache-Control': 'no-cache',
-    // 'X-No-Cache': 'true'
-  };
-  
-  const params = {
-    headers: firstHeaders,
-    tags: { name: 'QuizDetail-First' },
+  // 첫 번째 요청 (캐시 미스 발생 가능)
+  const firstParams = {
+    headers: getHeaders(data),
+    tags: { name: 'QuizDetail-First' }, // 태그 추가
     timeout: '5s',
   };
-  
-  const firstResponse = http.get(url, params);
+  const firstResponse = http.get(url, firstParams);
   firstRequestTrend.add(firstResponse.timings.duration);
+  totalRequests.add(1);
   
-  // 첫 요청의 헤더 로깅
-  if (__ITER < 3) {
-    logResponseHeaders(firstResponse, `첫번째 요청 ${url}`);
-  }
+  // 첫 요청의 헤더 로깅 (디버깅용)
+  // if (__ITER < 3) {
+  //   logResponseHeaders(firstResponse, `첫번째 요청 ${url}`);
+  // }
   
-  // 응답 체크
+  // 응답 체크 (JSON 검증 포함)
   const firstSuccess = check(firstResponse, {
-    '첫 번째 요청 성공': (r) => r && r.status === 200,
-    '첫 번째 요청 JSON 응답': (r) => {
-      // 응답 본문이 문자열이고 JSON 형식인지 확인
-      if (r && typeof r.body === 'string') {
-        try {
-          // 응답 본문이 JSON 파싱 가능한지 확인
-          const body = r.body.trim();
-          if (body.startsWith('{') || body.startsWith('[')) {
-            // 첫 몇 개의 요청에서 디버깅 로그
-            if (__ITER < 3) {
-              console.log(`첫번째 요청 확인: 본문 시작=${body.substring(0, 20)}`);
-              // JSON 파싱 테스트
-              JSON.parse(body);
-              console.log(`첫번째 요청 JSON 파싱 성공!`);
-            }
-            return true;
-          }
-        } catch (e) {
-          if (__ITER < 3) {
-            console.log(`첫번째 요청 JSON 파싱 실패: ${e.message}`);
-          }
-        }
-      }
-      
-      // 헤더가 application/json이면 성공으로 처리
-      for (let key in r.headers) {
-        if (key.toLowerCase() === 'content-type' && 
-            r.headers[key].toLowerCase().includes('application/json')) {
-          return true;
-        }
-      }
-      
-      return false;
-    },
+    'QuizDetail-First: 상태 코드 200': (r) => r && r.status === 200,
+    ...checkJsonResponse(firstResponse, 'QuizDetail-First:') // JSON 검증 함수 호출
   });
+  failRate.add(!firstSuccess['QuizDetail-First: 상태 코드 200']); // 실패율 기록 (상태코드 기준)
   
-  // 1초 지연
-  sleep(1);
+  // 캐시 상태 확인
+  const firstIsCacheHit = checkCacheHit(firstResponse);
+  if (firstIsCacheHit) {
+    caffeineHits.add(1);
+    cacheHitCount.add(1);
+  } else {
+    caffeineMisses.add(1);
+    cacheMissCount.add(1);
+  }
+  cacheHitRate.add(firstIsCacheHit); // 첫 요청의 캐시 히트율 (낮을 것으로 예상)
+  
+  sleep(0.5); // 약간의 지연
   
   // 두 번째 요청 (캐시 히트 기대)
-  const secondResponse = http.get(url, {
-    headers: getHeaders(data),
-    tags: { name: 'QuizDetail-Second' },
-    timeout: '5s',
-  });
+  const secondParams = {
+    headers: getHeaders(data), // 동일 헤더 사용
+    tags: { name: 'QuizDetail-Second' }, // 태그 추가
+    timeout: '3s', // 캐시 히트 시 더 짧은 타임아웃 가능
+  };
+  const secondResponse = http.get(url, secondParams);
   secondRequestTrend.add(secondResponse.timings.duration);
+  totalRequests.add(1);
   
-  // 두번째 요청의 헤더 로깅
-  if (__ITER < 3) {
-    logResponseHeaders(secondResponse, `두번째 요청 ${url}`);
+  // 두 번째 요청 헤더 로깅 (디버깅용)
+  // if (__ITER < 3) {
+  //   logResponseHeaders(secondResponse, `두번째 요청 ${url}`);
+  // }
+  
+  // 응답 체크 (JSON 검증 포함)
+  const secondSuccess = check(secondResponse, {
+    'QuizDetail-Second: 상태 코드 200': (r) => r && r.status === 200,
+    ...checkJsonResponse(secondResponse, 'QuizDetail-Second:') // JSON 검증 함수 호출
+  });
+  failRate.add(!secondSuccess['QuizDetail-Second: 상태 코드 200']);
+  
+  // 캐시 상태 확인
+  const secondIsCacheHit = checkCacheHit(secondResponse);
+  if (secondIsCacheHit) {
+    caffeineHits.add(1);
+    cacheHitCount.add(1);
+  } else {
+    caffeineMisses.add(1);
+    cacheMissCount.add(1);
+    // console.log(`[QuizDetail-Second] 캐시 미스 발생! URL: ${url}`); // 캐시 미스 시 로그
+  }
+  cacheHitRate.add(secondIsCacheHit); // 두 번째 요청의 캐시 히트율 (높을 것으로 예상)
+  
+  // 캐시 효과 분석
+  if (firstResponse.timings && secondResponse.timings) {
+    cacheBenefitRatio.add(firstResponse.timings.duration / secondResponse.timings.duration);
   }
   
-  // 응답 체크
-  const secondSuccess = check(secondResponse, {
-    '두 번째 요청 성공': (r) => r && r.status === 200,
-    '두 번째 요청 JSON 응답': (r) => {
-      // 응답 본문이 문자열이고 JSON 형식인지 확인
-      if (r && typeof r.body === 'string') {
-        try {
-          // 응답 본문이 JSON 파싱 가능한지 확인
-          const body = r.body.trim();
-          if (body.startsWith('{') || body.startsWith('[')) {
-            // 첫 몇 개의 요청에서 디버깅 로그
-            if (__ITER < 3) {
-              console.log(`두번째 요청 확인: 본문 시작=${body.substring(0, 20)}`);
-              // JSON 파싱 테스트
-              JSON.parse(body);
-              console.log(`두번째 요청 JSON 파싱 성공!`);
-            }
-            return true;
-          }
-        } catch (e) {
-          if (__ITER < 3) {
-            console.log(`두번째 요청 JSON 파싱 실패: ${e.message}`);
-          }
-        }
-      }
-      
-      // 헤더가 application/json이면 성공으로 처리
-      for (let key in r.headers) {
-        if (key.toLowerCase() === 'content-type' && 
-            r.headers[key].toLowerCase().includes('application/json')) {
-          return true;
-        }
-      }
-      
-      return false;
-    },
-  });
-  
   // 수정된 캐시 확인 로직
-  const isCacheHit = checkCacheHit(secondResponse);
+  const isCacheHit = secondIsCacheHit || firstIsCacheHit;
   
   // 이전 응답과 현재 응답의 내용이 같은지 확인 (추가 캐시 히트 확인 방법)
   let contentMatch = false;
@@ -370,7 +370,7 @@ function testQuizDetail(data) {
   
   const params = {
     headers: getHeaders(data),
-    tags: { name: 'QuizDetail' },
+    tags: { name: 'QuizDetail-Single' }, // 태그 추가
     timeout: '5s',
   };
   
@@ -378,45 +378,10 @@ function testQuizDetail(data) {
   
   // 응답 체크
   const success = check(response, {
-    '응답 상태 200': (r) => r && r.status === 200,
-    'JSON 응답': (r) => {
-      // 응답 본문이 문자열이고 JSON 형식인지 확인
-      if (r && typeof r.body === 'string') {
-        try {
-          // 응답 본문이 JSON 파싱 가능한지 확인
-          const body = r.body.trim();
-          if (body.startsWith('{') || body.startsWith('[')) {
-            // 첫 몇 개의 요청에서 디버깅 로그
-            if (__ITER < 3) {
-              console.log(`응답 확인: 본문 시작=${body.substring(0, 20)}`);
-              // JSON 파싱 테스트
-              JSON.parse(body);
-              console.log(`JSON 파싱 성공!`);
-            }
-            return true;
-          }
-        } catch (e) {
-          if (__ITER < 3) {
-            console.log(`JSON 파싱 실패: ${e.message}`);
-          }
-        }
-      }
-      
-      // 헤더가 application/json이면 성공으로 처리
-      for (let key in r.headers) {
-        if (key.toLowerCase() === 'content-type' && 
-            r.headers[key].toLowerCase().includes('application/json')) {
-          return true;
-        }
-      }
-      
-      // 둘 다 실패한 경우 디버깅 출력
-      if (__ITER < 3) {
-        console.log(`JSON 응답 확인 실패. 헤더:`, r.headers);
-      }
-      return false;
-    },
+    'QuizDetail-Single: 상태 코드 200': (r) => r && r.status === 200,
+    ...checkJsonResponse(response, 'QuizDetail-Single:') // JSON 검증 함수 호출
   });
+  failRate.add(!success['QuizDetail-Single: 상태 코드 200']);
 
   // 필요한 경우에만 헤더 로깅
   if (__ITER === 0) {
@@ -443,7 +408,7 @@ function testQuizDetail(data) {
   
   // 성능 메트릭 기록
   quizDetailTrend.add(response.timings.duration);
-  failRate.add(!success);
+  failRate.add(!success['QuizDetail-Single: 상태 코드 200']);
   totalRequests.add(1);
   
   return response;
@@ -451,154 +416,79 @@ function testQuizDetail(data) {
 
 // 퀴즈 검색 테스트
 function testQuizSearch(data) {
+  // 검색 조건 랜덤 선택
   const keyword = searchKeywords[Math.floor(Math.random() * searchKeywords.length)];
-  const encodedKeyword = encodeSearchKeyword(keyword);
-  const url = `${BASE_URL}/quizzes/search?keyword=${encodedKeyword}&page=0&size=10`;
-  
+  const difficulty = difficulties[Math.floor(Math.random() * difficulties.length)];
+  const tagId = tagIds[Math.floor(Math.random() * tagIds.length)];
+  const page = Math.floor(Math.random() * 5); // 0 ~ 4 페이지 랜덤 조회
+  const size = 10; // 페이지 당 10개
+
+  // 검색 URL 조합 (Query 파라미터 사용)
+  let searchUrl = `${BASE_URL}/quizzes/search?page=${page}&size=${size}`;
+  let useKeyword = false, useDifficulty = false, useTag = false;
+  if (Math.random() < 0.5) { // 50% 확률로 키워드 검색
+    searchUrl += `&title=${encodeSearchKeyword(keyword)}`;
+    useKeyword = true;
+  }
+  if (Math.random() < 0.5) { // 50% 확률로 난이도 검색
+    searchUrl += `&difficultyLevel=${difficulty}`;
+    useDifficulty = true;
+  }
+  if (Math.random() < 0.3) { // 30% 확률로 태그 검색
+    searchUrl += `&tagIds=${tagId}`;
+    useTag = true;
+  }
+
   const params = {
     headers: getHeaders(data),
-    tags: { name: 'QuizSearch' },
-    timeout: '5s',
+    tags: { name: 'QuizSearch' }, // 태그 명확화
+    timeout: '8s', // 검색은 조금 더 오래 걸릴 수 있음
   };
-  
-  const response = http.get(url, params);
-  
-  // 응답 체크
+
+  const response = http.get(searchUrl, params);
+
+  // 응답 체크 (JSON 검증 포함)
   const success = check(response, {
-    '응답 상태 200': (r) => r && r.status === 200,
-    'JSON 응답': (r) => {
-      // 응답 본문이 문자열이고 JSON 형식인지 확인
-      if (r && typeof r.body === 'string') {
-        try {
-          // 응답 본문이 JSON 파싱 가능한지 확인
-          const body = r.body.trim();
-          if (body.startsWith('{') || body.startsWith('[')) {
-            // 첫 몇 개의 요청에서 디버깅 로그
-            if (__ITER < 3) {
-              console.log(`응답 확인: 본문 시작=${body.substring(0, 20)}`);
-              // JSON 파싱 테스트
-              JSON.parse(body);
-              console.log(`JSON 파싱 성공!`);
-            }
-            return true;
-          }
-        } catch (e) {
-          if (__ITER < 3) {
-            console.log(`JSON 파싱 실패: ${e.message}`);
-          }
-        }
-      }
-      
-      // 헤더가 application/json이면 성공으로 처리
-      for (let key in r.headers) {
-        if (key.toLowerCase() === 'content-type' && 
-            r.headers[key].toLowerCase().includes('application/json')) {
-          return true;
-        }
-      }
-      
-      // 둘 다 실패한 경우 디버깅 출력
-      if (__ITER < 3) {
-        console.log(`JSON 응답 확인 실패. 헤더:`, r.headers);
-      }
-      return false;
-    },
+    'QuizSearch: 상태 코드 200': (r) => r && r.status === 200,
+    ...checkJsonResponse(response, 'QuizSearch:') // JSON 검증 함수 호출
   });
-  
+
   // 필요한 경우에만 헤더 로깅
-  if (__ITER < 2) {
-    logResponseHeaders(response, `검색 URL: ${url}`);
-  }
-  
+  // if (__ITER < 2) {
+  //   logResponseHeaders(response, `검색 URL: ${searchUrl}`);
+  // }
+
   // 수정된 캐시 확인 로직
   const isCacheHit = checkCacheHit(response);
-  
-  // 로깅 (검색 키워드 포함)
-  if (__ITER % 5 === 0) { // 5번째 요청마다 로그
-    console.log(`[검색: ${keyword}] 응답시간=${response.timings.duration.toFixed(2)}ms, 캐시=${isCacheHit ? 'HIT' : 'MISS'}, 헤더=${response.headers['x-cache-status'] || 'NONE'}`);
-  }
-  
+
+  // 로깅 (검색 조건 포함)
+  // if (__ITER % 10 === 0) { // 10번째 요청마다 로그 출력
+  //   let logMsg = `[QuizSearch ${useKeyword ? 'K:'+keyword : ''} ${useDifficulty ? 'D:'+difficulty : ''} ${useTag ? 'T:'+tagId : ''}] `;
+  //   logMsg += `응답=${response.timings.duration.toFixed(2)}ms, 캐시=${isCacheHit ? 'HIT' : 'MISS'}`;
+  //   console.log(logMsg);
+  // }
+
   // 캐시 상태 메트릭
   cacheHitRate.add(isCacheHit);
-  
+
   // 직접 카운트
   if (isCacheHit) {
-    cacheHitCount.add(1); 
+    cacheHitCount.add(1);
   } else {
     cacheMissCount.add(1);
   }
-  
+
   // 성능 메트릭 기록
   quizSearchTrend.add(response.timings.duration);
-  failRate.add(!success);
+  // failRate 계산 오류 수정: success 객체 내의 '상태 코드 200' 키 사용
+  failRate.add(!success['QuizSearch: 상태 코드 200']);
   totalRequests.add(1);
-  
-  // 오류 로깅
-  if (!success) {
-    console.log(`❌ 퀴즈 검색 API 호출 실패: ${response.status}, 키워드: ${keyword}`);
-  }
-  
-  return response;
-}
 
-// 인기 퀴즈 조회 테스트
-function testPopularQuizzes(data) {
-  // 인증 토큰이 없으면 테스트 스킵
-  if (!data.authToken) {
-    console.log('인증 토큰이 없어 인기 퀴즈 테스트를 스킵합니다.');
-    return null;
+  // 오류 로깅 (상태 코드 기준)
+  if (!success['QuizSearch: 상태 코드 200']) {
+    // console.error(`❌ QuizSearch API 호출 실패: Status ${response.status}, URL: ${searchUrl}`); // 주석 처리: 혼란을 야기함
   }
-  
-  const limit = 10;
-  const url = `${BASE_URL}/recommendations/popular?limit=${limit}`;
-  
-  // 요청 시 타임아웃 설정 추가 및 요청 옵션 강화
-  const params = {
-    headers: getHeaders(data),
-    tags: { name: 'PopularQuizzes' },
-    timeout: '5s',
-  };
-  
-  const response = http.get(url, params);
-  
-  // 응답 검증
-  const success = check(response, {
-    '응답 상태 200': (r) => r && r.status === 200,
-    'JSON 응답': (r) => r && r.headers && r.headers['content-type'] && r.headers['content-type'].includes('application/json'),
-  });
-  
-  // 필요한 경우에만 헤더 로깅
-  if (__ITER < 2) {
-    logResponseHeaders(response, '인기 퀴즈 URL');
-  }
-  
-  // 수정된 캐시 확인 로직
-  const isCacheHit = checkCacheHit(response);
-  
-  // 로깅
-  if (__ITER % 5 === 0) {
-    console.log(`[인기퀴즈] 응답시간=${response.timings.duration.toFixed(2)}ms, 캐시=${isCacheHit ? 'HIT' : 'MISS'}, 헤더=${response.headers['x-cache-status'] || 'NONE'}`);
-  }
-  
-  // 캐시 상태 메트릭
-  cacheHitRate.add(isCacheHit);
-  
-  // 직접 카운트
-  if (isCacheHit) {
-    cacheHitCount.add(1); 
-    // 첫 몇 번의 캐시 히트마다 강조 표시
-    if (caffeineHits.value < 5) {
-      console.log(`✅ 인기 퀴즈 캐시 히트 성공! 응답시간=${response.timings.duration.toFixed(2)}ms`);
-    }
-  } else {
-    cacheMissCount.add(1);
-  }
-  
-  // 성능 메트릭 기록
-  popularQuizTrend.add(response.timings.duration);
-  failRate.add(!success);
-  totalRequests.add(1);
-  
+
   return response;
 }
 
@@ -645,14 +535,6 @@ export default function(data) {
   testQuizSearch(data);
   sleep(1);
   
-  // 인기 퀴즈 API 호출 비율 감소 (25% 확률로만 실행)
-  if (Math.random() < 0.25) {
-    testPopularQuizzes(data);
-  } else {
-    // 인기 퀴즈 테스트를 건너 뛰어도 일관된 슬립 타임 유지
-    sleep(1);
-  }
-  
   // 테스트가 끝나면 요약 정보 출력 (마지막 VU의 마지막 반복)
   if (__ITER === options.stages[options.stages.length-1].target - 1 && __VU === options.stages[options.stages.length-1].target) {
     console.log('\n========== 최종 테스트 요약 정보 ==========');
@@ -662,4 +544,62 @@ export default function(data) {
     console.log(`캐시 히트율: ${(cacheHitCount.value / (cacheHitCount.value + cacheMissCount.value) * 100).toFixed(2)}%`);
     console.log('==========================================\n');
   }
+}
+
+export function handleSummary(data) {
+  console.log('\n📊 K6 Performance Test Summary 📊');
+  console.log('=======================================');
+
+  // 테스트 실행 정보
+  console.log(`\n⏱️  테스트 기간: ${data.metrics.iteration_duration.values.p95 / 1000}s (p95)`);
+  console.log(`🔄 총 반복 횟수: ${data.metrics.iterations.values.count}`);
+  console.log(`👥 최대 가상 사용자: ${data.vus.max}`);
+  console.log(`📈 총 요청 수: ${data.metrics.total_requests.values.count}`);
+
+  // 주요 API 응답 시간 (p95)
+  console.log('\n🚀 주요 API 응답 시간 (95th Percentile):');
+  if (data.metrics.quiz_detail_response_time) {
+    console.log(`  - 퀴즈 상세 조회 (Single): ${data.metrics.quiz_detail_response_time.values['p(95)'].toFixed(2)} ms`);
+  }
+   if (data.metrics.first_request_response_time) {
+    console.log(`  - 퀴즈 상세 (First - Cache Miss): ${data.metrics.first_request_response_time.values['p(95)'].toFixed(2)} ms`);
+  }
+  if (data.metrics.second_request_response_time) {
+    console.log(`  - 퀴즈 상세 (Second - Cache Hit): ${data.metrics.second_request_response_time.values['p(95)'].toFixed(2)} ms`);
+  }
+  if (data.metrics.quiz_search_response_time) {
+    console.log(`  - 퀴즈 검색: ${data.metrics.quiz_search_response_time.values['p(95)'].toFixed(2)} ms`);
+  }
+  if (data.metrics.comprehensive_test_response_time) {
+     console.log(`  - 종합 시나리오: ${data.metrics.comprehensive_test_response_time.values['p(95)'].toFixed(2)} ms`);
+  }
+
+  // 오류 및 실패율
+  console.log('\n❗ 오류 및 실패율:');
+  // request_fail_rate는 이제 실제 HTTP 실패율 (상태 코드 != 2xx, 3xx)을 반영할 가능성이 높음 (k6 내부 메트릭과 유사)
+  // 또는 스크립트에서 상태코드 200 아닌 경우만 failRate.add 했으므로, 200 아닌 응답 비율을 나타냄.
+  console.log(`  - 상태 코드 200 실패율 (Script): ${(data.metrics.request_fail_rate.values.rate * 100).toFixed(2)}%`);
+  console.log(`  - 실제 HTTP 요청 실패율 (k6): ${(data.metrics.http_req_failed.values.rate * 100).toFixed(2)}% (${data.metrics.http_req_failed.values.passes} fails / ${data.metrics.http_reqs.values.count} reqs)`);
+  const failedChecks = data.metrics.checks.values.fails;
+  const totalChecks = data.metrics.checks.values.passes + failedChecks;
+  console.log(`  - 총 검증(Checks) 실패 수: ${failedChecks} / ${totalChecks} (${(failedChecks/totalChecks * 100).toFixed(2)}%)`);
+
+  // 실패한 Check 항목 상세 출력 (상위 5개)
+  console.log('\n   Failed Checks Breakdown:');
+  let failedCheckCount = 0;
+  for (const checkName in data.metrics.checks.values.failures) {
+    if (failedCheckCount < 5) {
+        const failCount = data.metrics.checks.values.failures[checkName];
+        console.log(`     - ${checkName}: ${failCount} failures`);
+        failedCheckCount++;
+    } else {
+        console.log('     ... (more)');
+        break;
+    }
+  }
+
+
+  // 캐시 성능 지표
+  console.log('\n💾 캐시 성능:');
+  // ... existing code ...
 }

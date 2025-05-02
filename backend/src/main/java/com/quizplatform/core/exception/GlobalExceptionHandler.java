@@ -38,21 +38,28 @@ public class GlobalExceptionHandler {
     protected ResponseEntity<?> handleBusinessException(BusinessException e) {
         log.error("BusinessException: {}", e.getMessage());
         ErrorCode errorCode = e.getErrorCode();
+        HttpStatus status = errorCode.getStatus(); // ErrorCode에서 HTTP 상태 가져오기
 
-        // 데이터를 찾을 수 없는 경우(404)는 빈 객체로 응답
-        if (errorCode == ErrorCode.ENTITY_NOT_FOUND ||
-                errorCode == ErrorCode.USER_NOT_FOUND ||
-                errorCode == ErrorCode.QUIZ_NOT_FOUND ||
-                errorCode == ErrorCode.BATTLE_ROOM_NOT_FOUND ||
-                errorCode == ErrorCode.PARTICIPANT_NOT_FOUND) {
-
-            log.info("404 오류를 빈 객체로 응답 변환: {}", e.getMessage());
-            return ResponseEntity.ok(CommonApiResponse.success(new HashMap<>()));
+        // 데이터를 찾을 수 없는 경우(404) 처리 방식 변경
+        if (status == HttpStatus.NOT_FOUND) {
+            log.info("Handling 404 Not Found: {}", e.getMessage());
+            // HTTP 404 상태와 함께 CommonApiResponse.fail 사용
+            return ResponseEntity
+                    .status(status) // HttpStatus.NOT_FOUND
+                    .body(CommonApiResponse.fail(errorCode, e.getMessage()));
         }
 
-        // 그 외 비즈니스 예외는 기존대로 처리
+        // 그 외 비즈니스 예외는 CommonApiResponse.fail 또는 ErrorResponse 사용 (일관성 유지)
+        // 여기서는 CommonApiResponse.fail을 사용하도록 통일
+        log.warn("Handling BusinessException with status {}: {}", status, e.getMessage());
+        return ResponseEntity
+                .status(status)
+                .body(CommonApiResponse.fail(errorCode, e.getMessage()));
+
+        /* 이전 ErrorResponse 사용 방식 (선택 사항)
         ErrorResponse response = ErrorResponse.of(errorCode, e.getMessage());
-        return new ResponseEntity<>(response, errorCode.getStatus());
+        return new ResponseEntity<>(response, status);
+         */
     }
 
     /**
