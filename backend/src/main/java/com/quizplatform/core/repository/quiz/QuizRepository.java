@@ -4,6 +4,8 @@ import com.quizplatform.core.domain.quiz.DifficultyLevel;
 import com.quizplatform.core.domain.quiz.Quiz;
 import com.quizplatform.core.domain.quiz.QuizType;
 import com.quizplatform.core.domain.tag.Tag;
+import com.quizplatform.core.dto.quiz.QuizDetailResponse;
+import com.quizplatform.core.dto.quiz.QuizSummaryResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -12,6 +14,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -95,6 +98,40 @@ public interface QuizRepository extends JpaRepository<Quiz, Long>, CustomQuizRep
      */
     @Query("SELECT q FROM Quiz q WHERE q.quizType = 'DAILY' AND q.createdAt >= :since ORDER BY q.createdAt DESC")
     List<Quiz> findRecentDailyQuizzes(@Param("since") LocalDateTime since);
+    
+    /**
+     * 퀴즈 요약 정보를 DTO로 직접 조회합니다. (N+1 문제 방지)
+     *
+     * @param id 조회할 퀴즈 ID
+     * @return 퀴즈 요약 정보 DTO
+     */
+    @Query("SELECT new com.quizplatform.core.dto.quiz.QuizSummaryResponse(" +
+           "q.id, q.title, q.description, q.quizType, q.difficultyLevel, q.questionCount, " +
+           "q.creator.username, q.creator.profileImage, q.viewCount, q.attemptCount, q.avgScore) " +
+           "FROM Quiz q WHERE q.id = :id")
+    Optional<QuizSummaryResponse> findQuizSummaryResponseById(@Param("id") Long id);
+    
+    /**
+     * 퀴즈 상세 정보를 DTO로 직접 조회합니다. (N+1 문제 방지, 문제 제외)
+     *
+     * @param id 조회할 퀴즈 ID
+     * @return 퀴즈 상세 정보 DTO
+     */
+    @Query("SELECT new com.quizplatform.core.dto.quiz.QuizDetailResponse(" +
+           "q.id, q.title, q.description, q.quizType, q.difficultyLevel, q.questionCount, " +
+           "q.timeLimit, q.creator.id, q.creator.username, q.creator.profileImage, " +
+           "q.viewCount, q.attemptCount, q.avgScore, q.createdAt, q.isPublic) " +
+           "FROM Quiz q WHERE q.id = :id")
+    Optional<QuizDetailResponse> findQuizDetailResponseById(@Param("id") Long id);
+    
+    /**
+     * 특정 ID 목록에 해당하는 퀴즈의 태그 정보를 조회합니다.
+     *
+     * @param quizIds 조회할 퀴즈 ID 목록
+     * @return [퀴즈ID, 태그ID, 태그명] 형태의 배열 리스트
+     */
+    @Query("SELECT q.id, t.id, t.name FROM Quiz q JOIN q.tags t WHERE q.id IN :quizIds")
+    List<Object[]> findTagsByQuizIds(@Param("quizIds") Collection<Long> quizIds);
 
     /**
      * 주어진 태그 ID 목록 중 하나라도 포함하는 퀴즈의 총 개수(중복 제거)를 조회합니다.
@@ -215,4 +252,5 @@ public interface QuizRepository extends JpaRepository<Quiz, Long>, CustomQuizRep
             ") " +
             "ORDER BY q.createdAt DESC") // 최신 생성된 퀴즈 우선
     List<Quiz> findEligibleQuizzesForDaily(@Param("since") LocalDateTime since);
+    
 }

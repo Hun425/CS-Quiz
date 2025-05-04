@@ -19,6 +19,8 @@ public class UserProfileDto {
     private Integer totalPoints;
     private String joinedAt;
     private String lastLogin;
+
+
 }
 
 

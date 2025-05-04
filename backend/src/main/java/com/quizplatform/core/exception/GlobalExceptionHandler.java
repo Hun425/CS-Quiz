@@ -46,7 +46,7 @@ public class GlobalExceptionHandler {
             // HTTP 404 상태와 함께 CommonApiResponse.fail 사용
             return ResponseEntity
                     .status(status) // HttpStatus.NOT_FOUND
-                    .body(CommonApiResponse.fail(errorCode, e.getMessage()));
+                    .body(CommonApiResponse.error(e.getMessage(), errorCode.getCode()));
         }
 
         // 그 외 비즈니스 예외는 CommonApiResponse.fail 또는 ErrorResponse 사용 (일관성 유지)
@@ -54,7 +54,7 @@ public class GlobalExceptionHandler {
         log.warn("Handling BusinessException with status {}: {}", status, e.getMessage());
         return ResponseEntity
                 .status(status)
-                .body(CommonApiResponse.fail(errorCode, e.getMessage()));
+                .body(CommonApiResponse.error(e.getMessage(), errorCode.getCode()));
 
         /* 이전 ErrorResponse 사용 방식 (선택 사항)
         ErrorResponse response = ErrorResponse.of(errorCode, e.getMessage());

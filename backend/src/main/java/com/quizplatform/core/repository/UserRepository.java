@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -80,4 +81,44 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "LEFT JOIN FETCH u.quizAttempts " + // quizAttempts 즉시 로딩
             "WHERE u.id = :id")
     Optional<User> findByIdWithStatsAndAttempts(@Param("id") Long id);
+
+    /**
+     * 사용자 프로필 정보를 DTO로 직접 조회합니다. (N+1 문제 방지)
+     * UserProfileDto 생성자에 맞게 필드를 선택하고, 날짜는 문자열로 변환합니다.
+     *
+     * @param id 조회할 사용자의 ID
+     * @return 사용자 프로필 DTO 객체
+     */
+    @Query("SELECT new com.quizplatform.core.dto.user.UserProfileDto(" +
+            "u.id, u.username, u.email, u.profileImage, " + // role, provider 제외
+            "u.level, u.experience, u.requiredExperience, u.totalPoints, " + // 순서 수정
+            "FUNCTION('TO_CHAR', u.createdAt, 'YYYY-MM-DD HH24:MI:SS'), " + // joinedAt (생성일) 추가 및 포맷팅
+            "FUNCTION('TO_CHAR', u.lastLogin, 'YYYY-MM-DD HH24:MI:SS')) " + // lastLogin 추가 및 포맷팅
+            // 퀴즈 시도/리뷰 카운트 서브쿼리 제외
+            "FROM User u WHERE u.id = :id")
+    Optional<com.quizplatform.core.dto.user.UserProfileDto> findUserProfileDtoById(@Param("id") Long id);
+
+    /**
+     * 사용자 통계 데이터를 직접 조회합니다. (Native Query)
+     *
+     * @param userId 조회할 사용자의 ID
+     * @return 사용자 통계 데이터 맵
+     */
+    @Query(value = "SELECT " +
+           "COUNT(qa.id) as total_quizzes, " +
+           "SUM(CASE WHEN qa.is_completed = true THEN 1 ELSE 0 END) as completed_quizzes, " +
+           "AVG(qa.score) as avg_score, " +
+           "SUM(CASE WHEN qqa.is_correct = true THEN 1 ELSE 0 END) as correct_answers, " +
+           "COUNT(qqa.id) as total_questions, " +
+           "CASE WHEN COUNT(qqa.id) > 0 THEN (SUM(CASE WHEN qqa.is_correct = true THEN 1 ELSE 0 END) * 100.0 / COUNT(qqa.id)) ELSE 0 END as correct_rate, " +
+           "SUM(qa.time_taken) as total_time, " +
+           "MAX(qa.score) as best_score, " +
+           "MIN(qa.score) as worst_score " +
+           "FROM users u " +
+           "LEFT JOIN quiz_attempts qa ON u.id = qa.user_id " +
+           "LEFT JOIN question_attempts qqa ON qa.id = qqa.quiz_attempt_id " +
+           "WHERE u.id = :userId " +
+           "GROUP BY u.id", 
+           nativeQuery = true)
+    Map<String, Object> getUserStatisticsData(@Param("userId") Long userId);
 }

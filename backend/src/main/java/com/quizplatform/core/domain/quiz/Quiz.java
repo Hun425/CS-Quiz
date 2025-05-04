@@ -124,12 +124,13 @@ public class Quiz {
     /**
      * 퀴즈에 연결된 태그 목록
      */
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "quiz_tags", 
         joinColumns = @JoinColumn(name = "quiz_id"), 
         inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
+    @BatchSize(size = 30)
     private Set<Tag> tags = new HashSet<>();
 
     /**

@@ -5,6 +5,7 @@ import com.quizplatform.core.domain.quiz.Quiz;
 import com.quizplatform.core.domain.tag.Tag;
 // QuizSubmitRequest 내부의 QuizSearchCondition 사용 가정이지만, DTO 위치 확인 필요
 import com.quizplatform.core.dto.quiz.QuizSubmitRequest;
+import com.quizplatform.core.dto.quiz.QuizSummaryResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -30,8 +31,16 @@ public interface CustomQuizRepository {
      * @return 검색 조건에 맞는 Quiz 엔티티 페이지 객체
      */
     Page<Quiz> search(QuizSubmitRequest.QuizSearchCondition condition, Pageable pageable);
-    // 참고: QuizSearchCondition 클래스가 QuizSubmitRequest 내부에 정의되어 있지 않다면,
-    // 해당 클래스의 정확한 경로로 수정해야 합니다. (예: com.quizplatform.core.dto.quiz.QuizSearchCondition)
+    
+    /**
+     * 다양한 검색 조건을 이용하여 퀴즈를 검색하고 페이징 처리된 결과를 DTO로 직접 반환합니다.
+     * N+1 문제를 방지하기 위해 DTO 직접 조회 방식을 사용합니다.
+     *
+     * @param condition 검색 조건을 담고 있는 객체
+     * @param pageable  페이징 정보 (페이지 번호, 크기, 정렬 등)
+     * @return 검색 조건에 맞는 QuizSummaryResponse DTO 페이지 객체
+     */
+    Page<QuizSummaryResponse> searchQuizSummaryResponse(QuizSubmitRequest.QuizSearchCondition condition, Pageable pageable);
 
     /**
      * 주어진 태그 목록 및 난이도를 기반으로 추천 퀴즈 목록을 조회합니다.
@@ -43,4 +52,14 @@ public interface CustomQuizRepository {
      * @return 추천된 Quiz 엔티티 리스트
      */
     List<Quiz> findRecommendedQuizzes(Set<Tag> tags, DifficultyLevel difficulty, int limit);
+    
+    /**
+     * 주어진 태그 목록 및 난이도를 기반으로 추천 퀴즈 목록을 DTO로 직접 조회합니다.
+     *
+     * @param tags       추천 기준이 되는 태그(Tag) 객체 Set
+     * @param difficulty 추천 기준이 되는 난이도(DifficultyLevel)
+     * @param limit      조회할 최대 퀴즈 개수
+     * @return 추천된 QuizSummaryResponse DTO 리스트
+     */
+    List<QuizSummaryResponse> findRecommendedQuizSummaryResponses(Set<Tag> tags, DifficultyLevel difficulty, int limit);
 }

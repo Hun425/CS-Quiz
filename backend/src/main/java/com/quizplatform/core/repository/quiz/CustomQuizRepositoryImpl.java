@@ -1,7 +1,9 @@
 package com.quizplatform.core.repository.quiz;
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -10,7 +12,12 @@ import com.quizplatform.core.domain.quiz.QQuiz; // QueryDSL 생성 Q클래스
 import com.quizplatform.core.domain.quiz.Quiz;
 import com.quizplatform.core.domain.tag.QTag; // QueryDSL 생성 Q클래스
 import com.quizplatform.core.domain.tag.Tag;
+import com.quizplatform.core.domain.user.QUser;
 import com.quizplatform.core.dto.quiz.QuizSubmitRequest; // 위치 확인 필요
+import com.quizplatform.core.dto.quiz.QuizSummaryResponse;
+
+import com.quizplatform.core.dto.tag.TagDto;
+import com.quizplatform.core.dto.tag.TagResponse;
 import com.quizplatform.core.repository.tag.TagRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +60,338 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
         condition.validate();
 
         // QueryDSL의 BooleanBuilder를 사용하여 동적 WHERE 절 구성
+        BooleanBuilder builder = createSearchCondition(condition);
+
+        // 디버깅을 위한 로그 출력
+        log.debug("Quiz search condition: {}", condition.toString());
+        log.debug("Generated query condition: {}", builder.toString());
+
+        // 메인 쿼리 생성 (fetchJoin으로 N+1 문제 방지)
+        JPAQuery<Quiz> query = queryFactory
+                .selectFrom(quiz)
+                .leftJoin(quiz.tags, tag).fetchJoin() // 퀴즈와 태그 조인 (N+1 방지)
+                .leftJoin(quiz.creator).fetchJoin()   // 퀴즈와 생성자 조인 (N+1 방지)
+                .where(builder) // 동적으로 생성된 WHERE 조건 적용
+                .orderBy(getOrderSpecifier(condition.getOrderBy())) // 정렬 조건 적용
+                .offset(pageable.getOffset()) // 페이징 offset
+                .limit(pageable.getPageSize()) // 페이징 limit
+                .distinct(); // fetch join으로 인해 발생할 수 있는 중복 제거
+
+        // 전체 결과 수 계산 쿼리 (페이징 처리를 위해 필요)
+        Long total = queryFactory
+                .select(quiz.countDistinct()) // 중복 제거된 카운트
+                .from(quiz)
+                .leftJoin(quiz.tags, tag) // 조건에 태그가 포함될 수 있으므로 조인 필요
+                .where(builder) // 동일한 WHERE 조건 적용
+                .fetchOne(); // 결과가 하나 또는 null
+
+        // 메인 쿼리 실행 및 결과 가져오기
+        List<Quiz> content = query.fetch();
+
+        log.debug("Quiz search result count: {}", content.size());
+
+        // Page 객체 생성하여 반환 (결과 목록, 페이징 정보, 전체 개수)
+        return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    /**
+     * 다양한 검색 조건을 이용하여 퀴즈를 검색하고 페이징 처리된 결과를 DTO로 직접 반환합니다.
+     * N+1 문제를 방지하기 위해 DTO 직접 조회 방식을 사용합니다.
+     *
+     * @param condition 검색 조건을 담고 있는 객체
+     * @param pageable  페이징 정보 (페이지 번호, 크기, 정렬 등)
+     * @return 검색 조건에 맞는 QuizSummaryResponse DTO 페이지 객체
+     */
+    @Override
+    public Page<QuizSummaryResponse> searchQuizSummaryResponse(QuizSubmitRequest.QuizSearchCondition condition, Pageable pageable) {
+        QQuiz quiz = QQuiz.quiz;
+        QTag tag = QTag.tag;
+        QUser creator = QUser.user;
+
+        // 검색 조건 유효성 검사
+        condition.validate();
+
+        // 검색 조건 생성
+        BooleanBuilder builder = createSearchCondition(condition);
+
+        // 카운트 쿼리 먼저 실행
+        Long total = queryFactory
+                .select(quiz.countDistinct())
+                .from(quiz)
+                .leftJoin(quiz.tags, tag) // Count 쿼리에도 조건 조인이 필요할 수 있음
+                .where(builder)
+                .fetchOne();
+
+        if (total == null || total == 0) {
+            return new PageImpl<>(Collections.emptyList(), pageable, 0);
+        }
+
+        // 1단계: 태그를 제외한 기본 정보 DTO로 직접 조회
+        List<QuizSummaryResponse> baseContent = queryFactory
+                .select(Projections.constructor(QuizSummaryResponse.class,
+                        quiz.id,
+                        quiz.title,
+                        quiz.description, // description 추가 (QuizSummaryResponse 생성자에 맞게)
+                        quiz.quizType,
+                        quiz.difficultyLevel,
+                        quiz.questionCount,
+                        // creator.username, // 생성자에 username, profileImage가 없음. 필요시 QuizSummaryResponse 수정
+                        // creator.profileImage,
+                        quiz.viewCount, // viewCount 추가
+                        quiz.attemptCount,
+                        quiz.avgScore,
+                        // 생성자에 tags, createdAt 이 없으므로 null 또는 기본값 처리 필요
+                        Expressions.constant(Collections.emptyList()), // tags 임시 빈 리스트
+                        quiz.createdAt // createdAt 추가
+                        // 주의: QuizSummaryResponse 생성자와 파라미터 순서/타입 일치 확인 필요
+                ))
+                .from(quiz)
+                .leftJoin(quiz.creator, creator) // 조인은 필요
+                .where(builder)
+                .orderBy(getOrderSpecifier(condition.getOrderBy()))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        // 2단계: 별도 쿼리로 태그 정보 로드 (Map<QuizId, List<TagResponse>>)
+        List<QuizSummaryResponse> finalContent; // 최종 결과를 담을 리스트
+        if (!baseContent.isEmpty()) {
+            Set<Long> quizIds = baseContent.stream()
+                    .map(QuizSummaryResponse::getId)
+                    .collect(Collectors.toSet());
+
+            // 수정된 loadQuizTags 호출 (TagResponse 반환)
+            Map<Long, List<TagResponse>> quizTagsMap = loadQuizTagsAsResponse(quizIds); // 새 메서드 사용
+
+            // 3단계: 기본 DTO와 태그 정보를 합쳐 최종 DTO 생성
+            finalContent = baseContent.stream()
+                    .map(dto -> dto.toBuilder() // 기존 DTO 기반으로 빌더 생성
+                            .tags(quizTagsMap.getOrDefault(dto.getId(), Collections.emptyList())) // 태그 설정
+                            .build()) // 새로운 DTO 객체 생성
+                    .collect(Collectors.toList());
+        } else {
+            finalContent = Collections.emptyList();
+        }
+
+        return new PageImpl<>(finalContent, pageable, total);
+    }
+
+    /**
+     * 퀴즈 ID 목록에 대한 태그 정보를 TagResponse DTO로 조회하여 맵 형태로 반환합니다.
+     *
+     * @param quizIds 태그 정보를 조회할 퀴즈 ID 목록
+     * @return 퀴즈 ID를 키로, TagResponse DTO 목록을 값으로 하는 맵
+     */
+    private Map<Long, List<TagResponse>> loadQuizTagsAsResponse(Set<Long> quizIds) {
+        QQuiz quiz = QQuiz.quiz;
+        QTag tag = QTag.tag;
+
+        // Quiz ID와 연관된 Tag 정보 (ID, Name, Description 등 TagResponse 생성에 필요한 필드) 조회
+        List<Tuple> results = queryFactory
+                .select(quiz.id,
+                        tag.id,
+                        tag.name,
+                        tag.description
+                        // TagResponse.from(Tag) 를 사용하려면 Tag 엔티티 전체 또는 필요한 필드 조회
+                        // 또는 TagResponse 생성자에 필요한 필드를 직접 select
+                )
+                .from(quiz)
+                .join(quiz.tags, tag)
+                .where(quiz.id.in(quizIds))
+                .fetch();
+
+        // 결과를 퀴즈 ID 기준으로 매핑 (TagResponse 생성)
+        Map<Long, List<TagResponse>> quizTagsMap = new HashMap<>();
+        results.forEach(tuple -> {
+            Long quizId = tuple.get(quiz.id);
+            // TagResponse 생성 (팩토리 메서드나 빌더 사용 가정)
+            // 예시: TagResponse.from(Tag) 를 사용 못하므로 필드를 직접 사용
+            TagResponse tagResponse = TagResponse.builder()
+                    .id(tuple.get(tag.id))
+                    .name(tuple.get(tag.name))
+                    .description(tuple.get(tag.description))
+                    // quizCount는 여기서 알 수 없으므로 0 또는 다른 값으로 설정하거나,
+                    // TagResponse 구조 변경 고려
+                    .quizCount(0)
+                    // parentId, synonyms 등 다른 필드도 필요시 조회 및 설정
+                    .parentId(null) // 필요시 부모 태그 ID 조회 로직 추가
+                    .synonyms(Collections.emptySet()) // 필요시 동의어 조회 로직 추가
+                    .build();
+
+            quizTagsMap.computeIfAbsent(quizId, k -> new ArrayList<>())
+                    .add(tagResponse);
+        });
+
+        return quizTagsMap;
+    }
+
+    /**
+     * 주어진 태그 목록과 난이도를 기반으로 추천 퀴즈 목록을 조회합니다.
+     * 공개된 퀴즈 중에서 해당 난이도이고 주어진 태그 중 하나라도 포함하는 퀴즈를
+     * 랜덤하게 정렬하여 제한된 개수만큼 반환합니다.
+     *
+     * @param tags       추천 기준이 되는 태그(Tag) 객체 Set
+     * @param difficulty 추천 기준이 되는 난이도(DifficultyLevel)
+     * @param limit      조회할 최대 퀴즈 개수
+     * @return 추천된 Quiz 엔티티 리스트
+     */
+    @Override
+    public List<Quiz> findRecommendedQuizzes(Set<Tag> tags, DifficultyLevel difficulty, int limit) {
+        QQuiz quiz = QQuiz.quiz;
+        QTag tag = QTag.tag; // 사용되지는 않지만 조인을 위해 선언
+
+        // 추천 퀴즈 조회 쿼리
+        List<Quiz> quizzes = queryFactory
+                .selectFrom(quiz)
+                .leftJoin(quiz.tags, tag) // 태그 정보 조인을 위해 필요
+                .where(
+                        quiz.isPublic.isTrue() // 공개된 퀴즈
+                                .and(quiz.difficultyLevel.eq(difficulty)) // 지정된 난이도
+                                .and(quiz.tags.any().in(tags)) // 주어진 태그 중 하나라도 포함
+                )
+                .distinct() // 태그 중복으로 인한 퀴즈 중복 제거
+                .fetch();
+        
+        // 애플리케이션 레벨에서 랜덤하게 섞기 (DB의 ORDER BY random() 대신)
+        Collections.shuffle(quizzes);
+        
+        // 제한된 개수만큼 반환
+        return quizzes.stream()
+                .limit(limit)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 주어진 태그 목록과 난이도를 기반으로 추천 퀴즈 목록을 DTO로 직접 조회합니다.
+     *
+     * @param tags       추천 기준이 되는 태그(Tag) 객체 Set
+     * @param difficulty 추천 기준이 되는 난이도(DifficultyLevel)
+     * @param limit      조회할 최대 퀴즈 개수
+     * @return 추천된 QuizSummaryResponse DTO 리스트
+     */
+    @Override
+    public List<QuizSummaryResponse> findRecommendedQuizSummaryResponses(Set<Tag> tags, DifficultyLevel difficulty, int limit) {
+        QQuiz quiz = QQuiz.quiz;
+        QTag tag = QTag.tag;
+        QUser creator = QUser.user;
+
+        // 태그 ID 목록 추출
+        Set<Long> tagIds = tags.stream()
+                .map(Tag::getId)
+                .collect(Collectors.toSet());
+
+        // 1단계: 태그를 제외한 기본 정보 DTO로 직접 조회
+        // QuizSummaryResponse 생성자에 맞게 필드 순서/타입 조정 및 임시 값 추가
+        List<QuizSummaryResponse> baseResult = queryFactory
+                .select(Projections.constructor(QuizSummaryResponse.class,
+                        quiz.id,
+                        quiz.title,
+                        quiz.description, // 생성자에 맞게 추가
+                        quiz.quizType,
+                        quiz.difficultyLevel,
+                        quiz.questionCount,
+                        quiz.viewCount,     // 생성자에 맞게 추가
+                        quiz.attemptCount,
+                        quiz.avgScore,
+                        Expressions.constant(Collections.emptyList()), // tags 임시 빈 리스트
+                        quiz.createdAt    // 생성자에 맞게 추가
+                        // 주의: creator.username, profileImage 등은 생성자에 없으므로 제외
+                ))
+                .from(quiz)
+                // .leftJoin(quiz.creator, creator) // 생성자에 creator 정보 없으므로 조인 불필요할 수 있음 (쿼리 조건에 따라 판단)
+                .where(
+                        quiz.isPublic.isTrue()
+                                .and(quiz.difficultyLevel.eq(difficulty))
+                                .and(quiz.id.in(
+                                        // 서브쿼리: 태그 중 하나라도 포함하는 퀴즈 ID 목록
+                                        queryFactory.select(quiz.id)
+                                                .from(quiz)
+                                                .join(quiz.tags, tag)
+                                                .where(tag.id.in(tagIds))
+                                                .groupBy(quiz.id)
+                                ))
+                )
+                .fetch();
+
+        // 애플리케이션 레벨에서 랜덤하게 섞기
+        Collections.shuffle(baseResult);
+
+        // 결과 크기 제한
+        List<QuizSummaryResponse> limitedResult;
+        if (baseResult.size() > limit) {
+            limitedResult = baseResult.subList(0, limit);
+        } else {
+            limitedResult = baseResult;
+        }
+
+        // 2단계: 별도 쿼리로 태그 정보 로드 (TagResponse 사용)
+        List<QuizSummaryResponse> finalResult; // 최종 결과를 담을 리스트
+        if (!limitedResult.isEmpty()) {
+            Set<Long> quizIds = limitedResult.stream()
+                    .map(QuizSummaryResponse::getId)
+                    .collect(Collectors.toSet());
+
+            // 수정된 loadQuizTagsAsResponse 호출
+            Map<Long, List<TagResponse>> quizTagsMap = loadQuizTagsAsResponse(quizIds);
+
+            // 3단계: 기본 DTO와 태그 정보를 합쳐 최종 DTO 생성 (toBuilder 사용)
+            finalResult = limitedResult.stream()
+                    .map(dto -> dto.toBuilder() // 기존 DTO 기반으로 빌더 생성
+                            .tags(quizTagsMap.getOrDefault(dto.getId(), Collections.emptyList())) // 태그 설정
+                            .build()) // 새로운 DTO 객체 생성
+                    .collect(Collectors.toList());
+        } else {
+            finalResult = Collections.emptyList();
+        }
+
+        return finalResult;
+    }
+
+// loadQuizTagsAsResponse 메서드는 이전에 정의된 것을 사용합니다.
+// private Map<Long, List<TagResponse>> loadQuizTagsAsResponse(Set<Long> quizIds) { ... }
+    
+    /**
+     * 퀴즈 ID 목록에 대한 태그 정보를 조회하여 맵 형태로 반환합니다. (내부 헬퍼 메서드)
+     *
+     * @param quizIds 태그 정보를 조회할 퀴즈 ID 목록
+     * @return 퀴즈 ID를 키로, 태그 DTO 목록을 값으로 하는 맵
+     */
+    private Map<Long, List<TagDto>> loadQuizTags(Set<Long> quizIds) {
+        QQuiz quiz = QQuiz.quiz;
+        QTag tag = QTag.tag;
+        
+        // IN 쿼리 하나로 모든 퀴즈의 태그 정보 로드
+        List<Tuple> results = queryFactory
+                .select(quiz.id, tag.id, tag.name)
+                .from(quiz)
+                .join(quiz.tags, tag)
+                .where(quiz.id.in(quizIds))
+                .fetch();
+                
+        // 결과를 퀴즈 ID 기준으로 매핑
+        Map<Long, List<TagDto>> quizTagsMap = new HashMap<>();
+        results.forEach(tuple -> {
+            Long quizId = tuple.get(quiz.id);
+            Long tagId = tuple.get(tag.id);
+            String tagName = tuple.get(tag.name);
+            
+            quizTagsMap.computeIfAbsent(quizId, k -> new ArrayList<>())
+                   .add(new TagDto(tagId, tagName));
+        });
+        
+        return quizTagsMap;
+    }
+
+    /**
+     * 검색 조건을 BooleanBuilder로 생성합니다. (내부 헬퍼 메서드)
+     *
+     * @param condition 검색 조건 객체
+     * @return 생성된 BooleanBuilder 객체
+     */
+    private BooleanBuilder createSearchCondition(QuizSubmitRequest.QuizSearchCondition condition) {
+        QQuiz quiz = QQuiz.quiz;
+        
+        // QueryDSL의 BooleanBuilder를 사용하여 동적 WHERE 절 구성
         BooleanBuilder builder = new BooleanBuilder();
 
         // 기본 조건: 공개된(isPublic=true) 퀴즈만 검색
@@ -87,37 +426,8 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
         if (condition.getMaxQuestions() != null) {
             builder.and(quiz.questionCount.loe(condition.getMaxQuestions())); // <=
         }
-
-        // 디버깅을 위한 로그 출력
-        log.debug("Quiz search condition: {}", condition.toString());
-        log.debug("Generated query condition: {}", builder.toString());
-
-        // 메인 쿼리 생성 (fetchJoin으로 N+1 문제 방지)
-        JPAQuery<Quiz> query = queryFactory
-                .selectFrom(quiz)
-                .leftJoin(quiz.tags, tag).fetchJoin() // 퀴즈와 태그 조인 (N+1 방지)
-                .leftJoin(quiz.creator).fetchJoin()   // 퀴즈와 생성자 조인 (N+1 방지)
-                .where(builder) // 동적으로 생성된 WHERE 조건 적용
-                .orderBy(getOrderSpecifier(condition.getOrderBy())) // 정렬 조건 적용
-                .offset(pageable.getOffset()) // 페이징 offset
-                .limit(pageable.getPageSize()) // 페이징 limit
-                .distinct(); // fetch join으로 인해 발생할 수 있는 중복 제거
-
-        // 전체 결과 수 계산 쿼리 (페이징 처리를 위해 필요)
-        Long total = queryFactory
-                .select(quiz.countDistinct()) // 중복 제거된 카운트
-                .from(quiz)
-                .leftJoin(quiz.tags, tag) // 조건에 태그가 포함될 수 있으므로 조인 필요
-                .where(builder) // 동일한 WHERE 조건 적용
-                .fetchOne(); // 결과가 하나 또는 null
-
-        // 메인 쿼리 실행 및 결과 가져오기
-        List<Quiz> content = query.fetch();
-
-        log.debug("Quiz search result count: {}", content.size());
-
-        // Page 객체 생성하여 반환 (결과 목록, 페이징 정보, 전체 개수)
-        return new PageImpl<>(content, pageable, total != null ? total : 0L);
+        
+        return builder;
     }
 
     /**
@@ -180,42 +490,6 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
 
         log.debug("Tag ID {} expanded to: {}", tagId, expandedIds);
         return expandedIds;
-    }
-
-    /**
-     * 주어진 태그 목록과 난이도를 기반으로 추천 퀴즈 목록을 조회합니다.
-     * 공개된 퀴즈 중에서 해당 난이도이고 주어진 태그 중 하나라도 포함하는 퀴즈를
-     * 랜덤하게 정렬하여 제한된 개수만큼 반환합니다.
-     *
-     * @param tags       추천 기준이 되는 태그(Tag) 객체 Set
-     * @param difficulty 추천 기준이 되는 난이도(DifficultyLevel)
-     * @param limit      조회할 최대 퀴즈 개수
-     * @return 추천된 Quiz 엔티티 리스트
-     */
-    @Override
-    public List<Quiz> findRecommendedQuizzes(Set<Tag> tags, DifficultyLevel difficulty, int limit) {
-        QQuiz quiz = QQuiz.quiz;
-        QTag tag = QTag.tag; // 사용되지는 않지만 조인을 위해 선언
-
-        // 추천 퀴즈 조회 쿼리
-        List<Quiz> quizzes = queryFactory
-                .selectFrom(quiz)
-                .leftJoin(quiz.tags, tag) // 태그 정보 조인을 위해 필요
-                .where(
-                        quiz.isPublic.isTrue() // 공개된 퀴즈
-                                .and(quiz.difficultyLevel.eq(difficulty)) // 지정된 난이도
-                                .and(quiz.tags.any().in(tags)) // 주어진 태그 중 하나라도 포함
-                )
-                .distinct() // 태그 중복으로 인한 퀴즈 중복 제거
-                .fetch();
-        
-        // 애플리케이션 레벨에서 랜덤하게 섞기 (DB의 ORDER BY random() 대신)
-        Collections.shuffle(quizzes);
-        
-        // 제한된 개수만큼 반환
-        return quizzes.stream()
-                .limit(limit)
-                .collect(Collectors.toList());
     }
 
     /**

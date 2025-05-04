@@ -148,24 +148,24 @@ public class QuizServiceImpl implements QuizService {
     public Page<QuizSummaryResponse> searchQuizzesDto(QuizSubmitRequest.QuizSearchCondition condition, Pageable pageable) {
         // 조건 유효성 검사
         condition.validate();
-
-        Page<Quiz> quizzes = quizRepository.search(condition, pageable);
-        // 트랜잭션 내에서 DTO로 변환
-        return quizzes.map(entityMapperService::mapToQuizSummaryResponse);
+        
+        // 개선: DTO 직접 조회로 변경하여 N+1 문제 해결
+        return quizRepository.searchQuizSummaryResponse(condition, pageable);
     }
 
     @Override
     @Cacheable(value = "quizDetails", key = "'quiz:' + #quizId", cacheResolver = "trackedCacheResolver")
     public QuizDetailResponse getQuizWithoutQuestions(Long quizId) {
-        Quiz quiz = quizRepository.findByIdWithDetails(quizId)
+        // 개선: DTO 직접 조회로 변경하여 N+1 문제 해결
+        return quizRepository.findQuizDetailResponseById(quizId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND));
-
-        return entityMapperService.mapToQuizDetailResponse(quiz);
     }
 
     @Override
     @Cacheable(value = "quizzes", key = "'full:' + #quizId", cacheResolver = "trackedCacheResolver")
     public QuizResponse getQuizWithQuestions(Long quizId) {
+        // 복잡한 연관관계를 가진 경우(문제 포함)는 FetchJoin 활용이 여전히 유효
+        // 단, 필요한 모든 관계를 한 번에 로딩
         Quiz quiz = quizRepository.findByIdWithAllDetails(quizId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND));
 
@@ -231,14 +231,12 @@ public class QuizServiceImpl implements QuizService {
         Map<Tag, Double> tagPerformance = analyzeTagPerformance(recentAttempts);
         DifficultyLevel recommendedDifficulty = calculateRecommendedDifficulty(recentAttempts);
 
-        // 추천 퀴즈 찾기
-        List<Quiz> recommendedQuizzes = quizRepository.findRecommendedQuizzes(
+        // 개선: DTO 직접 조회로 변경하여 N+1 문제 해결
+        return quizRepository.findRecommendedQuizSummaryResponses(
                 tagPerformance.keySet(),
                 recommendedDifficulty,
                 limit
         );
-
-        return entityMapperService.mapToQuizSummaryResponseList(recommendedQuizzes);
     }
 
     @Override

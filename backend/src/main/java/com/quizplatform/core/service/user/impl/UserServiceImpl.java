@@ -66,12 +66,9 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public UserProfileDto getUserProfile(Long userId) {
-        // 사용자 정보와 연관된 통계 정보(UserLevel, UserBattleStats 등)를 함께 로드
-        User user = userRepository.findByIdWithStats(userId)
+        // 개선: DTO 직접 조회로 변경하여 N+1 문제 해결
+        return userRepository.findUserProfileDtoById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다: " + userId));
-
-        // EntityMapperService를 사용하여 User 엔티티를 UserProfileDto로 변환
-        return entityMapperService.mapToUserProfileDto(user);
     }
 
     /**
@@ -80,34 +77,34 @@ public class UserServiceImpl implements UserService {
     @Override
     @Cacheable(value = "userStatistics", key = "#userId") // 결과를 캐시에 저장
     public UserStatisticsDto getUserStatistics(Long userId) {
-        // 사용자 존재 여부 확인
-        if (!userRepository.existsById(userId)) {
+        // 개선: 단일 최적화 쿼리로 변경하여 N+1 문제 해결
+        Map<String, Object> stats = userRepository.getUserStatisticsData(userId);
+        if (stats == null || stats.isEmpty()) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다: " + userId);
         }
-
-        // 각 통계 지표를 Repository를 통해 조회 및 계산
-        long totalQuizzesTaken = quizAttemptRepository.countByUserId(userId);
-        long totalQuizzesCompleted = quizAttemptRepository.countByUserIdAndIsCompletedTrue(userId);
-        Double averageScore = quizAttemptRepository.getAverageScoreByUserId(userId);
-        long totalCorrectAnswers = questionAttemptRepository.countCorrectAnswersByUserId(userId);
-        long totalQuestions = questionAttemptRepository.countTotalQuestionsByUserId(userId);
-        // 정답률 계산 (0으로 나누는 경우 방지)
-        Double correctRate = totalQuestions > 0 ? ((double) totalCorrectAnswers / totalQuestions * 100.0) : 0.0;
-        Integer totalTimeTaken = quizAttemptRepository.getTotalTimeTakenByUserId(userId);
-        Integer bestScore = quizAttemptRepository.getMaxScoreByUserId(userId);
-        Integer worstScore = quizAttemptRepository.getMinScoreByUserId(userId);
-
+        
+        // null 값 처리 (결과가 null인 경우 기본값 사용)
+        int totalQuizzesTaken = stats.get("total_quizzes") != null ? ((Number) stats.get("total_quizzes")).intValue() : 0;
+        int totalQuizzesCompleted = stats.get("completed_quizzes") != null ? ((Number) stats.get("completed_quizzes")).intValue() : 0;
+        double averageScore = stats.get("avg_score") != null ? ((Number) stats.get("avg_score")).doubleValue() : 0.0;
+        int totalCorrectAnswers = stats.get("correct_answers") != null ? ((Number) stats.get("correct_answers")).intValue() : 0;
+        int totalQuestions = stats.get("total_questions") != null ? ((Number) stats.get("total_questions")).intValue() : 0;
+        double correctRate = stats.get("correct_rate") != null ? ((Number) stats.get("correct_rate")).doubleValue() : 0.0;
+        int totalTimeTaken = stats.get("total_time") != null ? ((Number) stats.get("total_time")).intValue() : 0;
+        int bestScore = stats.get("best_score") != null ? ((Number) stats.get("best_score")).intValue() : 0;
+        int worstScore = stats.get("worst_score") != null ? ((Number) stats.get("worst_score")).intValue() : 0;
+        
         // 계산된 통계 정보로 DTO 생성하여 반환
         return new UserStatisticsDto(
-                (int) totalQuizzesTaken,
-                (int) totalQuizzesCompleted,
-                averageScore != null ? averageScore : 0.0,
-                (int) totalCorrectAnswers,
-                (int) totalQuestions,
+                totalQuizzesTaken,
+                totalQuizzesCompleted,
+                averageScore,
+                totalCorrectAnswers,
+                totalQuestions,
                 correctRate,
-                totalTimeTaken != null ? totalTimeTaken : 0,
-                bestScore != null ? bestScore : 0,
-                worstScore != null ? worstScore : 0
+                totalTimeTaken,
+                bestScore,
+                worstScore
         );
     }
 
