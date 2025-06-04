@@ -3,7 +3,7 @@ package com.quizplatform.quiz.domain.service;
 import com.quizplatform.common.event.user.UserLevelUpEvent;
 import com.quizplatform.common.event.user.UserRegisteredEvent;
 import com.quizplatform.quiz.domain.dto.UserDTO;
-import com.quizplatform.quiz.infrastructure.cache.UserCacheService;
+import com.quizplatform.quiz.adapter.out.persistence.cache.UserCacheService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

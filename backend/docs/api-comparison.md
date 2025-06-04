@@ -16,7 +16,7 @@
 퀴즈 플랫폼 배틀 기능은 기존 모놀리식 아키텍처에서 모듈형 아키텍처로 마이그레이션되었습니다. 이 과정에서 일부 API 엔드포인트와 요청/응답 형식에 변경이 있었습니다.
 
 - **레거시 API 위치**: `legacy/main/java/com/quizplatform/core/controller/battle/`
-- **새 모듈형 API 위치**: `modules/battle/src/main/java/com/quizplatform/battle/application/controller/`
+- **새 모듈형 API 위치**: `modules/battle/src/main/java/com/quizplatform/battle/adapter/in/web/`
 
 ## REST API 비교
 
