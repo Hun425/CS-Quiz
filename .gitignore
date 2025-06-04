@@ -158,3 +158,6 @@ gradle-app.setting
 *.hprof
 
 # End of https://www.toptal.com/developers/gitignore/api/intellij+all,gradle,react,java
+
+# Ignore IDE settings for backend module
+backend/.idea/
