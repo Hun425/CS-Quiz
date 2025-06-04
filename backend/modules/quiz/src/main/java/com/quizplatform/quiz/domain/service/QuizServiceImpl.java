@@ -1,5 +1,7 @@
 package com.quizplatform.quiz.domain.service;
 
+import com.quizplatform.common.exception.BusinessException;
+import com.quizplatform.common.exception.ErrorCode;
 import com.quizplatform.quiz.domain.model.Quiz;
 import com.quizplatform.quiz.domain.model.QuestionAttempt;
 import com.quizplatform.quiz.domain.model.QuizAttempt;
@@ -65,7 +67,7 @@ public class QuizServiceImpl implements QuizService {
     @Transactional
     public QuizAttempt startQuizAttempt(Long quizId, Long userId) {
         Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new IllegalArgumentException("Quiz not found with ID: " + quizId));
+                .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND));
         
         QuizAttempt attempt = QuizAttempt.builder()
                 .quiz(quiz)
@@ -79,7 +81,7 @@ public class QuizServiceImpl implements QuizService {
     @Transactional
     public QuizAttempt submitQuizAttempt(Long attemptId) {
         QuizAttempt attempt = quizAttemptRepository.findById(attemptId)
-                .orElseThrow(() -> new IllegalArgumentException("Quiz attempt not found with ID: " + attemptId));
+                .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
         
         // 퀴즈 시도 완료 처리
         boolean passed = attempt.complete();
