@@ -13,7 +13,6 @@ spring:
   autoconfigure:
     exclude: 
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-      - org.springframework.boot.autoconfigure.security.reactive.ReactiveSecurityAutoConfiguration
   
   # OAuth2 설정 제거
   
@@ -159,7 +158,9 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
     
-# JWT 설정 제거
+# JWT 설정
+jwt:
+  secret: changeme-please-change-this-key
     
 # Eureka 클라이언트 설정
 eureka:

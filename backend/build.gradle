@@ -166,9 +166,6 @@ project(':modules:api-gateway') {
         configurations {
             all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-data-redis-reactive'
             all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-web'
-            all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-security'
-            all*.exclude group: 'org.springframework.security', module: 'spring-security-config'
-            all*.exclude group: 'org.springframework.security', module: 'spring-security-web'
         }
     }
 }

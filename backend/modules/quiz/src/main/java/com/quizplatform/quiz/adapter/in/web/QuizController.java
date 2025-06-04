@@ -11,6 +11,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import com.quizplatform.common.auth.CurrentUser;
+import com.quizplatform.common.auth.CurrentUserInfo;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -32,6 +35,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class QuizController {
 
     private final QuizApplicationService quizService;
@@ -51,7 +55,8 @@ public class QuizController {
     @PostMapping
     public ResponseEntity<QuizResponse> createQuiz(
             @Parameter(description = "퀴즈 생성 요청 데이터", required = true)
-            @RequestBody @Valid QuizCreateRequest request) {
+            @RequestBody @Valid QuizCreateRequest request,
+            @CurrentUser CurrentUserInfo currentUser) {
         QuizResponse created = quizService.createQuiz(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
@@ -175,7 +180,8 @@ public class QuizController {
             @Parameter(description = "수정할 퀴즈의 ID", required = true)
             @PathVariable Long id,
             @Parameter(description = "퀴즈 수정 요청 데이터", required = true)
-            @RequestBody @Valid QuizUpdateRequest request) {
+            @RequestBody @Valid QuizUpdateRequest request,
+            @CurrentUser CurrentUserInfo currentUser) {
         QuizResponse updated = quizService.updateQuiz(id, request);
         return ResponseEntity.ok(updated);
     }
@@ -194,7 +200,8 @@ public class QuizController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteQuiz(
             @Parameter(description = "삭제할 퀴즈의 ID", required = true)
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            @CurrentUser CurrentUserInfo currentUser) {
         quizService.deleteQuiz(id);
         return ResponseEntity.noContent().build();
     }
@@ -215,9 +222,10 @@ public class QuizController {
     @PatchMapping("/{id}/publish")
     public ResponseEntity<QuizResponse> setQuizPublishStatus(
             @Parameter(description = "상태를 변경할 퀴즈의 ID", required = true)
-            @PathVariable Long id, 
+            @PathVariable Long id,
             @Parameter(description = "공개 여부 (true: 공개, false: 비공개)", required = true)
-            @RequestParam boolean publish) {
+            @RequestParam boolean publish,
+            @CurrentUser CurrentUserInfo currentUser) {
         QuizResponse updated = quizService.setQuizPublishStatus(id, publish);
         return ResponseEntity.ok(updated);
     }
@@ -238,9 +246,10 @@ public class QuizController {
     @PatchMapping("/{id}/active")
     public ResponseEntity<QuizResponse> setQuizActiveStatus(
             @Parameter(description = "상태를 변경할 퀴즈의 ID", required = true)
-            @PathVariable Long id, 
+            @PathVariable Long id,
             @Parameter(description = "활성화 여부 (true: 활성화, false: 비활성화)", required = true)
-            @RequestParam boolean active) {
+            @RequestParam boolean active,
+            @CurrentUser CurrentUserInfo currentUser) {
         QuizResponse updated = quizService.setQuizActiveStatus(id, active);
         return ResponseEntity.ok(updated);
     }

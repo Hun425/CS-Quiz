@@ -11,8 +11,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import com.quizplatform.common.exception.BusinessException;
 import com.quizplatform.common.exception.ErrorCode;
+import com.quizplatform.common.auth.CurrentUser;
+import com.quizplatform.common.auth.CurrentUserInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +35,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Battle Controller", description = "퀴즈 대결 관련 API를 제공합니다")
+@SecurityRequirement(name = "bearerAuth")
 public class BattleController {
 
     private final BattleServiceAdapter battleService;
@@ -51,10 +55,11 @@ public class BattleController {
     @PostMapping
     public ResponseEntity<BattleRoom> createBattleRoom(
             @Parameter(description = "배틀방 생성 요청 데이터", required = true)
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request,
+            @CurrentUser CurrentUserInfo currentUser) {
         Long quizId = Long.valueOf(request.get("quizId").toString());
         int maxParticipants = Integer.parseInt(request.get("maxParticipants").toString());
-        Long creatorId = Long.valueOf(request.get("creatorId").toString());
+        Long creatorId = currentUser.id();
         String creatorUsername = (String) request.get("creatorUsername");
         String creatorProfileImage = (String) request.get("profileImage");
         int totalQuestions = Integer.parseInt(request.get("totalQuestions").toString());
@@ -132,8 +137,9 @@ public class BattleController {
             @Parameter(description = "참가할 배틀방의 ID", required = true)
             @PathVariable Long roomId,
             @Parameter(description = "참가 요청 데이터", required = true)
-            @RequestBody Map<String, Object> request) {
-        Long userId = Long.valueOf(request.get("userId").toString());
+            @RequestBody Map<String, Object> request,
+            @CurrentUser CurrentUserInfo currentUser) {
+        Long userId = currentUser.id();
         String username = (String) request.get("username");
         String profileImage = (String) request.get("profileImage");
 
@@ -155,13 +161,12 @@ public class BattleController {
             @ApiResponse(responseCode = "404", description = "배틀방 또는 참가자를 찾을 수 없습니다."),
             @ApiResponse(responseCode = "400", description = "준비 상태 변경 중 오류가 발생했습니다.")
     })
-    @PostMapping("/{roomId}/ready/{userId}")
+    @PostMapping("/{roomId}/ready")
     public ResponseEntity<?> toggleReady(
             @Parameter(description = "배틀방 ID", required = true)
             @PathVariable Long roomId,
-            @Parameter(description = "참가자 사용자 ID", required = true)
-            @PathVariable Long userId) {
-        BattleRoom battleRoom = battleService.toggleReady(roomId, userId);
+            @CurrentUser CurrentUserInfo currentUser) {
+        BattleRoom battleRoom = battleService.toggleReady(roomId, currentUser.id());
         return ResponseEntity.ok(battleRoom);
     }
     
@@ -179,13 +184,12 @@ public class BattleController {
             @ApiResponse(responseCode = "404", description = "배틀방 또는 참가자를 찾을 수 없습니다."),
             @ApiResponse(responseCode = "400", description = "퇴장 처리 중 오류가 발생했습니다.")
     })
-    @PostMapping("/{roomId}/leave/{userId}")
+    @PostMapping("/{roomId}/leave")
     public ResponseEntity<?> leaveBattleRoom(
             @Parameter(description = "배틀방 ID", required = true)
             @PathVariable Long roomId,
-            @Parameter(description = "퇴장할 사용자 ID", required = true)
-            @PathVariable Long userId) {
-        BattleRoom battleRoom = battleService.leaveBattleRoom(roomId, userId);
+            @CurrentUser CurrentUserInfo currentUser) {
+        BattleRoom battleRoom = battleService.leaveBattleRoom(roomId, currentUser.id());
         return ResponseEntity.ok(battleRoom);
     }
     
@@ -250,8 +254,9 @@ public class BattleController {
             @Parameter(description = "배틀방 ID", required = true)
             @PathVariable Long roomId,
             @Parameter(description = "답변 요청 데이터", required = true)
-            @RequestBody Map<String, Object> request) {
-        Long userId = Long.valueOf(request.get("userId").toString());
+            @RequestBody Map<String, Object> request,
+            @CurrentUser CurrentUserInfo currentUser) {
+        Long userId = currentUser.id();
         int questionIndex = Integer.parseInt(request.get("questionIndex").toString());
         String answer = (String) request.get("answer");
         boolean isCorrect = Boolean.parseBoolean(request.get("isCorrect").toString());

@@ -15,6 +15,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import com.quizplatform.common.auth.CurrentUser;
+import com.quizplatform.common.auth.CurrentUserInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -35,6 +38,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/")
 @RequiredArgsConstructor
 @Tag(name = "User Controller", description = "사용자 관리 API를 제공합니다")
+@SecurityRequirement(name = "bearerAuth")
 public class UserController {
 
     private final UserService userService;
@@ -118,7 +122,8 @@ public class UserController {
             @Parameter(description = "업데이트할 사용자의 ID", required = true)
             @PathVariable Long id,
             @Parameter(description = "업데이트할 프로필 정보", required = true)
-            @RequestBody UserProfileUpdateRequest request) {
+            @RequestBody UserProfileUpdateRequest request,
+            @CurrentUser CurrentUserInfo currentUser) {
         User updatedUser = userService.updateProfile(id, request.getUsername(), request.getProfileImage());
         return ResponseEntity.ok(UserResponse.fromEntity(updatedUser));
     }
@@ -138,7 +143,8 @@ public class UserController {
     @PutMapping("/{id}/toggle-active")
     public ResponseEntity<UserResponse> toggleActive(
             @Parameter(description = "상태를 변경할 사용자의 ID", required = true)
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            @CurrentUser CurrentUserInfo currentUser) {
         User updatedUser = userService.toggleActive(id);
         return ResponseEntity.ok(UserResponse.fromEntity(updatedUser));
     }
@@ -161,7 +167,8 @@ public class UserController {
             @Parameter(description = "권한을 변경할 사용자의 ID", required = true)
             @PathVariable Long id,
             @Parameter(description = "변경할 권한 (USER, ADMIN 등)", required = true)
-            @RequestParam UserRole role) {
+            @RequestParam UserRole role,
+            @CurrentUser CurrentUserInfo currentUser) {
         User updatedUser = userService.updateRole(id, role);
         return ResponseEntity.ok(UserResponse.fromEntity(updatedUser));
     }
@@ -183,7 +190,8 @@ public class UserController {
             @Parameter(description = "경험치를 부여할 사용자의 ID", required = true)
             @PathVariable Long id,
             @Parameter(description = "부여할 경험치 양", required = true, example = "100")
-            @RequestParam int experience) {
+            @RequestParam int experience,
+            @CurrentUser CurrentUserInfo currentUser) {
         boolean leveledUp = userService.giveExperience(id, experience);
         return ResponseEntity.ok(leveledUp);
     }
@@ -205,7 +213,8 @@ public class UserController {
             @Parameter(description = "포인트를 부여할 사용자의 ID", required = true)
             @PathVariable Long id,
             @Parameter(description = "부여할 포인트 양", required = true, example = "50")
-            @RequestParam int points) {
+            @RequestParam int points,
+            @CurrentUser CurrentUserInfo currentUser) {
         userService.givePoints(id, points);
         return ResponseEntity.ok().build();
     }
