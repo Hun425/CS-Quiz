@@ -5,6 +5,9 @@ import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.servers.Server;
+import io.swagger.v3.oas.models.security.Components;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,6 +32,17 @@ public class SwaggerConfig {
      */
     @Bean
     public OpenAPI quizOpenAPI() {
+        final String schemeName = "bearerAuth";
+
+        SecurityScheme securityScheme = new SecurityScheme()
+                .name(schemeName)
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT");
+
+        SecurityRequirement securityRequirement = new SecurityRequirement()
+                .addList(schemeName);
+
         return new OpenAPI()
                 .info(new Info()
                         .title("퀴즈 모듈 API")
@@ -40,6 +54,8 @@ public class SwaggerConfig {
                         .license(new License()
                                 .name("Apache 2.0")
                                 .url("http://www.apache.org/licenses/LICENSE-2.0.html")))
+                .addSecurityItem(securityRequirement)
+                .components(new Components().addSecuritySchemes(schemeName, securityScheme))
                 .servers(List.of(
                         // API Gateway를 통한 경로 추가
                         new Server().url("/api/quizzes").description("API Gateway 경로"),
