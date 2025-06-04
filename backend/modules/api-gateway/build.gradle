@@ -17,13 +17,16 @@
         // Circuit Breaker - 직접 버전 지정
         implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j:3.0.0'
 
+        // Spring Security 및 JWT 의존성 추가
+        implementation 'org.springframework.boot:spring-boot-starter-security'
+        implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+        runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+        runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
         // Rate Limiting과 Redis 의존성 제외
         configurations {
             all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-data-redis-reactive'
             all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-web'
-            all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-security'
-            all*.exclude group: 'org.springframework.security', module: 'spring-security-config'
-            all*.exclude group: 'org.springframework.security', module: 'spring-security-web'
             // 다른 모듈에서 오는 2.2.0 버전 제외
             all*.exclude group: 'org.springdoc', module: 'springdoc-openapi-starter-webmvc-ui'
         }
