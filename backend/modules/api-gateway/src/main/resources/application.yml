@@ -138,12 +138,6 @@ spring:
             - SetPath=/v3/api-docs
             - name: PreserveHostHeader
             
-        - id: swagger-ui-redirect
-          uri: forward:/swagger-ui/index.html
-          predicates:
-            - Path=/swagger-ui.html
-          filters:
-            - name: PreserveHostHeader
             
         - id: swagger-webjars
           uri: forward:/webjars
