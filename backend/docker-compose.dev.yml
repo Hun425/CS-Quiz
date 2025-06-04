@@ -58,7 +58,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/quiz_platform
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/quiz_platform?currentSchema=user_schema
       - SPRING_DATASOURCE_USERNAME=quizuser
       - SPRING_DATASOURCE_PASSWORD=quizpass
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
@@ -86,7 +86,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/quiz_platform
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/quiz_platform?currentSchema=quiz_schema
       - SPRING_DATASOURCE_USERNAME=quizuser
       - SPRING_DATASOURCE_PASSWORD=quizpass
       - SPRING_ELASTICSEARCH_REST_URIS=http://elasticsearch:9200
@@ -116,7 +116,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/quiz_platform
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/quiz_platform?currentSchema=battle_schema
       - SPRING_DATASOURCE_USERNAME=quizuser
       - SPRING_DATASOURCE_PASSWORD=quizpass
       - SPRING_REDIS_HOST=redis
