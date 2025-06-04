@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: quiz-app-config
+  namespace: default
+
+data:
+  SPRING_PROFILES_ACTIVE: "prod"
+  EUREKA_URL: "http://eureka-server:8761/eureka/"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  POSTGRES_HOST: "postgres"
+  POSTGRES_PORT: "5432"
+  CONFIG_GIT_URI: "file:///app/config-repo"
+  SPRING_ELASTICSEARCH_REST_URIS: "http://elasticsearch:9200"

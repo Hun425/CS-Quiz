@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: battle-service
+  labels:
+    app: battle-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: battle-service
+  template:
+    metadata:
+      labels:
+        app: battle-service
+    spec:
+      containers:
+      - name: battle-service
+        image: example/battle-service:latest
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          valueFrom:
+            configMapKeyRef:
+              name: quiz-app-config
+              key: SPRING_PROFILES_ACTIVE
+        - name: EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE
+          valueFrom:
+            configMapKeyRef:
+              name: quiz-app-config
+              key: EUREKA_URL
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:postgresql://postgres:5432/quiz_platform?currentSchema=battle_schema"
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: quiz-app-secret
+              key: POSTGRES_USER
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: quiz-app-secret
+              key: POSTGRES_PASSWORD
+        - name: SPRING_REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: quiz-app-config
+              key: REDIS_HOST
+        - name: SPRING_REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: quiz-app-config
+              key: REDIS_PORT
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          valueFrom:
+            configMapKeyRef:
+              name: quiz-app-config
+              key: KAFKA_BOOTSTRAP_SERVERS
+        ports:
+        - containerPort: 8083
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: battle-service
+spec:
+  selector:
+    app: battle-service
+  ports:
+  - port: 8083
+    targetPort: 8083
