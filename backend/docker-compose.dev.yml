@@ -1,6 +1,25 @@
 version: '3.8'
 
 services:
+  # 설정 서버
+  config-server:
+    build:
+      context: .
+      dockerfile: ./modules/config-server/Dockerfile
+    container_name: quiz-config-server-dev
+    ports:
+      - "8888:8888"
+      - "5888:5888"  # 디버깅 포트
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_GIT_URI=file:///app/config-repo
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5888
+    volumes:
+      - ./modules/config-server:/workspace/app
+      - maven-repo:/root/.m2
+    networks:
+      - quiz-network
+    restart: unless-stopped
   # API 게이트웨이 서비스
   api-gateway:
     build:
@@ -20,6 +39,7 @@ services:
       - ./modules/api-gateway:/workspace/app
       - maven-repo:/root/.m2
     depends_on:
+      - config-server
       - eureka-server
       - redis
       - kafka
@@ -42,6 +62,8 @@ services:
     volumes:
       - ./modules/eureka-server:/workspace/app
       - maven-repo:/root/.m2
+    depends_on:
+      - config-server
     networks:
       - quiz-network
     restart: unless-stopped
@@ -68,6 +90,7 @@ services:
       - maven-repo:/root/.m2
     depends_on:
       - postgres
+      - config-server
       - eureka-server
       - kafka
     networks:
@@ -97,6 +120,7 @@ services:
       - maven-repo:/root/.m2
     depends_on:
       - postgres
+      - config-server
       - eureka-server
       - elasticsearch
       - kafka
@@ -129,6 +153,7 @@ services:
     depends_on:
       - postgres
       - redis
+      - config-server
       - eureka-server
       - kafka
     networks:
