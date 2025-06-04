@@ -185,6 +185,17 @@ project(':modules:eureka-server') {
     }
 }
 
+project(':modules:config-server') {
+    bootJar {
+        enabled = true
+        mainClass.set('com.quizplatform.configserver.ConfigServerApplication')
+    }
+
+    dependencies {
+        implementation 'org.springframework.cloud:spring-cloud-config-server'
+    }
+}
+
 dependencies {
     implementation project(':modules:common')
     implementation project(':modules:user')
@@ -192,6 +203,7 @@ dependencies {
     implementation project(':modules:battle')
     implementation project(':modules:api-gateway')
     implementation project(':modules:eureka-server')
+    implementation project(':modules:config-server')
     
     implementation 'org.springframework.boot:spring-boot-starter-web'
 //    implementation 'org.springframework.boot:spring-boot-starter-security'
