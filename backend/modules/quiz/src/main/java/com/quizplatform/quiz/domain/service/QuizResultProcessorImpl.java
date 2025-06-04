@@ -4,7 +4,7 @@ import com.quizplatform.quiz.domain.model.Question;
 import com.quizplatform.quiz.domain.model.QuestionAttempt;
 import com.quizplatform.quiz.domain.model.Quiz;
 import com.quizplatform.quiz.domain.model.QuizAttempt;
-import com.quizplatform.quiz.domain.repository.QuizAttemptRepository;
+import com.quizplatform.quiz.adapter.out.persistence.repository.QuizAttemptRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

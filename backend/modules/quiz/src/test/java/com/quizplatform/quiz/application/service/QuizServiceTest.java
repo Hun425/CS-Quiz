@@ -4,7 +4,7 @@ import com.quizplatform.quiz.application.dto.QuizResponse;
 import com.quizplatform.quiz.domain.model.DifficultyLevel;
 import com.quizplatform.quiz.domain.model.Quiz;
 import com.quizplatform.quiz.domain.model.QuizType;
-import com.quizplatform.quiz.domain.repository.QuizRepository;
+import com.quizplatform.quiz.adapter.out.persistence.repository.QuizRepository;
 import com.quizplatform.quiz.domain.service.QuizServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
