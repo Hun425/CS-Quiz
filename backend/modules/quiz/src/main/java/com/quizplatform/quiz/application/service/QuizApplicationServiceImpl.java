@@ -1,5 +1,7 @@
 package com.quizplatform.quiz.application.service;
 
+import com.quizplatform.common.exception.BusinessException;
+import com.quizplatform.common.exception.ErrorCode;
 import com.quizplatform.quiz.application.dto.QuizCreateRequest;
 import com.quizplatform.quiz.application.dto.QuizResponse;
 import com.quizplatform.quiz.application.dto.QuizUpdateRequest;
@@ -14,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 /**
@@ -43,7 +44,7 @@ public class QuizApplicationServiceImpl implements QuizApplicationService {
     @Transactional(readOnly = true)
     public QuizResponse getQuizById(Long id) {
         Quiz quiz = quizService.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("퀴즈를 찾을 수 없습니다. ID: " + id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND));
         return convertToQuizResponse(quiz);
     }
 

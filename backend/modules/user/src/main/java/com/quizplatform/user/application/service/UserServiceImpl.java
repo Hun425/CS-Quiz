@@ -1,5 +1,7 @@
 package com.quizplatform.user.application.service;
 
+import com.quizplatform.common.exception.BusinessException;
+import com.quizplatform.common.exception.ErrorCode;
 import com.quizplatform.user.domain.model.User;
 import com.quizplatform.user.domain.model.UserLevelHistory;
 import com.quizplatform.user.domain.model.UserRole;
@@ -67,7 +69,7 @@ public class UserServiceImpl implements UserService {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
             log.warn("User not found with ID: {}", userId);
-            return false;
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
         
         User user = userOpt.get();
@@ -90,7 +92,7 @@ public class UserServiceImpl implements UserService {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
             log.warn("User not found with ID: {}", userId);
-            return;
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
         
         User user = userOpt.get();
@@ -105,7 +107,7 @@ public class UserServiceImpl implements UserService {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
             log.warn("User not found with ID: {}", userId);
-            throw new IllegalArgumentException("User not found with ID: " + userId);
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
         
         User user = userOpt.get();
@@ -119,7 +121,7 @@ public class UserServiceImpl implements UserService {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
             log.warn("User not found with ID: {}", userId);
-            throw new IllegalArgumentException("User not found with ID: " + userId);
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
         
         User user = userOpt.get();
@@ -133,7 +135,7 @@ public class UserServiceImpl implements UserService {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
             log.warn("User not found with ID: {}", userId);
-            throw new IllegalArgumentException("User not found with ID: " + userId);
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
         
         User user = userOpt.get();

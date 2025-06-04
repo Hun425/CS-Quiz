@@ -1,5 +1,7 @@
 package com.quizplatform.user.adapter.in.web;
 
+import com.quizplatform.common.exception.BusinessException;
+import com.quizplatform.common.exception.ErrorCode;
 import com.quizplatform.user.domain.model.User;
 import com.quizplatform.user.domain.model.UserRole;
 import com.quizplatform.user.application.service.UserService;
@@ -71,10 +73,9 @@ public class UserController {
     public ResponseEntity<UserResponse> getUserById(
             @Parameter(description = "조회할 사용자의 ID", required = true)
             @PathVariable Long id) {
-        return userService.findById(id)
-                .map(UserResponse::fromEntity)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        User user = userService.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        return ResponseEntity.ok(UserResponse.fromEntity(user));
     }
 
     /**

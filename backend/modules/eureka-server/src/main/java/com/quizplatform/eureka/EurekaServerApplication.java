@@ -11,7 +11,7 @@ import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
  * @author 채기훈
  * @since JDK 21.0.6 Eclipse Temurin
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.quizplatform.eureka", "com.quizplatform.common"})
 @EnableEurekaServer
 public class EurekaServerApplication {
 

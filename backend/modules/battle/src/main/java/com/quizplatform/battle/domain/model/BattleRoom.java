@@ -1,5 +1,7 @@
 package com.quizplatform.battle.domain.model;
 
+import com.quizplatform.common.exception.BusinessException;
+import com.quizplatform.common.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -190,13 +192,13 @@ public class BattleRoom {
      */
     private void validateParticipantAddition(Long userId) {
         if (status != BattleRoomStatus.WAITING) {
-            throw new IllegalStateException("이미 시작된 배틀입니다.");
+            throw new BusinessException(ErrorCode.BATTLE_ALREADY_STARTED);
         }
         if (isParticipantLimitReached()) {
-            throw new IllegalStateException("배틀 방이 가득 찼습니다.");
+            throw new BusinessException(ErrorCode.BATTLE_ROOM_FULL);
         }
         if (hasParticipant(userId)) {
-            throw new IllegalStateException("이미 참가 중인 사용자입니다.");
+            throw new BusinessException(ErrorCode.ALREADY_PARTICIPATING);
         }
     }
 
@@ -216,10 +218,10 @@ public class BattleRoom {
      */
     public void startBattle() {
         if (status != BattleRoomStatus.WAITING) {
-            throw new IllegalStateException("이미 시작된 배틀입니다.");
+            throw new BusinessException(ErrorCode.BATTLE_ALREADY_STARTED);
         }
         if (!isReadyToStart()) {
-            throw new IllegalStateException("아직 준비되지 않았습니다.");
+            throw new BusinessException(ErrorCode.NOT_READY_TO_START);
         }
         this.currentQuestionIndex = -1; // 인덱스 초기화 (첫 번째 문제로 진행할 준비)
         this.status = BattleRoomStatus.IN_PROGRESS;
@@ -240,7 +242,7 @@ public class BattleRoom {
      */
     public void startNextQuestion() {
         if (status != BattleRoomStatus.IN_PROGRESS) {
-            throw new IllegalStateException("진행 중인 배틀이 아닙니다.");
+            throw new BusinessException(ErrorCode.BATTLE_NOT_IN_PROGRESS);
         }
         
         // 다음 문제 인덱스로 진행

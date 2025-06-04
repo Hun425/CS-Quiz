@@ -12,6 +12,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDateTime;
+import com.quizplatform.common.exception.BusinessException;
+import com.quizplatform.common.exception.ErrorCode;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -128,7 +130,7 @@ public class BattleServiceImpl implements BattleService {
         // 참가자 맵에서 조회
         Map<Long, BattleParticipant> participants = participantsMap.get(roomId);
         if (participants == null || !participants.containsKey(userId)) {
-            throw new NoSuchElementException("참가자를 찾을 수 없습니다");
+            throw new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND);
         }
         
         // 준비 상태 토글
@@ -346,7 +348,7 @@ public class BattleServiceImpl implements BattleService {
         // 방 정보 가져오기
         BattleJoinResponse room = roomsMap.get(roomId);
         if (room == null) {
-            throw new NoSuchElementException("배틀방을 찾을 수 없습니다");
+            throw new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND);
         }
         
         // 참가자 맵에서 제거

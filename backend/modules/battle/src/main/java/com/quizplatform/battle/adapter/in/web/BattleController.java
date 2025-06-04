@@ -11,6 +11,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.quizplatform.common.exception.BusinessException;
+import com.quizplatform.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 
 /**
  * 배틀 관련 API 요청을 처리하는 컨트롤러 클래스
@@ -48,28 +49,23 @@ public class BattleController {
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터입니다.")
     })
     @PostMapping
-    public ResponseEntity<?> createBattleRoom(
+    public ResponseEntity<BattleRoom> createBattleRoom(
             @Parameter(description = "배틀방 생성 요청 데이터", required = true)
             @RequestBody Map<String, Object> request) {
-        try {
-            Long quizId = Long.valueOf(request.get("quizId").toString());
-            int maxParticipants = Integer.parseInt(request.get("maxParticipants").toString());
-            Long creatorId = Long.valueOf(request.get("creatorId").toString());
-            String creatorUsername = (String) request.get("creatorUsername");
-            String creatorProfileImage = (String) request.get("profileImage");
-            int totalQuestions = Integer.parseInt(request.get("totalQuestions").toString());
-            Integer questionTimeLimitSeconds = request.containsKey("questionTimeLimit") ? 
-                    Integer.valueOf(request.get("questionTimeLimit").toString()) : 30;
-            
-            BattleRoom battleRoom = battleService.createBattleRoom(
-                    quizId, maxParticipants, creatorId, creatorUsername, 
-                    creatorProfileImage, totalQuestions, questionTimeLimitSeconds);
-            
-            return ResponseEntity.ok(battleRoom);
-        } catch (Exception e) {
-            log.error("배틀방 생성 실패: {}", e.getMessage(), e);
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        Long quizId = Long.valueOf(request.get("quizId").toString());
+        int maxParticipants = Integer.parseInt(request.get("maxParticipants").toString());
+        Long creatorId = Long.valueOf(request.get("creatorId").toString());
+        String creatorUsername = (String) request.get("creatorUsername");
+        String creatorProfileImage = (String) request.get("profileImage");
+        int totalQuestions = Integer.parseInt(request.get("totalQuestions").toString());
+        Integer questionTimeLimitSeconds = request.containsKey("questionTimeLimit") ?
+                Integer.valueOf(request.get("questionTimeLimit").toString()) : 30;
+
+        BattleRoom battleRoom = battleService.createBattleRoom(
+                quizId, maxParticipants, creatorId, creatorUsername,
+                creatorProfileImage, totalQuestions, questionTimeLimitSeconds);
+
+        return ResponseEntity.ok(battleRoom);
     }
     
     /**
@@ -88,15 +84,8 @@ public class BattleController {
     public ResponseEntity<?> getBattleRoom(
             @Parameter(description = "조회할 배틀방의 ID", required = true)
             @PathVariable Long roomId) {
-        try {
-            BattleRoom battleRoom = battleService.getBattleRoom(roomId);
-            return ResponseEntity.ok(battleRoom);
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            log.error("배틀방 조회 실패: {}", e.getMessage(), e);
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        BattleRoom battleRoom = battleService.getBattleRoom(roomId);
+        return ResponseEntity.ok(battleRoom);
     }
     
     /**
@@ -114,14 +103,14 @@ public class BattleController {
     public ResponseEntity<List<BattleRoom>> getBattleRooms(
             @Parameter(description = "조회할 배틀방 상태 (WAITING, IN_PROGRESS, FINISHED)", example = "WAITING")
             @RequestParam(required = false, defaultValue = "WAITING") String status) {
+        BattleRoomStatus roomStatus;
         try {
-            BattleRoomStatus roomStatus = BattleRoomStatus.valueOf(status);
-            List<BattleRoom> rooms = battleService.getBattleRoomsByStatus(roomStatus);
-            return ResponseEntity.ok(rooms);
+            roomStatus = BattleRoomStatus.valueOf(status);
         } catch (IllegalArgumentException e) {
-            log.error("잘못된 상태 값: {}", status);
-            return ResponseEntity.badRequest().build();
+            throw new BusinessException(ErrorCode.INVALID_OPERATION);
         }
+        List<BattleRoom> rooms = battleService.getBattleRoomsByStatus(roomStatus);
+        return ResponseEntity.ok(rooms);
     }
     
     /**
@@ -144,21 +133,12 @@ public class BattleController {
             @PathVariable Long roomId,
             @Parameter(description = "참가 요청 데이터", required = true)
             @RequestBody Map<String, Object> request) {
-        try {
-            Long userId = Long.valueOf(request.get("userId").toString());
-            String username = (String) request.get("username");
-            String profileImage = (String) request.get("profileImage");
-            
-            BattleRoom battleRoom = battleService.joinBattleRoom(roomId, userId, username, profileImage);
-            return ResponseEntity.ok(battleRoom);
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        } catch (Exception e) {
-            log.error("배틀방 참가 실패: {}", e.getMessage(), e);
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        Long userId = Long.valueOf(request.get("userId").toString());
+        String username = (String) request.get("username");
+        String profileImage = (String) request.get("profileImage");
+
+        BattleRoom battleRoom = battleService.joinBattleRoom(roomId, userId, username, profileImage);
+        return ResponseEntity.ok(battleRoom);
     }
     
     /**
@@ -181,15 +161,8 @@ public class BattleController {
             @PathVariable Long roomId,
             @Parameter(description = "참가자 사용자 ID", required = true)
             @PathVariable Long userId) {
-        try {
-            BattleRoom battleRoom = battleService.toggleReady(roomId, userId);
-            return ResponseEntity.ok(battleRoom);
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            log.error("준비 상태 변경 실패: {}", e.getMessage(), e);
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        BattleRoom battleRoom = battleService.toggleReady(roomId, userId);
+        return ResponseEntity.ok(battleRoom);
     }
     
     /**
@@ -212,15 +185,8 @@ public class BattleController {
             @PathVariable Long roomId,
             @Parameter(description = "퇴장할 사용자 ID", required = true)
             @PathVariable Long userId) {
-        try {
-            BattleRoom battleRoom = battleService.leaveBattleRoom(roomId, userId);
-            return ResponseEntity.ok(battleRoom);
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            log.error("배틀방 퇴장 실패: {}", e.getMessage(), e);
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        BattleRoom battleRoom = battleService.leaveBattleRoom(roomId, userId);
+        return ResponseEntity.ok(battleRoom);
     }
     
     /**
@@ -240,17 +206,8 @@ public class BattleController {
     public ResponseEntity<?> startBattle(
             @Parameter(description = "시작할 배틀방 ID", required = true)
             @PathVariable Long roomId) {
-        try {
-            BattleRoom battleRoom = battleService.startBattle(roomId);
-            return ResponseEntity.ok(battleRoom);
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        } catch (Exception e) {
-            log.error("배틀 시작 실패: {}", e.getMessage(), e);
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        BattleRoom battleRoom = battleService.startBattle(roomId);
+        return ResponseEntity.ok(battleRoom);
     }
     
     /**
@@ -270,17 +227,8 @@ public class BattleController {
     public ResponseEntity<?> startNextQuestion(
             @Parameter(description = "배틀방 ID", required = true)
             @PathVariable Long roomId) {
-        try {
-            BattleRoom battleRoom = battleService.startNextQuestion(roomId);
-            return ResponseEntity.ok(battleRoom);
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        } catch (Exception e) {
-            log.error("다음 문제 진행 실패: {}", e.getMessage(), e);
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        BattleRoom battleRoom = battleService.startNextQuestion(roomId);
+        return ResponseEntity.ok(battleRoom);
     }
     
     /**
@@ -303,23 +251,16 @@ public class BattleController {
             @PathVariable Long roomId,
             @Parameter(description = "답변 요청 데이터", required = true)
             @RequestBody Map<String, Object> request) {
-        try {
-            Long userId = Long.valueOf(request.get("userId").toString());
-            int questionIndex = Integer.parseInt(request.get("questionIndex").toString());
-            String answer = (String) request.get("answer");
-            boolean isCorrect = Boolean.parseBoolean(request.get("isCorrect").toString());
-            long answerTime = Long.parseLong(request.get("answerTimeMs").toString());
-            
-            Object result = battleService.processAnswer(
-                    roomId, userId, questionIndex, answer, isCorrect, answerTime);
-            
-            return ResponseEntity.ok(result);
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            log.error("답변 처리 실패: {}", e.getMessage(), e);
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        Long userId = Long.valueOf(request.get("userId").toString());
+        int questionIndex = Integer.parseInt(request.get("questionIndex").toString());
+        String answer = (String) request.get("answer");
+        boolean isCorrect = Boolean.parseBoolean(request.get("isCorrect").toString());
+        long answerTime = Long.parseLong(request.get("answerTimeMs").toString());
+
+        Object result = battleService.processAnswer(
+                roomId, userId, questionIndex, answer, isCorrect, answerTime);
+
+        return ResponseEntity.ok(result);
     }
     
     /**
@@ -339,14 +280,7 @@ public class BattleController {
     public ResponseEntity<?> finishBattle(
             @Parameter(description = "종료할 배틀방 ID", required = true)
             @PathVariable Long roomId) {
-        try {
-            BattleRoom battleRoom = battleService.finishBattle(roomId);
-            return ResponseEntity.ok(battleRoom);
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            log.error("배틀 종료 실패: {}", e.getMessage(), e);
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        BattleRoom battleRoom = battleService.finishBattle(roomId);
+        return ResponseEntity.ok(battleRoom);
     }
-} 
+}
