@@ -1,6 +1,20 @@
 server:
   port: 8080
 
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    urls:
+      - name: user-service
+        url: http://localhost:8081/v3/api-docs
+      - name: quiz-service
+        url: http://localhost:8082/v3/api-docs
+      - name: battle-service
+        url: http://localhost:8083/v3/api-docs
+
+
 spring:
   application:
     name: api-gateway
@@ -14,41 +28,13 @@ spring:
     exclude: 
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
   
-  # OAuth2 설정 제거
-  
   # Redis 설정 완전 비활성화
   data:
     redis:
       enabled: false
   
-  # Swagger/OpenAPI 설정
-  springdoc:
-    api-docs:
-      enabled: true
-      path: /v3/api-docs
-    swagger-ui:
-      enabled: true
-      urls:
-        - name: user-service
-          url: http://localhost:8081/v3/api-docs
-        - name: quiz-service
-          url: http://localhost:8082/v3/api-docs
-        - name: battle-service
-          url: http://localhost:8083/v3/api-docs
-    # 자동 서비스 디스커버리 기반 그룹 설정
-    group-configs:
-      - group: gateway
-        paths-to-match: /api/auth/**, /api/services/**
-      - group: users
-        paths-to-match: /api/users/**
-      - group: quizzes  
-        paths-to-match: /api/quizzes/**
-      - group: battles
-        paths-to-match: /api/battles/**
-    show-actuator: false
-    cache:
-      disabled: true
-    
+  # Swagger/OpenAPI 설정 (진짜 자동 설정)
+
   cloud:
     gateway:
       globalcors:
@@ -80,9 +66,8 @@ spring:
           filters:
             - RewritePath=/api/battles/(?<path>.*), /$\{path}
             
-            
       
-      # 서비스 발견 관련 설정
+      # 서비스 발견 관련 설정 (자동 설정)
       discovery:
         locator:
           enabled: true
@@ -91,7 +76,7 @@ spring:
       # 레이트 리미팅 설정 비활성화
       default-filters: []
             
-  # Kafka 설정
+  # Kafka 설정 (로컬)
   kafka:
     bootstrap-servers: localhost:9092
     
@@ -133,9 +118,7 @@ logging:
     org.springframework.cloud.gateway: DEBUG
     org.springframework.http.server.reactive: DEBUG
     org.springframework.web.reactive: DEBUG
-    reactor.netty: DEBUG
-    org.springdoc: DEBUG
-    org.springframework.cloud.client.discovery: DEBUG
+    com.quizplatform: DEBUG
     
 # Actuator 설정
 management:

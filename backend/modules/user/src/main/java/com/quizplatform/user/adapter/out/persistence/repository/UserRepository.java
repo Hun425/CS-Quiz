@@ -39,4 +39,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return 사용자 Optional
      */
     Optional<User> findByProviderAndProviderId(String provider, String providerId);
+    
+    /**
+     * AuthProvider와 제공자 ID로 사용자 조회
+     * 
+     * @param provider 인증 제공자 enum
+     * @param providerId 제공자 ID
+     * @return 사용자 Optional
+     */
+    Optional<User> findByProviderAndProviderId(com.quizplatform.user.domain.model.AuthProvider provider, String providerId);
 } 

@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 퀴즈 시도 도메인 모델
@@ -137,29 +138,88 @@ public class QuizAttempt {
         this.endTime = LocalDateTime.now();
         this.completed = true;
         
-        // 점수 계산
-        int totalPoints = 0;
-        int earnedPoints = 0;
+        // 점수 계산 - 개선된 로직
+        this.score = calculateScore();
         
-        for (Question question : this.quiz.getQuestions()) {
-            totalPoints += question.getPoints();
-            
-            // 해당 문제에 대한 시도 찾기
-            questionAttempts.stream()
-                    .filter(attempt -> attempt.getQuestionId().equals(question.getId()))
-                    .findFirst()
-                    .ifPresent(attempt -> {
-                        if (attempt.isCorrect()) {
-                            this.score += question.getPoints();
-                        }
-                    });
-        }
-        
-        // 통과 기준: 60% 이상 정답
-        double percentage = (double) this.score / totalPoints * 100;
-        this.passed = percentage >= 60;
+        // 통과 기준 확인
+        this.passed = checkPassingScore();
         
         return this.passed;
+    }
+    
+    /**
+     * 점수 계산 (백분율 기준)
+     * 
+     * @return 계산된 점수 (0-100)
+     */
+    private int calculateScore() {
+        if (this.quiz.getQuestions().isEmpty()) {
+            return 0;
+        }
+        
+        AtomicInteger totalPoints = new AtomicInteger(0);
+        AtomicInteger earnedPoints = new AtomicInteger(0);
+        
+        this.quiz.getQuestions().forEach(question -> {
+            int questionPoints = question.getPoints() != null ? question.getPoints() : 10; // 기본 10점
+            totalPoints.addAndGet(questionPoints);
+            
+            // 해당 문제에 대한 정답 시도 찾기 (람다 적극 활용)
+            questionAttempts.stream()
+                    .filter(attempt -> attempt.getQuestionId().equals(question.getId()))
+                    .filter(QuestionAttempt::isCorrect)
+                    .findFirst()
+                    .ifPresent(attempt -> earnedPoints.addAndGet(questionPoints));
+        });
+        
+        if (totalPoints.get() == 0) {
+            return 0;
+        }
+        
+        // 백분율로 변환 (0-100)
+        return Math.round((float) earnedPoints.get() / totalPoints.get() * 100);
+    }
+    
+    /**
+     * 통과 여부 확인
+     * 
+     * @return 통과 여부
+     */
+    private boolean checkPassingScore() {
+        int passingScore = this.quiz.getPassingScore();
+        return this.score >= passingScore;
+    }
+    
+    /**
+     * 정답 문제 수 반환
+     * 
+     * @return 정답 문제 수
+     */
+    public int getCorrectAnswerCount() {
+        return (int) questionAttempts.stream()
+                .filter(QuestionAttempt::isCorrect)
+                .count();
+    }
+    
+    /**
+     * 오답 문제 수 반환
+     * 
+     * @return 오답 문제 수
+     */
+    public int getIncorrectAnswerCount() {
+        return questionAttempts.size() - getCorrectAnswerCount();
+    }
+    
+    /**
+     * 정답률 반환 (0.0 - 1.0)
+     * 
+     * @return 정답률
+     */
+    public double getAccuracy() {
+        if (questionAttempts.isEmpty()) {
+            return 0.0;
+        }
+        return (double) getCorrectAnswerCount() / questionAttempts.size();
     }
     
     /**

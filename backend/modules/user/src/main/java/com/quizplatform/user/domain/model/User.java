@@ -78,6 +78,18 @@ public class User {
      */
     @Column(name = "profile_image")
     private String profileImage;
+    
+    /**
+     * 표시 이름 (별도 컬럼)
+     */
+    @Column(name = "display_name", length = 100)
+    private String displayName;
+    
+    /**
+     * 프로필 이미지 URL (OAuth2용)
+     */
+    @Column(name = "profile_image_url")
+    private String profileImageUrl;
 
     /**
      * 사용자 권한
@@ -214,15 +226,19 @@ public class User {
      * @param username 사용자명
      * @param passwordHash 비밀번호 해시 (LOCAL 인증용)
      * @param profileImage 프로필 이미지 URL
+     * @param displayName 표시 이름
+     * @param profileImageUrl 프로필 이미지 URL (OAuth2용)
      */
     @Builder
-    public User(AuthProvider provider, String providerId, String email, String username, String passwordHash, String profileImage) {
+    public User(AuthProvider provider, String providerId, String email, String username, String passwordHash, String profileImage, String displayName, String profileImageUrl) {
         this.provider = provider;
         this.providerId = providerId;
         this.email = email;
         this.username = username;
         this.passwordHash = passwordHash;
         this.profileImage = profileImage;
+        this.displayName = displayName;
+        this.profileImageUrl = profileImageUrl;
         this.role = UserRole.USER;
         this.isActive = true;
         this.totalPoints = 0;
@@ -385,12 +401,31 @@ public class User {
     }
 
     /**
-     * 표시 이름 반환 (username을 표시 이름으로 사용)
+     * OAuth2 사용자 정보 업데이트
+     * 
+     * @param email 이메일
+     * @param displayName 표시 이름
+     * @param profileImageUrl 프로필 이미지 URL
+     */
+    public void updateOAuth2Info(String email, String displayName, String profileImageUrl) {
+        if (email != null && !email.isBlank()) {
+            this.email = email;
+        }
+        if (displayName != null && !displayName.isBlank()) {
+            this.displayName = displayName;
+        }
+        if (profileImageUrl != null) {
+            this.profileImageUrl = profileImageUrl;
+        }
+    }
+    
+    /**
+     * 표시 이름 반환 (displayName이 있으면 사용, 없으면 username 사용)
      * 
      * @return 표시 이름
      */
     public String getDisplayName() {
-        return this.username;
+        return this.displayName != null && !this.displayName.isBlank() ? this.displayName : this.username;
     }
 
     /**

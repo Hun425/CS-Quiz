@@ -1,12 +1,14 @@
 package com.quizplatform.user.application.service;
 
+import com.quizplatform.common.event.EventPublisher;
+import com.quizplatform.common.event.Topics;
 import com.quizplatform.common.exception.BusinessException;
 import com.quizplatform.common.exception.ErrorCode;
-import com.quizplatform.user.domain.model.User;
-import com.quizplatform.user.domain.model.UserLevelHistory;
-import com.quizplatform.user.domain.model.UserRole;
 import com.quizplatform.user.adapter.out.persistence.repository.UserRepository;
-import com.quizplatform.user.adapter.out.event.UserEventPublisher;
+import com.quizplatform.user.domain.event.UserCreatedEvent;
+import com.quizplatform.user.domain.event.UserLevelUpEvent;
+import com.quizplatform.user.domain.model.User;
+import com.quizplatform.user.domain.model.UserRole;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,14 +29,14 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final UserEventPublisher eventPublisher;
+    private final EventPublisher eventPublisher;
 
     @Override
     @Transactional
     public User createUser(User user) {
         User savedUser = userRepository.save(user);
         // 사용자 생성 이벤트 발행
-        eventPublisher.publishUserCreated(savedUser);
+        eventPublisher.publish(new UserCreatedEvent(savedUser), Topics.USER_CREATED);
         log.info("User created with ID: {}", savedUser.getId());
         return savedUser;
     }
@@ -78,7 +80,7 @@ public class UserServiceImpl implements UserService {
         
         if (leveledUp) {
             // 레벨업 이벤트 발행
-            eventPublisher.publishUserLevelUp(user, oldLevel);
+            eventPublisher.publish(new UserLevelUpEvent(user, oldLevel), Topics.USER_LEVEL_UP);
             log.info("User level up: {} from level {} to {}", user.getId(), oldLevel, user.getLevel());
         }
         

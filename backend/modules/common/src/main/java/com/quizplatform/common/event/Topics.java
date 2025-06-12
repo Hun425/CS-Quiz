@@ -28,6 +28,7 @@ public class Topics {
     public static final String QUIZ_SCORE_CALCULATION_RESULT = "quiz-score-calculation-result";
     
     // User 모듈 토픽
+    public static final String USER_CREATED = "user-created";
     public static final String USER_REGISTERED = "user-registered";
     public static final String USER_LEVEL_UP = "user-level-up";
     public static final String USER_ACHIEVEMENT_EARNED = "user-achievement-earned";

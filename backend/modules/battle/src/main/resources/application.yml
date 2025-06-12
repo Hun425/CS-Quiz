@@ -22,7 +22,7 @@ spring:
       
   # 데이터베이스 설정
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/quizplatform}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/quiz_platform?currentSchema=battle_schema}
     username: ${DB_USERNAME:quizuser}
     password: ${DB_PASSWORD:quizpass}
     driver-class-name: org.postgresql.Driver

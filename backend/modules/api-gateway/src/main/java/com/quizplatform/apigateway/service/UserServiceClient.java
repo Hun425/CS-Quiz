@@ -1,6 +1,7 @@
 package com.quizplatform.apigateway.service;
 
 import com.quizplatform.apigateway.dto.LoginRequest;
+import com.quizplatform.apigateway.dto.OAuth2UserRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,20 @@ public class UserServiceClient {
                 .bodyToMono(UserAuthInfo.class)
                 .doOnSuccess(user -> log.info("User info retrieved: {}", user.email()))
                 .doOnError(error -> log.error("Failed to get user info: {}", error.getMessage()));
+    }
+    
+    /**
+     * OAuth2 사용자 정보 처리 (조회/생성)
+     */
+    public Mono<UserAuthInfo> processOAuth2User(OAuth2UserRequest request) {
+        return webClientBuilder.build()
+                .post()
+                .uri("lb://user-service/auth/oauth2")
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(UserAuthInfo.class)
+                .doOnSuccess(user -> log.info("OAuth2 user processed successfully: {}", user.email()))
+                .doOnError(error -> log.error("OAuth2 user processing failed: {}", error.getMessage()));
     }
     
     /**

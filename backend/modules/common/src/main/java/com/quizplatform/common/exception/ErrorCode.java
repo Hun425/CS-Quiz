@@ -26,7 +26,12 @@ public enum ErrorCode {
     QUIZ_NOT_FOUND(HttpStatus.NOT_FOUND, "Q001", "퀴즈를 찾을 수 없습니다."),
     QUIZ_ALREADY_COMPLETED(HttpStatus.CONFLICT, "Q002", "이미 완료된 퀴즈입니다."),
     QUIZ_TIME_EXPIRED(HttpStatus.FORBIDDEN, "Q003", "퀴즈 시간이 만료되었습니다."),
-    INVALID_QUESTION(HttpStatus.NOT_FOUND,"Q004","잘못된 퀴즈입니다"),
+    INVALID_QUESTION(HttpStatus.NOT_FOUND, "Q004", "잘못된 퀴즈입니다."),
+    QUIZ_NOT_AVAILABLE(HttpStatus.FORBIDDEN, "Q005", "현재 이용할 수 없는 퀴즈입니다."),
+    QUIZ_EXPIRED(HttpStatus.FORBIDDEN, "Q006", "만료된 퀴즈입니다."),
+    QUIZ_ATTEMPT_NOT_FOUND(HttpStatus.NOT_FOUND, "Q007", "퀴즈 시도를 찾을 수 없습니다."),
+    QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "Q008", "문제를 찾을 수 없습니다."),
+    ACCESS_DENIED(HttpStatus.FORBIDDEN, "Q009", "접근 권한이 없습니다."),
 
     // Review Related Errors
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "리뷰를 찾을 수 없습니다."),

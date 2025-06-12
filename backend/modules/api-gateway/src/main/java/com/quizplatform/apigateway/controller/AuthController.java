@@ -56,6 +56,24 @@ public class AuthController {
                 .onErrorReturn(ResponseEntity.status(401).build());
     }
     
+    @PostMapping("/oauth2/callback")
+    @Operation(summary = "OAuth2 콜백", description = "OAuth2 인증 후 콜백을 처리하여 JWT 토큰을 발급받습니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "OAuth2 인증 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+        @ApiResponse(responseCode = "401", description = "OAuth2 인증 실패"),
+        @ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    public Mono<ResponseEntity<LoginResponse>> oauth2Callback(@RequestBody @Valid OAuth2CallbackRequest request) {
+        log.info("OAuth2 callback request for provider: {}", request.provider());
+        
+        return authService.oauth2Login(request)
+                .map(ResponseEntity::ok)
+                .doOnSuccess(response -> log.info("OAuth2 login successful for provider: {}", request.provider()))
+                .doOnError(error -> log.error("OAuth2 login failed for provider: {}", request.provider(), error))
+                .onErrorReturn(ResponseEntity.status(401).build());
+    }
+    
     @GetMapping("/health")
     @Operation(summary = "인증 서비스 헬스체크", description = "인증 서비스의 상태를 확인합니다.")
     public Mono<ResponseEntity<String>> health() {

@@ -2,6 +2,7 @@ package com.quizplatform.user.adapter.in.web;
 
 import com.quizplatform.user.adapter.in.web.dto.AuthLoginRequest;
 import com.quizplatform.user.adapter.in.web.dto.AuthUserResponse;
+import com.quizplatform.user.adapter.in.web.dto.OAuth2UserRequest;
 import com.quizplatform.user.adapter.in.web.dto.RegisterRequest;
 import com.quizplatform.user.application.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -59,6 +60,19 @@ public class AuthController {
     public ResponseEntity<AuthUserResponse> getUserById(@PathVariable Long userId) {
         log.debug("Get user by ID request: {}", userId);
         AuthUserResponse response = authService.getUserById(userId);
+        return ResponseEntity.ok(response);
+    }
+    
+    @PostMapping("/oauth2")
+    @Operation(summary = "OAuth2 사용자 처리", description = "OAuth2 인증으로 받은 사용자 정보를 처리합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "OAuth2 사용자 처리 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+        @ApiResponse(responseCode = "409", description = "이미 존재하는 이메일")
+    })
+    public ResponseEntity<AuthUserResponse> processOAuth2User(@RequestBody @Valid OAuth2UserRequest request) {
+        log.info("OAuth2 user processing request for email: {} from provider: {}", request.email(), request.provider());
+        AuthUserResponse response = authService.processOAuth2User(request);
         return ResponseEntity.ok(response);
     }
     

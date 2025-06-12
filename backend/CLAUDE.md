@@ -4,6 +4,44 @@
 
 이 문서는 Legacy 모노리식 코드를 MSA 이벤트 기반 아키텍처로 전환하는 마이그레이션 가이드입니다.
 
+## ⚠️ 필수 개발 가이드라인
+
+### 📋 개발 진행 규칙
+1. **MSA_DEVELOPMENT_GUIDE.md 참조 필수** - 모든 개발은 이 가이드를 따라야 함 (지키지 않으면 삭제)
+2. **빌드/테스트 금지** - `./gradlew build` 등 빌드 테스트 명령어 실행 금지
+3. **CLAUDE.md 업데이트 필수** - 모든 작업 완료 시 진행 상황을 이 문서에 업데이트
+4. **Todo 관리** - TodoWrite/TodoRead 도구를 사용하여 작업 진행 상황 추적
+
+### 🔧 코드 작성 규칙
+1. **JavaDoc 주석 필수**
+   ```java
+   /**
+    * [클래스/메서드 설명]
+    * 
+    * <p>[상세 설명]</p>
+    *
+    * @author 채기훈
+    * @since JDK 21.0.6 Eclipse Temurin
+    */
+   ```
+2. **헥사고날 아키텍처 패턴** - adapter/application/domain/infrastructure 구조
+3. **이벤트 기반 통신** - 모듈 간 Kafka 이벤트 사용
+4. **Spring Boot 표준** - @Service, @RestController, @Repository 등 표준 어노테이션
+5. **람다식 적극 활용** ⭐
+   - Stream API, Optional 등을 적극 활용하여 함수형 프로그래밍 지향
+   - 람다에서 지역변수 수정이 필요한 경우 AtomicInteger, 배열, 컬렉션 등 활용
+   ```java
+   // ✅ 권장: 람다와 Stream API 활용
+   AtomicInteger earnedPoints = new AtomicInteger(0);
+   questionAttempts.stream()
+       .filter(attempt -> attempt.getQuestionId().equals(question.getId()))
+       .filter(QuestionAttempt::isCorrect)
+       .findFirst()
+       .ifPresent(attempt -> earnedPoints.addAndGet(questionPoints));
+   
+   // ❌ 최후 수단: 전통적 for 루프 (람다 사용 불가능한 경우만)
+   for (QuestionAttempt attempt : questionAttempts) { ... }
+   ```
 ---
 
 ## 🎯 Overall Migration Progress
@@ -40,8 +78,14 @@
 - **사용자 정보 조회 API** (/auth/user/{userId})
 - **비밀번호 암호화** (BCrypt)
 
-#### ❌ 미구현
+#### ✅ 구현 완료 (추가)
 - **OAuth2 소셜 로그인** (Google, GitHub, Kakao)
+  - OAuth2ClientService: Google, GitHub, Kakao 사용자 정보 조회
+  - OAuth2 콜백 엔드포인트: /api/auth/oauth2/callback
+  - User Module OAuth2 사용자 처리 (조회/생성)
+  - OAuth2 설정 파일 업데이트
+
+#### ❌ 미구현
 - **성취 시스템** (Achievement, UserAchievementHistory)
 - **사용자 통계 및 분석**
 - **사용자 레벨링 로직 및 경험치 시스템**
@@ -49,7 +93,7 @@
 - **최근 활동 추적**
 - **주제별 성과 분석**
 
-### 2. Quiz Module (40% Complete)
+### 2. Quiz Module (65% Complete)
 **위치**: `modules/quiz/`
 
 #### ✅ 구현 완료
@@ -63,8 +107,16 @@
 - 퀴즈 생성/업데이트 기능 (기본 구조만)
 - 사용자 캐싱 서비스 (LocalUserCacheService)
 
-#### ❌ 미구현
+#### ✅ 구현 완료 (추가)
 - **퀴즈 시도 및 채점 시스템** (QuizAttempt, 점수 계산)
+  - QuizAttempt 엔티티 및 도메인 모델 (점수 계산, 통과 기준 로직)
+  - QuizAttemptService: 퀴즈 시작/제출/완료 처리
+  - QuizAttemptController: REST API 엔드포인트 제공
+  - 점수 계산 알고리즘: 배점 기반 백분율 계산
+  - QuizResultProcessor: 퀴즈 완료 후 통계/이벤트 처리
+  - 이벤트 기반 통신: QuizCompletedEvent 발행으로 User Service 연동
+
+#### ❌ 미구현
 - **일일 퀴즈 시스템**
 - **퀴즈 검색 및 필터링**
 - **퀴즈 리뷰 시스템** (QuizReview, QuizReviewComment)
@@ -114,8 +166,13 @@
 #### ⚠️ 부분 구현
 - JWT 토큰 검증 (액세스 토큰만 검증하도록 개선)
 
-#### ❌ 미구현
+#### ✅ 구현 완료 (추가)
 - **OAuth2 소셜 로그인 통합**
+  - OAuth2 콜백 엔드포인트 추가 (/api/auth/oauth2/callback)
+  - AuthService에 oauth2Login 메서드 추가
+  - UserServiceClient에 processOAuth2User 메서드 추가
+
+#### ❌ 미구현
 - **사용자 세션 관리**
 - **보안 필터 체인 완성**
 - **요청 검증 및 변환**
@@ -277,6 +334,58 @@
   - 이벤트 기반 통신 가이드
   - 새 모듈 생성 체크리스트
   - 코딩 컨벤션 및 테스팅 가이드
+  - **코드 주석 가이드라인 추가**: JavaDoc 표준 템플릿 및 작성 규칙 정의
+
+### 2025-01-06 (OAuth2 소셜 로그인 구현)
+- **OAuth2 소셜 로그인 완전 구현**
+  - OAuth2ClientService: Google, GitHub, Kakao 사용자 정보 조회 로직
+  - API Gateway OAuth2 콜백 엔드포인트 추가 (/api/auth/oauth2/callback)
+  - AuthService oauth2Login 메서드 구현
+  - UserServiceClient processOAuth2User 메서드 추가
+  - User Module OAuth2 사용자 처리 로직 (조회/생성)
+  - User 엔티티 OAuth2 관련 필드 추가 (displayName, profileImageUrl)
+  - OAuth2 설정 파일 업데이트 (Google, GitHub, Kakao)
+
+### 2025-01-06 (퀴즈 시도 및 채점 시스템 구현)
+- **퀴즈 시도 및 채점 시스템 완전 구현**
+  - QuizAttempt/QuestionAttempt 엔티티 도메인 로직 개선
+  - 점수 계산 알고리즘: 배점 기반 백분율 계산으로 개선
+  - QuizAttemptService/Impl: 퀴즈 시작, 답변 제출, 완료 처리
+  - QuizAttemptController: REST API 엔드포인트 (시작/제출/조회)
+  - DTO 구현: QuizAttemptRequest/Response, QuestionAttemptRequest/Response, QuizSubmitRequest
+  - QuizResultProcessor: 결과 처리, 통계 업데이트, 업적 확인
+  - 이벤트 기반 통신: QuizCompletedEvent/UserAchievementEvent 발행
+  - ErrorCode 확장: 퀴즈 시도 관련 에러 코드 추가
+
+### 2025-01-06 (IntelliJ 로컬 개발환경 구축)
+- **Docker 없이 IntelliJ 로컬 실행 환경 구축**
+  - 각 모듈별 application-local.yml 설정 파일 생성
+  - PostgreSQL 로컬 설정: user_schema, quiz_schema, battle_schema 분리
+  - Redis/Kafka 로컬 연동 설정
+  - IntelliJ Run Configuration 가이드 작성
+  - INTELLIJ_LOCAL_SETUP.md: 상세한 로컬 개발환경 설치 가이드
+
+### 2025-01-06 (하이브리드 개발환경 구축)
+- **Docker 인프라 + IntelliJ 애플리케이션 하이브리드 환경**
+  - docker-compose.yml: 인프라 서비스만 Docker로 관리 (PostgreSQL, Redis, Kafka, Elasticsearch)
+  - 애플리케이션 서비스: IntelliJ에서 개별 실행 (-Dspring.profiles.active=local)
+  - 데이터베이스 이름 일관성 수정: `quiz_platform` 표준화
+  - PostgreSQL 헬스체크 및 Battle Service URL 수정
+  - Config Server 설정 오류 수정: application-local.yml에서 profiles.active 제거
+
+### 2025-01-06 (컴파일 오류 수정)
+- **MSA 의존성 문제 해결**
+  - QuizAttemptController: `currentUser.getUserId()` → `currentUser.id()` 수정
+  - UserServiceImpl: 공통 EventPublisher 사용, UserEventPublisher 제거
+  - API Gateway: 독립적인 OAuth2UserRequest DTO 생성 (User Service 의존성 제거)
+  - QuizAttempt: 람다 표현식 final 변수 오류 수정 (for-each 루프로 임시 해결)
+  - Topics.java: USER_CREATED 상수 추가
+
+### 2025-01-06 (개발 가이드라인 강화)
+- **람다식 적극 활용 가이드라인 추가**
+  - Stream API, Optional 등 함수형 프로그래밍 지향
+  - 람다에서 지역변수 수정: AtomicInteger, 배열, 컬렉션 활용 권장
+  - for 루프는 최후 수단으로만 사용
 
 ---
 

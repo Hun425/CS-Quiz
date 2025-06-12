@@ -14,6 +14,7 @@ public class AuthService {
     
     private final JwtTokenProvider jwtTokenProvider;
     private final UserServiceClient userServiceClient;
+    private final OAuth2ClientService oauth2ClientService;
     
     /**
      * 사용자 로그인
@@ -81,5 +82,50 @@ public class AuthService {
                 })
                 .doOnSuccess(response -> log.info("Token refreshed successfully"))
                 .doOnError(error -> log.error("Token refresh failed", error));
+    }
+    
+    /**
+     * OAuth2 로그인
+     */
+    public Mono<LoginResponse> oauth2Login(OAuth2CallbackRequest request) {
+        log.info("Processing OAuth2 login for provider: {}", request.provider());
+        
+        return oauth2ClientService.getUserInfo(request.provider(), request.code())
+                .flatMap(oauth2UserInfo -> {
+                    // User Service에 OAuth2 사용자 정보 전달하여 사용자 조회/생성
+                    OAuth2UserRequest userRequest = OAuth2UserRequest.builder()
+                            .provider(oauth2UserInfo.provider())
+                            .providerId(oauth2UserInfo.providerId())
+                            .email(oauth2UserInfo.email())
+                            .displayName(oauth2UserInfo.name())
+                            .profileImageUrl(oauth2UserInfo.profileImage())
+                            .build();
+                    
+                    return userServiceClient.processOAuth2User(userRequest);
+                })
+                .map(userInfo -> {
+                    // JWT 토큰 생성
+                    JwtTokenProvider.TokenPair tokenPair = jwtTokenProvider.generateTokenPair(
+                            userInfo.id(),
+                            userInfo.email(),
+                            userInfo.roles()
+                    );
+                    
+                    // 응답 생성
+                    return LoginResponse.builder()
+                            .accessToken(tokenPair.accessToken())
+                            .refreshToken(tokenPair.refreshToken())
+                            .tokenType("Bearer")
+                            .expiresIn(tokenPair.expiresIn())
+                            .user(LoginResponse.UserInfo.builder()
+                                    .id(userInfo.id())
+                                    .email(userInfo.email())
+                                    .displayName(userInfo.displayName())
+                                    .roles(userInfo.roles())
+                                    .build())
+                            .build();
+                })
+                .doOnSuccess(response -> log.info("OAuth2 login successful for provider: {}", request.provider()))
+                .doOnError(error -> log.error("OAuth2 login failed for provider: {}", request.provider(), error));
     }
 }

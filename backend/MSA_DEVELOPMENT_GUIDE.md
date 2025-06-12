@@ -635,9 +635,168 @@ public Optional<User> getByEmail(String email)
 public void checkUser(User user)
 ```
 
-### 4.2 코딩 스타일
+### 4.2 코드 주석 가이드라인
 
-#### 4.2.1 필수 어노테이션
+#### 4.2.1 JavaDoc 작성 규칙
+
+모든 클래스, 인터페이스, 메서드에는 JavaDoc 주석을 작성해야 합니다.
+
+**클래스/인터페이스 주석 템플릿:**
+
+```java
+/**
+ * [클래스 한 줄 설명]
+ * 
+ * <p>[클래스의 상세 설명이나 역할 설명]</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
+ */
+public class UserService {
+    // 구현 내용
+}
+```
+
+**메서드 주석 템플릿:**
+
+```java
+/**
+ * [메서드 한 줄 설명]
+ * 
+ * <p>[상세 설명이 필요한 경우]</p>
+ * 
+ * @param request [파라미터 설명]
+ * @param currentUser [파라미터 설명]
+ * @return [반환값 설명]
+ * @throws UserNotFoundException [예외 조건 설명]
+ */
+public UserResponse createUser(UserCreateRequest request, CurrentUserInfo currentUser) {
+    // 구현 내용
+}
+```
+
+**필드 주석:**
+
+```java
+/**
+ * [필드 설명]
+ */
+@Column(name = "email", unique = true, nullable = false)
+private String email;
+```
+
+#### 4.2.2 주석 작성 규칙
+
+- **@author**: 항상 "채기훈"으로 작성
+- **@since**: 항상 "JDK 21.0.6 Eclipse Temurin"으로 작성
+- **한국어 사용**: 모든 설명은 한국어로 작성
+- **간결성**: 불필요한 설명은 피하고 핵심만 기술
+- **일관성**: 동일한 패턴과 용어 사용
+
+#### 4.2.3 엔티티 클래스 주석 예시
+
+```java
+/**
+ * 사용자 엔티티 클래스
+ * 
+ * <p>퀴즈 플랫폼의 사용자 정보를 관리합니다.
+ * 개인 정보, 인증 정보, 레벨, 경험치, 권한 등 사용자와 관련된 모든 데이터를 포함합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
+ */
+@Entity
+@Table(name = "users", schema = "user_schema")
+public class User {
+    
+    /**
+     * 사용자 ID
+     */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    /**
+     * 이메일 주소
+     */
+    @Column(nullable = false, length = 100, unique = true)
+    private String email;
+}
+```
+
+#### 4.2.4 서비스 클래스 주석 예시
+
+```java
+/**
+ * 사용자 관리 서비스
+ * 
+ * <p>사용자 생성, 조회, 수정, 삭제 등의 비즈니스 로직을 처리합니다.
+ * OAuth2 인증 및 로컬 인증을 모두 지원합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
+ */
+@Service
+@RequiredArgsConstructor
+@Slf4j
+@Transactional(readOnly = true)
+public class UserServiceImpl implements UserService {
+    
+    /**
+     * 새로운 사용자를 생성합니다
+     * 
+     * @param request 사용자 생성 요청 정보
+     * @param currentUser 현재 로그인한 사용자 정보
+     * @return 생성된 사용자 정보
+     * @throws EmailAlreadyExistsException 이메일이 이미 존재하는 경우
+     */
+    @Override
+    @Transactional
+    public UserResponse createUser(UserCreateRequest request, CurrentUserInfo currentUser) {
+        // 구현 내용
+    }
+}
+```
+
+#### 4.2.5 컨트롤러 클래스 주석 예시
+
+```java
+/**
+ * 사용자 관리 REST API 컨트롤러
+ * 
+ * <p>사용자 관련 HTTP 요청을 처리하는 컨트롤러입니다.
+ * 사용자 생성, 조회, 수정, 삭제 등의 API를 제공합니다.</p>
+ *
+ * @author 채기훈
+ * @since JDK 21.0.6 Eclipse Temurin
+ */
+@RestController
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+@Slf4j
+@Tag(name = "User API", description = "사용자 관리 API")
+public class UserController {
+    
+    /**
+     * 새로운 사용자를 생성합니다
+     * 
+     * @param request 사용자 생성 요청 데이터
+     * @param currentUser 현재 인증된 사용자 정보
+     * @return 생성된 사용자 정보
+     */
+    @PostMapping
+    @Operation(summary = "사용자 생성", description = "새로운 사용자를 생성합니다.")
+    public ResponseEntity<UserResponse> createUser(
+            @RequestBody @Valid UserCreateRequest request,
+            @CurrentUser CurrentUserInfo currentUser) {
+        // 구현 내용
+    }
+}
+```
+
+### 4.3 코딩 스타일
+
+#### 4.3.1 필수 어노테이션
 
 ```java
 // Lombok 사용 권장

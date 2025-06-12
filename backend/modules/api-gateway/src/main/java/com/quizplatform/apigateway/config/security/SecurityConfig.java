@@ -19,7 +19,17 @@ public class SecurityConfig {
         http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(ex -> ex
-                        .pathMatchers("/swagger-ui/**", "/v3/api-docs/**", "/webjars/**").permitAll()
+                        // Swagger UI 관련 모든 경로 허용
+                        .pathMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/webjars/**").permitAll()
+                        // API 문서 접근 허용
+                        .pathMatchers("/api-docs/**", "/swagger-config", "/swagger-resources/**").permitAll()
+                        // 인증 관련 엔드포인트 허용
+                        .pathMatchers("/api/auth/**").permitAll()
+                        // 서비스 목록 조회 허용 (개발 환경)
+                        .pathMatchers("/api/services").permitAll()
+                        // 루트 경로 리디렉션 허용
+                        .pathMatchers("/").permitAll()
+                        // 나머지는 인증 필요
                         .anyExchange().authenticated()
                 )
                 .addFilterAt(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION);
