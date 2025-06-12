@@ -22,7 +22,8 @@ public class JwtAuthenticationFilter implements WebFilter, Ordered {
             "/swagger-ui",
             "/v3/api-docs",
             "/webjars",
-            "/actuator"
+            "/actuator",
+            "/api/auth"  // 인증 API는 화이트리스트에 추가
     );
 
     @Override
@@ -39,10 +40,17 @@ public class JwtAuthenticationFilter implements WebFilter, Ordered {
 
         String token = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (token != null && tokenProvider.validateToken(token)) {
+            // 액세스 토큰인지 확인
+            if (!tokenProvider.isAccessToken(token)) {
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                return exchange.getResponse().setComplete();
+            }
+            
             Claims claims = tokenProvider.getClaims(token);
             ServerWebExchange mutated = exchange.mutate()
                     .request(r -> r.headers(headers -> {
                         headers.set("X-User-Id", claims.getSubject());
+                        headers.set("X-User-Email", claims.get("email", String.class));
                         Object roles = claims.get("roles");
                         if (roles != null) {
                             headers.set("X-User-Roles", roles.toString());

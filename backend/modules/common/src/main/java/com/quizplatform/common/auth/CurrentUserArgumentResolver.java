@@ -31,11 +31,15 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
         if (!StringUtils.hasText(userIdHeader)) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED, "인증 정보가 없습니다.");
         }
+        
+        String emailHeader = webRequest.getHeader("X-User-Email");
         String rolesHeader = webRequest.getHeader("X-User-Roles");
+        
         List<String> roles = StringUtils.hasText(rolesHeader)
                 ? Arrays.asList(rolesHeader.split(","))
                 : Collections.emptyList();
+                
         Long id = Long.valueOf(userIdHeader);
-        return new CurrentUserInfo(id, roles);
+        return new CurrentUserInfo(id, emailHeader, roles);
     }
 }

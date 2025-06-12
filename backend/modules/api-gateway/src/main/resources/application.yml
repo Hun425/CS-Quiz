@@ -160,7 +160,9 @@ spring:
     
 # JWT 설정
 jwt:
-  secret: changeme-please-change-this-key
+  secret: changeme-please-change-this-key-for-production-use-longer-key
+  access-token-validity: 3600      # 1시간 (초 단위)
+  refresh-token-validity: 604800   # 7일 (초 단위)
     
 # Eureka 클라이언트 설정
 eureka:

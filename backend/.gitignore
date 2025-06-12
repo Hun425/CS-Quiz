@@ -155,4 +155,7 @@ psd
 thumb
 sketch
 
+# legacy
+legacy
+
 # End of https://www.toptal.com/developers/gitignore/api/intellij,java,react
