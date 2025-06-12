@@ -36,7 +36,7 @@ public class UserServiceClient {
     public Mono<UserAuthInfo> getUserById(Long userId) {
         return webClientBuilder.build()
                 .get()
-                .uri("lb://user-service/users/{userId}", userId)
+                .uri("lb://user-service/auth/user/{userId}", userId)
                 .retrieve()
                 .bodyToMono(UserAuthInfo.class)
                 .doOnSuccess(user -> log.info("User info retrieved: {}", user.email()))

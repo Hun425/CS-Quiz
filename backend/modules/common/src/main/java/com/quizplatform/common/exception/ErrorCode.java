@@ -17,6 +17,10 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "사용자를 찾을 수 없습니다."),
     DUPLICATE_USERNAME(HttpStatus.CONFLICT, "U002", "이미 존재하는 사용자명입니다."),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "U003", "잘못된 비밀번호입니다."),
+    EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "U004", "이미 사용 중인 이메일입니다."),
+    USERNAME_ALREADY_EXISTS(HttpStatus.CONFLICT, "U005", "이미 사용 중인 사용자명입니다."),
+    USER_INACTIVE(HttpStatus.FORBIDDEN, "U006", "비활성화된 계정입니다."),
+    INVALID_AUTH_PROVIDER(HttpStatus.BAD_REQUEST, "U007", "잘못된 인증 제공자입니다."),
 
     // Quiz Related Errors
     QUIZ_NOT_FOUND(HttpStatus.NOT_FOUND, "Q001", "퀴즈를 찾을 수 없습니다."),

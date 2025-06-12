@@ -33,6 +33,13 @@
 - 사용자 레벨 시스템 (도메인 모델만 존재, 로직 부족)
 - 배틀 통계 (모델만 존재)
 
+#### ✅ 구현 완료 (추가)
+- **LOCAL 인증 지원** (이메일/비밀번호 로그인)
+- **회원가입 API** (/auth/register)
+- **로그인 인증 API** (/auth/login)
+- **사용자 정보 조회 API** (/auth/user/{userId})
+- **비밀번호 암호화** (BCrypt)
+
 #### ❌ 미구현
 - **OAuth2 소셜 로그인** (Google, GitHub, Kakao)
 - **성취 시스템** (Achievement, UserAchievementHistory)

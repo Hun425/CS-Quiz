@@ -7,12 +7,11 @@ dependencyManagement {
 dependencies {
     implementation project(':modules:common')
     
-    // 시큐리티 및 JWT 의존성 제거
+    // Spring Security (비밀번호 암호화용)
+    implementation 'org.springframework.security:spring-security-crypto'
     
     // Eureka Client
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
-    
-
     
     // PostgreSQL 드라이버
     runtimeOnly 'org.postgresql:postgresql'

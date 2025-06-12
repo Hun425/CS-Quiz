@@ -68,6 +68,12 @@ public class User {
     private String username;
 
     /**
+     * 비밀번호 (LOCAL 인증용, 해시된 상태로 저장)
+     */
+    @Column(name = "password_hash")
+    private String passwordHash;
+
+    /**
      * 프로필 이미지 URL
      */
     @Column(name = "profile_image")
@@ -206,14 +212,16 @@ public class User {
      * @param providerId 제공자에서의 사용자 ID
      * @param email 이메일
      * @param username 사용자명
+     * @param passwordHash 비밀번호 해시 (LOCAL 인증용)
      * @param profileImage 프로필 이미지 URL
      */
     @Builder
-    public User(AuthProvider provider, String providerId, String email, String username, String profileImage) {
+    public User(AuthProvider provider, String providerId, String email, String username, String passwordHash, String profileImage) {
         this.provider = provider;
         this.providerId = providerId;
         this.email = email;
         this.username = username;
+        this.passwordHash = passwordHash;
         this.profileImage = profileImage;
         this.role = UserRole.USER;
         this.isActive = true;
@@ -356,5 +364,41 @@ public class User {
      */
     public void activate() {
         this.isActive = true;
+    }
+
+    /**
+     * 비밀번호 해시 업데이트
+     * 
+     * @param passwordHash 새로운 비밀번호 해시
+     */
+    public void updatePasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+    /**
+     * LOCAL 인증 제공자인지 확인
+     * 
+     * @return LOCAL 인증 제공자 여부
+     */
+    public boolean isLocalProvider() {
+        return AuthProvider.LOCAL.equals(this.provider);
+    }
+
+    /**
+     * 표시 이름 반환 (username을 표시 이름으로 사용)
+     * 
+     * @return 표시 이름
+     */
+    public String getDisplayName() {
+        return this.username;
+    }
+
+    /**
+     * 권한 목록 반환
+     * 
+     * @return 권한 목록
+     */
+    public List<String> getRoles() {
+        return List.of(this.role.name());
     }
 } 
