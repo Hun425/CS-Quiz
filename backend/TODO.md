@@ -7,11 +7,11 @@
 - [x] 4. Tag 도메인 모델 설계 (최대 3단계 계층, 관리자 권한) ✅
 
 ## Phase 2: 기본 Tag CRUD 구현 (예상 소요시간: 2-3시간)
-- [ ] 5. Tag 엔티티 개선/재설계 (계층구조 지원)
-- [ ] 6. TagRepository 인터페이스 구현 (계층구조 쿼리 포함)
-- [ ] 7. TagService 도메인 서비스 구현
-- [ ] 8. TagController REST API 구현 (관리자 전용)
-- [ ] 9. Tag CRUD DTO 클래스들 구현
+- [x] 5. Tag 엔티티 개선/재설계 (계층구조 지원) ✅
+- [x] 6. TagRepository 인터페이스 구현 (계층구조 쿼리 포함) ✅
+- [x] 7. TagService 도메인 서비스 구현 ✅
+- [x] 8. TagController REST API 구현 (관리자 전용) ✅
+- [x] 9. Tag CRUD DTO 클래스들 구현 ✅
 
 ## Phase 3: Quiz-Tag 통합 (예상 소요시간: 2-3시간)
 - [ ] 10. Quiz 엔티티에 Tag 관계 추가/수정
@@ -37,7 +37,7 @@
 
 ## 완료 체크포인트
 - [x] ✅ Phase 1 완료 - 설계 확정
-- [ ] ✅ Phase 2 완료 - 기본 CRUD 동작
+- [x] ✅ Phase 2 완료 - 기본 CRUD 동작
 - [ ] ✅ Phase 3 완료 - Quiz-Tag 통합
 - [ ] ✅ Phase 4 완료 - 통계 기능
 - [ ] ✅ Phase 5 완료 - 추천 시스템

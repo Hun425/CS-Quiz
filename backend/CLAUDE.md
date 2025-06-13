@@ -19,6 +19,10 @@
    - 모든 기술적 결정은 **REASON.md에 필수 기록**
    - TDR(Technical Decision Record) 형식으로 근거와 함께 문서화
    - 대안 검토 과정과 선택 이유 상세 기술
+7. **📝 작업 완료 시 3곳 필수 업데이트**:
+   - **TODO.md**: 체크리스트 완료 표시 (✅)
+   - **REASON.md**: 기술 결정사항 TDR 기록  
+   - **CLAUDE.md**: Work Log에 작업 내용 상세 기록
 
 
 ### 🔧 코드 작성 규칙
@@ -396,13 +400,59 @@
   - 람다에서 지역변수 수정: AtomicInteger, 배열, 컬렉션 활용 권장
   - for 루프는 최후 수단으로만 사용
 
+### 2025-06-13 (OAuth2 전용 로그인 시스템 완성)
+- **OAuth2 전용 로그인으로 전환 완료**
+  - 일반 로그인/회원가입 엔드포인트 제거
+  - API Gateway 보안 설정 OAuth2 콜백만 허용
+  - AuthProvider enum에서 LOCAL 제거
+  - User 도메인 모델 OAuth2 전용으로 정리
+
+### 2025-06-13 (Tag 시스템 통합 Phase 1 완료)
+- **새로운 작업 추적 시스템 도입**
+  - initialprompt.txt와 TODO.md 기반 체계적 플래닝
+  - REASON.md에 TDR(Technical Decision Record) 형식 도입
+  - 모든 기술 결정사항 근거와 함께 문서화
+
+- **계층구조 Tag 시스템 설계 완료**
+  - Legacy Tag 엔티티 분석 및 현재 구조 파악
+  - Adjacency List 방식 선택 (TDR-001)
+  - Quiz-Tag 매핑 관계 유지 결정 (TDR-002)
+  - 완전한 계층구조 Tag 도메인 모델 구현 (TDR-003)
+    * 최대 3단계 계층, 퀴즈당 최대 10개 태그 제한
+    * Stream API 활용한 계층 탐색 메서드
+    * 성능 최적화 인덱스 및 캐싱 준비
+    * 사용량 추적 및 유효성 검증 로직
+
+### 2025-06-13 (Tag 시스템 통합 Phase 2 완료)
+- **완전한 Tag CRUD 시스템 구현**
+  - TagRepository: 재귀 CTE 기반 계층구조 쿼리 (TDR-004)
+    * 후손/조상 태그 탐색, 중복 검사, 통계 쿼리
+    * 성능 최적화 인덱스 (parent_id, level, name)
+    * 함수형 프로그래밍 친화적 메서드 설계
+  
+  - TagService: 포괄적 비즈니스 로직 구현 (TDR-005)
+    * 계층구조 무결성 보장 (순환 참조 방지, 깊이 제한)
+    * 관리자 권한 체크 및 삭제 정책 구현
+    * Stream API 활용한 검색/필터링 로직
+    * 원자적 트랜잭션 보장
+  
+  - TagController: 관리자 전용 REST API
+    * 완전한 CRUD, 계층 탐색, 검색, 통계 엔드포인트
+    * Swagger 문서화 및 페이징 지원
+    * 관리자 권한 체크 통합
+  
+  - Tag DTO 시스템: 계층화된 응답 구조
+    * TagResponse: 부모/자식 정보 포함 완전한 태그 정보
+    * 검색/통계/이동 요청을 위한 전용 DTO
+    * Record 클래스 활용으로 불변성 보장
+
 ---
 
 ## 🎯 Next Actions
 
-1. **API Gateway 보안 강화** - JWT/OAuth2 인증/인가 시스템 완성
-2. **Quiz Module 핵심 기능 강화** - 시도/채점 시스템 + 태그 통합
-3. **User Module OAuth2 통합** - 소셜 로그인 기능 구현
+1. **Quiz Module Tag 시스템 Phase 2** - TagRepository/TagService 구현
+2. **Tag CRUD API 구현** - 관리자 전용 REST 엔드포인트
+3. **Quiz-Tag 통합 기능** - 태그 기반 검색/필터링
 
 ---
 

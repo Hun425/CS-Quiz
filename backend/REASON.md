@@ -214,6 +214,98 @@ public static final int MAX_TAGS_PER_QUIZ = 10;
 
 ---
 
+## TDR-004: TagRepository 계층구조 쿼리 설계
+
+### 📅 결정 날짜
+2025-06-13
+
+### 🎯 문제 상황
+계층구조 태그의 효율적인 데이터 액세스를 위한 Repository 메서드와 쿼리 전략 설계 필요
+
+### 🔍 구현된 주요 기능
+
+#### 1. 계층구조 탐색 쿼리
+```sql
+-- 재귀 CTE를 활용한 후손 태그 조회
+WITH RECURSIVE tag_descendants AS (
+    SELECT * FROM tags WHERE parent_id = :tagId
+    UNION ALL
+    SELECT t.* FROM tags t
+    INNER JOIN tag_descendants td ON t.parent_id = td.id
+)
+```
+
+#### 2. 성능 최적화 인덱스
+- `idx_tag_parent_id`: 부모-자식 관계 탐색 최적화
+- `idx_tag_level`: 레벨별 필터링 최적화  
+- `idx_tag_name`: 이름 검색 최적화
+
+#### 3. 비즈니스 로직 지원 메서드
+- 중복 검사: `existsByNameAndParent`
+- 삭제 가능성 검사: `existsByParentId`, `hasConnectedQuizzes`
+- 통계 쿼리: `getTagQuizCounts`
+
+### ✅ 최종 설계 특징
+
+**1. 함수형 프로그래밍 적용**
+- Optional 반환으로 안전한 조회
+- Stream-friendly 메서드 명명
+
+**2. 쿼리 최적화**
+- 재귀 CTE 활용으로 단일 쿼리로 계층 탐색
+- JPQL과 네이티브 SQL 혼용으로 성능/가독성 균형
+
+**3. 확장성 고려**
+- 통계 쿼리 분리로 성능 부담 최소화
+- 페이징 지원을 위한 카운트 쿼리 별도 제공
+
+---
+
+## TDR-005: TagService 비즈니스 로직 설계
+
+### 📅 결정 날짜  
+2025-06-13
+
+### 🎯 문제 상황
+계층구조 태그의 복잡한 비즈니스 규칙과 관리자 권한 체크를 포함한 서비스 계층 설계 필요
+
+### 🔍 핵심 비즈니스 규칙
+
+#### 1. 계층구조 무결성 보장
+- 최대 3단계 깊이 제한
+- 순환 참조 방지 (자기 자신이나 후손을 부모로 설정 금지)
+- 같은 부모 하위에서 이름 중복 방지
+
+#### 2. 삭제 정책
+- 하위 태그가 있으면 삭제 불가
+- 연결된 퀴즈가 있으면 삭제 불가
+- 카스케이드 삭제 대신 명시적 체크
+
+#### 3. 권한 관리
+- 모든 CUD 작업은 관리자 권한 필요
+- 조회 작업은 권한 불필요 (활성 태그만)
+
+### ✅ 설계 특징
+
+**1. 함수형 프로그래밍 활용**
+```java
+// Stream API를 활용한 필터링과 정렬
+return allTags.stream()
+    .filter(tag -> /* 조건 */)
+    .sorted((t1, t2) -> /* 정렬 로직 */)
+    .collect(Collectors.toList());
+```
+
+**2. 원자적 연산 보장**
+- `@Transactional` 적절한 적용
+- 검증 로직과 비즈니스 로직 분리
+
+**3. 확장 가능한 아키텍처**
+- 인터페이스 기반 설계
+- Record 클래스 활용으로 불변 데이터 전달
+
+---
+
 ## 작성 가이드라인
 각 기술 결정사항은 다음 형식을 따릅니다:
 - **TDR-번호**: 연속된 일련번호
