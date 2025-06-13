@@ -1,6 +1,6 @@
 package com.quizplatform.apigateway.service;
 
-import com.quizplatform.apigateway.dto.LoginRequest;
+// OAuth2 전용으로 변경하여 LoginRequest import 제거
 import com.quizplatform.apigateway.dto.OAuth2UserRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,19 +17,7 @@ public class UserServiceClient {
     
     private final WebClient.Builder webClientBuilder;
     
-    /**
-     * 사용자 인증 (이메일/비밀번호)
-     */
-    public Mono<UserAuthInfo> authenticateUser(LoginRequest loginRequest) {
-        return webClientBuilder.build()
-                .post()
-                .uri("lb://user-service/auth/login")
-                .bodyValue(loginRequest)
-                .retrieve()
-                .bodyToMono(UserAuthInfo.class)
-                .doOnSuccess(user -> log.info("User authenticated successfully: {}", user.email()))
-                .doOnError(error -> log.error("User authentication failed: {}", error.getMessage()));
-    }
+    // OAuth2 전용 로그인으로 전환하여 일반 인증 메서드는 제거
     
     /**
      * 사용자 ID로 사용자 정보 조회

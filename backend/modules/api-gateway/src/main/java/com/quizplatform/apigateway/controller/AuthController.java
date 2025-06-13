@@ -22,22 +22,7 @@ public class AuthController {
     
     private final AuthService authService;
     
-    @PostMapping("/login")
-    @Operation(summary = "로그인", description = "이메일과 비밀번호로 로그인하여 JWT 토큰을 발급받습니다.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "로그인 성공"),
-        @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
-        @ApiResponse(responseCode = "401", description = "인증 실패")
-    })
-    public Mono<ResponseEntity<LoginResponse>> login(@RequestBody @Valid LoginRequest loginRequest) {
-        log.info("Login attempt for email: {}", loginRequest.email());
-        
-        return authService.login(loginRequest)
-                .map(ResponseEntity::ok)
-                .doOnSuccess(response -> log.info("Login successful for email: {}", loginRequest.email()))
-                .doOnError(error -> log.error("Login failed for email: {}", loginRequest.email(), error))
-                .onErrorReturn(ResponseEntity.status(401).build());
-    }
+    // OAuth2 전용 로그인으로 전환하여 일반 로그인 엔드포인트는 제거
     
     @PostMapping("/refresh")
     @Operation(summary = "토큰 갱신", description = "리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급받습니다.")

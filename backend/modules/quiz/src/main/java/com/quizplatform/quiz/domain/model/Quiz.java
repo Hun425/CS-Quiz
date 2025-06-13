@@ -228,8 +228,19 @@ public class Quiz {
      * 퀴즈에 태그 추가
      * 
      * @param tag 추가할 태그
+     * @throws IllegalArgumentException 태그 수가 최대 허용 개수를 초과하는 경우
      */
     public void addTag(Tag tag) {
+        if (tags.size() >= Tag.MAX_TAGS_PER_QUIZ) {
+            throw new IllegalArgumentException(
+                String.format("퀴즈당 최대 %d개의 태그만 추가할 수 있습니다.", Tag.MAX_TAGS_PER_QUIZ)
+            );
+        }
+        
+        if (tags.contains(tag)) {
+            return; // 이미 존재하는 태그는 중복 추가하지 않음
+        }
+        
         tags.add(tag);
         tag.addQuiz(this);
     }

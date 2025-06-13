@@ -27,10 +27,7 @@ public enum AuthProvider {
     /**
      * 네이버 로그인
      */
-    NAVER,
+    NAVER
     
-    /**
-     * 로컬 로그인 (이메일/비밀번호)
-     */
-    LOCAL
+    // OAuth2 전용 로그인으로 전환하여 LOCAL 제거
 } 

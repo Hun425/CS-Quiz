@@ -24,32 +24,7 @@ public class AuthController {
     
     private final AuthService authService;
     
-    @PostMapping("/login")
-    @Operation(summary = "로그인", description = "이메일과 비밀번호로 로그인합니다.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "로그인 성공"),
-        @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
-        @ApiResponse(responseCode = "401", description = "인증 실패"),
-        @ApiResponse(responseCode = "403", description = "비활성화된 계정")
-    })
-    public ResponseEntity<AuthUserResponse> login(@RequestBody @Valid AuthLoginRequest request) {
-        log.info("Login request for email: {}", request.email());
-        AuthUserResponse response = authService.authenticateUser(request);
-        return ResponseEntity.ok(response);
-    }
-    
-    @PostMapping("/register")
-    @Operation(summary = "회원가입", description = "새로운 사용자 계정을 생성합니다.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "회원가입 성공"),
-        @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
-        @ApiResponse(responseCode = "409", description = "이미 존재하는 이메일 또는 사용자명")
-    })
-    public ResponseEntity<AuthUserResponse> register(@RequestBody @Valid RegisterRequest request) {
-        log.info("Register request for email: {}", request.email());
-        AuthUserResponse response = authService.registerUser(request);
-        return ResponseEntity.ok(response);
-    }
+    // OAuth2 전용 로그인으로 전환하여 일반 로그인/회원가입 엔드포인트는 제거
     
     @GetMapping("/user/{userId}")
     @Operation(summary = "사용자 정보 조회", description = "사용자 ID로 인증용 사용자 정보를 조회합니다.")

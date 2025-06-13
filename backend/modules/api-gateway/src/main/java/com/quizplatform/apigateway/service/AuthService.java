@@ -16,36 +16,7 @@ public class AuthService {
     private final UserServiceClient userServiceClient;
     private final OAuth2ClientService oauth2ClientService;
     
-    /**
-     * 사용자 로그인
-     */
-    public Mono<LoginResponse> login(LoginRequest loginRequest) {
-        return userServiceClient.authenticateUser(loginRequest)
-                .map(userInfo -> {
-                    // JWT 토큰 생성
-                    JwtTokenProvider.TokenPair tokenPair = jwtTokenProvider.generateTokenPair(
-                            userInfo.id(),
-                            userInfo.email(),
-                            userInfo.roles()
-                    );
-                    
-                    // 응답 생성
-                    return LoginResponse.builder()
-                            .accessToken(tokenPair.accessToken())
-                            .refreshToken(tokenPair.refreshToken())
-                            .tokenType("Bearer")
-                            .expiresIn(tokenPair.expiresIn())
-                            .user(LoginResponse.UserInfo.builder()
-                                    .id(userInfo.id())
-                                    .email(userInfo.email())
-                                    .displayName(userInfo.displayName())
-                                    .roles(userInfo.roles())
-                                    .build())
-                            .build();
-                })
-                .doOnSuccess(response -> log.info("Login successful for user: {}", loginRequest.email()))
-                .doOnError(error -> log.error("Login failed for user: {}", loginRequest.email(), error));
-    }
+    // OAuth2 전용 로그인으로 전환하여 일반 로그인 메서드는 제거
     
     /**
      * 토큰 갱신

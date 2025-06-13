@@ -392,12 +392,12 @@ public class User {
     }
 
     /**
-     * LOCAL 인증 제공자인지 확인
+     * OAuth2 인증 제공자인지 확인
      * 
-     * @return LOCAL 인증 제공자 여부
+     * @return 항상 true (OAuth2 전용 시스템)
      */
-    public boolean isLocalProvider() {
-        return AuthProvider.LOCAL.equals(this.provider);
+    public boolean isOAuth2Provider() {
+        return true;
     }
 
     /**

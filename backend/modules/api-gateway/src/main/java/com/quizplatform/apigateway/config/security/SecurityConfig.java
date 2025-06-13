@@ -23,8 +23,8 @@ public class SecurityConfig {
                         .pathMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/webjars/**").permitAll()
                         // API 문서 접근 허용
                         .pathMatchers("/api-docs/**", "/swagger-config", "/swagger-resources/**").permitAll()
-                        // 인증 관련 엔드포인트 허용
-                        .pathMatchers("/api/auth/**").permitAll()
+                        // OAuth2 콜백 및 토큰 갱신만 허용
+                        .pathMatchers("/api/auth/oauth2/callback", "/api/auth/refresh", "/api/auth/health").permitAll()
                         // 서비스 목록 조회 허용 (개발 환경)
                         .pathMatchers("/api/services").permitAll()
                         // 루트 경로 리디렉션 허용
