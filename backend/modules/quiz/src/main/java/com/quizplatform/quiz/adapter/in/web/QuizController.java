@@ -274,4 +274,163 @@ public class QuizController {
         Page<QuizResponse> results = quizService.searchQuizzes(keyword, pageable);
         return ResponseEntity.ok(results);
     }
+    
+    // ===== Tag 기반 퀴즈 조회 API =====
+    
+    /**
+     * 특정 태그의 퀴즈 목록 조회
+     * 
+     * @param tagId 태그 ID
+     * @param pageable 페이지 정보
+     * @return 태그별 퀴즈 목록
+     */
+    @Operation(summary = "태그별 퀴즈 조회", description = "특정 태그에 연결된 퀴즈 목록을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "태그별 퀴즈 목록이 성공적으로 조회되었습니다."),
+            @ApiResponse(responseCode = "404", description = "태그를 찾을 수 없습니다."),
+            @ApiResponse(responseCode = "400", description = "비활성화된 태그입니다.")
+    })
+    @GetMapping("/tags/{tagId}")
+    public ResponseEntity<Page<QuizResponse>> getQuizzesByTag(
+            @Parameter(description = "조회할 태그의 ID", required = true)
+            @PathVariable Long tagId,
+            @Parameter(description = "페이지 요청 정보")
+            Pageable pageable) {
+        Page<QuizResponse> quizzes = quizService.getQuizzesByTag(tagId, pageable);
+        return ResponseEntity.ok(quizzes);
+    }
+    
+    /**
+     * 여러 태그 조건으로 퀴즈 목록 조회
+     * 
+     * @param tagIds 태그 ID 목록
+     * @param operator 논리 연산자 (AND/OR)
+     * @param pageable 페이지 정보
+     * @return 태그별 퀴즈 목록
+     */
+    @Operation(summary = "다중 태그 퀴즈 조회", description = "여러 태그 조건으로 퀴즈 목록을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "다중 태그 퀴즈 목록이 성공적으로 조회되었습니다."),
+            @ApiResponse(responseCode = "400", description = "잘못된 태그 ID 목록 또는 논리 연산자입니다.")
+    })
+    @GetMapping("/tags")
+    public ResponseEntity<Page<QuizResponse>> getQuizzesByTags(
+            @Parameter(description = "태그 ID 목록 (콤마로 구분)", required = true, example = "1,2,3")
+            @RequestParam List<Long> tagIds,
+            @Parameter(description = "논리 연산자 (AND: 모든 태그 포함, OR: 하나 이상 태그 포함)", example = "AND")
+            @RequestParam(defaultValue = "AND") String operator,
+            @Parameter(description = "페이지 요청 정보")
+            Pageable pageable) {
+        Page<QuizResponse> quizzes = quizService.getQuizzesByTags(tagIds, operator, pageable);
+        return ResponseEntity.ok(quizzes);
+    }
+    
+    /**
+     * 고급 검색 (키워드 + 태그 + 카테고리 + 난이도 조합)
+     * 
+     * @param keyword 검색 키워드 (선택적)
+     * @param tagIds 태그 ID 목록 (선택적)
+     * @param category 카테고리 (선택적)
+     * @param difficulty 난이도 (선택적)
+     * @param pageable 페이지 정보
+     * @return 고급 검색 결과
+     */
+    @Operation(summary = "퀴즈 고급 검색", description = "키워드, 태그, 카테고리, 난이도를 조합하여 퀴즈를 검색합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "고급 검색 결과가 성공적으로 조회되었습니다.")
+    })
+    @GetMapping("/search/advanced")
+    public ResponseEntity<Page<QuizResponse>> advancedSearchQuizzes(
+            @Parameter(description = "검색 키워드 (선택적)", example = "Java")
+            @RequestParam(required = false) String keyword,
+            @Parameter(description = "태그 ID 목록 (선택적, 콤마로 구분)", example = "1,2,3")
+            @RequestParam(required = false) List<Long> tagIds,
+            @Parameter(description = "카테고리 (선택적)", example = "프로그래밍")
+            @RequestParam(required = false) String category,
+            @Parameter(description = "난이도 (선택적, 1-5)", example = "3")
+            @RequestParam(required = false) Integer difficulty,
+            @Parameter(description = "페이지 요청 정보")
+            Pageable pageable) {
+        Page<QuizResponse> results = quizService.advancedSearchQuizzes(keyword, tagIds, category, difficulty, pageable);
+        return ResponseEntity.ok(results);
+    }
+    
+    // ===== Quiz-Tag 관계 관리 API =====
+    
+    /**
+     * 퀴즈의 태그 목록 업데이트
+     * 
+     * @param quizId 퀴즈 ID
+     * @param tagIds 새로운 태그 ID 목록
+     * @param currentUser 현재 사용자 정보
+     * @return 업데이트된 퀴즈 정보
+     */
+    @Operation(summary = "퀴즈 태그 업데이트", description = "퀴즈의 태그 목록을 새로운 목록으로 교체합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "퀴즈 태그가 성공적으로 업데이트되었습니다.",
+                    content = @Content(schema = @Schema(implementation = QuizResponse.class))),
+            @ApiResponse(responseCode = "400", description = "잘못된 태그 ID 목록입니다."),
+            @ApiResponse(responseCode = "404", description = "퀴즈 또는 태그를 찾을 수 없습니다.")
+    })
+    @PutMapping("/{quizId}/tags")
+    public ResponseEntity<QuizResponse> updateQuizTags(
+            @Parameter(description = "태그를 업데이트할 퀴즈의 ID", required = true)
+            @PathVariable Long quizId,
+            @Parameter(description = "새로운 태그 ID 목록", required = true)
+            @RequestBody List<Long> tagIds,
+            @CurrentUser CurrentUserInfo currentUser) {
+        QuizResponse updated = quizService.updateQuizTags(quizId, tagIds);
+        return ResponseEntity.ok(updated);
+    }
+    
+    /**
+     * 퀴즈에 태그 추가
+     * 
+     * @param quizId 퀴즈 ID
+     * @param tagId 추가할 태그 ID
+     * @param currentUser 현재 사용자 정보
+     * @return 업데이트된 퀴즈 정보
+     */
+    @Operation(summary = "퀴즈에 태그 추가", description = "퀴즈에 새로운 태그를 추가합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "태그가 성공적으로 추가되었습니다.",
+                    content = @Content(schema = @Schema(implementation = QuizResponse.class))),
+            @ApiResponse(responseCode = "400", description = "태그를 추가할 수 없습니다. (최대 태그 수 초과 또는 이미 할당된 태그)"),
+            @ApiResponse(responseCode = "404", description = "퀴즈 또는 태그를 찾을 수 없습니다.")
+    })
+    @PostMapping("/{quizId}/tags/{tagId}")
+    public ResponseEntity<QuizResponse> addTagToQuiz(
+            @Parameter(description = "태그를 추가할 퀴즈의 ID", required = true)
+            @PathVariable Long quizId,
+            @Parameter(description = "추가할 태그의 ID", required = true)
+            @PathVariable Long tagId,
+            @CurrentUser CurrentUserInfo currentUser) {
+        QuizResponse updated = quizService.addTagToQuiz(quizId, tagId);
+        return ResponseEntity.ok(updated);
+    }
+    
+    /**
+     * 퀴즈에서 태그 제거
+     * 
+     * @param quizId 퀴즈 ID
+     * @param tagId 제거할 태그 ID
+     * @param currentUser 현재 사용자 정보
+     * @return 업데이트된 퀴즈 정보
+     */
+    @Operation(summary = "퀴즈에서 태그 제거", description = "퀴즈에서 특정 태그를 제거합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "태그가 성공적으로 제거되었습니다.",
+                    content = @Content(schema = @Schema(implementation = QuizResponse.class))),
+            @ApiResponse(responseCode = "404", description = "퀴즈를 찾을 수 없습니다.")
+    })
+    @DeleteMapping("/{quizId}/tags/{tagId}")
+    public ResponseEntity<QuizResponse> removeTagFromQuiz(
+            @Parameter(description = "태그를 제거할 퀴즈의 ID", required = true)
+            @PathVariable Long quizId,
+            @Parameter(description = "제거할 태그의 ID", required = true)
+            @PathVariable Long tagId,
+            @CurrentUser CurrentUserInfo currentUser) {
+        QuizResponse updated = quizService.removeTagFromQuiz(quizId, tagId);
+        return ResponseEntity.ok(updated);
+    }
 } 

@@ -1,5 +1,6 @@
 package com.quizplatform.quiz.domain.service;
 
+import com.quizplatform.common.auth.CurrentUserInfo;
 import com.quizplatform.quiz.domain.model.Tag;
 
 import java.util.List;
@@ -24,11 +25,11 @@ public interface TagService {
      * @param name 태그 이름
      * @param description 태그 설명
      * @param parentId 부모 태그 ID (루트 태그인 경우 null)
-     * @param currentUserId 현재 사용자 ID (관리자 권한 체크용)
+     * @param currentUser 현재 사용자 정보 (관리자 권한 체크용)
      * @return 생성된 태그
      * @throws IllegalArgumentException 권한이 없거나 유효하지 않은 데이터인 경우
      */
-    Tag createTag(String name, String description, Long parentId, Long currentUserId);
+    Tag createTag(String name, String description, Long parentId, CurrentUserInfo currentUser);
     
     /**
      * 태그 정보 수정
@@ -36,30 +37,30 @@ public interface TagService {
      * @param tagId 수정할 태그 ID
      * @param name 새 태그 이름
      * @param description 새 태그 설명
-     * @param currentUserId 현재 사용자 ID (관리자 권한 체크용)
+     * @param currentUser 현재 사용자 정보 (관리자 권한 체크용)
      * @return 수정된 태그
      * @throws IllegalArgumentException 권한이 없거나 태그를 찾을 수 없는 경우
      */
-    Tag updateTag(Long tagId, String name, String description, Long currentUserId);
+    Tag updateTag(Long tagId, String name, String description, CurrentUserInfo currentUser);
     
     /**
      * 태그 삭제
      * 
      * @param tagId 삭제할 태그 ID
-     * @param currentUserId 현재 사용자 ID (관리자 권한 체크용)
+     * @param currentUser 현재 사용자 정보 (관리자 권한 체크용)
      * @throws IllegalArgumentException 권한이 없거나 삭제할 수 없는 태그인 경우
      */
-    void deleteTag(Long tagId, Long currentUserId);
+    void deleteTag(Long tagId, CurrentUserInfo currentUser);
     
     /**
      * 태그 활성화/비활성화
      * 
      * @param tagId 대상 태그 ID
      * @param active 활성화 상태
-     * @param currentUserId 현재 사용자 ID (관리자 권한 체크용)
+     * @param currentUser 현재 사용자 정보 (관리자 권한 체크용)
      * @return 수정된 태그
      */
-    Tag setTagActive(Long tagId, boolean active, Long currentUserId);
+    Tag setTagActive(Long tagId, boolean active, CurrentUserInfo currentUser);
     
     // ===== 조회 작업 =====
     
@@ -132,10 +133,10 @@ public interface TagService {
      * 
      * @param tagId 이동할 태그 ID
      * @param newParentId 새 부모 태그 ID (루트로 이동시 null)
-     * @param currentUserId 현재 사용자 ID (관리자 권한 체크용)
+     * @param currentUser 현재 사용자 정보 (관리자 권한 체크용)
      * @return 이동된 태그
      */
-    Tag moveTag(Long tagId, Long newParentId, Long currentUserId);
+    Tag moveTag(Long tagId, Long newParentId, CurrentUserInfo currentUser);
     
     // ===== 검색 기능 =====
     
@@ -214,19 +215,19 @@ public interface TagService {
     /**
      * 태그 계층구조 전체 조회 (관리자용)
      * 
-     * @param currentUserId 현재 사용자 ID (관리자 권한 체크용)
+     * @param currentUser 현재 사용자 정보 (관리자 권한 체크용)
      * @return 전체 태그 계층구조
      */
-    List<Tag> getFullHierarchy(Long currentUserId);
+    List<Tag> getFullHierarchy(CurrentUserInfo currentUser);
     
     /**
      * 태그 대량 가져오기 (Legacy 데이터 마이그레이션용)
      * 
      * @param tags 가져올 태그 목록
-     * @param currentUserId 현재 사용자 ID (관리자 권한 체크용)
+     * @param currentUser 현재 사용자 정보 (관리자 권한 체크용)
      * @return 처리 결과 요약
      */
-    TagImportResult importTags(List<TagImportData> tags, Long currentUserId);
+    TagImportResult importTags(List<TagImportData> tags, CurrentUserInfo currentUser);
     
     /**
      * 태그 사용량 통계를 나타내는 클래스

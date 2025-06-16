@@ -122,4 +122,67 @@ public interface QuizApplicationService {
      * @return 추천된 퀴즈 목록
      */
     List<QuizResponse> getRecommendedQuizzes(User user, int limit);
+    
+    // ===== Tag 기반 퀴즈 조회 =====
+    
+    /**
+     * 특정 태그에 연결된 퀴즈 목록 조회
+     * 
+     * @param tagId 태그 ID
+     * @param pageable 페이지 정보
+     * @return 태그별 퀴즈 목록 페이지
+     */
+    Page<QuizResponse> getQuizzesByTag(Long tagId, Pageable pageable);
+    
+    /**
+     * 여러 태그 조건으로 퀴즈 목록 조회
+     * 
+     * @param tagIds 태그 ID 목록
+     * @param operator 논리 연산자 ("AND", "OR")
+     * @param pageable 페이지 정보
+     * @return 태그별 퀴즈 목록 페이지
+     */
+    Page<QuizResponse> getQuizzesByTags(List<Long> tagIds, String operator, Pageable pageable);
+    
+    /**
+     * 고급 검색 (키워드 + 태그 조합)
+     * 
+     * @param keyword 검색 키워드 (선택적)
+     * @param tagIds 태그 ID 목록 (선택적)
+     * @param category 카테고리 (선택적)
+     * @param difficulty 난이도 (선택적)
+     * @param pageable 페이지 정보
+     * @return 고급 검색 결과 페이지
+     */
+    Page<QuizResponse> advancedSearchQuizzes(String keyword, List<Long> tagIds, 
+                                           String category, Integer difficulty, Pageable pageable);
+    
+    // ===== Quiz-Tag 관계 관리 =====
+    
+    /**
+     * 퀴즈의 태그 목록 업데이트
+     * 
+     * @param quizId 퀴즈 ID
+     * @param tagIds 새로운 태그 ID 목록
+     * @return 업데이트된 퀴즈 정보
+     */
+    QuizResponse updateQuizTags(Long quizId, List<Long> tagIds);
+    
+    /**
+     * 퀴즈에 태그 추가
+     * 
+     * @param quizId 퀴즈 ID
+     * @param tagId 추가할 태그 ID
+     * @return 업데이트된 퀴즈 정보
+     */
+    QuizResponse addTagToQuiz(Long quizId, Long tagId);
+    
+    /**
+     * 퀴즈에서 태그 제거
+     * 
+     * @param quizId 퀴즈 ID
+     * @param tagId 제거할 태그 ID
+     * @return 업데이트된 퀴즈 정보
+     */
+    QuizResponse removeTagFromQuiz(Long quizId, Long tagId);
 } 

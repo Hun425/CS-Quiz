@@ -1,5 +1,6 @@
 package com.quizplatform.quiz.domain.service;
 
+import com.quizplatform.common.auth.CurrentUserInfo;
 import com.quizplatform.common.exception.BusinessException;
 import com.quizplatform.common.exception.ErrorCode;
 import com.quizplatform.quiz.adapter.out.persistence.repository.TagRepository;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 태그 도메인 서비스 구현체
@@ -31,17 +33,16 @@ import java.util.stream.Collectors;
 public class TagServiceImpl implements TagService {
     
     private final TagRepository tagRepository;
-    // TODO: UserService 연동으로 관리자 권한 체크 (현재는 임시로 모든 사용자 허용)
     
     // ===== 기본 CRUD 작업 =====
     
     @Override
     @Transactional
-    public Tag createTag(String name, String description, Long parentId, Long currentUserId) {
-        log.info("Creating new tag: name={}, parentId={}, userId={}", name, parentId, currentUserId);
+    public Tag createTag(String name, String description, Long parentId, CurrentUserInfo currentUser) {
+        log.info("Creating new tag: name={}, parentId={}, userId={}", name, parentId, currentUser.id());
         
         // 관리자 권한 체크
-        validateAdminPermission(currentUserId);
+        validateAdminPermission(currentUser);
         
         // 부모 태그 조회 및 검증
         Tag parent = null;
@@ -78,11 +79,11 @@ public class TagServiceImpl implements TagService {
     
     @Override
     @Transactional
-    public Tag updateTag(Long tagId, String name, String description, Long currentUserId) {
-        log.info("Updating tag: id={}, name={}, userId={}", tagId, name, currentUserId);
+    public Tag updateTag(Long tagId, String name, String description, CurrentUserInfo currentUser) {
+        log.info("Updating tag: id={}, name={}, userId={}", tagId, name, currentUser.id());
         
         // 관리자 권한 체크
-        validateAdminPermission(currentUserId);
+        validateAdminPermission(currentUser);
         
         // 태그 조회
         Tag tag = tagRepository.findById(tagId)
@@ -109,11 +110,11 @@ public class TagServiceImpl implements TagService {
     
     @Override
     @Transactional
-    public void deleteTag(Long tagId, Long currentUserId) {
-        log.info("Deleting tag: id={}, userId={}", tagId, currentUserId);
+    public void deleteTag(Long tagId, CurrentUserInfo currentUser) {
+        log.info("Deleting tag: id={}, userId={}", tagId, currentUser.id());
         
         // 관리자 권한 체크
-        validateAdminPermission(currentUserId);
+        validateAdminPermission(currentUser);
         
         // 태그 조회
         Tag tag = tagRepository.findById(tagId)
@@ -138,11 +139,11 @@ public class TagServiceImpl implements TagService {
     
     @Override
     @Transactional
-    public Tag setTagActive(Long tagId, boolean active, Long currentUserId) {
-        log.info("Setting tag active status: id={}, active={}, userId={}", tagId, active, currentUserId);
+    public Tag setTagActive(Long tagId, boolean active, CurrentUserInfo currentUser) {
+        log.info("Setting tag active status: id={}, active={}, userId={}", tagId, active, currentUser.id());
         
         // 관리자 권한 체크
-        validateAdminPermission(currentUserId);
+        validateAdminPermission(currentUser);
         
         // 태그 조회
         Tag tag = tagRepository.findById(tagId)
@@ -204,11 +205,11 @@ public class TagServiceImpl implements TagService {
     
     @Override
     @Transactional
-    public Tag moveTag(Long tagId, Long newParentId, Long currentUserId) {
-        log.info("Moving tag: id={}, newParentId={}, userId={}", tagId, newParentId, currentUserId);
+    public Tag moveTag(Long tagId, Long newParentId, CurrentUserInfo currentUser) {
+        log.info("Moving tag: id={}, newParentId={}, userId={}", tagId, newParentId, currentUser.id());
         
         // 관리자 권한 체크
-        validateAdminPermission(currentUserId);
+        validateAdminPermission(currentUser);
         
         // 태그 조회
         Tag tag = tagRepository.findById(tagId)
@@ -302,14 +303,15 @@ public class TagServiceImpl implements TagService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND, 
                                                        "태그를 찾을 수 없습니다: " + tagId));
         
-        List<Object[]> quizCounts = tagRepository.getTagQuizCounts();
-        int connectedQuizCount = quizCounts.stream()
+        // Stream API를 활용한 효율적인 퀴즈 수 계산
+        int connectedQuizCount = tagRepository.getTagQuizCounts().stream()
                 .filter(row -> tagId.equals(row[0]))
-                .mapToInt(row -> ((Number) row[1]).intValue())
                 .findFirst()
+                .map(row -> ((Number) row[1]).intValue())
                 .orElse(0);
         
-        List<Tag> descendants = getAllDescendants(tagId);
+        // 후손 태그 수 계산
+        int descendantCount = getAllDescendants(tagId).size();
         
         return new TagUsageStats(
                 tag.getId(),
@@ -317,7 +319,7 @@ public class TagServiceImpl implements TagService {
                 tag.getFullPath(),
                 tag.getUsageCount(),
                 connectedQuizCount,
-                descendants.size()
+                descendantCount
         );
     }
     
@@ -344,47 +346,51 @@ public class TagServiceImpl implements TagService {
     // ===== 관리자 전용 기능 =====
     
     @Override
-    public List<Tag> getFullHierarchy(Long currentUserId) {
+    public List<Tag> getFullHierarchy(CurrentUserInfo currentUser) {
         // 관리자 권한 체크
-        validateAdminPermission(currentUserId);
+        validateAdminPermission(currentUser);
         
         return tagRepository.findAll();
     }
     
     @Override
     @Transactional
-    public TagImportResult importTags(List<TagImportData> tags, Long currentUserId) {
-        log.info("Importing {} tags, userId={}", tags.size(), currentUserId);
+    public TagImportResult importTags(List<TagImportData> tags, CurrentUserInfo currentUser) {
+        log.info("Importing {} tags, userId={}", tags.size(), currentUser.id());
         
         // 관리자 권한 체크
-        validateAdminPermission(currentUserId);
+        validateAdminPermission(currentUser);
         
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger errorCount = new AtomicInteger(0);
         List<String> errorMessages = new ArrayList<>();
         
-        // 태그 가져오기 처리
-        tags.forEach(tagData -> {
+        // Stream API를 활용한 태그 가져오기 처리
+        tags.stream().forEach(tagData -> {
             try {
                 // 부모 태그 찾기
                 Tag parent = findParentByPath(tagData.parentPath());
+                Long parentId = Optional.ofNullable(parent).map(Tag::getId).orElse(null);
                 
-                // 중복 체크
-                Long parentId = parent != null ? parent.getId() : null;
-                if (!tagRepository.existsByNameAndParent(tagData.name(), parentId)) {
-                    Tag newTag = Tag.builder()
-                            .name(tagData.name())
-                            .description(tagData.description())
-                            .parent(parent)
-                            .build();
-                    
-                    newTag.setActive(tagData.active());
-                    tagRepository.save(newTag);
-                    successCount.incrementAndGet();
-                } else {
-                    errorMessages.add("중복된 태그: " + tagData.name());
-                    errorCount.incrementAndGet();
-                }
+                // 중복 체크 후 태그 생성
+                Optional.of(tagData)
+                        .filter(data -> !tagRepository.existsByNameAndParent(data.name(), parentId))
+                        .map(data -> {
+                            Tag newTag = Tag.builder()
+                                    .name(data.name())
+                                    .description(data.description())
+                                    .parent(parent)
+                                    .build();
+                            newTag.setActive(data.active());
+                            return tagRepository.save(newTag);
+                        })
+                        .ifPresentOrElse(
+                            tag -> successCount.incrementAndGet(),
+                            () -> {
+                                errorMessages.add("중복된 태그: " + tagData.name());
+                                errorCount.incrementAndGet();
+                            }
+                        );
             } catch (Exception e) {
                 errorMessages.add("태그 생성 실패 (" + tagData.name() + "): " + e.getMessage());
                 errorCount.incrementAndGet();
@@ -407,16 +413,37 @@ public class TagServiceImpl implements TagService {
     // ===== 내부 헬퍼 메서드 =====
     
     /**
-     * 관리자 권한 검증 (임시 구현)
+     * 관리자 권한 검증
+     * 
+     * <p>태그 관리 권한을 확인합니다. 다음 역할을 가진 사용자만 허용됩니다:</p>
+     * <ul>
+     *   <li>ADMIN - 시스템 관리자</li>
+     *   <li>QUIZ_ADMIN - 퀴즈 관리자</li>
+     *   <li>OWNER - 시스템 소유자</li>
+     * </ul>
+     * 
+     * @param currentUser 현재 사용자 정보
+     * @throws BusinessException 로그인하지 않았거나 관리자 권한이 없는 경우
      */
-    private void validateAdminPermission(Long currentUserId) {
-        // TODO: UserService와 연동하여 실제 관리자 권한 체크
-        if (currentUserId == null) {
+    private void validateAdminPermission(CurrentUserInfo currentUser) {
+        if (currentUser == null || currentUser.id() == null) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED, "로그인이 필요합니다.");
         }
         
-        // 임시로 모든 로그인한 사용자를 관리자로 처리
-        log.debug("Admin permission validated for user: {}", currentUserId);
+        // 관리자 권한 체크 (ADMIN, QUIZ_ADMIN, OWNER 역할 허용)
+        boolean hasAdminPermission = currentUser.hasRole("ADMIN") || 
+                                   currentUser.hasRole("QUIZ_ADMIN") || 
+                                   currentUser.hasRole("OWNER");
+        
+        if (!hasAdminPermission) {
+            log.warn("Unauthorized tag management attempt by user: {} with roles: {}", 
+                    currentUser.id(), currentUser.roles());
+            throw new BusinessException(ErrorCode.FORBIDDEN, 
+                                      "태그 관리 권한이 없습니다. 관리자 권한이 필요합니다.");
+        }
+        
+        log.debug("Admin permission validated for user: {} with roles: {}", 
+                 currentUser.id(), currentUser.roles());
     }
     
     /**
@@ -430,32 +457,43 @@ public class TagServiceImpl implements TagService {
     
     /**
      * 경로 문자열로 부모 태그 찾기
+     * 
+     * <p>경로는 "루트태그명 > 자식태그명 > 손자태그명" 형식으로 구성됩니다.</p>
+     * 
+     * @param parentPath 태그 경로 문자열
+     * @return 찾은 부모 태그 (없으면 null)
      */
     private Tag findParentByPath(String parentPath) {
         if (parentPath == null || parentPath.trim().isEmpty()) {
             return null;
         }
         
-        // 경로를 ">" 로 분리하여 단계별로 태그 찾기
-        String[] pathComponents = parentPath.split(">");
+        String[] pathParts = parentPath.split(">");
         Tag currentTag = null;
         
-        for (String component : pathComponents) {
-            String tagName = component.trim();
-            Long parentId = currentTag != null ? currentTag.getId() : null;
-            
-            currentTag = tagRepository.findByNameIgnoreCase(tagName)
-                    .filter(tag -> {
-                        if (parentId == null) {
-                            return tag.getParent() == null;
-                        } else {
-                            return tag.getParent() != null && parentId.equals(tag.getParent().getId());
-                        }
-                    })
-                    .orElse(null);
+        // 경로를 단계적으로 탐색
+        for (String tagName : pathParts) {
+            String trimmedName = tagName.trim();
+            if (trimmedName.isEmpty()) {
+                continue;
+            }
             
             if (currentTag == null) {
-                break;
+                // 루트 태그 찾기
+                currentTag = tagRepository.findByNameIgnoreCase(trimmedName)
+                        .filter(tag -> tag.getParent() == null)
+                        .orElse(null);
+            } else {
+                // 자식 태그 찾기
+                Long parentId = currentTag.getId();
+                currentTag = tagRepository.findByNameIgnoreCase(trimmedName)
+                        .filter(tag -> tag.getParent() != null && 
+                                     parentId.equals(tag.getParent().getId()))
+                        .orElse(null);
+            }
+            
+            if (currentTag == null) {
+                break; // 경로에서 태그를 찾지 못하면 중단
             }
         }
         

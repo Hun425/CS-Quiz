@@ -12,6 +12,8 @@ public enum ErrorCode {
     ENTITY_NOT_FOUND(HttpStatus.NOT_FOUND, "C002", "엔티티를 찾을 수 없습니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C003", "서버 내부 오류가 발생했습니다."),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "C004", "인증 정보가 없습니다."),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "C005", "권한이 없습니다."),
+    DUPLICATE_ENTITY(HttpStatus.CONFLICT, "C006", "중복된 엔티티입니다."),
 
     // User Related Errors
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "사용자를 찾을 수 없습니다."),

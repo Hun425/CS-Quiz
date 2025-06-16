@@ -270,6 +270,121 @@ public class Quiz {
         // 문자열 태그는 ElementCollection으로 처리되지 않음
         // 이 메서드는 하위 호환성을 위해 유지하되, 태그 서비스에서 Tag 객체를 찾아 removeTag(Tag) 호출 필요
     }
+    
+    /**
+     * 모든 태그 제거
+     */
+    public void clearAllTags() {
+        tags.forEach(tag -> tag.removeQuiz(this));
+        tags.clear();
+    }
+    
+    /**
+     * 태그 목록을 일괄 설정
+     * 
+     * @param newTags 새로운 태그 목록
+     */
+    public void setTags(Set<Tag> newTags) {
+        // 기존 태그 모두 제거
+        clearAllTags();
+        
+        // 새 태그들 추가 (최대 개수 체크 포함)
+        newTags.forEach(this::addTag);
+    }
+    
+    /**
+     * 특정 태그가 포함되어 있는지 확인
+     * 
+     * @param tagId 태그 ID
+     * @return 포함 여부
+     */
+    public boolean hasTag(Long tagId) {
+        return tags.stream()
+                .anyMatch(tag -> tag.getId().equals(tagId));
+    }
+    
+    /**
+     * 특정 태그가 포함되어 있는지 확인 (이름 기준)
+     * 
+     * @param tagName 태그 이름
+     * @return 포함 여부
+     */
+    public boolean hasTagByName(String tagName) {
+        return tags.stream()
+                .anyMatch(tag -> tag.getName().equalsIgnoreCase(tagName));
+    }
+    
+    /**
+     * 현재 태그 수 반환
+     * 
+     * @return 태그 수
+     */
+    public int getTagCount() {
+        return tags.size();
+    }
+    
+    /**
+     * 태그 추가 가능 여부 확인
+     * 
+     * @return 추가 가능 여부
+     */
+    public boolean canAddMoreTags() {
+        return getTagCount() < Tag.MAX_TAGS_PER_QUIZ;
+    }
+    
+    /**
+     * 남은 태그 슬롯 수 반환
+     * 
+     * @return 추가 가능한 태그 수
+     */
+    public int getRemainingTagSlots() {
+        return Math.max(0, Tag.MAX_TAGS_PER_QUIZ - getTagCount());
+    }
+    
+    /**
+     * 특정 레벨의 태그들만 조회
+     * 
+     * @param level 태그 레벨
+     * @return 해당 레벨의 태그 목록
+     */
+    public Set<Tag> getTagsByLevel(int level) {
+        return tags.stream()
+                .filter(tag -> tag.getLevel() == level)
+                .collect(java.util.stream.Collectors.toSet());
+    }
+    
+    /**
+     * 루트 태그들만 조회
+     * 
+     * @return 루트 태그 목록
+     */
+    public Set<Tag> getRootTags() {
+        return getTagsByLevel(0);
+    }
+    
+    /**
+     * 태그 이름 목록 반환 (정렬된 상태)
+     * 
+     * @return 태그 이름 목록
+     */
+    public List<String> getTagNames() {
+        return tags.stream()
+                .map(Tag::getName)
+                .sorted()
+                .collect(java.util.stream.Collectors.toList());
+    }
+    
+    /**
+     * 태그 전체 경로 목록 반환 (정렬된 상태)
+     * 
+     * @return 태그 전체 경로 목록
+     */
+    public List<String> getTagFullPaths() {
+        return tags.stream()
+                .map(Tag::getFullPath)
+                .sorted()
+                .collect(java.util.stream.Collectors.toList());
+    }
 
     /**
      * 퀴즈 시도 기록 및 통계 업데이트

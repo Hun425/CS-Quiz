@@ -64,7 +64,7 @@ public class TagController {
                 request.name(),
                 request.description(),
                 request.parentId(),
-                currentUser.id()
+                currentUser
         );
         
         TagResponse response = TagResponse.from(createdTag);
@@ -93,7 +93,7 @@ public class TagController {
                 tagId,
                 request.name(),
                 request.description(),
-                currentUser.id()
+                currentUser
         );
         
         TagResponse response = TagResponse.from(updatedTag);
@@ -115,7 +115,7 @@ public class TagController {
         
         log.info("Deleting tag: id={}, userId={}", tagId, currentUser.id());
         
-        tagService.deleteTag(tagId, currentUser.id());
+        tagService.deleteTag(tagId, currentUser);
         return ResponseEntity.noContent().build();
     }
     
@@ -135,7 +135,7 @@ public class TagController {
         log.info("Setting tag active: id={}, active={}, userId={}", 
                 tagId, active, currentUser.id());
         
-        Tag updatedTag = tagService.setTagActive(tagId, active, currentUser.id());
+        Tag updatedTag = tagService.setTagActive(tagId, active, currentUser);
         TagResponse response = TagResponse.from(updatedTag);
         return ResponseEntity.ok(response);
     }
@@ -273,7 +273,7 @@ public class TagController {
         log.info("Moving tag: id={}, newParentId={}, userId={}", 
                 tagId, request.newParentId(), currentUser.id());
         
-        Tag movedTag = tagService.moveTag(tagId, request.newParentId(), currentUser.id());
+        Tag movedTag = tagService.moveTag(tagId, request.newParentId(), currentUser);
         TagResponse response = TagResponse.from(movedTag);
         return ResponseEntity.ok(response);
     }
@@ -375,7 +375,7 @@ public class TagController {
     public ResponseEntity<List<TagResponse>> getFullHierarchy(@CurrentUser CurrentUserInfo currentUser) {
         log.debug("Getting full hierarchy: userId={}", currentUser.id());
         
-        List<Tag> hierarchy = tagService.getFullHierarchy(currentUser.id());
+        List<Tag> hierarchy = tagService.getFullHierarchy(currentUser);
         List<TagResponse> responses = hierarchy.stream()
                 .map(TagResponse::from)
                 .collect(Collectors.toList());
