@@ -1,0 +1,36 @@
+server:
+  port: 8083
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/quiz_content_db
+    username: postgres
+    password: postgres
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 3000
+      idle-timeout: 60000
+
+# Eureka 설정
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    instance-id: ${spring.application.name}:${random.uuid}
+    prefer-ip-address: true
+
+# 퀴즈 서비스 관련 설정
+quiz:
+  categories:
+    enable-cache: true
+    cache-ttl: 3600  # 초
+  questions:
+    default-page-size: 20
+    max-page-size: 100
+  content:
+    image-upload-path: ${QUIZ_IMAGE_PATH:./uploads/quiz-images}
+    max-image-size: 5242880  # 5MB
+  search:
+    enable-full-text: true
+    min-query-length: 2 

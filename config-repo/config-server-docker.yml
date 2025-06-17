@@ -1,0 +1,22 @@
+server:
+  port: 8888
+
+spring:
+  cloud:
+    config:
+      server:
+        git:
+          uri: ${CONFIG_GIT_URI:file:///app/config-repo}
+          default-label: ${CONFIG_GIT_BRANCH:main}
+          search-paths: ${CONFIG_SEARCH_PATHS:/*}
+          clone-on-start: true
+
+  security:
+    user:
+      name: ${CONFIG_SERVER_USER:configuser}
+      password: ${CONFIG_SERVER_PASSWORD:configpassword}
+
+# 로깅 설정
+logging:
+  level:
+    org.springframework.cloud.config: INFO 

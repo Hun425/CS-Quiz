@@ -1,0 +1,37 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          time_zone: UTC
+  
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+# 로깅 설정
+logging:
+  level:
+    com.quizplatform: INFO
+    org.springframework: INFO
+    org.hibernate: INFO
+
+# JWT 토큰 설정
+security:
+  jwt:
+    secret-key: ${JWT_SECRET:ThisIsSecretForJWTHS512SignatureAlgorithmThatMUSTHave64ByteLength}
+    expiration-time: 86400000  # 24시간
+    refresh-expiration-time: 604800000  # 7일 

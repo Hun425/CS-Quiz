@@ -1,0 +1,87 @@
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:3000"
+              - "http://localhost:5173"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+      routes:
+        # User Service Routes
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - RewritePath=/api/users/(?<segment>.*), /api/v1/users/$\{segment}
+            
+        # Quiz Service Routes
+        - id: quiz-service
+          uri: lb://quiz-service
+          predicates:
+            - Path=/api/quizzes/**
+          filters:
+            - RewritePath=/api/quizzes/(?<segment>.*), /api/v1/quizzes/$\{segment}
+            
+        # Battle Service Routes
+        - id: battle-service
+          uri: lb://battle-service
+          predicates:
+            - Path=/api/battles/**, /ws-battle/**
+          filters:
+            - RewritePath=/api/battles/(?<segment>.*), /api/v1/battles/$\{segment}
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${OAUTH2_GOOGLE_CLIENT_ID:your-client-id}
+            client-secret: ${OAUTH2_GOOGLE_CLIENT_SECRET:your-client-secret}
+            scope:
+              - email
+              - profile
+          kakao:
+            client-id: ${OAUTH2_KAKAO_CLIENT_ID:your-client-id}
+            client-secret: ${OAUTH2_KAKAO_CLIENT_SECRET:your-client-secret}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
+              - profile_nickname
+              - account_email
+            client-name: Kakao
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    instance-id: ${spring.application.name}:${random.uuid}
+    prefer-ip-address: true
+
+# 로깅 설정
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+    reactor.netty: INFO
+    
+# Rate Limiter 설정
+gateway:
+  rate-limiter:
+    default-capacity: 50
+    default-refill-rate: 10 

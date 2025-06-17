@@ -107,15 +107,20 @@ services:
     networks:
       - quiz-network
 
-  # React 프론트엔드 서비스
+  # Next.js 프론트엔드 서비스 (신버전)
   frontend:
     build:
-      context: ./frontend
+      context: ./client
       dockerfile: Dockerfile
     container_name: quiz-frontend
     restart: always
     ports:
-      - "80:80"
+      - "80:3000"
+    environment:
+      # Next.js 환경 변수
+      NEXT_PUBLIC_API_BASE_URL: http://13.125.187.28:8080
+      NEXT_PUBLIC_WS_BASE_URL: ws://13.125.187.28:8080/ws-battle
+      NODE_ENV: production
     depends_on:
       - backend
     networks:
