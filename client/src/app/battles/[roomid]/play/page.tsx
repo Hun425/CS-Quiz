@@ -17,12 +17,6 @@ const BattleContent = () => {
 
   useBattleSocket(roomId);
 
-  // useEffect(() => {
-  //   return () => {
-  //     battleSocketClient.leaveBattle();
-  //   };
-  // }, []);
-
   // store 상태
   const { status, endPayload } = useBattleSocketStore();
 

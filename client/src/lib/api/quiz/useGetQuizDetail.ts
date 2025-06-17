@@ -17,6 +17,8 @@ export const useGetQuizDetail = (quizId: number) => {
       return response.data.data;
     },
     enabled: !!quizId,
-    staleTime: 1000 * 60 * 5,
+    refetchOnMount: true,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 };

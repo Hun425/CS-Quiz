@@ -8,18 +8,18 @@ interface QuizCardProps {
 
 const QuizCard: React.FC<QuizCardProps> = ({ quiz }) => {
   return (
-    <div className="border border-border rounded-lg p-6 bg-card-background shadow-md transition-transform duration-200 hover:scale-105">
+    <div className="border border-border rounded-lg p-4 bg-card-background text-foreground  transition-transform duration-200 hover:scale-105">
       <Link
         href={`/quizzes/${quiz.id}`}
-        className="flex flex-col h-full text-foreground no-underline"
+        className="flex flex-col h-full no-underline"
       >
         {/* 퀴즈 제목 */}
-        <h2 className="text-xl font-bold text-primary mb-2">{quiz.title}</h2>
+        <h3 className="text-lg text-foreground font-bold mb-2">{quiz.title}</h3>
 
         {/* 퀴즈 메타정보 */}
         <div className="flex flex-wrap gap-1 mb-2">
           {/* 난이도 */}
-          <Tag difficultyLevel={quiz.difficultyLevel} />
+          <Tag difficultyLevel={quiz.difficultyLevel} className="p-0" />
 
           {/* 퀴즈 유형 */}
           <Tag quizType={quiz.quizType} />

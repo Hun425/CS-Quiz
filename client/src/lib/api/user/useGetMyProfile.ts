@@ -36,5 +36,6 @@ export const useGetMyProfile = (userId?: number) => {
     },
     staleTime: isMe ? 1000 * 60 * 10 : 0, // 내 정보만 staleTime 적용
     refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 };

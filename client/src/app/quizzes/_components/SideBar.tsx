@@ -84,41 +84,42 @@ const Sidebar: React.FC = () => {
   );
 
   return (
-    <aside className="hidden lg:block w-1/4 bg-background border border-border p-6 rounded-md shadow-sm">
+    <aside className="hidden lg:block w-[260px] bg-background border border-border p-4 rounded-md shadow-sm">
       {/* 🔹 사용자 프로필 정보 */}
       <section className="space-y-4 mb-6">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3">
           {userProfile.profileImage ? (
             <Image
               src={userProfile.profileImage}
               alt="프로필 이미지"
-              width={50}
-              height={50}
+              width={40}
+              height={40}
               className="rounded-full border border-border"
             />
           ) : (
-            <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-lg font-semibold">
+            <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center text-base font-semibold">
               {userProfile.username.charAt(0)}
             </div>
           )}
           <div>
-            <p className="text-lg font-semibold text-primary">
-              {userProfile.username}님 <br></br> 환영합니다!
+            <p className="text-base font-semibold text-primary">
+              {userProfile.username}님
             </p>
-            <p className="text-sm text-muted">Lv. {userProfile.level}</p>
+            <p className="text-xs text-muted">Lv. {userProfile.level}</p>
           </div>
         </div>
-        {/* 🔹 경험치 진행 바 */}
-        <div className="mt-4">
-          <p className="text-xs text-muted">
+
+        {/* 경험치 진행바 */}
+        <div className="mt-3">
+          <p className="text-xs text-muted mb-1">
             경험치: {userProfile.experience} / {userProfile.requiredExperience}
           </p>
           <Progress value={expPercentage} />
         </div>
 
-        {/* 🔹 총 포인트 & 마지막 로그인 정보 */}
-        <div className="mt-4 text-sm text-foreground">
-          <p>🌟 총 포인트: {userProfile.totalPoints.toLocaleString()} P</p>
+        {/* 포인트 & 로그인 */}
+        <div className="mt-3 text-xs text-foreground space-y-1">
+          <p>🌟 포인트: {userProfile.totalPoints.toLocaleString()} P</p>
           <p>
             ⏳ 마지막 로그인:{" "}
             {new Date(userProfile.lastLogin).toLocaleDateString()}
@@ -126,31 +127,28 @@ const Sidebar: React.FC = () => {
         </div>
       </section>
 
-      {/* 🔹 퀴즈 추천 섹션 */}
-      <section className="mt-6 space-y-4">
-        {/* ✅ 오늘의 퀴즈 카드 */}
-        <div className="bg-card border border-border p-4 rounded-lg ">
-          <h3 className="text-md font-semibold mb-2">📅 오늘의 퀴즈</h3>
+      {/* 🔹 퀴즈 추천 */}
+      <section className="mt-6 space-y-3">
+        <div className="bg-card border border-border p-3 rounded-lg">
+          <h3 className="text-sm font-semibold mb-2">📅 오늘의 퀴즈</h3>
           {isLoadingDaily ? (
-            <p className="text-sm text-muted">불러오는 중...</p>
+            <p className="text-xs text-muted">불러오는 중...</p>
           ) : dailyQuiz?.data && Object.keys(dailyQuiz.data).length > 0 ? (
             <Link
               href={`/quiz/daily/${dailyQuiz.data.id}`}
-              className="block text-md font-semibold bg-primary text-white p-2 rounded-md text-center hover:bg-primary/90 transition"
+              className="block text-xs font-semibold bg-primary text-white p-2 rounded-md text-center hover:bg-primary/90 transition"
             >
-              {dailyQuiz.data.title} 🚀
+              {dailyQuiz.data.title}
             </Link>
           ) : (
-            <p className="text-sm text-muted">오늘의 퀴즈가 없습니다.</p>
+            <p className="text-xs text-muted">오늘의 퀴즈가 없습니다.</p>
           )}
         </div>
 
-        {/* ✅ 추천 퀴즈 카드 */}
-        <div className="bg-card border border-border p-4 rounded-lg ">
-          <h3 className="text-md font-semibold mb-2">🌟 추천 퀴즈</h3>
-
+        <div className="bg-card border border-border p-3 rounded-lg">
+          <h3 className="text-sm font-semibold mb-2">🌟 추천 퀴즈</h3>
           {isLoadingRecommended ? (
-            <p className="text-sm text-muted">불러오는 중...</p>
+            <p className="text-xs text-muted">불러오는 중...</p>
           ) : Array.isArray(recommendedQuizzes?.data) &&
             recommendedQuizzes.data.length > 0 ? (
             recommendedQuizzes.data
@@ -159,13 +157,13 @@ const Sidebar: React.FC = () => {
                 <Link
                   key={quiz.id}
                   href={`/quiz/recommended/${quiz.id}`}
-                  className="block text-sm bg-secondary text-white p-2 rounded-md hover:bg-secondary/90 transition"
+                  className="block text-xs bg-secondary text-white p-2 rounded-md hover:bg-secondary/90 transition"
                 >
                   {quiz.title}
                 </Link>
               ))
           ) : (
-            <p className="text-sm text-muted">추천 퀴즈가 없습니다.</p>
+            <p className="text-xs text-muted">추천 퀴즈가 없습니다.</p>
           )}
         </div>
       </section>

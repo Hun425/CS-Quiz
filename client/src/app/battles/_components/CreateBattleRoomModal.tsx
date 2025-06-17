@@ -1,4 +1,5 @@
 "use client";
+
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useCreateBattleRoom } from "@/lib/api/battle/useCreateBattleRoom";
@@ -52,43 +53,62 @@ const CreateBattleRoomModal: React.FC<CreateBattleRoomModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 text-default">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-[400px] max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4">새 배틀룸 생성</h2>
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      {/* ✅ 모달 박스 */}
+      <div className="bg-background pt-3 pb-6 px-6 rounded-2xl shadow-lg w-[380px] max-h-[100vh] overflow-y-auto flex flex-col gap-5">
+        {/* pt-3 로 padding-top 줄여줌! */}
 
-        {/* 최대 참가자 수 */}
-        <label className="block text-sm font-medium mb-1">최대 참가자 수</label>
-        <input
-          type="number"
-          className="w-full p-2 border rounded-md mb-4"
-          value={maxParticipants}
-          onChange={(e) => setMaxParticipants(Number(e.target.value))}
-          min={2}
-          max={10}
-        />
+        {/* 타이틀+설명 묶기 */}
+        <div className="flex flex-col items-center gap-2">
+          <h2 className="text-xl font-bold mt-3 text-primary text-center">
+            배틀룸 생성
+          </h2>
+          <p className=" text-center text-sm text-muted leading-relaxed">
+            한 번에 하나의 방에만 참여할 수 있어요.
+            <br />
+            생성하면 바로 배틀룸으로 이동합니다.
+          </p>
+        </div>
 
-        {/* 퀴즈 검색 */}
-        <label className="block text-sm font-medium mb-1">퀴즈 검색</label>
-        <input
-          type="search"
-          className="w-full p-2 border rounded-md mb-3"
-          placeholder="퀴즈 제목으로 검색"
-          value={searchQuery}
-          onChange={(e) =>
-            startTransition(() => setSearchQuery(e.target.value))
-          }
-        />
+        {/* ✅ 최대 참가자 수 */}
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">최대 참가자 수 (2~10)</label>
+          <input
+            type="number"
+            value={maxParticipants}
+            onChange={(e) => setMaxParticipants(Number(e.target.value))}
+            min={2}
+            max={10}
+            className="w-full p-2 text-sm border border-border rounded-md bg-background"
+          />
+        </div>
 
-        {/* 퀴즈 검색 결과 */}
-        <div className="h-[200px] overflow-y-auto border rounded-md mb-4 p-2 bg-gray-50">
+        {/* ✅ 퀴즈 검색창 */}
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">퀴즈 검색</label>
+          <input
+            type="search"
+            value={searchQuery}
+            placeholder="퀴즈 주제를 검색하세요"
+            onChange={(e) =>
+              startTransition(() => setSearchQuery(e.target.value))
+            }
+            className="w-full p-2 text-sm border border-border rounded-md bg-background"
+          />
+        </div>
+
+        {/* ✅ 퀴즈 목록 */}
+        <div className="h-[200px] overflow-y-auto border border-border bg-sub-background p-2 rounded-md space-y-2">
           {isSearchLoading ? (
-            <p className="text-sm text-center text-gray-500">검색 중...</p>
+            <p className="text-center text-sm text-muted">🔍 검색 중...</p>
           ) : searchedQuizzes?.content.length ? (
             searchedQuizzes.content.map((quiz) => (
               <div
                 key={quiz.id}
-                className={`p-2 rounded cursor-pointer hover:bg-primary hover:text-white transition-colors ${
-                  quizId === quiz.id ? "bg-primary text-white" : ""
+                className={`p-2 rounded-md text-sm cursor-pointer transition ${
+                  quizId === quiz.id
+                    ? "bg-primary text-white"
+                    : "hover:bg-primary/10"
                 }`}
                 onClick={() => setQuizId(quiz.id)}
               >
@@ -96,21 +116,19 @@ const CreateBattleRoomModal: React.FC<CreateBattleRoomModalProps> = ({
               </div>
             ))
           ) : (
-            <p className="text-sm text-center text-gray-400">
-              검색 결과가 없습니다. 다른 키워드를 입력해보세요.
+            <p className="text-center text-sm text-muted">
+              검색 결과가 없습니다.
             </p>
           )}
         </div>
 
-        {/* 에러 메시지 */}
+        {/* ✅ 에러 메시지 */}
         {errorMessage && (
-          <p className="text-red-500 text-sm text-center mt-3">
-            {errorMessage}
-          </p>
+          <p className="text-center text-sm text-danger">{errorMessage}</p>
         )}
 
-        {/* 버튼 */}
-        <div className="flex justify-end space-x-2 mt-5">
+        {/* ✅ 버튼 영역 */}
+        <div className="flex justify-end gap-4 mt-1">
           <Button variant="outline" size="small" onClick={onClose}>
             취소
           </Button>
@@ -120,7 +138,7 @@ const CreateBattleRoomModal: React.FC<CreateBattleRoomModalProps> = ({
             onClick={handleCreateBattleRoom}
             disabled={isPending}
           >
-            {isPending ? "생성 중..." : "생성"}
+            {isPending ? "생성 중..." : "생성하기"}
           </Button>
         </div>
       </div>
