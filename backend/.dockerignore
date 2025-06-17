@@ -1,0 +1,55 @@
+# 빌드 결과물
+build/
+target/
+*.jar
+*.war
+
+# IDE 관련
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS 관련
+.DS_Store
+Thumbs.db
+
+# 로그 파일
+*.log
+logs/
+
+# 임시 파일
+*.tmp
+*.temp
+
+# Gradle 캐시 (Docker 내부에서 새로 생성)
+.gradle/
+
+# Git 관련
+.git/
+.gitignore
+README.md
+HELP.md
+
+# 테스트 관련
+src/test/
+
+# 문서 관련
+md/
+k6-tests/
+dummy_data.sql
+
+# 환경 설정 (민감한 정보 포함 가능)
+.env
+.env.*
+
+# Node.js 관련 (만약 있다면)
+node_modules/
+npm-debug.log
+
+# 기타 불필요한 파일들
+*.orig
+*.bak
+*.swp
+*~ 

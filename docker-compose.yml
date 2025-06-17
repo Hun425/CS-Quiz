@@ -112,6 +112,9 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://13.125.187.28:8080
+        NEXT_PUBLIC_WS_BASE_URL: ws://13.125.187.28:8080/ws-battle
     container_name: quiz-frontend
     restart: always
     ports:
