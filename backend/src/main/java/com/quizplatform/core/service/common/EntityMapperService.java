@@ -15,244 +15,125 @@ import com.quizplatform.core.dto.quiz.QuizResponse;
 import com.quizplatform.core.dto.quiz.QuizResultResponse;
 import com.quizplatform.core.dto.quiz.QuizSummaryResponse;
 import com.quizplatform.core.dto.user.UserProfileDto;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
-@Service
-@Slf4j
-public class EntityMapperService {
-
-
-    @Transactional(readOnly = true)
-    public QuizDetailResponse mapToQuizDetailResponse(Quiz quiz) {
-        // 필요한 연관 관계 초기화
-        initializeQuizAssociations(quiz);
-        return QuizDetailResponse.from(quiz);
-    }
-
-    @Transactional(readOnly = true)
-    public QuizSummaryResponse mapToQuizSummaryResponse(Quiz quiz) {
-        // 필요한 연관 관계 초기화 (요약 정보에만 필요한 것들)
-        quiz.getTags().size();
-        if (quiz.getCreator() != null) {
-            quiz.getCreator().getUsername();
-        }
-        return QuizSummaryResponse.from(quiz);
-    }
-
-    @Transactional(readOnly = true)
-    public List<QuizSummaryResponse> mapToQuizSummaryResponseList(List<Quiz> quizzes) {
-        return quizzes.stream()
-                .map(this::mapToQuizSummaryResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public BattleRoomResponse mapToBattleRoomResponse(BattleRoom battleRoom) {
-        // 필요한 연관 관계 초기화
-        battleRoom.getParticipants().forEach(participant -> {
-            participant.getUser().getUsername(); // 사용자 정보 초기화
-            participant.getUser().getProfileImage();
-            participant.getUser().getLevel();
-        });
-        battleRoom.getQuiz().getTitle(); // 퀴즈 정보 초기화
-        battleRoom.getQuiz().getTimeLimit();
-        battleRoom.getQuiz().getQuestions().size();
-
-        return BattleRoomResponse.from(battleRoom);
-    }
-
-    @Transactional(readOnly = true)
-    public List<BattleRoomResponse> mapToBattleRoomResponseList(List<BattleRoom> battleRooms) {
-        return battleRooms.stream()
-                .map(this::mapToBattleRoomResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public UserProfileDto mapToUserProfileDto(User user) {
-        // 사용자 기본 정보 초기화
-        return new UserProfileDto(
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getProfileImage(),
-                user.getLevel(),
-                user.getExperience(),
-                user.getRequiredExperience(),
-                user.getTotalPoints(),
-                formatDateTime(user.getCreatedAt()),
-                user.getLastLogin() != null ? formatDateTime(user.getLastLogin()) : null
-        );
-    }
-
-    @Transactional(readOnly = true)
-    public BattleEndResponse mapToBattleEndResponse(BattleResult result) {
-        // BattleResult로부터 BattleEndResponse 생성
-        List<BattleEndResponse.ParticipantResult> participantResults = result.getParticipants().stream()
-                .map(participant -> {
-                    // 각 참가자의 답변 로딩
-                    participant.getAnswers().size();
-
-                    Map<Long, Boolean> questionResults = participant.getAnswers().stream()
-                            .collect(Collectors.toMap(
-                                    answer -> answer.getQuestion().getId(),
-                                    answer -> answer.isCorrect()
-                            ));
-
-                    return BattleEndResponse.ParticipantResult.builder()
-                            .userId(participant.getUser().getId())
-                            .username(participant.getUser().getUsername())
-                            .finalScore(participant.getCurrentScore())
-                            .correctAnswers(participant.getCorrectAnswersCount())
-                            .averageTimeSeconds(calculateAverageTime(participant))
-                            .experienceGained(calculateExperienceGained(participant, result))
-                            .isWinner(participant.equals(result.getWinner()))
-                            .questionResults(questionResults)
-                            .build();
-                })
-                .collect(Collectors.toList());
-
-        return BattleEndResponse.builder()
-                .roomId(result.getRoomId())
-                .results(participantResults)
-                .totalQuestions(result.getTotalQuestions())
-                .timeTakenSeconds(result.getTotalTimeSeconds())
-                .endTime(result.getEndTime())
-                .build();
-    }
-
-    @Transactional(readOnly = true)
-    public List<QuestionAttemptDto> mapToQuestionAttemptDtoList(List<QuestionAttempt> questionAttempts) {
-        return questionAttempts.stream()
-                .map(this::mapToQuestionAttemptDto)
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public QuestionAttemptDto mapToQuestionAttemptDto(QuestionAttempt attempt) {
-        // 필요한 연관 관계 초기화
-        attempt.getQuestion().getQuestionText();
-        attempt.getQuestion().getExplanation();
-
-        return QuestionAttemptDto.from(attempt);
-    }
-
-    @Transactional(readOnly = true)
-    public QuizResultResponse mapToQuizResultResponse(QuizAttempt quizAttempt, int experienceGained) {
-        // QuizResultResponse 생성에 필요한 초기화 작업
-        Quiz quiz = quizAttempt.getQuiz();
-        quiz.getQuestions().size();
-
-        // 문제별 결과 생성
-        List<QuizResultResponse.QuestionResultDto> questionResults = new ArrayList<>();
-        quizAttempt.getQuestionAttempts().forEach(qa -> {
-            // 각 질문과 답변 로딩
-            qa.getQuestion().getQuestionText();
-            qa.getQuestion().getCorrectAnswer();
-            qa.getQuestion().getExplanation();
-
-            questionResults.add(
-                    QuizResultResponse.QuestionResultDto.builder()
-                            .id(qa.getQuestion().getId())
-                            .questionText(qa.getQuestion().getQuestionText())
-                            .yourAnswer(qa.getUserAnswer())
-                            .correctAnswer(qa.getQuestion().getCorrectAnswer())
-                            .isCorrect(qa.isCorrect())
-                            .explanation(qa.getQuestion().getExplanation())
-                            .points(qa.getQuestion().getPoints())
-                            .build()
-            );
-        });
-
-        // 총 가능 점수 계산
-        int totalPossibleScore = quiz.getQuestions().stream()
-                .mapToInt(q -> q.getPoints())
-                .sum();
-
-        // 결과 응답 생성
-        return QuizResultResponse.builder()
-                .quizId(quiz.getId())
-                .title(quiz.getTitle())
-                .totalQuestions(quiz.getQuestions().size())
-                .correctAnswers((int) quizAttempt.getQuestionAttempts().stream()
-                        .filter(QuestionAttempt::isCorrect)
-                        .count())
-                .score(quizAttempt.getScore())
-                .totalPossibleScore(totalPossibleScore)
-                .timeTaken(quizAttempt.getTimeTaken())
-                .completedAt(quizAttempt.getEndTime())
-                .experienceGained(experienceGained)
-                .newTotalExperience(quizAttempt.getUser().getExperience())
-                .questions(questionResults)
-                .build();
-    }
-
-    // 헬퍼 메서드
-    private void initializeQuizAssociations(Quiz quiz) {
-        quiz.getQuestions().size(); // 질문 컬렉션 초기화
-        quiz.getTags().size(); // 태그 컬렉션 초기화
-        if (quiz.getCreator() != null) {
-            quiz.getCreator().getUsername(); // 생성자 정보 초기화
-        }
-    }
-
-    private String formatDateTime(ZonedDateTime dateTime) {
-        if (dateTime == null) return null;
-        return dateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-    }
-
-    private int calculateAverageTime(BattleParticipant participant) {
-        List<com.quizplatform.core.domain.battle.BattleAnswer> answers = participant.getAnswers();
-        if (answers.isEmpty()) {
-            return 0;
-        }
-        int totalTime = answers.stream()
-                .mapToInt(answer -> answer.getTimeTaken())
-                .sum();
-        return totalTime / answers.size();
-    }
-
-    private int calculateExperienceGained(BattleParticipant participant, BattleResult result) {
-        // 기본 경험치 (점수의 10%)
-        int baseExp = participant.getCurrentScore() / 10;
-
-        // 승리 보너스
-        if (participant.equals(result.getWinner())) {
-            baseExp *= 1.5;  // 승리 시 50% 추가 경험치
-        }
-
-        // 정답률 보너스
-        double correctRate = (double) participant.getCorrectAnswersCount() / result.getTotalQuestions();
-        if (correctRate >= 0.8) {
-            baseExp += 50;  // 80% 이상 정답 시 추가 보너스
-        }
-
-        return baseExp;
-    }
-
-    @Transactional(readOnly = true)
-    public QuizResponse mapToQuizResponse(Quiz quiz) {
-        // 필요한 연관 관계 초기화
-        initializeQuizAssociations(quiz);
-        return QuizResponse.from(quiz);
-    }
+/**
+ * 엔티티 객체를 DTO 객체로 변환하는 로직을 담당하는 서비스 인터페이스입니다.
+ * 지연 로딩된 연관 관계를 초기화하고 필요한 데이터 형식으로 변환합니다.
+ *
+ * @author 채기훈
+ * @since JDK 21 eclipse temurin 21.0.6
+ */
+public interface EntityMapperService {
 
     /**
-     * Quiz 엔티티로부터 QuizResponse를 생성하며, 퀴즈 시도 ID를 추가로 설정합니다.
+     * Quiz 엔티티를 상세 정보 DTO (QuizDetailResponse)로 변환합니다.
+     * 변환 전 필요한 연관 관계(질문, 태그, 생성자)를 초기화합니다.
+     *
+     * @param quiz 변환할 Quiz 엔티티
+     * @return 변환된 QuizDetailResponse DTO
      */
-    @Transactional(readOnly = true)
-    public QuizResponse mapToQuizResponseWithAttemptId(Quiz quiz, Long quizAttemptId) {
-        // 필요한 연관 관계 초기화
-        initializeQuizAssociations(quiz);
-        return QuizResponse.from(quiz).withQuizAttemptId(quizAttemptId);
-    }
+    QuizDetailResponse mapToQuizDetailResponse(Quiz quiz);
+
+    /**
+     * Quiz 엔티티를 요약 정보 DTO (QuizSummaryResponse)로 변환합니다.
+     * 요약 정보에 필요한 최소한의 연관 관계(태그, 생성자)만 초기화합니다.
+     *
+     * @param quiz 변환할 Quiz 엔티티
+     * @return 변환된 QuizSummaryResponse DTO
+     */
+    QuizSummaryResponse mapToQuizSummaryResponse(Quiz quiz);
+
+    /**
+     * Quiz 엔티티 리스트를 요약 정보 DTO (QuizSummaryResponse) 리스트로 변환합니다.
+     * 각 엔티티에 대해 mapToQuizSummaryResponse 메서드를 호출합니다.
+     *
+     * @param quizzes 변환할 Quiz 엔티티 리스트
+     * @return 변환된 QuizSummaryResponse DTO 리스트
+     */
+    List<QuizSummaryResponse> mapToQuizSummaryResponseList(List<Quiz> quizzes);
+
+    /**
+     * BattleRoom 엔티티를 BattleRoomResponse DTO로 변환합니다.
+     * 변환 전 필요한 연관 관계(참가자 정보, 퀴즈 정보)를 초기화합니다.
+     *
+     * @param battleRoom 변환할 BattleRoom 엔티티
+     * @return 변환된 BattleRoomResponse DTO
+     */
+    BattleRoomResponse mapToBattleRoomResponse(BattleRoom battleRoom);
+
+    /**
+     * BattleRoom 엔티티 리스트를 BattleRoomResponse DTO 리스트로 변환합니다.
+     * 각 엔티티에 대해 mapToBattleRoomResponse 메서드를 호출합니다.
+     *
+     * @param battleRooms 변환할 BattleRoom 엔티티 리스트
+     * @return 변환된 BattleRoomResponse DTO 리스트
+     */
+    List<BattleRoomResponse> mapToBattleRoomResponseList(List<BattleRoom> battleRooms);
+
+    /**
+     * User 엔티티를 사용자 프로필 정보 DTO (UserProfileDto)로 변환합니다.
+     * 날짜 정보는 ISO 8601 형식의 문자열로 포맷합니다.
+     *
+     * @param user 변환할 User 엔티티
+     * @return 변환된 UserProfileDto
+     */
+    UserProfileDto mapToUserProfileDto(User user);
+
+    /**
+     * BattleResult 객체(배틀 결과 정보)를 BattleEndResponse DTO (배틀 종료 응답)로 변환합니다.
+     * 각 참가자의 최종 점수, 정답 수, 평균 답변 시간, 획득 경험치 등을 계산하고 포함합니다.
+     *
+     * @param result 변환할 BattleResult 객체
+     * @return 변환된 BattleEndResponse DTO
+     */
+    BattleEndResponse mapToBattleEndResponse(BattleResult result);
+
+    /**
+     * QuestionAttempt 엔티티 리스트를 QuestionAttemptDto 리스트로 변환합니다.
+     * 각 엔티티에 대해 mapToQuestionAttemptDto 메서드를 호출합니다.
+     *
+     * @param questionAttempts 변환할 QuestionAttempt 엔티티 리스트
+     * @return 변환된 QuestionAttemptDto 리스트
+     */
+    List<QuestionAttemptDto> mapToQuestionAttemptDtoList(List<QuestionAttempt> questionAttempts);
+
+    /**
+     * QuestionAttempt 엔티티를 QuestionAttemptDto로 변환합니다.
+     * 변환 전 필요한 연관 관계(질문 정보)를 초기화합니다.
+     *
+     * @param attempt 변환할 QuestionAttempt 엔티티
+     * @return 변환된 QuestionAttemptDto
+     */
+    QuestionAttemptDto mapToQuestionAttemptDto(QuestionAttempt attempt);
+
+    /**
+     * QuizAttempt 엔티티와 획득 경험치를 QuizResultResponse DTO (퀴즈 결과 응답)로 변환합니다.
+     * 퀴즈 정보, 총 점수, 정답 수, 문제별 결과, 획득 경험치 등을 포함합니다.
+     *
+     * @param quizAttempt      변환할 QuizAttempt 엔티티
+     * @param experienceGained 해당 퀴즈 시도에서 획득한 경험치
+     * @return 변환된 QuizResultResponse DTO
+     */
+    QuizResultResponse mapToQuizResultResponse(QuizAttempt quizAttempt, int experienceGained);
+
+    /**
+     * Quiz 엔티티를 QuizResponse DTO로 변환합니다.
+     * 변환 전 필요한 연관 관계를 초기화합니다.
+     *
+     * @param quiz 변환할 Quiz 엔티티
+     * @return 변환된 QuizResponse DTO
+     */
+    QuizResponse mapToQuizResponse(Quiz quiz);
+
+    /**
+     * Quiz 엔티티로부터 QuizResponse를 생성하며, 퀴즈 시도 ID(quizAttemptId)를 추가로 설정합니다.
+     * 퀴즈를 시작하거나 이어할 때 사용될 수 있습니다.
+     *
+     * @param quiz          변환할 Quiz 엔티티
+     * @param quizAttemptId 설정할 퀴즈 시도 ID
+     * @return 퀴즈 시도 ID가 포함된 QuizResponse DTO
+     */
+    QuizResponse mapToQuizResponseWithAttemptId(Quiz quiz, Long quizAttemptId);
 }

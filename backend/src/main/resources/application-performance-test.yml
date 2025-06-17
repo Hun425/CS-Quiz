@@ -1,0 +1,43 @@
+# JPA 성능 테스트를 위한 설정
+spring:
+  datasource:
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 10
+      minimum-idle: 5
+      
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        # 성능 측정을 위한 통계 수집 활성화
+        generate_statistics: true
+        # 기존의 배치 사이즈 설정을 유지
+        default_batch_fetch_size: 100
+    
+    # 영속성 컨텍스트 관리 설정 - 최적화 테스트를 위해 false 유지
+    open-in-view: false
+  
+  # 테스트 환경에서는 캐싱 비활성화 (성능 비교를 위해)
+  cache:
+    type: none
+
+# 로깅 설정
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.hibernate.stat: DEBUG  # 통계 로깅
+    com.quizplatform: DEBUG
+    
+    # P6Spy 로깅 (SQL 실행 시간 측정)
+    p6spy: DEBUG
+
+# 테스트용 성능 측정 설정
+quizplatform:
+  performance-test:
+    # 테스트 데이터 크기 설정
+    test-data-size: 100
+    # 반복 테스트 횟수
+    repeat-count: 5

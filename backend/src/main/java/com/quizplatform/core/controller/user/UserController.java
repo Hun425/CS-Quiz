@@ -18,14 +18,34 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * 사용자 컨트롤러 클래스
+ * 
+ * <p>사용자 프로필, 통계, 업적, 활동 내역 등 사용자 관련 API를 제공합니다.
+ * 대부분의 API는 본인 및 다른 사용자의 정보를 조회할 수 있는 두 가지 엔드포인트를 제공합니다.</p>
+ * 
+ * @author 채기훈
+ * @since JDK 21 eclipse temurin 21.0.6
+ */
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 @Tag(name = "사용자 API", description = "사용자 프로필, 통계, 업적 등 관련 API")
 public class UserController {
 
+    /**
+     * 사용자 서비스
+     */
     private final UserService userService;
 
+    /**
+     * 사용자 프로필 조회 API
+     * 
+     * <p>특정 사용자의 프로필 정보(이름, 이메일, 프로필 이미지 등)를 조회합니다.</p>
+     * 
+     * @param userId 조회할 사용자 ID
+     * @return 사용자 프로필 정보
+     */
     @Operation(summary = "사용자 프로필 조회", description = "특정 사용자의 프로필 정보를 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "프로필 조회 성공",
@@ -40,6 +60,14 @@ public class UserController {
         return ResponseEntity.ok(CommonApiResponse.success(profile));
     }
 
+    /**
+     * 내 프로필 조회 API
+     * 
+     * <p>현재 로그인한 사용자의 프로필 정보를 조회합니다.</p>
+     * 
+     * @param principal 인증된 사용자 정보
+     * @return 현재 사용자 프로필 정보
+     */
     @Operation(summary = "내 프로필 조회", description = "현재 로그인한 사용자의 프로필 정보를 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "프로필 조회 성공",
@@ -55,6 +83,14 @@ public class UserController {
         return ResponseEntity.ok(CommonApiResponse.success(profile));
     }
 
+    /**
+     * 사용자 통계 조회 API
+     * 
+     * <p>특정 사용자의 퀴즈 참여 통계(완료한 퀴즈 수, 평균 점수, 정답률 등)를 조회합니다.</p>
+     * 
+     * @param userId 조회할 사용자 ID
+     * @return 사용자 퀴즈 통계 정보
+     */
     @Operation(summary = "사용자 통계 조회", description = "특정 사용자의 퀴즈 참여 통계를 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "통계 조회 성공",
@@ -69,6 +105,14 @@ public class UserController {
         return ResponseEntity.ok(CommonApiResponse.success(statistics));
     }
 
+    /**
+     * 내 통계 조회 API
+     * 
+     * <p>현재 로그인한 사용자의 퀴즈 참여 통계를 조회합니다.</p>
+     * 
+     * @param principal 인증된 사용자 정보
+     * @return 현재 사용자 퀴즈 통계 정보
+     */
     @Operation(summary = "내 통계 조회", description = "현재 로그인한 사용자의 퀴즈 참여 통계를 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "통계 조회 성공",
@@ -84,6 +128,15 @@ public class UserController {
         return ResponseEntity.ok(CommonApiResponse.success(statistics));
     }
 
+    /**
+     * 사용자 최근 활동 조회 API
+     * 
+     * <p>특정 사용자의 최근 활동 내역(퀴즈 참여, 배틀, 업적 획득 등)을 조회합니다.</p>
+     * 
+     * @param userId 조회할 사용자 ID
+     * @param limit 조회할 최대 활동 개수
+     * @return 사용자 최근 활동 목록
+     */
     @Operation(summary = "사용자 최근 활동 조회", description = "특정 사용자의 최근 활동 내역을 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "활동 조회 성공",
@@ -100,6 +153,15 @@ public class UserController {
         return ResponseEntity.ok(CommonApiResponse.success(activities));
     }
 
+    /**
+     * 내 최근 활동 조회 API
+     * 
+     * <p>현재 로그인한 사용자의 최근 활동 내역을 조회합니다.</p>
+     * 
+     * @param principal 인증된 사용자 정보
+     * @param limit 조회할 최대 활동 개수
+     * @return 현재 사용자 최근 활동 목록
+     */
     @Operation(summary = "내 최근 활동 조회", description = "현재 로그인한 사용자의 최근 활동 내역을 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "활동 조회 성공",
@@ -117,6 +179,14 @@ public class UserController {
         return ResponseEntity.ok(CommonApiResponse.success(activities));
     }
 
+    /**
+     * 사용자 업적 조회 API
+     * 
+     * <p>특정 사용자가 획득한 업적 목록을 조회합니다.</p>
+     * 
+     * @param userId 조회할 사용자 ID
+     * @return 사용자 업적 목록
+     */
     @Operation(summary = "사용자 업적 조회", description = "특정 사용자가 획득한 업적 목록을 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "업적 조회 성공",
@@ -131,6 +201,14 @@ public class UserController {
         return ResponseEntity.ok(CommonApiResponse.success(achievements));
     }
 
+    /**
+     * 내 업적 조회 API
+     * 
+     * <p>현재 로그인한 사용자가 획득한 업적 목록을 조회합니다.</p>
+     * 
+     * @param principal 인증된 사용자 정보
+     * @return 현재 사용자 업적 목록
+     */
     @Operation(summary = "내 업적 조회", description = "현재 로그인한 사용자가 획득한 업적 목록을 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "업적 조회 성공",
@@ -146,6 +224,14 @@ public class UserController {
         return ResponseEntity.ok(CommonApiResponse.success(achievements));
     }
 
+    /**
+     * 사용자 주제별 성과 조회 API
+     * 
+     * <p>특정 사용자의 태그(주제)별 퀴즈 성과(점수, 정답률 등)를 조회합니다.</p>
+     * 
+     * @param userId 조회할 사용자 ID
+     * @return 사용자 주제별 성과 목록
+     */
     @Operation(summary = "사용자 주제별 성과 조회", description = "특정 사용자의 태그(주제)별 퀴즈 성과를 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "주제별 성과 조회 성공",
@@ -160,6 +246,14 @@ public class UserController {
         return ResponseEntity.ok(CommonApiResponse.success(topicPerformance));
     }
 
+    /**
+     * 내 주제별 성과 조회 API
+     * 
+     * <p>현재 로그인한 사용자의 태그(주제)별 퀴즈 성과를 조회합니다.</p>
+     * 
+     * @param principal 인증된 사용자 정보
+     * @return 현재 사용자 주제별 성과 목록
+     */
     @Operation(summary = "내 주제별 성과 조회", description = "현재 로그인한 사용자의 태그(주제)별 퀴즈 성과를 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "주제별 성과 조회 성공",
@@ -175,6 +269,15 @@ public class UserController {
         return ResponseEntity.ok(CommonApiResponse.success(topicPerformance));
     }
 
+    /**
+     * 프로필 정보 업데이트 API
+     * 
+     * <p>현재 로그인한 사용자의 프로필 정보(이름, 프로필 이미지 등)를 업데이트합니다.</p>
+     * 
+     * @param principal 인증된 사용자 정보
+     * @param request 업데이트할 프로필 정보
+     * @return 업데이트된 사용자 프로필 정보
+     */
     @Operation(summary = "프로필 정보 업데이트", description = "현재 로그인한 사용자의 프로필 정보를 업데이트합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "프로필 업데이트 성공",

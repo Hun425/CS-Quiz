@@ -2,7 +2,9 @@ package com.quizplatform.core.controller.auth;
 
 import com.quizplatform.core.config.security.jwt.JwtTokenProvider;
 import com.quizplatform.core.dto.AuthResponse;
-import com.quizplatform.core.service.AuthService;
+
+
+import com.quizplatform.core.service.user.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

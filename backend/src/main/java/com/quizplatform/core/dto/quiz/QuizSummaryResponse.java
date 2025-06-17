@@ -13,7 +13,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Getter
-@Builder
+@Builder(toBuilder = true)
 public class QuizSummaryResponse {
     private Long id;
     private String title;

@@ -16,16 +16,36 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * 퀴즈 시도 컨트롤러 클래스
+ * 
+ * <p>퀴즈 풀이, 답변 제출, 결과 조회 등 퀴즈 시도 관련 API를 제공합니다.
+ * 모든 API는 사용자 인증이 필요합니다.</p>
+ * 
+ * @author 채기훈
+ * @since JDK 21 eclipse temurin 21.0.6
+ */
 @RestController
 @RequestMapping("/api/quizzes")
 @RequiredArgsConstructor
 @Tag(name = "Quiz Attempt Controller", description = "퀴즈 풀이 및 결과 관련 API를 제공합니다.")
 public class QuizAttemptController {
 
+    /**
+     * 퀴즈 시도 서비스
+     */
     private final QuizAttemptService quizAttemptService;
 
     /**
-     * 퀴즈 답변 제출 및 결과 조회
+     * 퀴즈 답변 제출 API
+     * 
+     * <p>사용자가 풀이한 퀴즈의 답변을 제출하고 결과를 반환합니다.
+     * 제출된 답변은 채점되어 결과에 반영됩니다.</p>
+     * 
+     * @param userPrincipal 인증된 사용자 정보
+     * @param quizId 퀴즈 ID
+     * @param request 퀴즈 답변 제출 요청 데이터
+     * @return 퀴즈 풀이 결과
      */
     @Operation(summary = "퀴즈 답변 제출", description = "퀴즈 답변을 제출하고 결과를 받습니다.")
     @ApiResponses(value = {
@@ -58,7 +78,15 @@ public class QuizAttemptController {
     }
 
     /**
-     * 퀴즈 결과 조회
+     * 퀴즈 결과 조회 API
+     * 
+     * <p>이전에 제출한 퀴즈 시도의 결과를 조회합니다.
+     * 자신이 제출한 답변, 정답, 해설, 점수 등의 정보를 확인할 수 있습니다.</p>
+     * 
+     * @param userPrincipal 인증된 사용자 정보
+     * @param quizId 퀴즈 ID
+     * @param attemptId 퀴즈 시도 ID
+     * @return 퀴즈 시도 결과
      */
     @Operation(summary = "퀴즈 결과 조회", description = "이전에 완료한 퀴즈의 결과를 조회합니다.")
     @ApiResponses(value = {

@@ -18,16 +18,35 @@ import jakarta.annotation.PostConstruct;
 
 /**
  * STOMP 채널 인터셉터 - 클라이언트 연결/해제 처리
+ * 
+ * <p>WebSocket 연결 시작/종료 이벤트를 감지하고 처리합니다.
+ * 특히 사용자 연결 해제 시, 해당 사용자가 참여 중이던 배틀룸에서 자동으로 나가도록 처리합니다.</p>
+ * 
+ * @author 채기훈
+ * @since JDK 21 eclipse temurin 21.0.6
  */
 @Slf4j
 @Component
 public class StompChannelInterceptor implements ChannelInterceptor {
 
-    // 지연 주입을 위해 ApplicationContext 사용
+    /**
+     * 애플리케이션 컨텍스트
+     */
     private final ApplicationContext applicationContext;
+    
+    /**
+     * 배틀 서비스 (지연 주입)
+     */
     private final BattleService battleService;
 
-    // 생성자 주입 방식을 사용하고, BattleService 파라미터에 @Lazy 추가
+    /**
+     * 생성자
+     * 
+     * <p>BattleService는 순환 참조 방지를 위해 지연 주입(Lazy)합니다.</p>
+     * 
+     * @param applicationContext 애플리케이션 컨텍스트
+     * @param battleService 배틀 서비스
+     */
     @Autowired
     public StompChannelInterceptor(ApplicationContext applicationContext, @Lazy BattleService battleService) {
         this.applicationContext = applicationContext;
@@ -35,13 +54,16 @@ public class StompChannelInterceptor implements ChannelInterceptor {
         log.info("StompChannelInterceptor: BattleService 지연 주입 설정 완료");
     }
 
-
-    // public void init() {
-    //     // 빈 생성 사이클이 완료된 후에 BattleService 가져옴
-    //     this.battleService = applicationContext.getBean(BattleService.class);
-    //     log.info("StompChannelInterceptor: BattleService 지연 주입 완료");
-    // }
-
+    /**
+     * 메시지 전송 완료 후 처리
+     * 
+     * <p>클라이언트 연결 해제 시 호출되며, 사용자가 배틀룸에서 나가는 처리를 수행합니다.</p>
+     * 
+     * @param message 메시지
+     * @param channel 메시지 채널
+     * @param sent 전송 성공 여부
+     * @param ex 발생한 예외 (있는 경우)
+     */
     @Override
     public void afterSendCompletion(Message<?> message, MessageChannel channel, boolean sent, Exception ex) {
         SimpMessageHeaderAccessor accessor = SimpMessageHeaderAccessor.wrap(message);

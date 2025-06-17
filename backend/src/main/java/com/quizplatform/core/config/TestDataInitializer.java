@@ -15,6 +15,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * 테스트 데이터 초기설정 클래스
+ *
+ * @author 채기훈
+ * @since JDK 21 eclipse temurin 21.0.6
+ */
 @Component
 @Slf4j
 @Profile({"dev", "local", "prod"})
@@ -63,13 +69,17 @@ public class TestDataInitializer {
 
             if (!dataExists) {
                 // 데이터가 없는 경우에만 스크립트 실행
-                executeSqlFile(            "classpath:/duymm_sql.sql");
+                executeSqlFile("classpath:/duymm_sql.sql");
 
                 // executeSqlFiles();
                 log.info("더미 데이터가 성공적으로 로드되었습니다.");
             } else {
                 log.info("데이터가 이미 존재합니다. 스크립트 실행을 건너뜁니다.");
             }
+            
+            // 테스트 계정 생성
+            executeSqlFile("classpath:/dummysql/test_account.sql");
+            log.info("테스트 계정이 성공적으로 생성되었습니다.");
 
             // Swagger 예제에 사용할 ID 값 저장
             fetchExampleIds();

@@ -22,6 +22,15 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 배틀 참가자 엔티티 클래스
+ * 
+ * <p>배틀에 참여한 사용자 정보와 점수, 답변, 상태 등을 관리합니다.
+ * 사용자 식별, 답변 제출, 점수 계산, 활동 상태 추적 등의 기능을 제공합니다.</p>
+ * 
+ * @author 채기훈
+ * @since JDK 21 eclipse temurin 21.0.6
+ */
 @Entity
 @Table(
         name = "battle_participants",
@@ -34,38 +43,68 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Slf4j
 public class BattleParticipant {
+    /**
+     * 참가자 ID
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * 참가 중인 배틀 방
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "battle_room_id")
     private BattleRoom battleRoom;
 
+    /**
+     * 참가자 사용자
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
+    /**
+     * 참가자가 제출한 답변 목록
+     */
     @Fetch(FetchMode.SUBSELECT)
     @OneToMany(mappedBy = "participant", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @BatchSize(size = 30)
     private List<BattleAnswer> answers = new ArrayList<>();
 
+    /**
+     * 현재 점수
+     */
     @Column(name = "current_score")
     private int currentScore = 0;
 
+    /**
+     * 준비 상태
+     */
     @Column(name = "is_ready")
     private boolean ready = false;
 
+    /**
+     * 활동 상태
+     */
     @Column(name = "is_active")
     private boolean active = true;
 
+    /**
+     * 현재 연속 정답 횟수
+     */
     @Column(name = "current_streak")
     private int currentStreak = 0;
 
+    /**
+     * 마지막 활동 시간
+     */
     @Column(name = "last_activity")
     private LocalDateTime lastActivity;
 
+    /**
+     * 생성 시간
+     */
     @CreatedDate
     private LocalDateTime createdAt;
 
@@ -77,6 +116,12 @@ public class BattleParticipant {
     private static final int STREAK_BONUS_POINTS_1 = 3;
     private static final int STREAK_BONUS_POINTS_2 = 5;
 
+    /**
+     * 배틀 참가자 생성자
+     * 
+     * @param battleRoom 참가할 배틀 방
+     * @param user 참가자 사용자
+     */
     @Builder
     public BattleParticipant(BattleRoom battleRoom, User user) {
         this.battleRoom = battleRoom;
@@ -86,8 +131,9 @@ public class BattleParticipant {
     }
 
     /**
-     * 현재 참가자가 특정 질문에 답변했는지 확인합니다.
-     * 이 메서드는 인덱스가 아닌 질문 ID를 기반으로 체크합니다.
+     * 현재 참가자가 특정 질문에 답변했는지 확인
+     * 
+     * <p>질문 ID를 기반으로 이미 답변했는지 여부를 체크합니다.</p>
      *
      * @param questionId 확인할 질문의 ID
      * @return 해당 질문에 답변했으면 true, 아니면 false
@@ -126,8 +172,9 @@ public class BattleParticipant {
     }
 
     /**
-     * 현재 참가자가 특정 인덱스의 문제에 답변했는지 안전하게 확인합니다.
-     * 이 메서드는 LazyInitializationException을 방지합니다.
+     * 현재 참가자가 특정 인덱스의 문제에 답변했는지 확인
+     * 
+     * <p>LazyInitializationException을 방지하기 위한 안전한 검사를 수행합니다.</p>
      *
      * @param questionIndex 확인할 문제의 인덱스
      * @return 해당 인덱스의 문제에 답변했으면 true, 아니면 false
@@ -176,12 +223,21 @@ public class BattleParticipant {
     }
 
     /**
-     * 현재 진행 중인 문제에 답변했는지 확인합니다.
+     * 현재 진행 중인 문제에 답변했는지 확인
+     * 
+     * @return 현재 문제에 답변했으면 true, 아니면 false
      */
     public boolean hasAnsweredCurrentQuestion() {
         return answers.size() > battleRoom.getCurrentQuestionIndex();
     }
 
+    /**
+     * 참가자 유효성 검증
+     * 
+     * @param battleRoom 배틀 방
+     * @param user 참가자
+     * @throws BusinessException 유효하지 않은 참가자일 경우
+     */
     private void validateParticipant(BattleRoom battleRoom, User user) {
         if (battleRoom == null) {
             throw new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND);
@@ -191,6 +247,14 @@ public class BattleParticipant {
         }
     }
 
+    /**
+     * 문제 답변 제출
+     * 
+     * @param question 답변할 문제
+     * @param answer 제출할 답변
+     * @param timeSpentSeconds 소요 시간(초)
+     * @return 생성된 답변 객체
+     */
     public BattleAnswer submitAnswer(Question question, String answer, int timeSpentSeconds) {
         validateAnswerSubmission(question, timeSpentSeconds);
 
@@ -201,6 +265,13 @@ public class BattleParticipant {
         return battleAnswer;
     }
 
+    /**
+     * 답변 제출 유효성 검증
+     * 
+     * @param question 답변할 문제
+     * @param timeSpentSeconds 소요 시간(초)
+     * @throws BusinessException 유효하지 않은 제출일 경우
+     */
     private void validateAnswerSubmission(Question question, int timeSpentSeconds) {
         if (hasAnsweredCurrentQuestion()) {
             throw new BusinessException(ErrorCode.ANSWER_ALREADY_SUBMITTED);
@@ -213,6 +284,14 @@ public class BattleParticipant {
         }
     }
 
+    /**
+     * 배틀 답변 객체 생성
+     * 
+     * @param question 답변할 문제
+     * @param answer 제출할 답변
+     * @param timeSpentSeconds 소요 시간(초)
+     * @return 생성된 답변 객체
+     */
     private BattleAnswer createBattleAnswer(Question question, String answer, int timeSpentSeconds) {
         return BattleAnswer.builder()
                 .participant(this)
@@ -222,20 +301,52 @@ public class BattleParticipant {
                 .build();
     }
 
+    /**
+     * 답변 결과 처리
+     * 
+     * @param battleAnswer 처리할 답변 객체
+     */
     private void processAnswerResult(BattleAnswer battleAnswer) {
         Question question = battleAnswer.getQuestion();
+        
+        log.info("답변 처리 시작: userId={}, 문제ID={}, 제출답변=[{}]",
+                this.user.getId(), question.getId(), battleAnswer.getAnswer());
+        
         boolean isCorrect = question.isCorrectAnswer(battleAnswer.getAnswer());
         battleAnswer.setCorrect(isCorrect);
+        
+        log.info("답변 정답 여부 결정: userId={}, 문제ID={}, 제출답변=[{}], 정답=[{}], 결과={}",
+                this.user.getId(), question.getId(), battleAnswer.getAnswer(), 
+                question.getCorrectAnswer(), isCorrect);
 
         if (isCorrect) {
+            int oldScore = this.currentScore;
             processCorrectAnswer(battleAnswer, question);
+            
+            log.info("정답 처리 완료: userId={}, 문제ID={}, 배점={}, 획득점수={}, 기존점수={}, 새총점={}",
+                    this.user.getId(), question.getId(), question.getPoints(), 
+                    battleAnswer.getEarnedPoints() + battleAnswer.getTimeBonus(), 
+                    oldScore, this.currentScore);
         } else {
             processIncorrectAnswer(battleAnswer);
+            
+            log.info("오답 처리 완료: userId={}, 문제ID={}, 획득점수=0, 현재총점={}",
+                    this.user.getId(), question.getId(), this.currentScore);
         }
 
         answers.add(battleAnswer);
+        
+        log.info("답변 처리 최종결과: userId={}, 문제ID={}, 정답여부={}, 현재점수={}, 정답수={}/{}, 연속정답={}",
+                this.user.getId(), question.getId(), isCorrect, this.currentScore,
+                getCorrectAnswersCount(), answers.size(), this.currentStreak);
     }
 
+    /**
+     * 정답 처리
+     * 
+     * @param battleAnswer 정답 객체
+     * @param question 답변한 문제
+     */
     private void processCorrectAnswer(BattleAnswer battleAnswer, Question question) {
         int earnedPoints = calculateTotalPoints(question, battleAnswer.getTimeTaken());
         battleAnswer.setEarnedPoints(earnedPoints);
@@ -243,11 +354,23 @@ public class BattleParticipant {
         currentStreak++;
     }
 
+    /**
+     * 오답 처리
+     * 
+     * @param battleAnswer 오답 객체
+     */
     private void processIncorrectAnswer(BattleAnswer battleAnswer) {
         battleAnswer.setEarnedPoints(0);
         currentStreak = 0;
     }
 
+    /**
+     * 총 획득 점수 계산
+     * 
+     * @param question 답변한 문제
+     * @param timeSpentSeconds 소요 시간(초)
+     * @return 계산된 총 점수
+     */
     private int calculateTotalPoints(Question question, int timeSpentSeconds) {
         int basePoints = question.getPoints();
         int timeBonus = calculateTimeBonus(timeSpentSeconds, question.getTimeLimitSeconds());
@@ -256,6 +379,13 @@ public class BattleParticipant {
         return basePoints + timeBonus + streakBonus;
     }
 
+    /**
+     * 시간 보너스 계산
+     * 
+     * @param timeSpentSeconds 소요 시간(초)
+     * @param timeLimitSeconds 제한 시간(초)
+     * @return 시간 보너스 점수
+     */
     private int calculateTimeBonus(int timeSpentSeconds, int timeLimitSeconds) {
         double timeRatio = 1 - (timeSpentSeconds / (double) timeLimitSeconds);
         if (timeRatio >= 0.7) return 3;
@@ -264,25 +394,44 @@ public class BattleParticipant {
         return 0;
     }
 
+    /**
+     * 연속 정답 보너스 계산
+     * 
+     * @return 연속 정답 보너스 점수
+     */
     private int calculateStreakBonus() {
         if (currentStreak >= STREAK_BONUS_THRESHOLD_2) return STREAK_BONUS_POINTS_2;
         if (currentStreak >= STREAK_BONUS_THRESHOLD_1) return STREAK_BONUS_POINTS_1;
         return 0;
     }
 
-
+    /**
+     * 정답 개수 조회
+     * 
+     * @return 정답 개수
+     */
     public int getCorrectAnswersCount() {
         return (int) answers.stream()
                 .filter(BattleAnswer::isCorrect)
                 .count();
     }
 
+    /**
+     * 준비 상태 토글
+     * 
+     * @throws BusinessException 준비 상태 변경이 불가능한 경우
+     */
     public void toggleReady() {
         validateReadyToggle();
         this.ready = !this.ready;
         updateActivityStatus();
     }
 
+    /**
+     * 준비 상태 토글 유효성 검증
+     * 
+     * @throws BusinessException 준비 상태 변경이 불가능한 경우
+     */
     private void validateReadyToggle() {
         if (!battleRoom.getStatus().name().equals(BattleRoomStatus.WAITING.name())) {
             throw new BusinessException(ErrorCode.BATTLE_ALREADY_STARTED);
@@ -292,24 +441,47 @@ public class BattleParticipant {
         }
     }
 
+    /**
+     * 활동 상태 확인
+     * 
+     * @return 활동 중이면 true, 아니면 false
+     */
     public boolean isActive() {
         return active && !hasExceededInactiveTime();
     }
 
+    /**
+     * 최대 비활성 시간을 초과했는지 확인
+     * 
+     * @return 초과했으면 true, 아니면 false
+     */
     private boolean hasExceededInactiveTime() {
         return Duration.between(lastActivity, LocalDateTime.now())
                 .toMinutes() >= MAX_INACTIVE_MINUTES;
     }
 
+    /**
+     * 활동 상태 업데이트
+     */
     private void updateActivityStatus() {
         this.lastActivity = LocalDateTime.now();
     }
 
+    /**
+     * 정답률 계산
+     * 
+     * @return 정답률 (0-100%)
+     */
     public double getAccuracy() {
         if (answers.isEmpty()) return 0.0;
         return (getCorrectAnswersCount() / (double) answers.size()) * 100;
     }
 
+    /**
+     * 평균 답변 시간 계산
+     * 
+     * @return 평균 답변 시간
+     */
     public Duration getAverageAnswerTime() {
         if (answers.isEmpty()) return Duration.ZERO;
 
@@ -319,23 +491,39 @@ public class BattleParticipant {
         return Duration.ofSeconds(totalSeconds / answers.size());
     }
 
+    /**
+     * 보너스 점수 추가
+     * 
+     * @param bonusPoints 추가할 보너스 점수
+     */
     public void addBonusPoints(int bonusPoints) {
         // 보너스 점수를 현재 점수에 더함
         this.currentScore += bonusPoints;
     }
 
+    /**
+     * 활동 상태 설정
+     * 
+     * @param active 활동 상태
+     */
     public void setActive(boolean active) {
         this.active = active;
     }
 
+    /**
+     * 모든 문제를 정답으로 맞췄는지 확인
+     * 
+     * @return 모두 정답이면 true, 아니면 false
+     */
     public boolean hasAllCorrectAnswers() {
         // 참가자의 답변이 존재하고 모두 정답이면 true 반환
         return !answers.isEmpty() && answers.stream().allMatch(BattleAnswer::isCorrect);
     }
 
-
     /**
-     * 안전하게 answers 컬렉션의 크기를 반환합니다.
+     * 안전하게 answers 컬렉션의 크기를 반환
+     * 
+     * @return answers 컬렉션의 크기
      */
     private int getAnswersCount() {
         try {
@@ -344,5 +532,29 @@ public class BattleParticipant {
             log.warn("answers 컬렉션 접근 오류: {}", e.getMessage());
             return 0;
         }
+    }
+
+    public void setCurrentStreak(int i) {
+        this.currentStreak = i;
+    }
+    
+    /**
+     * 점수 초기화 - 새 배틀 시작 시 호출
+     */
+    public void resetScore() {
+        int oldScore = this.currentScore;
+        this.currentScore = 0; // 명시적으로 0으로 설정
+        log.info("참가자 점수 초기화: userId={}, 이전점수={}, 현재점수={}",
+                user.getId(), oldScore, this.currentScore);
+    }
+    
+    /**
+     * 연속 정답 초기화 - 새 배틀 시작 시 호출
+     */
+    public void resetStreak() {
+        int oldStreak = this.currentStreak;
+        this.currentStreak = 0; // 명시적으로 0으로 설정
+        log.info("참가자 연속 정답 초기화: userId={}, 이전연속정답={}, 현재연속정답={}",
+                user.getId(), oldStreak, this.currentStreak);
     }
 }

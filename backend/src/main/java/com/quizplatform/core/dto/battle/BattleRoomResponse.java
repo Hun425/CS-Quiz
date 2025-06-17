@@ -28,6 +28,7 @@ public class BattleRoomResponse {
     private LocalDateTime endTime;
     private Integer timeLimit;
     private int questionCount;
+    private Long creatorId;
 
     /**
      * BattleRoom 엔티티를 BattleRoomResponse DTO로 변환
@@ -51,6 +52,7 @@ public class BattleRoomResponse {
                 .endTime(battleRoom.getEndTime())
                 .timeLimit(battleRoom.getQuiz().getTimeLimit())
                 .questionCount(battleRoom.getQuiz().getQuestions().size())
+                .creatorId(battleRoom.getCreatorId())
                 .build();
     }
 

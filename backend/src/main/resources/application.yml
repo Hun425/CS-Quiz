@@ -1,9 +1,9 @@
 spring:
-  # ?? ???? ??
+  # 프로필 활성화 설정
   profiles:
     active: local
 
-  # ????? ??
+  # 데이터소스 설정
   datasource:
     url: jdbc:postgresql://localhost:5432/quiz_db
     username: quizuser
@@ -16,10 +16,10 @@ spring:
       connection-timeout: 20000
       max-lifetime: 1200000
 
-  # JPA ??
+  # JPA 설정
   jpa:
     hibernate:
-      ddl-auto: update  # ??? ??? ??
+      ddl-auto: update  # 개발 환경에서 사용
     show-sql: true
     properties:
       hibernate:
@@ -27,16 +27,21 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         jdbc:
           time_zone: Asia/Seoul
-        # ?? ?? ??
+        # 성능 최적화 설정
         jdbc.batch_size: 50
         order_inserts: true
         order_updates: true
-        default_batch_fetch_size: 1000
-    open-in-view: false  # OSIV ????
+        default_batch_fetch_size: 100  # 최적의 성능을 위해 100으로 조정
+        # 추가 성능 최적화 설정
+        query.in_clause_parameter_padding: true  # IN 절 파라미터 패딩 최적화
+        query.plan_cache_max_size: 2048  # 쿼리 계획 캐시 크기 최적화
+        query.plan_parameter_metadata_max_size: 128  # 최적화된 파라미터 메타데이터 크기 
+        connection.provider_disables_autocommit: true  # 불필요한 autocommit 비활성화
+        # 통계 활성화 (개발 환경에서만 사용 권장)
+        generate_statistics: ${HIBERNATE_STATISTICS:false}  # 성능 측정 시에만 true로 설정
+    open-in-view: false  # OSIV 비활성화 (영속성 컨텍스트의 트랜잭션 범위 제한)
 
-
-
-  # Redis ??
+  # Redis 설정
   data:
     redis:
       host: localhost
@@ -49,7 +54,7 @@ spring:
           min-idle: 2
           max-wait: -1ms
 
-  # Elasticsearch ??
+  # Elasticsearch 설정
   elasticsearch:
     uris: http://localhost:9200
     connection-timeout: 5s
@@ -93,13 +98,27 @@ spring:
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
+            
+  # 캐시 설정
+  cache:
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=600s,recordStats
+    type: caffeine
+    
+  # MVC 설정
+  mvc:
+    content-negotiation:
+      favor-parameter: false
+      media-types:
+        json: application/json
+      default-content-type: application/json
 
 app:
   oauth2:
     authorized-redirect-uri: ${OAUTH2_AUTHORIZED_REDIRECT_URI:http://localhost:3000/api/oauth2/redirect}
 
 
-# ?? ??
+# 서버 설정
 server:
   port: 8080
   servlet:
@@ -109,7 +128,7 @@ server:
     accept-count: 100
     connection-timeout: 5s
 
-# ?? ??
+# 로깅 설정
 logging:
   level:
     root: INFO
@@ -119,20 +138,20 @@ logging:
     org.springframework.cache: TRACE
     org.springframework.data.elasticsearch.client.WIRE: TRACE
 
-# JWT ??
+# JWT 설정
 jwt:
-  secret: ${JWT_SECRET:AbCdEfGhIjKlMnOpQrStUvWxYz1234567890AbCdEfGhIjKlMnOpQrStUvWxYz}  # ?? ?? ????? ????? ??
-  access-token-validity: 3600000  # 1??
-  refresh-token-validity: 1209600000  # 2?
+  secret: ${JWT_SECRET:AbCdEfGhIjKlMnOpQrStUvWxYz1234567890AbCdEfGhIjKlMnOpQrStUvWxYz}  # 개발 환경에서만 사용하세요
+  access-token-validity: 3600000  # 1시간
+  refresh-token-validity: 1209600000  # 2주
 
-# ?? ??
+# 애플리케이션 캐시 설정
 cache:
   quiz:
-    ttl: 3600  # 1??
+    ttl: 3600  # 1시간
   user:
-    ttl: 1800  # 30?
+    ttl: 1800  # 30분
 
-# ?????? ???? ??
+# 모니터링 엔드포인트 설정
 management:
   endpoints:
     web:
@@ -142,8 +161,7 @@ management:
     health:
       show-details: always
 
-
-# application.yml에 추가할 설정
+# API 문서 설정
 springdoc:
   swagger-ui:
     path: /swagger-ui.html  # Swagger UI 경로 설정
@@ -157,7 +175,3 @@ springdoc:
   default-produces-media-type: application/json
   paths-to-match:
     - /api/**
-
-
-
-

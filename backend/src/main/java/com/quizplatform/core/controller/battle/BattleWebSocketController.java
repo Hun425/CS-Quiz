@@ -1,40 +1,79 @@
 package com.quizplatform.core.controller.battle;
 
+import com.quizplatform.core.config.security.UserPrincipal;
 import com.quizplatform.core.domain.battle.BattleRoomStatus;
 import com.quizplatform.core.dto.battle.*;
+import com.quizplatform.core.dto.common.CommonApiResponse;
+import com.quizplatform.core.exception.BusinessException;
+import com.quizplatform.core.exception.ErrorCode;
 import com.quizplatform.core.service.battle.BattleService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * 배틀 웹소켓 컨트롤러 클래스
+ * 
+ * <p>실시간 퀴즈 대결을 위한 WebSocket 메시지 처리를 담당합니다.
+ * 배틀 참가, 답변 제출, 준비 상태 변경, 배틀 진행/종료 등의 실시간 통신을 처리합니다.</p>
+ * 
+ * @author 채기훈
+ * @since JDK 21 eclipse temurin 21.0.6
+ */
 @Controller
 @RequiredArgsConstructor
 @Slf4j
 public class BattleWebSocketController {
+    /**
+     * 배틀 서비스
+     */
     private final BattleService battleService;
+    
+    /**
+     * 웹소켓 메시징 템플릿
+     */
     private final SimpMessagingTemplate messagingTemplate;
 
+    /**
+     * 게임 세션 맵 (방 ID → 세션 ID)
+     */
     private final Map<Long, String> gameSessionMap = new ConcurrentHashMap<>();
 
-    // 답변 제출 중복 방지를 위한 Map (방ID와 문제 인덱스 추적)
+    /**
+     * 답변 제출 중복 방지를 위한 맵 (방 ID → 문제 인덱스)
+     */
     private final Map<Long, Integer> roomQuestionIndexMap = new ConcurrentHashMap<>();
 
-    // 중복 문제 진행 방지를 위한 Map (방ID와 마지막 처리 타임스탬프)
+    /**
+     * 중복 문제 진행 방지를 위한 맵 (방 ID → 마지막 처리 타임스탬프)
+     */
     private final Map<Long, Long> lastQuestionProcessingMap = new ConcurrentHashMap<>();
 
-
-
     /**
-     * 대결방 입장 처리
-     * 클라이언트: /app/battle/join으로 메시지 전송
+     * 배틀방 입장 처리
+     * 
+     * <p>WebSocket을 통해 배틀방 입장 요청을 처리합니다.
+     * 세션 정보를 등록하고 다른 참가자들에게 입장 알림을 전송합니다.</p>
+     * 
+     * @param request 배틀방 입장 요청 정보
+     * @param sessionId 웹소켓 세션 ID
+     * @param headerAccessor 헤더 접근자
      */
     @MessageMapping("/battle/join")
     public void joinBattle(
@@ -121,6 +160,11 @@ public class BattleWebSocketController {
 
     /**
      * 다음 문제로 진행
+     * 
+     * <p>배틀의 다음 문제로 진행하는 로직을 처리합니다.
+     * 모든 참가자가 현재 문제에 답변한 후 호출됩니다.</p>
+     * 
+     * @param roomId 배틀방 ID
      */
     private void moveToNextQuestion(Long roomId) {
         log.info("다음 문제 준비: roomId={}", roomId);
@@ -163,7 +207,12 @@ public class BattleWebSocketController {
 
     /**
      * 답변 제출 처리
-     * 클라이언트: /app/battle/answer로 메시지 전송
+     * 
+     * <p>참가자의 답변을 처리하고 결과를 전송합니다.
+     * 모든 참가자가 답변을 제출하면 다음 문제로 자동 진행됩니다.</p>
+     * 
+     * @param request 답변 제출 요청 정보
+     * @param sessionId 웹소켓 세션 ID
      */
     @MessageMapping("/battle/answer")
     public void submitAnswer(BattleAnswerRequest request, @Header("simpSessionId") String sessionId) {
@@ -226,10 +275,13 @@ public class BattleWebSocketController {
         }
     }
 
-
-
     /**
-     * 대결 시작
+     * 배틀 시작 처리
+     * 
+     * <p>배틀을 시작하고 첫 번째 문제를 참가자들에게 전송합니다.
+     * 모든 참가자가 준비 상태일 때 호출됩니다.</p>
+     * 
+     * @param roomId 배틀방 ID
      */
     private synchronized void startBattle(Long roomId) {
         log.info("배틀 시작: roomId={}", roomId);
@@ -277,7 +329,12 @@ public class BattleWebSocketController {
     }
 
     /**
-     * 대결 종료
+     * 배틀 종료 처리
+     * 
+     * <p>배틀을 종료하고 최종 결과를 계산하여 참가자들에게 전송합니다.
+     * 모든 문제가 끝났거나 강제 종료 시 호출됩니다.</p>
+     * 
+     * @param roomId 배틀방 ID
      */
     private void endBattle(Long roomId) {
         log.info("배틀 종료 처리 시작: roomId={}", roomId);
@@ -332,6 +389,15 @@ public class BattleWebSocketController {
         }
     }
 
+    /**
+     * 배틀방 나가기 처리
+     * 
+     * <p>참가자의 배틀방 퇴장 요청을 처리합니다.
+     * 배틀 중인 경우 패배 처리되며, 모든 참가자에게 퇴장 알림이 전송됩니다.</p>
+     * 
+     * @param request 배틀방 퇴장 요청 정보
+     * @param sessionId 웹소켓 세션 ID
+     */
     @MessageMapping("/battle/leave")
     public void leaveBattle(
             BattleLeaveRequest request,
@@ -376,41 +442,55 @@ public class BattleWebSocketController {
 
     /**
      * 준비 상태 토글 처리
-     * 클라이언트: /app/battle/ready로 메시지 전송
+     * 
+     * <p>참가자의 준비 상태 변경 요청을 처리합니다.
+     * 모든 참가자가 준비 완료되면 배틀 시작 카운트다운이 시작됩니다.</p>
+     * 
+     * @param request 준비 상태 변경 요청 정보
+     * @param sessionId 웹소켓 세션 ID
      */
     @MessageMapping("/battle/ready")
     public synchronized void toggleReady(
             BattleReadyRequest request,
             @Header("simpSessionId") String sessionId
     ) {
-        log.info("준비 상태 토글 요청: roomId={}, userId={}, sessionId={}",
-                request.getRoomId(), request.getUserId(), sessionId);
+        log.info("준비 상태 토글 요청: roomId={}, sessionId={}", 
+                request.getRoomId(), sessionId);
 
         try {
+            // 배틀방 유효성 검사
+            if (!battleService.isValidBattleRoom(request.getRoomId())) {
+                log.error("유효하지 않은 배틀방: roomId={}", request.getRoomId());
+                messagingTemplate.convertAndSendToUser(
+                        sessionId,
+                        "/queue/errors",
+                        "유효하지 않은 배틀방입니다."
+                );
+                return;
+            }
+
             // 준비 상태 토글 처리
             BattleReadyResponse response = battleService.toggleReadyState(request, sessionId);
 
-            // 대결방의 모든 참가자에게 준비 상태 변경 알림
+            // 모든 참가자에게 준비 상태 변경 알림
             messagingTemplate.convertAndSend(
-                    "/topic/battle/" + request.getRoomId() + "/participants",
+                    "/topic/battle/" + request.getRoomId() + "/ready",
                     response
             );
+            log.info("준비 상태 토글 전송 완료: roomId={}, 준비완료 인원={}/{}",
+                    request.getRoomId(), response.getReadyCount(), response.getTotalParticipants());
 
-            log.info("준비 상태 토글 처리 완료: roomId={}, userId={}, 참가자수={}",
-                    request.getRoomId(), request.getUserId(), response.getParticipants().size());
-
-            // 대결 시작 조건 확인 (경쟁 상태 방지를 위해 synchronized 블록 내에서 처리)
+            // 모든 참가자가 준비 완료되었으면 게임 시작 (로그 추가)
             if (battleService.isReadyToStart(request.getRoomId())) {
-                // 자동 시작을 바로 하지 않고 5초 지연 후 시작하도록 수정
-                log.info("모든 참가자 준비 완료. 5초 후 배틀 시작: roomId={}", request.getRoomId());
+                log.info("모든 참가자 준비 완료. 자동 시작 조건 충족: roomId={}", request.getRoomId());
                 
-                // 대기 상태 메시지 전송
+                // 준비 상태 메시지 전송
                 messagingTemplate.convertAndSend(
                         "/topic/battle/" + request.getRoomId() + "/status",
                         new BattleRoomStatusChangeResponse(request.getRoomId(), BattleRoomStatus.READY)
                 );
                 
-                // 5초 후 시작
+                // 5초 후 시작 (지연 시작)
                 new Thread(() -> {
                     try {
                         Thread.sleep(5000);
@@ -421,15 +501,133 @@ public class BattleWebSocketController {
                 }).start();
             }
         } catch (Exception e) {
-            log.error("준비 상태 토글 처리 중 오류 발생: roomId={}, userId={}",
-                    request.getRoomId(), request.getUserId(), e);
-            
-            // 오류 메시지를 클라이언트에게 전송
+            log.error("준비 상태 토글 처리 중 오류 발생: roomId={}", request.getRoomId(), e);
             messagingTemplate.convertAndSendToUser(
                     sessionId,
                     "/queue/errors",
                     "준비 상태 변경 중 오류가 발생했습니다: " + e.getMessage()
             );
         }
+    }
+
+    /**
+     * 배틀 문제 강제 진행 처리
+     * 
+     * <p>방장이나 관리자가 현재 문제를 건너뛰고 다음 문제로 강제 진행하는 기능을 처리합니다.
+     * 모든 참가자가 답변을 제출하지 않았더라도 다음 문제로 넘어갈 수 있습니다.</p>
+     * 
+     * @param request 강제 진행 요청 정보
+     * @param sessionId 웹소켓 세션 ID
+     */
+    @MessageMapping("/battle/force-next")
+    public void forceNextQuestion(BattleForceNextRequest request, @Header("simpSessionId") String sessionId) {
+        log.info("문제 강제 진행 요청: roomId={}, requesterId={}, sessionId={}", 
+                request.getRoomId(), request.getRequesterId(), sessionId);
+        
+        try {
+            // 배틀방 유효성 검사
+            if (!battleService.isValidBattleRoom(request.getRoomId())) {
+                log.error("유효하지 않은 배틀방: roomId={}", request.getRoomId());
+                messagingTemplate.convertAndSendToUser(
+                        sessionId,
+                        "/queue/errors",
+                        "유효하지 않은 배틀방입니다."
+                );
+                return;
+            }
+            
+            // 요청자 권한 검증 (방장이거나 관리자인지 확인)
+            if (!battleService.isRoomCreator(request.getRoomId(), request.getRequesterId())) {
+                log.error("강제 진행 권한 없음: roomId={}, requesterId={}", request.getRoomId(), request.getRequesterId());
+                messagingTemplate.convertAndSendToUser(
+                        sessionId,
+                        "/queue/errors",
+                        "강제 진행할 권한이 없습니다. 방장만 가능합니다."
+                );
+                
+                // 실패 응답 전송
+                messagingTemplate.convertAndSendToUser(
+                        sessionId,
+                        "/queue/battle/force-next",
+                        BattleForceNextResponse.builder()
+                                .roomId(request.getRoomId())
+                                .success(false)
+                                .build()
+                );
+                return;
+            }
+            
+            // 모든 참가자에게 강제 진행 메시지 전송
+            messagingTemplate.convertAndSend(
+                    "/topic/battle/" + request.getRoomId() + "/notification",
+                    "방장에 의해 다음 문제로 강제 진행합니다."
+            );
+            
+            // 다음 문제로 강제 진행
+            moveToNextQuestion(request.getRoomId());
+            
+            // 성공 응답 전송 (개인)
+            messagingTemplate.convertAndSendToUser(
+                    sessionId,
+                    "/queue/battle/force-next", 
+                    BattleForceNextResponse.builder()
+                            .roomId(request.getRoomId())
+                            .success(true)
+                            .build()
+            );
+            
+            log.info("문제 강제 진행 처리 완료: roomId={}", request.getRoomId());
+        } catch (Exception e) {
+            log.error("문제 강제 진행 처리 중 오류 발생: roomId={}", request.getRoomId(), e);
+            messagingTemplate.convertAndSendToUser(
+                    sessionId,
+                    "/queue/errors",
+                    "문제 강제 진행 중 오류가 발생했습니다: " + e.getMessage()
+            );
+            
+            // 실패 응답 전송
+            messagingTemplate.convertAndSendToUser(
+                    sessionId,
+                    "/queue/battle/force-next",
+                    BattleForceNextResponse.builder()
+                            .roomId(request.getRoomId())
+                            .success(false)
+                            .build()
+            );
+        }
+    }
+
+    /**
+     * 내 활성 배틀방 조회 API
+     *
+     * <p>현재 사용자가 참가 중인 활성 배틀방을 조회합니다.
+     * 한 사용자는 한 번에 하나의 배틀방에만 참가할 수 있습니다.</p>
+     *
+     * @param userPrincipal 인증된 사용자 정보
+     * @return 사용자의 활성 배틀방 정보 또는 빈 객체
+     * @throws BusinessException 인증되지 않은 사용자일 경우
+     */
+    @Operation(summary = "내 활성 대결방 조회", description = "현재 사용자가 참가 중인 활성 대결방을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "활성 대결방 정보가 성공적으로 조회되었습니다.")
+    })
+    @GetMapping("/my-active")
+    public ResponseEntity<CommonApiResponse<Object>> getMyActiveBattleRoom(
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal) {
+
+        // 사용자 인증 확인
+        if (userPrincipal == null) {
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "인증이 필요합니다.");
+        }
+
+        BattleRoomResponse battleRoom = battleService.getActiveBattleRoomByUser(userPrincipal.getUser());
+
+        // 활성 대결방이 없으면 빈 객체 반환 (이전: 빈 배열 반환)
+        if (battleRoom == null) {
+            // 빈 객체로 변경
+            return ResponseEntity.ok(CommonApiResponse.success(new HashMap<>()));
+        }
+
+        return ResponseEntity.ok(CommonApiResponse.success(battleRoom));
     }
 }
