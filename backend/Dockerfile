@@ -1,11 +1,18 @@
 FROM gradle:8.5-jdk17 AS build
 WORKDIR /app
 
-# 소스 코드 복사
-COPY . .
+# Gradle 의존성 파일들을 먼저 복사 (캐시 최적화)
+COPY build.gradle settings.gradle ./
+COPY gradle gradle
 
-# Gradle 빌드
-RUN gradle build -x test
+# 의존성 다운로드 (소스 코드 변경 시에도 캐시됨)
+RUN gradle dependencies --no-daemon
+
+# 소스 코드 복사
+COPY src src
+
+# Gradle 빌드 (의존성은 이미 캐시되어 있음)
+RUN gradle build -x test --no-daemon
 
 # 실행 환경
 FROM eclipse-temurin:17-jre
