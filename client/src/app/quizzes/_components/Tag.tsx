@@ -118,7 +118,7 @@ const Tag: React.FC<{
       <button
         onClick={onClick}
         className={classNames(
-          "px-2 py-0.5 text-xs font-medium rounded-md shadow-sm transition-all duration-200",
+          "text-xs font-medium rounded-md shadow-sm transition-all duration-200",
           sizeClasses[size],
           className,
           {
@@ -147,7 +147,7 @@ const Tag: React.FC<{
           {tag?.quizCount !== undefined && (
             <span
               className={classNames(
-                "ml-1 px-1.5 py-0.5 text-xs rounded-full bg-white/10" // 배경 투명도 낮춰 차분하게
+                "ml-0.5 px-1 py-0.5 text-xs rounded-full bg-white/10" // 배경 투명도 낮춰 차분하게
               )}
             >
               {tag.quizCount}

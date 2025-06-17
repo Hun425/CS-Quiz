@@ -16,7 +16,6 @@ import {
   Legend,
 } from "chart.js";
 import Loading from "@/app/_components/Loading";
-// import { useGetQuizStatistics } from "@/lib/api/quiz/useGetQuizStatistics";
 import DifficultyChart from "../_components/DifficultyChart";
 
 ChartJS.register(
@@ -34,8 +33,6 @@ const QuizDetailPage: React.FC = () => {
 
   const { isAuthenticated } = useAuthStore();
   const { isLoading, error, data: quiz } = useGetQuizDetail(Number(quizId));
-  // const { data: quizStatistics } = useGetQuizStatistics(Number(quizId));
-  // console.log(quizStatistics);
 
   const quizStatistics = quiz?.statistics;
 

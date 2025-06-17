@@ -27,15 +27,12 @@ const Footer = () => {
             <Link href="/" className="hover:text-primary transition">
               홈
             </Link>
-            <Link href="/quiz" className="hover:text-primary transition">
+            <Link href="/quizzes" className="hover:text-primary transition">
               퀴즈
-            </Link>
-            <Link href="/today-quiz" className="hover:text-primary transition">
-              오늘의 퀴즈
             </Link>
 
             <Link
-              href="/live-battle"
+              href="/battles"
               className="text-primary font-bold hover:text-red-700 transition"
             >
               실시간 퀴즈 대결

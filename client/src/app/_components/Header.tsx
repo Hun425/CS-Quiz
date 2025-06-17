@@ -12,12 +12,12 @@ const Header: React.FC = () => {
           <Link href="/" className="flex items-center space-x-2">
             <Image
               src="/images/logo.png"
-              width={30}
-              height={30}
+              width={25}
+              height={25}
               alt="CRAM Logo"
               className="rounded-full"
             />
-            <h1 className="font-primary text-xl sm:text-2xl font-bold tracking-tight">
+            <h1 className="font-primary text-lg sm:text-2xl font-bold tracking-tight">
               CRAM
             </h1>
           </Link>
@@ -25,18 +25,12 @@ const Header: React.FC = () => {
         </div>
 
         {/* 가운데 네비게이션 */}
-        <nav className="hidden md:flex items-center justify-center gap-4 flex-1 px-2 text-sm">
-          <Link
-            href="/quizzes"
-            className="text-foreground font-bold hover:scale-105"
-          >
+        <nav className="hidden md:flex items-center justify-center gap-4 flex-1 px-2 text-md">
+          <Link href="/quizzes" className="text-foreground font-bold ">
             퀴즈
           </Link>
-          <Link
-            href="/battles"
-            className="text-primary font-bold hover:scale-105"
-          >
-            실시간 퀴즈 대결
+          <Link href="/battles" className="text-primary font-bold ">
+            배틀
           </Link>
         </nav>
 

@@ -34,7 +34,7 @@ export const METADATA: Record<string, IMetadata> = {
     },
   },
   login: {
-    title: "로그인 | Cram",
+    title: "로그인",
     description:
       "소셜 계정으로 간편하게 로그인하고 Cram의 모든 기능을 즐겨보세요!",
     openGraph: {
@@ -89,7 +89,7 @@ export const METADATA: Record<string, IMetadata> = {
   },
 
   battles: {
-    title: "실시간 퀴즈 대결 | Cram",
+    title: "실시간 퀴즈 대결",
     description:
       "다른 사용자들과 속도와 정확도를 겨루며 실시간으로 퀴즈 대결을 즐겨보세요!",
     openGraph: {

@@ -41,7 +41,7 @@ const TokenTimer = memo(() => {
 
   return (
     <span
-      className={`text-sm ${
+      className={`text-sm min-w-10  ${
         timeLeft !== null && timeLeft < 300
           ? "text-red-500 font-semibold"
           : "text-neutral-500"
