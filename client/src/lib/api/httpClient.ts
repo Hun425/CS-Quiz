@@ -3,9 +3,19 @@ import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
 import refreshAccessToken from "./refreshAccessToken";
 
-const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL
-  ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/api`
-  : "http://localhost:8080/api";
+// 서버 사이드와 클라이언트 사이드를 구분하여 API URL 설정
+const getBaseURL = () => {
+  // 서버 사이드 렌더링시 내부 Docker 네트워크 사용
+  if (typeof window === 'undefined') {
+    return process.env.API_BASE_URL ? `${process.env.API_BASE_URL}/api` : "http://backend:8080/api";
+  }
+  // 클라이언트 사이드에서는 외부 URL 사용
+  return process.env.NEXT_PUBLIC_API_BASE_URL 
+    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/api`
+    : "http://localhost:8080/api";
+};
+
+const baseURL = getBaseURL();
 
 const httpClient = axios.create({
   baseURL,
