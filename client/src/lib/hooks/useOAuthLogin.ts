@@ -10,7 +10,9 @@ import { Provider } from "../types/auth";
 
 export const useOAuthLogin = () => {
   const loginWithProvider = (provider: Provider) => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    // 클라이언트 사이드에서만 실행되므로 NEXT_PUBLIC_ 환경 변수 사용
+    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+    console.log("OAuth Login URL:", `${apiUrl}/api/oauth2/authorize/${provider}`);
     window.location.href = `${apiUrl}/api/oauth2/authorize/${provider}`;
   };
 
