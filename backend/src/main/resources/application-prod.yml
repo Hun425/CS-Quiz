@@ -99,8 +99,8 @@ spring:
 # 애플리케이션 설정
 app:
   oauth2:
-    authorized-redirect-uri: http://13.125.187.28:8080/oauth2/redirect
-  base-url: http://13.125.187.28:8080
+    authorized-redirect-uri: https://13.125.187.28/oauth2/redirect
+  base-url: https://13.125.187.28
 
 # 서버 설정
 server:
