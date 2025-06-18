@@ -32,7 +32,7 @@ const prodConfig: EnvironmentConfig = {
     apiBaseUrl: '/api',  // 상대 경로 사용
     wsBaseUrl: '/ws-battle',  // 상대 경로 사용
     oauthRedirectBaseUrl: '/api/oauth2/authorize',  // 상대 경로 사용
-    frontendBaseUrl: 'http://13.125.187.28'  // 외부에서 접근하는 주소
+    frontendBaseUrl: 'http://13.125.187.28'  // IP 주소로 단순화
 };
 
 // Use production config when in production mode
