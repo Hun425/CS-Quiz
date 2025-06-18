@@ -94,7 +94,7 @@ services:
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
       KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
       KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
-      OAUTH2_AUTHORIZED_REDIRECT_URI: http://13.125.187.28:8080/oauth2/redirect
+      OAUTH2_AUTHORIZED_REDIRECT_URI: https://13.125.187.28/oauth2/redirect
       # JWT 시크릿 키 설정
       JWT_SECRET: ${JWT_SECRET:-abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890}
     depends_on:
@@ -113,42 +113,58 @@ services:
       context: ./client
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_BASE_URL: http://13.125.187.28:8080
-        NEXT_PUBLIC_WS_BASE_URL: ws://13.125.187.28:8080/ws-battle
+        NEXT_PUBLIC_API_BASE_URL: https://13.125.187.28
+        NEXT_PUBLIC_WS_BASE_URL: wss://13.125.187.28/ws-battle
     container_name: quiz-frontend
     restart: always
-    ports:
-      - "80:3000"
+    expose:
+      - "3000"
     environment:
       # Next.js 환경 변수 - 내부 Docker 네트워크와 외부 접근 분리
-      NEXT_PUBLIC_API_BASE_URL: http://13.125.187.28:8080
+      NEXT_PUBLIC_API_BASE_URL: https://13.125.187.28
       API_BASE_URL: http://backend:8080  # 서버 사이드에서 사용할 내부 URL
-      NEXT_PUBLIC_WS_BASE_URL: ws://13.125.187.28:8080/ws-battle
+      NEXT_PUBLIC_WS_BASE_URL: wss://13.125.187.28/ws-battle
       NODE_ENV: production
     depends_on:
       - backend
     networks:
       - quiz-network
 
-  # # HTTPS 설정을 위한 Nginx 리버스 프록시 (나중에 사용)
-  # nginx-proxy:
-  #   image: nginx:alpine
-  #   container_name: nginx-proxy
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   volumes:
-  #     - ./nginx.conf:/etc/nginx/nginx.conf
-  #     - ./ssl:/etc/ssl/certs
-  #   depends_on:
-  #     - frontend
-  #     - backend
-  #   networks:
-  #     - quiz-network
+  # HTTPS 설정을 위한 Nginx 리버스 프록시
+  nginx-proxy:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - web-root:/var/www/certbot
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - quiz-network
+
+  # Let's Encrypt Certbot
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - web-root:/var/www/certbot
+    command: certonly --webroot --webroot-path=/var/www/certbot --email chae0738@naver.com --agree-tos --no-eff-email -d 13.125.187.28
 
 volumes:
   postgres_data:
   redis_data:
+  certbot-etc:
+  certbot-var:
+  web-root:
   # elasticsearch_data:
 
 networks:
