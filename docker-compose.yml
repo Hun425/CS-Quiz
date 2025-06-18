@@ -94,7 +94,7 @@ services:
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
       KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
       KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
-      OAUTH2_AUTHORIZED_REDIRECT_URI: https://13.125.187.28/oauth2/redirect
+      OAUTH2_AUTHORIZED_REDIRECT_URI: https://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com/oauth2/redirect
       # JWT 시크릿 키 설정
       JWT_SECRET: ${JWT_SECRET:-abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890}
     depends_on:
@@ -113,17 +113,17 @@ services:
       context: ./client
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_BASE_URL: https://13.125.187.28
-        NEXT_PUBLIC_WS_BASE_URL: wss://13.125.187.28/ws-battle
+        NEXT_PUBLIC_API_BASE_URL: https://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com
+        NEXT_PUBLIC_WS_BASE_URL: wss://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com/ws-battle
     container_name: quiz-frontend
     restart: always
     expose:
       - "3000"
     environment:
       # Next.js 환경 변수 - 내부 Docker 네트워크와 외부 접근 분리
-      NEXT_PUBLIC_API_BASE_URL: https://13.125.187.28
+      NEXT_PUBLIC_API_BASE_URL: https://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com
       API_BASE_URL: http://backend:8080  # 서버 사이드에서 사용할 내부 URL
-      NEXT_PUBLIC_WS_BASE_URL: wss://13.125.187.28/ws-battle
+      NEXT_PUBLIC_WS_BASE_URL: wss://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com/ws-battle
       NODE_ENV: production
     depends_on:
       - backend
@@ -157,7 +157,7 @@ services:
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
       - web-root:/var/www/certbot
-    command: certonly --webroot --webroot-path=/var/www/certbot --email chae0738@naver.com --agree-tos --no-eff-email -d 13.125.187.28
+    command: certonly --webroot --webroot-path=/var/www/certbot --email chae0738@naver.com --agree-tos --no-eff-email -d ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com
 
 volumes:
   postgres_data:
