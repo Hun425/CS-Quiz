@@ -99,7 +99,7 @@ spring:
 # 애플리케이션 설정
 app:
   oauth2:
-    authorized-redirect-uri: http://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com/oauth2/redirect
+    authorized-redirect-uri: http://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com/api/oauth2/callback
   base-url: http://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com
 
 # 서버 설정
