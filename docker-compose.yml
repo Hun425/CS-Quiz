@@ -113,17 +113,17 @@ services:
       context: ./client
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_BASE_URL: http://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com
-        NEXT_PUBLIC_WS_BASE_URL: ws://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com/ws-battle
+        NEXT_PUBLIC_API_BASE_URL: http://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com:8080
+        NEXT_PUBLIC_WS_BASE_URL: ws://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com:8080/ws-battle
     container_name: quiz-frontend
     restart: always
     expose:
       - "3000"
     environment:
       # Next.js 환경 변수 - 내부 Docker 네트워크와 외부 접근 분리
-      NEXT_PUBLIC_API_BASE_URL: http://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com
-      API_BASE_URL: http://backend:8080  # 서버 사이드에서 사용할 내부 URL
-      NEXT_PUBLIC_WS_BASE_URL: ws://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com/ws-battle
+              NEXT_PUBLIC_API_BASE_URL: http://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com:8080
+        API_BASE_URL: http://backend:8080  # 서버 사이드에서 사용할 내부 URL
+        NEXT_PUBLIC_WS_BASE_URL: ws://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com:8080/ws-battle
       NODE_ENV: production
     depends_on:
       - backend
