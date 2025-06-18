@@ -130,6 +130,22 @@ services:
     networks:
       - quiz-network
 
+  # # HTTPS 설정을 위한 Nginx 리버스 프록시 (나중에 사용)
+  # nginx-proxy:
+  #   image: nginx:alpine
+  #   container_name: nginx-proxy
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf
+  #     - ./ssl:/etc/ssl/certs
+  #   depends_on:
+  #     - frontend
+  #     - backend
+  #   networks:
+  #     - quiz-network
+
 volumes:
   postgres_data:
   redis_data:
