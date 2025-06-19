@@ -116,7 +116,7 @@ spring:
 
 app:
   oauth2:
-    authorized-redirect-uri: ${OAUTH2_AUTHORIZED_REDIRECT_URI:http://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com:3000/api/oauth2/redirect}
+    authorized-redirect-uri: ${OAUTH2_AUTHORIZED_REDIRECT_URI:http://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com/api/oauth2/redirect}
 
 
 # 서버 설정

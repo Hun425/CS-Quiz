@@ -129,21 +129,15 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
         // 1단계: 태그를 제외한 기본 정보 DTO로 직접 조회
         List<QuizSummaryResponse> baseContent = queryFactory
                 .select(Projections.constructor(QuizSummaryResponse.class,
-                        quiz.id,
-                        quiz.title,
-                        quiz.description, // description 추가 (QuizSummaryResponse 생성자에 맞게)
-                        quiz.quizType,
-                        quiz.difficultyLevel,
-                        quiz.questionCount,
-                        // creator.username, // 생성자에 username, profileImage가 없음. 필요시 QuizSummaryResponse 수정
-                        // creator.profileImage,
-                        quiz.viewCount, // viewCount 추가
-                        quiz.attemptCount,
-                        quiz.avgScore,
-                        // 생성자에 tags, createdAt 이 없으므로 null 또는 기본값 처리 필요
-                        Expressions.constant(Collections.emptyList()), // tags 임시 빈 리스트
-                        quiz.createdAt // createdAt 추가
-                        // 주의: QuizSummaryResponse 생성자와 파라미터 순서/타입 일치 확인 필요
+                        quiz.id,                  // Long
+                        quiz.title,               // String
+                        quiz.quizType,            // QuizType
+                        quiz.difficultyLevel,     // DifficultyLevel
+                        quiz.questionCount,       // int
+                        quiz.attemptCount,        // int
+                        quiz.avgScore,            // double
+                        Expressions.constant(Collections.emptyList()), // List<TagResponse>
+                        quiz.createdAt            // LocalDateTime
                 ))
                 .from(quiz)
                 .leftJoin(quiz.creator, creator) // 조인은 필요

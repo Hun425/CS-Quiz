@@ -4,8 +4,10 @@ import com.quizplatform.core.domain.quiz.DifficultyLevel;
 import com.quizplatform.core.domain.quiz.Quiz;
 import com.quizplatform.core.domain.quiz.QuizType;
 import com.quizplatform.core.dto.tag.TagResponse;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,6 +16,8 @@ import java.util.stream.Collectors;
 
 @Getter
 @Builder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
 public class QuizSummaryResponse {
     private Long id;
     private String title;
