@@ -5,7 +5,7 @@ import AuthSection from "./_components/AuthSection";
 
 const CramMainPage = () => {
   return (
-    <div className="bg-background-gradient min-h-screen max-w-screen-full px-4 md:px-8 lg:px-20 py-8 text-white transition-colors duration-300">
+    <div className="flex flex-col items-center bg-background-gradient min-h-screen max-w-screen-full px-4 md:px-8 lg:px-20 py-8 text-white transition-colors duration-300">
       <AuthSection />
 
       <section className="max-w-screen-xl mx-auto my-16">

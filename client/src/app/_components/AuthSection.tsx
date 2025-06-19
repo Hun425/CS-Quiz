@@ -25,7 +25,7 @@ const AuthSection = () => {
   } = useGetRecommendedQuizzes({ limit: 3 });
 
   return (
-    <section className="max-w-screen-xl text-foreground p-4 sm:p-12 rounded-xl flex flex-col items-center text-center overflow-hidden">
+    <section className="max-w-screen-xl text-foreground px-2 my-16 rounded-xl flex flex-col items-center text-center overflow-hidden">
       {/* ✅ 메인 영역 */}
       <div className="flex flex-col lg:flex-row items-center justify-between w-full gap-10 relative">
         {/* ✨ 왼쪽 텍스트/버튼/카드 */}
