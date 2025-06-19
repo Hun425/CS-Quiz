@@ -98,7 +98,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 .queryParam("expiresIn", authResponse.getExpiresIn())
                 .build().toUriString();
 
-        logger.info("Redirecting user {} to target URL: {}");
+        logger.info("Redirecting user {} to target URL: {}", userPrincipal.getEmail(), targetUrl);
 
         // 7. 리다이렉트 수행 (SimpleUrlAuthenticationSuccessHandler의 기능 사용)
         // clearAuthenticationAttributes(request); // 이전 인증 속성 정리 (필요 시)
@@ -116,7 +116,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private void saveRefreshToken(Long userId, String refreshToken) {
         // Redis 키 정의
         String key = "refresh_token:" + userId;
-        logger.debug("Saving refresh token to Redis with key: {}");
+        logger.debug("Saving refresh token to Redis with key: {}", key);
         try {
             // Redis에 값 설정 (만료 시간 14일 지정)
             redisTemplate.opsForValue().set(
@@ -124,9 +124,9 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                     refreshToken,
                     Duration.ofDays(14) // Redis 저장 만료 기간 설정
             );
-            logger.info("Refresh token saved successfully for user ID: {}");
+            logger.info("Refresh token saved successfully for user ID: {}", userId);
         } catch (Exception e) {
-            logger.error("Failed to save refresh token to Redis for user ID {}: {}");
+            logger.error("Failed to save refresh token to Redis for user ID {}: {}", userId, e.getMessage());
             // 여기서 예외를 다시 던지거나 적절한 에러 처리를 고려할 수 있습니다.
         }
     }
