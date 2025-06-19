@@ -69,6 +69,8 @@ services:
       OAUTH2_AUTHORIZED_REDIRECT_URI: http://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com/api/oauth2/redirect
       # JWT 시크릿 키 설정
       JWT_SECRET: ${JWT_SECRET:-abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890}
+      # HikariCP 설정
+      SPRING_DATASOURCE_HIKARI_AUTO_COMMIT: false
     depends_on:
       postgres:
         condition: service_healthy
