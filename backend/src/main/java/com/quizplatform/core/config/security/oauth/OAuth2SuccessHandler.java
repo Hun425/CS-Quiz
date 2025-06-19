@@ -7,6 +7,7 @@ import com.quizplatform.core.dto.AuthResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
@@ -26,6 +27,7 @@ import java.time.Duration;
  * @author 채기훈
  * @since JDK 21 eclipse temurin 21.0.6
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
@@ -59,18 +61,19 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                                         Authentication authentication) throws IOException {
         // 응답이 이미 커밋(전송 시작)되었는지 확인 (예: 다른 필터에서 이미 응답을 보낸 경우)
         if (response.isCommitted()) {
-            logger.debug("Response has already been committed.");
+            log.debug("Response has already been committed.");
             return;
         }
 
         // 1. 인증 객체로부터 UserPrincipal 추출
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        logger.debug("OAuth2 authentication successful for user: " + userPrincipal.getEmail());
+        log.debug("OAuth2 authentication successful for user: {}", userPrincipal.getEmail());
 
         // 2. JWT Access Token 및 Refresh Token 생성
         String accessToken = tokenProvider.generateAccessToken(authentication);
         String refreshToken = tokenProvider.generateRefreshToken(authentication);
-        logger.debug("Generated tokens for user: " + userPrincipal.getEmail());
+        log.debug("Generated tokens for user: {}", userPrincipal.getEmail());
+
 
         // 3. Redis에 Refresh Token 저장
         saveRefreshToken(userPrincipal.getId(), refreshToken);
@@ -98,7 +101,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 .queryParam("expiresIn", authResponse.getExpiresIn())
                 .build().toUriString();
 
-        logger.info("Redirecting user {} to target URL: {}", userPrincipal.getEmail(), targetUrl);
+        log.info("Redirecting user {} to target URL: {}", userPrincipal.getEmail(), targetUrl);
 
         // 7. 리다이렉트 수행 (SimpleUrlAuthenticationSuccessHandler의 기능 사용)
         // clearAuthenticationAttributes(request); // 이전 인증 속성 정리 (필요 시)
@@ -116,7 +119,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private void saveRefreshToken(Long userId, String refreshToken) {
         // Redis 키 정의
         String key = "refresh_token:" + userId;
-        logger.debug("Saving refresh token to Redis with key: {}", key);
+        log.debug("Saving refresh token to Redis with key: {}", key);
         try {
             // Redis에 값 설정 (만료 시간 14일 지정)
             redisTemplate.opsForValue().set(
@@ -124,9 +127,9 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                     refreshToken,
                     Duration.ofDays(14) // Redis 저장 만료 기간 설정
             );
-            logger.info("Refresh token saved successfully for user ID: {}", userId);
+            log.info("Refresh token saved successfully for user ID: {}", userId);
         } catch (Exception e) {
-            logger.error("Failed to save refresh token to Redis for user ID {}: {}", userId, e.getMessage());
+            log.error("Failed to save refresh token to Redis for user ID {}: {}", userId, e.getMessage());
             // 여기서 예외를 다시 던지거나 적절한 에러 처리를 고려할 수 있습니다.
         }
     }
