@@ -280,16 +280,13 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
                 .select(Projections.constructor(QuizSummaryResponse.class,
                         quiz.id,
                         quiz.title,
-                        quiz.description, // 생성자에 맞게 추가
                         quiz.quizType,
                         quiz.difficultyLevel,
                         quiz.questionCount,
-                        quiz.viewCount,     // 생성자에 맞게 추가
                         quiz.attemptCount,
                         quiz.avgScore,
                         Expressions.constant(Collections.emptyList()), // tags 임시 빈 리스트
-                        quiz.createdAt    // 생성자에 맞게 추가
-                        // 주의: creator.username, profileImage 등은 생성자에 없으므로 제외
+                        quiz.createdAt
                 ))
                 .from(quiz)
                 // .leftJoin(quiz.creator, creator) // 생성자에 creator 정보 없으므로 조인 불필요할 수 있음 (쿼리 조건에 따라 판단)
