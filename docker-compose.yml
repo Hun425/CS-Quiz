@@ -51,8 +51,8 @@ services:
       dockerfile: Dockerfile
     container_name: quiz-backend
     restart: always
-    ports:
-      - "8080:8080"
+    # ports:
+    #   - "8080:8080"  # nginx 프록시를 통해서만 접근하도록 포트 노출 제거
     env_file: .env
     environment:
       # 프로필 설정 - 운영 환경(prod)으로 변경
