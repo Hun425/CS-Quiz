@@ -9,7 +9,7 @@ import com.quizplatform.core.domain.quiz.Quiz;
 import com.quizplatform.core.domain.user.User;
 import com.quizplatform.core.domain.user.UserBattleStats;
 import com.quizplatform.core.dto.battle.*;
-import com.quizplatform.core.dto.progess.BattleProgress;
+import com.quizplatform.core.dto.progress.BattleProgress;
 import com.quizplatform.core.exception.BusinessException;
 import com.quizplatform.core.exception.ErrorCode;
 import com.quizplatform.core.repository.UserRepository;

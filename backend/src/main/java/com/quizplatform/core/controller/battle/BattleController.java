@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -65,7 +64,7 @@ public class BattleController {
 
         // 사용자 인증 확인
         if (userPrincipal == null) {
-            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "인증이 필요합니다.");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "인증이 필요합니다.");
         }
 
         // creatorId를 요청 객체에 설정
@@ -145,7 +144,7 @@ public class BattleController {
 
         // 사용자 인증 확인
         if (userPrincipal == null) {
-            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "인증이 필요합니다.");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "인증이 필요합니다.");
         }
 
         BattleRoomResponse battleRoom = battleService.joinBattleRoom(roomId, userPrincipal.getUser());
@@ -176,7 +175,7 @@ public class BattleController {
 
         // 사용자 인증 확인
         if (userPrincipal == null) {
-            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "인증이 필요합니다.");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "인증이 필요합니다.");
         }
 
         BattleRoomResponse battleRoom = battleService.toggleReady(roomId, userPrincipal.getUser());
@@ -207,7 +206,7 @@ public class BattleController {
 
         // 사용자 인증 확인
         if (userPrincipal == null) {
-            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "인증이 필요합니다.");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "인증이 필요합니다.");
         }
 
         BattleRoomResponse battleRoom = battleService.leaveBattleRoom(roomId, userPrincipal.getUser());
@@ -252,19 +251,19 @@ public class BattleController {
             @ApiResponse(responseCode = "200", description = "활성 대결방 정보가 성공적으로 조회되었습니다.")
     })
     @GetMapping("/my-active")
-    public ResponseEntity<CommonApiResponse<Object>> getMyActiveBattleRoom(
+    public ResponseEntity<CommonApiResponse<BattleRoomResponse>> getMyActiveBattleRoom(
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
         // 사용자 인증 확인
         if (userPrincipal == null) {
-            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "인증이 필요합니다.");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "인증이 필요합니다.");
         }
 
         BattleRoomResponse battleRoom = battleService.getActiveBattleRoomByUser(userPrincipal.getUser());
         
-        // 활성 대결방이 없으면 빈 배열 반환
+        // 활성 대결방이 없으면 null 반환
         if (battleRoom == null) {
-            return ResponseEntity.ok(CommonApiResponse.success(new ArrayList<>()));
+            return ResponseEntity.ok(CommonApiResponse.success(null));
         }
         
         return ResponseEntity.ok(CommonApiResponse.success(battleRoom));

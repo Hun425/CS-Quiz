@@ -31,17 +31,15 @@ public interface UserLevelRepository extends JpaRepository<UserLevel, Long> {
 
     /**
      * 특정 사용자의 최근 레벨업 이력을 지정된 개수(limit)만큼 조회합니다.
-     * 네이티브 쿼리를 사용하여 user_level_history 테이블에서 결과를 조회하고,
-     * 결과를 LevelUpRecord 인터페이스/DTO로 매핑합니다. (주의: LevelUpRecord의 정의 필요)
+     * 네이티브 쿼리를 사용하여 user_level_history 테이블에서 결과를 조회합니다.
      * 업데이트 시각(updated_at) 기준 내림차순(최신순)으로 정렬됩니다.
      *
      * @param userId 조회할 사용자의 ID
      * @param limit  조회할 최대 이력 개수
-     * @return 레벨업 이력 정보를 담은 LevelUpRecord 객체 리스트.
-     * (LevelUpRecord 인터페이스는 id, oldLevel, newLevel, occurredAt 메서드를 가져야 함)
+     * @return Object 배열 리스트. 각 배열의 요소는 [id, oldLevel, newLevel, occurredAt] 순서입니다.
      */
     @Query(value = "SELECT id, previous_level AS oldLevel, level AS newLevel, updated_at AS occurredAt FROM user_level_history WHERE user_id = :userId ORDER BY updated_at DESC LIMIT :limit", nativeQuery = true)
-    List<LevelUpRecord> findRecentLevelUpsByUserId(@Param("userId") Long userId, @Param("limit") int limit);
+    List<Object[]> findRecentLevelUpsByUserIdRaw(@Param("userId") Long userId, @Param("limit") int limit);
 
     /**
      * 특정 사용자(User) 객체에 해당하는 UserLevel 정보를 조회합니다.

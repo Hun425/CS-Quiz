@@ -153,16 +153,4 @@ VALUES
     (NOW(), NOW(), '계층적인 데이터를 표현하는 데 적합하며, 부모-자식 관계를 가지는 노드들로 구성된 자료구조는?', 'MULTIPLE_CHOICE', 'INTERMEDIATE', '트리 (Tree)', '["그래프 (Graph)", "스택 (Stack)", "큐 (Queue)", "트리 (Tree)"]'::jsonb, '트리는 파일 시스템 디렉토리 구조, 조직도, DOM(Document Object Model) 등 계층 구조를 나타내는 데 널리 사용됩니다.', 10, 45, (SELECT id FROM quiz_info)),
     (NOW(), NOW(), '이진 검색 트리(Binary Search Tree, BST)의 특징으로 올바른 것은?', 'MULTIPLE_CHOICE', 'INTERMEDIATE', '모든 노드의 왼쪽 서브트리 값은 노드 값보다 작고, 오른쪽 서브트리 값은 노드 값보다 크다', '["모든 노드는 최대 2개의 자식 노드를 가진다", "루트 노드의 값이 항상 가장 크다", "모든 리프 노드는 같은 레벨에 있다", "모든 노드의 왼쪽 서브트리 값은 노드 값보다 작고, 오른쪽 서브트리 값은 노드 값보다 크다"]'::jsonb, '이진 검색 트리는 이 속성을 이용하여 효율적인 검색(평균 O(log n))이 가능하도록 설계된 트리 구조입니다.', 10, 45, (SELECT id FROM quiz_info)),
     (NOW(), NOW(), '정점(Vertex)들과 이들을 연결하는 간선(Edge)들로 구성되어, 네트워크 연결망, 소셜 네트워크 관계 등을 표현하는 데 사용되는 자료구조는?', 'MULTIPLE_CHOICE', 'INTERMEDIATE', '그래프 (Graph)', '["트리 (Tree)", "그래프 (Graph)", "해시 테이블 (Hash Table)", "힙 (Heap)"]'::jsonb, '그래프는 노드(정점)와 이들 사이의 관계(간선)를 표현하는 범용적인 자료구조입니다.', 10, 45, (SELECT id FROM quiz_info)),
-    (NOW(), NOW(), '완전 이진 트리(Complete Binary Tree)의 일종으로, 최대값 또는 최소값을 빠르게(O(log n)) 찾고 삽입/삭제할 수 있는 자료구조는?',
-     'MULTIPLE_CHOICE',
-     'INTERMEDIATE',
-     '힙 (Heap)',
-     to_jsonb(ARRAY[
-         '우선순위 큐 (Priority Queue)는 힙으로 구현될 수 있다',
-         '힙 (Heap)',
-         '이진 검색 트리 (Binary Search Tree)',
-         '균형 이진 트리 (AVL Tree)'
-         ]),
-     '힙은 부모 노드의 값이 항상 자식 노드의 값보다 크거나 같은(최대 힙) 또는 작거나 같은(최소 힙) 속성을 만족하는 트리 기반 자료구조입니다. 우선순위 큐 구현에 주로 사용됩니다.',
-     10, 45,
-     (SELECT id FROM quiz_info));
+    (NOW(), NOW(), '완전 이진 트리(Complete Binary Tree)의 일종으로, 최대값 또는 최소값을 빠르게(O(log n)) 찾고 삽입/삭제할 수 있는 자료구조는?', 'MULTIPLE_CHOICE', 'INTERMEDIATE', '힙 (Heap)', '["우선순위 큐 (Priority Queue)는 힙으로 구현될 수 있다", "힙 (Heap)", "이진 검색 트리 (Binary Search Tree)", "균형 이진 트리 (AVL Tree)"]'::jsonb, '힙은 부모 노드의 값이 항상 자식 노드의 값보다 크거나 같은(최대 힙) 또는 작거나 같은(최소 힙) 속성을 만족하는 트리 기반 자료구조입니다. 우선순위 큐 구현에 주로 사용됩니다.', 10, 45, (SELECT id FROM quiz_info));

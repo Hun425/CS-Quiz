@@ -1,4 +1,4 @@
-package com.quizplatform.core.dto.progess;
+package com.quizplatform.core.dto.progress;
 
 import lombok.Builder;
 import lombok.Getter;

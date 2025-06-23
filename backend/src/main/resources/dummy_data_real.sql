@@ -14,8 +14,8 @@ INSERT INTO public.users (
 VALUES
     -- 관리자 계정
     (  'admin@example.com', 'admin', 800, true, 10, 'GITHUB', 'admin_id_123',
-       1000, 'ADMIN', 5000, NOW() - INTERVAL '200 days', NOW(),
-       'https://robohash.org/admin?set=set4', NOW() - INTERVAL '2 days',
+       1000, 'ADMIN', 5000, (NOW() - INTERVAL '200 days')::timestamptz, NOW()::timestamptz,
+       'https://robohash.org/admin?set=set4', (NOW() - INTERVAL '2 days')::timestamptz,
        NULL, NULL, NULL);
 -- 2. 태그 데이터 생성
 INSERT INTO public.tags (created_at, name, description)
@@ -293,7 +293,8 @@ SELECT
     floor(random() * 5) + 3, -- 3-7개 문제
     'CUSTOM',
     20, -- 20분 제한시간
-    (SELECT id FROM public.users WHERE id != 1 ORDER BY random() LIMIT 1), -- 랜덤 사용자 (관리자 제외)
+    COALESCE((SELECT id FROM public.users WHERE id != 1 ORDER BY random() LIMIT 1), 
+             (SELECT id FROM public.users WHERE role = 'ADMIN' LIMIT 1)), -- 랜덤 사용자, 없으면 관리자
     floor(random() * 50 + 5), -- 5-55 시도 횟수
     random() * 30 + 65, -- 65-95 평균 점수
     floor(random() * 200 + 30), -- 30-230 조회수
