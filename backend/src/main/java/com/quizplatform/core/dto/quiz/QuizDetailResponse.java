@@ -10,8 +10,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonGetter;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 // Quiz 관련 응답 DTO들
@@ -38,6 +40,12 @@ public class QuizDetailResponse {
     private List<TagResponse> tags;
     private UserSummaryResponse creator;
     private QuizStatistics statistics;
+
+    // statistics가 null이면 빈 배열로 반환
+    @JsonGetter("statistics")
+    public Object getStatisticsSafe() {
+        return statistics != null ? statistics : Collections.emptyList();
+    }
 
     public static QuizDetailResponse from(Quiz quiz) {
         return QuizDetailResponse.builder()
