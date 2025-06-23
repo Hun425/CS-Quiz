@@ -8,6 +8,10 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.util.FileCopyUtils;
 
 import java.io.IOException;
@@ -50,6 +54,7 @@ public class TestDataInitializer {
 
     private final JdbcTemplate jdbcTemplate;
     private final ResourceLoader resourceLoader;
+    private final PlatformTransactionManager transactionManager;
 
     // SQL 파일 실행 순서 정의 (dummy 폴더의 new*.sql 파일들 사용)
     private static final List<String> SQL_FILES = Arrays.asList(
@@ -64,105 +69,143 @@ public class TestDataInitializer {
     );
 
     @Autowired
-    public TestDataInitializer(JdbcTemplate jdbcTemplate, ResourceLoader resourceLoader) {
+    public TestDataInitializer(JdbcTemplate jdbcTemplate, ResourceLoader resourceLoader, 
+                              PlatformTransactionManager transactionManager) {
         this.jdbcTemplate = jdbcTemplate;
         this.resourceLoader = resourceLoader;
+        this.transactionManager = transactionManager;
     }
 
     @PostConstruct
     public void init() {
         try {
-            // 데이터가 이미 존재하는지 확인
-            boolean dataExists = checkIfDataExists();
-
-            if (!dataExists) {
-                log.info("핵심 데이터가 부족합니다. 더미 데이터를 로드합니다.");
+            log.info("=== 테스트 데이터 초기화 시작 ===");
+            
+            // 테스트 데이터가 있는지 확인
+            if (!hasTestData()) {
+                log.info("테스트 데이터가 없습니다. 먼저 간단한 테스트 SQL을 실행합니다.");
                 
-                // 방법 1: 통합 SQL 파일 사용 (빠른 로딩)
-                // 임시로 주석 처리 - 문제 해결 후 다시 활성화
-                // executeSqlFile("classpath:/dummy_data_real.sql");
-                
-                // 임시 해결책: 분리된 SQL 파일들 사용
-                executeSqlFiles();
-                
-                // 방법 2: 분리된 SQL 파일들 사용 (체계적, 현재 사용중)
-                // 이미 위에서 활성화됨
-                
-                log.info("더미 데이터가 성공적으로 로드되었습니다.");
-                
-                // 더미 데이터 로드 후에 테스트 계정 생성 (의존성 해결)
-                // dummy 폴더 사용 시에는 테스트 계정이 이미 포함되어 있을 수 있음
+                // 먼저 간단한 테스트 실행
                 try {
-                    executeSqlFile("classpath:/dummysql/test_account.sql");
-                    log.info("테스트 계정이 성공적으로 생성되었습니다.");
+                    executeSimpleTestWithManualTransaction();
                 } catch (Exception e) {
-                    log.warn("테스트 계정 생성 생략 (이미 포함되어 있을 수 있음): " + e.getMessage());
+                    log.error("간단한 테스트 실행 실패, 기존 방식으로 진행: {}", e.getMessage(), e);
+                    // 기존 방식으로 실행
+                    executeAllSqlFiles();
                 }
+                
+                log.info("모든 SQL 파일 실행이 완료되었습니다.");
             } else {
-                log.info("모든 핵심 데이터가 존재합니다. 더미데이터 로딩을 건너뜁니다.");
-                
-                // 더미 데이터가 있을 때만 테스트 계정 생성 시도 (dummy 폴더 사용 시 생략 가능)
-                try {
-                    executeSqlFile("classpath:/dummysql/test_account.sql");
-                    log.info("테스트 계정이 업데이트되었습니다.");
-                } catch (Exception e) {
-                    log.warn("테스트 계정 생성 중 오류 발생 (무시): " + e.getMessage());
-                }
+                log.info("테스트 데이터가 이미 존재합니다. 초기화를 건너뜁니다.");
             }
-
-            // Swagger 예제에 사용할 ID 값 저장
-            fetchExampleIds();
+            
+            // Swagger 예제용 ID 설정
+            setExampleIds();
+            
+            log.info("=== 테스트 데이터 초기화 완료 ===");
+            
         } catch (Exception e) {
-            log.error("데이터 초기화 중 오류 발생: " + e.getMessage(), e);
+            log.error("테스트 데이터 초기화 중 오류 발생: " + e.getMessage(), e);
         }
     }
 
-    private boolean checkIfDataExists() {
+    /**
+     * 테스트 데이터가 존재하는지 확인
+     */
+    private boolean hasTestData() {
         try {
-            // 사용자와 퀴즈 모두 확인 (더미데이터의 핵심)
             Integer userCount = jdbcTemplate.queryForObject(
                     "SELECT COUNT(*) FROM public.users", Integer.class);
             Integer quizCount = jdbcTemplate.queryForObject(
                     "SELECT COUNT(*) FROM public.quizzes", Integer.class);
             Integer tagCount = jdbcTemplate.queryForObject(
                     "SELECT COUNT(*) FROM public.tags", Integer.class);
+            Integer questionCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM public.questions", Integer.class);
             
-            boolean hasUsers = userCount != null && userCount > 0;
-            boolean hasQuizzes = quizCount != null && quizCount > 0;
-            boolean hasTags = tagCount != null && tagCount > 0;
+            log.info("현재 데이터 상태:");
+            log.info("  - Users: {} 개", userCount);
+            log.info("  - Quizzes: {} 개", quizCount);
+            log.info("  - Tags: {} 개", tagCount);
+            log.info("  - Questions: {} 개", questionCount);
             
-            log.info("기존 데이터 확인 - Users: {}, Quizzes: {}, Tags: {}", userCount, quizCount, tagCount);
+            // 모든 테이블에 최소 데이터가 있어야 true 반환
+            boolean hasData = userCount != null && userCount > 0 
+                    && quizCount != null && quizCount > 0 
+                    && tagCount != null && tagCount > 0
+                    && questionCount != null && questionCount > 0;
             
-            // 모든 핵심 데이터가 존재해야 'true' 반환
-            return hasUsers && hasQuizzes && hasTags;
+            log.info("테스트 데이터 존재 여부: {}", hasData);
+            return hasData;
             
         } catch (Exception e) {
-            log.warn("데이터베이스 테이블을 확인할 수 없습니다. 새 데이터를 로드합니다: " + e.getMessage());
+            log.warn("데이터 확인 중 오류 발생 (테이블이 없을 수 있음): " + e.getMessage());
             return false;
         }
     }
 
-    private void executeSqlFiles() {
-        log.info("분리된 SQL 파일들을 순서대로 실행합니다.");
-        
-        // 각 SQL 파일을 순서대로 실행
-        for (String sqlFilePath : SQL_FILES) {
+    /**
+     * 모든 SQL 파일을 순차적으로 실행
+     */
+    public void executeAllSqlFiles() {
+        for (String sqlFile : SQL_FILES) {
             try {
-                log.info("SQL 파일 실행 중: {}", sqlFilePath);
-                executeSqlFile(sqlFilePath);
-                log.info("SQL 파일 실행 완료: {}", sqlFilePath);
+                log.info("실행 중: {}", sqlFile);
+                executeSqlFileWithManualTransaction(sqlFile);
+                log.info("완료: {}", sqlFile);
             } catch (Exception e) {
-                log.error("SQL 파일 '{}' 실행 중 오류 발생: {}", sqlFilePath, e.getMessage(), e);
-                // 중요하지 않은 파일의 경우 오류를 무시하고 계속 진행
-                if (sqlFilePath.contains("cleanup") || sqlFilePath.contains("test_account")) {
-                    log.warn("선택적 파일 '{}' 실행 실패, 계속 진행합니다.", sqlFilePath);
-                } else {
-                    throw new RuntimeException("필수 SQL 파일 실행 중 오류 발생: " + sqlFilePath, e);
-                }
+                log.error("SQL 파일 실행 실패: {} - {}", sqlFile, e.getMessage(), e);
+                // 오류가 발생해도 다음 파일 계속 실행
             }
         }
     }
 
+    /**
+     * 개별 SQL 파일을 수동 트랜잭션으로 실행
+     */
+    public void executeSqlFileWithManualTransaction(String sqlFile) throws IOException {
+        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+        def.setIsolationLevel(TransactionDefinition.ISOLATION_DEFAULT);
+        def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
+        
+        TransactionStatus status = transactionManager.getTransaction(def);
+        
+        try {
+            executeSqlFile(sqlFile);
+            transactionManager.commit(status);
+            log.info("트랜잭션 커밋 성공: {}", sqlFile);
+        } catch (Exception e) {
+            transactionManager.rollback(status);
+            log.error("트랜잭션 롤백됨: {} - {}", sqlFile, e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    /**
+     * 간단한 테스트 SQL을 수동 트랜잭션으로 실행
+     */
+    public void executeSimpleTestWithManualTransaction() throws IOException {
+        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+        def.setIsolationLevel(TransactionDefinition.ISOLATION_DEFAULT);
+        def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
+        
+        TransactionStatus status = transactionManager.getTransaction(def);
+        
+        try {
+            log.info("간단한 테스트 SQL 수동 트랜잭션 시작");
+            executeSqlFile("classpath:test-simple.sql");
+            transactionManager.commit(status);
+            log.info("간단한 테스트 SQL 트랜잭션 커밋 성공");
+        } catch (Exception e) {
+            transactionManager.rollback(status);
+            log.error("간단한 테스트 SQL 트랜잭션 롤백됨: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    /**
+     * 개별 SQL 파일 실행
+     */
     private void executeSqlFile(String resourcePath) throws IOException {
         Resource resource = resourceLoader.getResource(resourcePath);
 
@@ -176,59 +219,92 @@ public class TestDataInitializer {
                 StandardCharsets.UTF_8
         );
 
-        // 타임스탬프 문제가 있는 파일들을 처리
-        if (resourcePath.contains("daily_quizzes.sql")) {
-            sql = fixTimestampCastingIssues(sql);
-        }
+        // SQL 문장 개수 체크 (대략적으로)
+        long insertCount = sql.toLowerCase().split("insert into").length - 1;
+        log.info("SQL 파일 크기: {} bytes, INSERT 문 개수: {}", sql.length(), insertCount);
 
-        // SQL 실행
-        jdbcTemplate.execute(sql);
+        try {
+            // SQL 실행 전 데이터 개수 확인
+            int beforeUsers = getTableCount("users");
+            int beforeQuizzes = getTableCount("quizzes");
+            int beforeTags = getTableCount("tags");
+            int beforeQuestions = getTableCount("questions");
+            
+            log.info("실행 전 데이터 개수 - Users: {}, Quizzes: {}, Tags: {}, Questions: {}", 
+                    beforeUsers, beforeQuizzes, beforeTags, beforeQuestions);
+
+            // 전체 SQL을 한 번에 실행 (복잡한 구문 지원)
+            log.info("전체 SQL 실행 시작: {}", resourcePath);
+            jdbcTemplate.execute(sql);
+            log.info("전체 SQL 실행 완료: {}", resourcePath);
+            
+            // SQL 실행 후 데이터 개수 확인
+            int afterUsers = getTableCount("users");
+            int afterQuizzes = getTableCount("quizzes");
+            int afterTags = getTableCount("tags");
+            int afterQuestions = getTableCount("questions");
+            
+            log.info("실행 후 데이터 개수 - Users: {}, Quizzes: {}, Tags: {}, Questions: {}", 
+                    afterUsers, afterQuizzes, afterTags, afterQuestions);
+            log.info("증가된 데이터 개수 - Users: +{}, Quizzes: +{}, Tags: +{}, Questions: +{}", 
+                    afterUsers - beforeUsers, afterQuizzes - beforeQuizzes, 
+                    afterTags - beforeTags, afterQuestions - beforeQuestions);
+            
+            log.info("SQL 실행 성공: {}", resourcePath);
+        } catch (Exception e) {
+            log.error("SQL 실행 중 오류: {} - {}", resourcePath, e.getMessage(), e);
+            
+            // SQL 내용의 일부를 로그로 출력 (디버깅용)
+            String sqlPreview = sql.length() > 500 ? sql.substring(0, 500) + "..." : sql;
+            log.error("실패한 SQL 내용 (처음 500자): {}", sqlPreview);
+            
+            throw e;
+        }
     }
 
     /**
-     * SQL 스크립트에서 타임스탬프 캐스팅 문제를 수정
+     * 테이블의 행 개수를 안전하게 조회
      */
-    private String fixTimestampCastingIssues(String sql) {
-        // NOW() + INTERVAL 표현식에 타임스탬프 캐스팅 추가
-        sql = sql.replaceAll("NOW\\(\\) \\+ INTERVAL '1 day'",
-                "(NOW() + INTERVAL '1 day')::timestamp");
-
-        // NOW() - INTERVAL 표현식에 타임스탬프 캐스팅 추가
-        sql = sql.replaceAll("NOW\\(\\) - \\(\\(seq-1\\) \\* INTERVAL '1 day'\\)",
-                "(NOW() - ((seq-1) * INTERVAL '1 day'))::timestamp");
-
-        return sql;
+    private int getTableCount(String tableName) {
+        try {
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM public." + tableName, Integer.class);
+            return count != null ? count : 0;
+        } catch (Exception e) {
+            log.warn("테이블 {} 개수 조회 실패: {}", tableName, e.getMessage());
+            return 0;
+        }
     }
 
-    private void fetchExampleIds() {
-        // 첫 번째 퀴즈 ID 가져오기
-        try {
-            EXAMPLE_QUIZ_ID = jdbcTemplate.queryForObject(
-                    "SELECT id FROM public.quizzes LIMIT 1", String.class);
-            log.info("Example Quiz ID: " + EXAMPLE_QUIZ_ID);
-        } catch (Exception e) {
-            EXAMPLE_QUIZ_ID = "00000000-0000-0000-0000-000000000000";
-            log.error("퀴즈 ID 가져오기 실패: " + e.getMessage());
-        }
-
-        // 첫 번째 사용자 ID 가져오기
+    /**
+     * Swagger 예제용 ID 설정
+     */
+    private void setExampleIds() {
         try {
             EXAMPLE_USER_ID = jdbcTemplate.queryForObject(
                     "SELECT id FROM public.users LIMIT 1", String.class);
-            log.info("Example User ID: " + EXAMPLE_USER_ID);
+            log.info("Example User ID: {}", EXAMPLE_USER_ID);
         } catch (Exception e) {
             EXAMPLE_USER_ID = "00000000-0000-0000-0000-000000000000";
-            log.error("사용자 ID 가져오기 실패: " + e.getMessage());
+            log.warn("사용자 ID 가져오기 실패, 기본값 사용");
         }
 
-        // 첫 번째 태그 ID 가져오기
+        try {
+            EXAMPLE_QUIZ_ID = jdbcTemplate.queryForObject(
+                    "SELECT id FROM public.quizzes LIMIT 1", String.class);
+            log.info("Example Quiz ID: {}", EXAMPLE_QUIZ_ID);
+        } catch (Exception e) {
+            EXAMPLE_QUIZ_ID = "00000000-0000-0000-0000-000000000000";
+            log.warn("퀴즈 ID 가져오기 실패, 기본값 사용");
+        }
+
         try {
             EXAMPLE_TAG_ID = jdbcTemplate.queryForObject(
                     "SELECT id FROM public.tags LIMIT 1", String.class);
-            log.info("Example Tag ID: " + EXAMPLE_TAG_ID);
+            log.info("Example Tag ID: {}", EXAMPLE_TAG_ID);
         } catch (Exception e) {
             EXAMPLE_TAG_ID = "00000000-0000-0000-0000-000000000000";
-            log.error("태그 ID 가져오기 실패: " + e.getMessage());
+            log.warn("태그 ID 가져오기 실패, 기본값 사용");
         }
     }
 }

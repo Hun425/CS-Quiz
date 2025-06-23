@@ -1,12 +1,28 @@
 -- 새로운 더미 데이터 추가 (프론트엔드, 백엔드, 네트워크)
 
--- 1. 필요한 태그 추가 (프론트엔드, 백엔드)
+-- 0. 필수 의존성 데이터 생성 (관리자 사용자, 기본 태그들)
+-- 관리자 사용자 생성 (없는 경우에만)
+INSERT INTO public.users (
+    email, username, experience, is_active, level, provider, provider_id,
+    required_experience, role, total_points, created_at, updated_at, profile_image,
+    last_login, access_token, refresh_token, token_expires_at
+)
+SELECT 
+    'admin@example.com', 'admin', 800, true, 10, 'GITHUB', 'admin_id_123',
+    1000, 'ADMIN', 5000, NOW(), NOW(),
+    'https://robohash.org/admin?set=set4', NOW() - INTERVAL '2 days',
+    NULL, NULL, NULL
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.users WHERE role = 'ADMIN'
+);
+
+-- 1. 필요한 태그 추가 (프론트엔드, 백엔드, 네트워크)
 INSERT INTO public.tags (created_at, name, description)
 VALUES
     (NOW(), '프론트엔드', '프론트엔드 웹 개발 관련 기술 및 개념 (HTML, CSS, JavaScript, 프레임워크 등)'),
-    (NOW(), '백엔드', '백엔드 개발 관련 기술 및 개념 (서버, 데이터베이스, API, 프레임워크 등)')
+    (NOW(), '백엔드', '백엔드 개발 관련 기술 및 개념 (서버, 데이터베이스, API, 프레임워크 등)'),
+    (NOW(), '네트워크', '네트워킹 프로토콜, 모델 및 인프라')
 ON CONFLICT (name) DO NOTHING; -- 이미 존재하면 추가하지 않음
--- '네트워크' 태그는 dummy_data.sql 에 이미 존재
 
 -- 2. 새로운 퀴즈 추가 (프론트엔드, 백엔드, 네트워크 - 각 초급/중급 1개씩, 총 6개 퀴즈)
 
