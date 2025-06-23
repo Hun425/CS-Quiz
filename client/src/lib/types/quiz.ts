@@ -64,17 +64,36 @@ export interface QuizPlayResponse extends QuizDetailResponse {
  * - 개별 퀴즈의 상세 정보를 포함
  */
 export interface QuizDetailResponse {
-  id: number;
-  title: string;
-  description: string;
-  quizType: QuizType;
-  difficultyLevel: QuizDifficultyType;
-  timeLimit: number;
-  questionCount: number;
-  tags: TagResponse[];
-  creator: Creator;
-  statistics?: QuizStatisticsResponse;
+  attemptCount: number;
+  avgScore: number;
   createdAt: string;
+  creator?: string | null;
+  creatorId: number;
+  creatorProfileImage: string;
+  creatorUsername: string;
+  description: string;
+  difficultyLevel: QuizDifficultyType;
+  id: number;
+  isPublic: boolean;
+  questionCount: number;
+  quizType: QuizType;
+  statistics?: QuizStatisticsResponse | null;
+  tags: TagResponse[];
+  timeLimit: number;
+  title: string;
+  viewCount: number;
+  // 기존 필드들
+  // id: number;
+  // title: string;
+  // description: string;
+  // quizType: QuizType;
+  // difficultyLevel: QuizDifficultyType;
+  // timeLimit: number;
+  // questionCount: number;
+  // tags: TagResponse[];
+  // creator: Creator;
+  // statistics?: QuizStatisticsResponse;
+  // createdAt: string;
 }
 
 /**
