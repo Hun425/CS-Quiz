@@ -83,7 +83,6 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
   setAnswer: (questionId, answer) =>
     set((state) => {
       const updatedAnswers = { ...state.answers, [questionId]: answer };
-      console.log("Updated Answers:", updatedAnswers);
       const isCompleted =
         Object.keys(updatedAnswers).length === state.questionCount;
 

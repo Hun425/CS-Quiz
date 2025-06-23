@@ -14,8 +14,8 @@ export default function QueryProvider({
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 1000 * 60 * 30, // ✅ 30분 동안 fresh 상태 유지
-            gcTime: 1000 * 60 * 35, // ✅ 35분 후에 garbage collection
+            staleTime: 10000, // ✅ 10초 이내에는 캐시된 결과 사용
+            gcTime: 1000 * 60 * 30, // ✅ 30분 후에 garbage collection
             refetchOnWindowFocus: false,
           },
         },

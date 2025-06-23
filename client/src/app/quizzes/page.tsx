@@ -26,7 +26,7 @@ const QuizListPage: React.FC = () => {
   const { data, isLoading, error } = useSearchQuizzes(
     searchParams,
     currentPage,
-    10
+    12
   );
 
   const handleSearch = (newParams: {
