@@ -110,15 +110,16 @@ public interface QuizRepository extends JpaRepository<Quiz, Long>, CustomQuizRep
     Optional<Quiz> findQuizForSummaryById(@Param("id") Long id);
     
     /**
-     * 퀴즈 상세 정보를 DTO로 직접 조회합니다. (N+1 문제 방지, 문제 제외)
+     * 퀴즈 상세 정보를 DTO로 직접 조회합니다. (N+1 문제 방지, 기본 필드만)
      *
      * @param id 조회할 퀴즈 ID
-     * @return 퀴즈 상세 정보 DTO
+     * @return 퀴즈 상세 정보 DTO (기본 필드만, tags/creator/statistics는 별도 로딩)
      */
     @Query("SELECT new com.quizplatform.core.dto.quiz.QuizDetailResponse(" +
            "q.id, q.title, q.description, q.quizType, q.difficultyLevel, q.questionCount, " +
            "q.timeLimit, q.creator.id, q.creator.username, q.creator.profileImage, " +
-           "q.viewCount, q.attemptCount, q.avgScore, q.createdAt, q.isPublic) " +
+           "q.viewCount, q.attemptCount, q.avgScore, q.createdAt, q.isPublic, " +
+           "null, null, null) " + // tags, creator, statistics는 null로 전달
            "FROM Quiz q WHERE q.id = :id")
     Optional<QuizDetailResponse> findQuizDetailResponseById(@Param("id") Long id);
     

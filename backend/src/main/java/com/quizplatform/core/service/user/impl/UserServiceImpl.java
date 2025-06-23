@@ -21,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,9 +68,38 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public UserProfileDto getUserProfile(Long userId) {
+        // 보안 체크: 본인 또는 관리자만 프로필 조회 가능
+        validateUserAccess(userId);
+        
         // 개선: DTO 직접 조회로 변경하여 N+1 문제 해결
         return userRepository.findUserProfileDtoById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다: " + userId));
+    }
+    
+    /**
+     * 사용자 접근 권한을 검증합니다.
+     * 본인 또는 관리자만 접근할 수 있습니다.
+     */
+    private void validateUserAccess(Long targetUserId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "인증이 필요합니다");
+        }
+        
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+            String username = ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
+            User currentUser = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "현재 사용자를 찾을 수 없습니다"));
+            
+            // 본인이거나 관리자인 경우만 허용
+            boolean isOwner = currentUser.getId().equals(targetUserId);
+            boolean isAdmin = currentUser.getRole().name().equals("ADMIN");
+            
+            if (!isOwner && !isAdmin) {
+                throw new BusinessException(ErrorCode.FORBIDDEN, "다른 사용자의 프로필에 접근할 수 없습니다");
+            }
+        }
     }
 
     /**

@@ -136,9 +136,10 @@ logging:
     root: INFO
     com.quizplatform: DEBUG
     org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    org.springframework.cache: TRACE
-    org.springframework.data.elasticsearch.client.WIRE: TRACE
+    # 운영환경에서는 TRACE 레벨 비활성화 (민감한 정보 노출 방지)
+    # org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.cache: DEBUG
+    # org.springframework.data.elasticsearch.client.WIRE: TRACE
 
 # JWT 설정
 jwt:

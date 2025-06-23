@@ -25,6 +25,13 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "사용자를 찾을 수 없습니다."),
     DUPLICATE_USERNAME(HttpStatus.CONFLICT, "U002", "이미 존재하는 사용자명입니다."),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "U003", "잘못된 비밀번호입니다."),
+    
+    // Security Related Errors (보안 관련 오류)
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "S001", "인증이 필요합니다."),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "S002", "접근 권한이 없습니다."),
+    ACCESS_DENIED(HttpStatus.FORBIDDEN, "S003", "해당 자원에 접근할 수 없습니다."),
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "S004", "유효하지 않은 토큰입니다."),
+    TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "S005", "토큰이 만료되었습니다."),
 
     // Quiz Related Errors (퀴즈 관련 오류)
     QUIZ_NOT_FOUND(HttpStatus.NOT_FOUND, "Q001", "퀴즈를 찾을 수 없습니다."),

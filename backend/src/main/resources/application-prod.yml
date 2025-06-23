@@ -123,7 +123,7 @@ logging:
 
 # JWT 설정
 jwt:
-  secret: ${JWT_SECRET:AbCdEfGhIjKlMnOpQrStUvWxYz1234567890AbCdEfGhIjKlMnOpQrStUvWxYz}
+  secret: ${JWT_SECRET}  # 운영환경에서는 반드시 환경변수로 설정
   access-token-validity: 3600000  # 1시간
   refresh-token-validity: 1209600000  # 2주
 

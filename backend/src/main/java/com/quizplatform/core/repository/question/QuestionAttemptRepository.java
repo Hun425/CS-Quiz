@@ -34,15 +34,13 @@ public interface QuestionAttemptRepository extends JpaRepository<QuestionAttempt
      *
      * @param question 오답 통계를 조회할 대상 문제 객체
      * @param pageable 페이징 정보 (조회할 개수 제한 등)
-     * @return 흔한 오답 정보 리스트. 각 요소는 Object 배열이며, 주로 [userAnswer(String), count(Long)] 형태일 것으로 예상됩니다.
-     * (주의: 현재 쿼리는 userAnswer만 SELECT 하므로, 반환 타입 확인 필요. COUNT는 정렬에만 사용됨)
-     * -> 개선된 쿼리: "SELECT qa.userAnswer, COUNT(qa.userAnswer) FROM ... GROUP BY qa.userAnswer ORDER BY COUNT(qa.userAnswer) DESC"
+     * @return 흔한 오답 정보 리스트. 각 요소는 Object 배열이며, [userAnswer(String), count(Long)] 형태입니다.
      */
-    @Query("SELECT qa FROM QuestionAttempt qa " + // 현재 쿼리는 QuestionAttempt 엔티티 전체를 반환합니다.
+    @Query("SELECT qa.userAnswer, COUNT(qa.userAnswer) FROM QuestionAttempt qa " +
             "WHERE qa.question = :question AND qa.isCorrect = false " +
-            "GROUP BY qa.userAnswer " + // userAnswer 기준으로 그룹화 (쿼리 의미상 userAnswer와 count를 반환하는 것이 적절해 보임)
-            "ORDER BY COUNT(qa.userAnswer) DESC") // userAnswer 등장 횟수 내림차순 정렬
-    List<Object[]> findCommonWrongAnswers( // 반환 타입을 List<QuestionAttempt> 또는 특정 DTO로 변경 고려
+            "GROUP BY qa.userAnswer " +
+            "ORDER BY COUNT(qa.userAnswer) DESC")
+    List<Object[]> findCommonWrongAnswers(
                                            @Param("question") Question question,
                                            Pageable pageable
     );
