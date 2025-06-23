@@ -201,7 +201,7 @@ export default function QuizPlayPage() {
                     onClick={() =>
                       setAnswer(
                         quizPlayData.questions[currentQuestionIndex].id,
-                        option.key
+                        option.value
                       )
                     }
                   >
