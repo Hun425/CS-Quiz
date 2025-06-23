@@ -46,10 +46,11 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     /**
      * OAuth2 인증이 성공적으로 완료되었을 때 호출되는 메서드입니다.
      * 1. 인증된 사용자 정보(UserPrincipal)를 가져옵니다.
-     * 2. Access Token과 Refresh Token을 생성합니다.
-     * 3. Refresh Token을 Redis에 저장합니다.
-     * 4. 리다이렉트할 Target URL을 구성합니다. (redirectUri + 쿼리 파라미터)
-     * 5. 사용자를 Target URL로 리다이렉트 시킵니다.
+     * 2. 사용자 ID를 명시적으로 Subject로 하는 Authentication 생성
+     * 3. Access Token과 Refresh Token을 생성합니다.
+     * 4. Refresh Token을 Redis에 저장합니다.
+     * 5. 리다이렉트할 Target URL을 구성합니다. (redirectUri + 쿼리 파라미터)
+     * 6. 사용자를 Target URL로 리다이렉트 시킵니다.
      *
      * @param request        HTTP 요청 객체
      * @param response       HTTP 응답 객체
@@ -69,19 +70,22 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         log.debug("OAuth2 authentication successful for user: {}", userPrincipal.getEmail());
 
-        // 2. JWT Access Token 및 Refresh Token 생성
-        String accessToken = tokenProvider.generateAccessToken(authentication);
-        String refreshToken = tokenProvider.generateRefreshToken(authentication);
-        log.debug("Generated tokens for user: {}", userPrincipal.getEmail());
+        // 2. 사용자 ID를 명시적으로 Subject로 하는 Authentication 생성
+        Authentication idBasedAuth = createAuthenticationWithUserId(userPrincipal);
+        
+        // 3. JWT Access Token 및 Refresh Token 생성 (ID 기반 Authentication 사용)
+        String accessToken = tokenProvider.generateAccessToken(idBasedAuth);
+        String refreshToken = tokenProvider.generateRefreshToken(idBasedAuth);
+        log.debug("Generated tokens for user: {} (ID: {})", userPrincipal.getEmail(), userPrincipal.getId());
 
 
-        // 3. Redis에 Refresh Token 저장
+        // 4. Redis에 Refresh Token 저장
         saveRefreshToken(userPrincipal.getId(), refreshToken);
 
-        // 4. Access Token 만료 시간 계산 (응답에 포함시키기 위함)
+        // 5. Access Token 만료 시간 계산 (응답에 포함시키기 위함)
         long expiresIn = tokenProvider.getAccessTokenExpirationMs();
 
-        // 5. 응답 데이터 구성 (AuthResponse DTO 사용) - 실제 응답 본문 대신 리다이렉트 파라미터로 사용
+        // 6. 응답 데이터 구성 (AuthResponse DTO 사용) - 실제 응답 본문 대신 리다이렉트 파라미터로 사용
         AuthResponse authResponse = AuthResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
@@ -91,7 +95,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 .username(userPrincipal.getUsername())
                 .build();
 
-        // 6. 리다이렉트 Target URL 구성
+        // 7. 리다이렉트 Target URL 구성
         // 설정된 redirectUri에 토큰, 사용자 정보 등을 쿼리 파라미터로 추가
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
                 .queryParam("token", authResponse.getAccessToken())
@@ -101,11 +105,40 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 .queryParam("expiresIn", authResponse.getExpiresIn())
                 .build().toUriString();
 
-        log.info("Redirecting user {} to target URL: {}", userPrincipal.getEmail(), targetUrl);
+        log.info("Redirecting user {} (ID: {}) to target URL: {}", userPrincipal.getEmail(), userPrincipal.getId(), targetUrl);
 
-        // 7. 리다이렉트 수행 (SimpleUrlAuthenticationSuccessHandler의 기능 사용)
+        // 8. 리다이렉트 수행 (SimpleUrlAuthenticationSuccessHandler의 기능 사용)
         // clearAuthenticationAttributes(request); // 이전 인증 속성 정리 (필요 시)
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
+    }
+
+    /**
+     * 사용자 ID를 명시적으로 Subject로 하는 Authentication 객체를 생성합니다.
+     * OAuth2 제공자별로 다른 name 속성 대신 일관된 사용자 ID를 사용합니다.
+     *
+     * @param userPrincipal 사용자 정보
+     * @return 사용자 ID를 Subject로 하는 Authentication 객체
+     */
+    private Authentication createAuthenticationWithUserId(UserPrincipal userPrincipal) {
+        // OAuth2User 구현체 생성 - Subject로 사용자 ID를 명시적으로 설정
+        org.springframework.security.oauth2.core.user.OAuth2User oauth2User = 
+            new org.springframework.security.oauth2.core.user.DefaultOAuth2User(
+                userPrincipal.getAuthorities(),
+                java.util.Map.of(
+                    "sub", userPrincipal.getId().toString(), // 사용자 ID를 sub 클레임으로 설정
+                    "email", userPrincipal.getEmail(),
+                    "name", userPrincipal.getUsername(),
+                    "picture", userPrincipal.getProfileImage() != null ? userPrincipal.getProfileImage() : ""
+                ),
+                "sub" // nameAttributeKey - 사용자 ID를 기본 식별자로 사용
+            );
+
+        // OAuth2 인증 토큰 생성
+        return new org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken(
+                oauth2User,
+                userPrincipal.getAuthorities(),
+                "oauth2"
+        );
     }
 
     /**
