@@ -156,7 +156,7 @@ public class QuizServiceImpl implements QuizService {
     @Override
     @Cacheable(value = "quizDetails", key = "'quiz:' + #quizId", cacheResolver = "trackedCacheResolver")
     public QuizDetailResponse getQuizWithoutQuestions(Long quizId) {
-        // 개선: DTO 직접 조회로 변경하여 N+1 문제 해결
+        // DTO 직접 조회로 기본 성능 확보 (tags/creator/statistics는 필요시 별도 로딩)
         return quizRepository.findQuizDetailResponseById(quizId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_NOT_FOUND));
     }

@@ -1,7 +1,27 @@
 -- 새로운 더미 데이터 추가 (백엔드 고급, 네트워크 고급)
 
--- 1. 필요한 태그 확인 (이미 존재)
--- '백엔드', '네트워크' 태그는 이전 스크립트 또는 dummy_data.sql 에서 생성되었으므로 별도 생성 불필요
+-- 0. 필수 의존성 확인 및 생성 (이미 new.sql에서 생성되었지만 안전하게 체크)
+-- 관리자 사용자 생성 (없는 경우에만)
+INSERT INTO public.users (
+    email, username, experience, is_active, level, provider, provider_id,
+    required_experience, role, total_points, created_at, updated_at, profile_image,
+    last_login, access_token, refresh_token, token_expires_at
+)
+SELECT 
+    'admin@example.com', 'admin', 800, true, 10, 'GITHUB', 'admin_id_123',
+    1000, 'ADMIN', 5000, NOW(), NOW(),
+    'https://robohash.org/admin?set=set4', NOW() - INTERVAL '2 days',
+    NULL, NULL, NULL
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.users WHERE role = 'ADMIN'
+);
+
+-- 필요한 태그 생성 (없는 경우에만)
+INSERT INTO public.tags (created_at, name, description)
+VALUES
+    (NOW(), '백엔드', '백엔드 개발 관련 기술 및 개념 (서버, 데이터베이스, API, 프레임워크 등)'),
+    (NOW(), '네트워크', '네트워킹 프로토콜, 모델 및 인프라')
+ON CONFLICT (name) DO NOTHING;
 
 -- 2. 새로운 퀴즈 추가 (백엔드 고급 1개, 네트워크 고급 1개 - 각 10문제)
 

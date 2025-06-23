@@ -1,4 +1,4 @@
-package com.quizplatform.core.dto.progess;
+package com.quizplatform.core.dto.progress;
 
 import com.quizplatform.core.domain.battle.BattleRoomStatus;
 import lombok.Getter;

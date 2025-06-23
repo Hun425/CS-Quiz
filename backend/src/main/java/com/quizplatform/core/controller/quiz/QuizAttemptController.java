@@ -62,7 +62,7 @@ public class QuizAttemptController {
 
         // 사용자 인증 확인
         if (userPrincipal == null) {
-            return ResponseEntity.status(403).body(
+            return ResponseEntity.status(401).body(
                     CommonApiResponse.error("로그인이 필요합니다.", "UNAUTHORIZED")
             );
         }
@@ -102,7 +102,7 @@ public class QuizAttemptController {
 
         // 사용자 인증 확인
         if (userPrincipal == null) {
-            return ResponseEntity.status(403).body(
+            return ResponseEntity.status(401).body(
                     CommonApiResponse.error("로그인이 필요합니다.", "UNAUTHORIZED")
             );
         }

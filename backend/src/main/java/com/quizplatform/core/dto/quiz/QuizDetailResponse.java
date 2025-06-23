@@ -55,7 +55,7 @@ public class QuizDetailResponse {
                 .attemptCount(quiz.getAttemptCount())
                 .avgScore(quiz.getAvgScore())
                 .createdAt(quiz.getCreatedAt())
-                .isPublic(quiz.getIsPublic())
+                .isPublic(quiz.isPublic())
                 .tags(quiz.getTags().stream()
                         .map(TagResponse::from)
                         .collect(Collectors.toList()))

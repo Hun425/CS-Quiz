@@ -231,6 +231,21 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
      */
     @Override
     public List<Quiz> findRecommendedQuizzes(Set<Tag> tags, DifficultyLevel difficulty, int limit) {
+        // 입력 검증: limit 값이 유효한 범위인지 확인
+        if (limit < 1 || limit > 1000) {
+            throw new IllegalArgumentException("Limit must be between 1 and 1000, but was: " + limit);
+        }
+        
+        // 입력 검증: tags가 null이거나 비어있는지 확인
+        if (tags == null || tags.isEmpty()) {
+            throw new IllegalArgumentException("Tags cannot be null or empty");
+        }
+        
+        // 입력 검증: difficulty가 null인지 확인
+        if (difficulty == null) {
+            throw new IllegalArgumentException("Difficulty level cannot be null");
+        }
+        
         QQuiz quiz = QQuiz.quiz;
         QTag tag = QTag.tag; // 사용되지는 않지만 조인을 위해 선언
 
@@ -265,6 +280,21 @@ public class CustomQuizRepositoryImpl implements CustomQuizRepository {
      */
     @Override
     public List<QuizSummaryResponse> findRecommendedQuizSummaryResponses(Set<Tag> tags, DifficultyLevel difficulty, int limit) {
+        // 입력 검증: limit 값이 유효한 범위인지 확인
+        if (limit < 1 || limit > 1000) {
+            throw new IllegalArgumentException("Limit must be between 1 and 1000, but was: " + limit);
+        }
+        
+        // 입력 검증: tags가 null이거나 비어있는지 확인
+        if (tags == null || tags.isEmpty()) {
+            throw new IllegalArgumentException("Tags cannot be null or empty");
+        }
+        
+        // 입력 검증: difficulty가 null인지 확인
+        if (difficulty == null) {
+            throw new IllegalArgumentException("Difficulty level cannot be null");
+        }
+        
         QQuiz quiz = QQuiz.quiz;
         QTag tag = QTag.tag;
         QUser creator = QUser.user;

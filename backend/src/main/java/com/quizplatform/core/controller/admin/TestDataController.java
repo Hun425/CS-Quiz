@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "테스트 데이터 관리", description = "테스트 목적의 더미 데이터 생성 및 관리 API")
+@PreAuthorize("hasRole('ADMIN')")
 public class TestDataController {
 
     private final QuizDataGenerator quizDataGenerator;
