@@ -90,9 +90,12 @@ public class UserServiceImpl implements UserService {
         
         Object principal = authentication.getPrincipal();
         if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
-            String username = ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
-            User currentUser = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "현재 사용자를 찾을 수 없습니다"));
+            String email = ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
+            log.debug("Validating access for email: {} targeting userId: {}", email, targetUserId);
+            User currentUser = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "현재 사용자를 찾을 수 없습니다: " + email));
+            
+            log.debug("Current user found: id={}, email={}", currentUser.getId(), currentUser.getEmail());
             
             // 본인이거나 관리자인 경우만 허용
             boolean isOwner = currentUser.getId().equals(targetUserId);
