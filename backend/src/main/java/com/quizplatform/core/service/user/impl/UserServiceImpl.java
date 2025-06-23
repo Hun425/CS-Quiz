@@ -68,6 +68,8 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public UserProfileDto getUserProfile(Long userId) {
+        log.info("getUserProfile called with userId: {}", userId);
+        
         // 보안 체크: 본인 또는 관리자만 프로필 조회 가능
         validateUserAccess(userId);
         

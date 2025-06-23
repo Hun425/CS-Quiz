@@ -79,6 +79,7 @@ public class UserController {
             @Parameter(hidden = true)
             @AuthenticationPrincipal UserPrincipal principal) {
         Long userId = principal.getId();
+        log.info("getMyProfile called - UserPrincipal ID: {}, Email: {}", userId, principal.getEmail());
         UserProfileDto profile = userService.getUserProfile(userId);
         return ResponseEntity.ok(CommonApiResponse.success(profile));
     }

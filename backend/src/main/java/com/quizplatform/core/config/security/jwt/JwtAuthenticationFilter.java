@@ -56,7 +56,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 log.debug("Valid JWT found, proceeding with authentication setup.");
                 // 3. JWT에서 사용자 ID 추출 (Subject 클레임 등 활용)
                 String userId = tokenProvider.getUserIdFromToken(jwt);
-                log.debug("User ID extracted from JWT: {}", userId);
+                log.info("User ID extracted from JWT: {}", userId);
 
                 // 4. 사용자 ID를 이용하여 UserDetails 객체 로드
                 // CustomUserDetailsService의 loadUserByUsername이 ID 문자열도 처리하도록 구현됨

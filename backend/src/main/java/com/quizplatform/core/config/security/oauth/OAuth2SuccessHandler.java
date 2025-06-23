@@ -74,6 +74,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         Authentication idBasedAuth = createAuthenticationWithUserId(userPrincipal);
         
         // 3. JWT Access Token 및 Refresh Token 생성 (ID 기반 Authentication 사용)
+        log.debug("Authentication name (subject): {}", idBasedAuth.getName());
         String accessToken = tokenProvider.generateAccessToken(idBasedAuth);
         String refreshToken = tokenProvider.generateRefreshToken(idBasedAuth);
         log.debug("Generated tokens for user: {} (ID: {})", userPrincipal.getEmail(), userPrincipal.getId());
