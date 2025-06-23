@@ -150,7 +150,8 @@ public class AuthServiceImpl implements AuthService {
 
             // 4. 최종적으로 사용자를 찾지 못한 경우
             if (user == null) {
-                throw new OAuth2AuthenticationProcessingException("사용자를 찾을 수 없습니다: " + userIdentifier);
+                log.error("리프레시 토큰에서 사용자 조회 실패. 토큰 클레임: {}", claims);
+                throw new OAuth2AuthenticationProcessingException("사용자를 찾을 수 없습니다. 토큰이 올바르지 않거나 사용자가 삭제되었을 수 있습니다: " + userIdentifier);
             }
 
             log.info("사용자 조회 성공: id={}, username={}", user.getId(), user.getUsername());
@@ -195,7 +196,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * 사용자 ID를. 명시적으로 subject(sub)로 사용하는 Authentication 객체를 생성합니다.
+     * 사용자 ID를 명시적으로 subject(sub)로 사용하는 Authentication 객체를 생성합니다.
      * 이는 리프레시 토큰 처리 시 일관성을 유지하기 위함입니다.
      *
      * @param user 사용자 엔티티
@@ -213,7 +214,7 @@ public class AuthServiceImpl implements AuthService {
                         "sub", user.getId().toString(), // ID를 sub 클레임으로 설정
                         "email", user.getEmail(),
                         "name", user.getUsername(),
-                        "picture", user.getProfileImage()
+                        "picture", user.getProfileImage() != null ? user.getProfileImage() : ""
                 ),
                 "sub" // nameAttributeKey - ID를 기본 식별자로 사용
         );
@@ -222,7 +223,7 @@ public class AuthServiceImpl implements AuthService {
         return new OAuth2AuthenticationToken(
                 oauth2User,
                 authorities,
-                user.getProvider().toString().toLowerCase()
+                "oauth2" // 고정된 등록 ID 사용
         );
     }
 
@@ -342,33 +343,14 @@ public class AuthServiceImpl implements AuthService {
      * 사용자 정보를 바탕으로 Authentication 객체를 생성합니다.
      *
      * <p>이 Authentication 객체는 JWT 토큰 생성에 사용됩니다.</p>
+     * <p>사용자 ID를 일관된 Subject로 사용합니다.</p>
      *
      * @param user 사용자 엔티티
      * @return Spring Security Authentication 객체
      */
     private Authentication createAuthentication(User user) {
-        Set<GrantedAuthority> authorities = Collections.singleton(
-                new SimpleGrantedAuthority("ROLE_USER")
-        );
-
-        // OAuth2User 구현체 생성
-        OAuth2User oauth2User = new DefaultOAuth2User(
-                authorities,
-                Map.of(
-                        "sub", user.getId().toString(),
-                        "email", user.getEmail(),
-                        "name", user.getUsername(),
-                        "picture", user.getProfileImage()
-                ),
-                "sub"  // nameAttributeKey - ID를 기본 식별자로 사용
-        );
-
-        // OAuth2 인증 토큰 생성
-        return new OAuth2AuthenticationToken(
-                oauth2User,
-                authorities,
-                user.getProvider().toString().toLowerCase()
-        );
+        // 일관성을 위해 createAuthenticationWithId 메서드 사용
+        return createAuthenticationWithId(user);
     }
 
     /**
