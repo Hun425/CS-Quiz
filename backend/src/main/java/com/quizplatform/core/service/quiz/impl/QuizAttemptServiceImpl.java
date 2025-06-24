@@ -175,9 +175,11 @@ public class QuizAttemptServiceImpl implements QuizAttemptService {
         quizAttempt.complete();
         quizAttemptRepository.save(quizAttempt); // 변경된 QuizAttempt 저장
 
-        // 퀴즈 자체의 통계 업데이트 (평균 점수, 시도 횟수 등)
-        quiz.recordAttempt(quizAttempt.getScore());
-        quizRepository.save(quiz); // 변경된 Quiz 정보 저장
+        // 퀴즈 자체의 통계 업데이트 (평균 점수, 시도 횟수 등) - 원자적 업데이트 사용
+        int updatedRows = quizRepository.updateQuizStatsAtomic(quiz.getId(), quizAttempt.getScore());
+        if (updatedRows == 0) {
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "퀴즈 통계 업데이트에 실패했습니다.");
+        }
 
         // 레벨링 서비스 호출하여 경험치 계산 및 부여, 레벨/업적 처리
         User user = quizAttempt.getUser();

@@ -264,9 +264,11 @@ public class QuizServiceImpl implements QuizService {
         // 퀴즈 시도 객체 생성 (시작 시간 기록)
         QuizAttempt quizAttempt = quizAttemptService.startQuiz(quizId, user);
 
-        // 퀴즈 조회수 증가
-        quiz.incrementViewCount();
-        quizRepository.save(quiz);
+        // 퀴즈 조회수 증가 (원자적 업데이트)
+        int updatedRows = quizRepository.incrementViewCountAtomic(quizId);
+        if (updatedRows == 0) {
+            throw new BusinessException(ErrorCode.QUIZ_NOT_FOUND, "퀴즈를 찾을 수 없습니다.");
+        }
 
         // 기본 퀴즈 응답 생성
         QuizResponse quizResponse = entityMapperService.mapToQuizResponse(quiz);
