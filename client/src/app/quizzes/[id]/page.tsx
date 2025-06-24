@@ -33,7 +33,7 @@ const QuizDetailPage: React.FC = () => {
 
   const { isAuthenticated } = useAuthStore();
   const { isLoading, error, data: quiz } = useGetQuizDetail(Number(quizId));
-
+  // 기능 완료시 삭제할것
   console.log(quiz);
 
   const handleStartQuiz = () => {
@@ -132,9 +132,11 @@ const QuizDetailPage: React.FC = () => {
         {/* 오른쪽: ⏳ 퀴즈 제한 시간 */}
         <div className="flex flex-col border border-border items-center justify-center p-3 sm:p-4 bg-background rounded-lg w-full sm:max-w-xs md:max-w-[10rem] text-center gap-1 sm:gap-2">
           <span className="text-xl sm:text-3xl font-bold text-primary">⏳</span>
-          <span className="text-xs text-gray-500">문제 당 제한 시간</span>
+          <span className="text-xs text-gray-500">제한 시간</span>
           <span className="text-lg sm:text-2xl font-bold text-primary">
-            {Math.floor(quiz.timeLimit)}분
+            {`${Math.floor((quiz.timeLimit * quiz.questionCount) / 60)}분 ${
+              (quiz.timeLimit * quiz.questionCount) % 60
+            }초`}
           </span>
         </div>
       </div>

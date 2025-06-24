@@ -60,7 +60,16 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
       currentQuestionIndex: 0,
       answers: {},
       isQuizCompleted: false,
-      remainingTime: timeLimit,
+      remainingTime: timeLimit * questionCount,
+      questionCount,
+      startTime,
+      endTime,
+    });
+
+    console.log("Quiz set:", {
+      quizId,
+      attemptId,
+      timeLimit,
       questionCount,
       startTime,
       endTime,
@@ -70,6 +79,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
   // 퀴즈 플레이 전체 응답 데이터 저장
   setQuizPlayData: (data) => {
     set({ quizPlayData: data });
+    console.log("Quiz play data set:", data);
   },
 
   // 문제 인덱스 이동

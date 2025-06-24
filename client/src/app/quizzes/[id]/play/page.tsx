@@ -162,7 +162,7 @@ export default function QuizPlayPage() {
           onClick={handleSubmitQuiz}
           className="text-white mt-6"
         >
-          ✅ 제출하기
+          제출하기
         </Button>
       </aside>
 
@@ -187,7 +187,7 @@ export default function QuizPlayPage() {
               (option) => {
                 const selected =
                   answers[quizPlayData.questions[currentQuestionIndex].id] ===
-                  option.key;
+                  option.value;
                 return (
                   <button
                     key={option.key}
@@ -254,7 +254,7 @@ export default function QuizPlayPage() {
               className="text-white w-full md:w-auto"
               onClick={handleSubmitQuiz}
             >
-              ✅ 제출하기
+              제출하기
             </Button>
           ) : (
             <Button
