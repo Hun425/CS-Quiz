@@ -23,38 +23,38 @@ export default function QuizPlayPage() {
     remainingTime,
     setCurrentQuestionIndex,
     setAnswer,
-    resetQuiz,
+    // resetQuiz,
     getElapsedTime,
   } = useQuizStore();
 
   const { quizPlayData, error, isLoading } = useLoadQuizPlayData(quizId);
 
   // ✅ 뒤로가기 감지 + confirm
-  useEffect(() => {
-    const handlePopState = () => {
-      const currentPath = window.location.pathname;
-      // ❗ "/quizzes/[id]/play"를 벗어나려 할 때만
-      if (!currentPath.includes(`/quizzes/${id}/play`)) {
-        const confirmLeave = window.confirm(
-          "퀴즈가 초기화됩니다. 나가시겠습니까?"
-        );
-        if (confirmLeave) {
-          resetQuiz(true); // 나가기 허용
-        } else {
-          setTimeout(() => {
-            window.history.forward(); // 취소했으면 앞으로 다시 밀기
-          }, 0);
-        }
-      }
-    };
+  // useEffect(() => {
+  //   const handlePopState = () => {
+  //     const currentPath = window.location.pathname;
+  //     // ❗ "/quizzes/[id]/play"를 벗어나려 할 때만
+  //     if (!currentPath.includes(`/quizzes/${id}/play`)) {
+  //       const confirmLeave = window.confirm(
+  //         "퀴즈가 초기화됩니다. 나가시겠습니까?"
+  //       );
+  //       if (confirmLeave) {
+  //         resetQuiz(true); // 나가기 허용
+  //       } else {
+  //         setTimeout(() => {
+  //           window.history.forward(); // 취소했으면 앞으로 다시 밀기
+  //         }, 0);
+  //       }
+  //     }
+  //   };
 
-    window.addEventListener("popstate", handlePopState);
+  //   window.addEventListener("popstate", handlePopState);
 
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-      resetQuiz(true); // 컴포넌트 언마운트 시 세션 정리
-    };
-  }, [id, resetQuiz]);
+  //   return () => {
+  //     window.removeEventListener("popstate", handlePopState);
+  //     resetQuiz(true); // 컴포넌트 언마운트 시 세션 정리
+  //   };
+  // }, [id, resetQuiz]);
 
   // ✅ 새로고침 방지용 beforeunload
   useEffect(() => {
