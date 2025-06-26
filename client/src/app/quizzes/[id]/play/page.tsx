@@ -23,60 +23,88 @@ export default function QuizPlayPage() {
     remainingTime,
     setCurrentQuestionIndex,
     setAnswer,
-    // resetQuiz,
+    resetQuiz,
     getElapsedTime,
   } = useQuizStore();
 
   const { quizPlayData, error, isLoading } = useLoadQuizPlayData(quizId);
 
-  // ✅ 뒤로가기 감지 + confirm
-  // useEffect(() => {
-  //   const handlePopState = () => {
-  //     const currentPath = window.location.pathname;
-  //     // ❗ "/quizzes/[id]/play"를 벗어나려 할 때만
-  //     if (!currentPath.includes(`/quizzes/${id}/play`)) {
-  //       const confirmLeave = window.confirm(
-  //         "퀴즈가 초기화됩니다. 나가시겠습니까?"
-  //       );
-  //       if (confirmLeave) {
-  //         resetQuiz(true); // 나가기 허용
-  //       } else {
-  //         setTimeout(() => {
-  //           window.history.forward(); // 취소했으면 앞으로 다시 밀기
-  //         }, 0);
-  //       }
-  //     }
-  //   };
+  // ✅ 뒤로가기 방지용 popstate 이벤트 리스너`
+  useEffect(() => {
+    const handlePopState = () => {
+      const confirmLeave = window.confirm(
+        "퀴즈가 초기화됩니다. 나가시겠습니까?"
+      );
+      if (confirmLeave) {
+        resetQuiz(true);
+      } else {
+        // 강제로 앞으로 다시 가는 로직은 Next.js에서는 비추
+        router.push(`/quizzes/${quizId}/play`);
+      }
+    };
 
-  //   window.addEventListener("popstate", handlePopState);
-
-  //   return () => {
-  //     window.removeEventListener("popstate", handlePopState);
-  //     resetQuiz(true); // 컴포넌트 언마운트 시 세션 정리
-  //   };
-  // }, [id, resetQuiz]);
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [quizId, resetQuiz, router]);
 
   // ✅ 새로고침 방지용 beforeunload
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = "";
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, []);
+  // useEffect(() => {
+  //   const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+  //     e.preventDefault();
+  //     e.returnValue = "";
+  //   };
+  //   window.addEventListener("beforeunload", handleBeforeUnload);
+  //   return () => {
+  //     window.removeEventListener("beforeunload", handleBeforeUnload);
+  //   };
+  // }, []);
 
   const handleSubmitQuiz = async () => {
-    if (!quizPlayData) return;
+    if (!quizPlayData || !attemptId) {
+      alert("퀴즈 정보를 불러오는 데 실패했습니다. 다시 시도해주세요.");
+      router.push("/quizzes");
+      return;
+    }
 
-    if (!isQuizCompleted && remainingTime === 0) {
-      alert("시간이 초과되었습니다. 퀴즈 목록으로 돌아갑니다.");
+    // 퀴즈에 문제가 없는 경우
+    if (quizPlayData.questions.length === 0) {
+      alert("문제가 존재하지 않는 퀴즈입니다.");
+      router.push("/quizzes");
+      return;
+    }
+
+    // 시간이 음수로 내려간 경우 예외 처리
+    if (remainingTime < 0) {
+      alert("시간이 만료되었습니다. 퀴즈 목록으로 돌아갑니다.");
+      resetQuiz(true); // 세션 초기화
       router.push(`/quizzes/${quizId}`);
       return;
     }
 
+    // 시간 초과 + 퀴즈 미완료
+    if (!isQuizCompleted && remainingTime === 0) {
+      alert("시간이 초과되었습니다. 퀴즈 목록으로 돌아갑니다.");
+      resetQuiz(true); // 세션 초기화
+      router.push(`/quizzes/${quizId}`);
+      return;
+    }
+
+    // 시간 초과 + 퀴즈 완료
+    if (isQuizCompleted && remainingTime === 0) {
+      alert("퀴즈 풀이가 완료되었습니다. 결과 페이지로 이동합니다.");
+      resetQuiz(true);
+      router.push(`/quizzes/${quizId}/results?attemptId=${attemptId}`);
+      return;
+    }
+
+    // 퀴즈 완료 + 시간 남음 → 중복 제출 방지
+    if (isQuizCompleted) {
+      alert("이미 퀴즈를 완료하였습니다. 결과 페이지로 이동합니다.");
+      router.push(`/quizzes/${quizId}/results?attemptId=${attemptId}`);
+      return;
+    }
+
+    // 시간 남았지만 퀴즈 미완료
     if (!isQuizCompleted) {
       alert("퀴즈가 완료되지 않았습니다. 모든 문제에 답을 선택해주세요.");
       return;

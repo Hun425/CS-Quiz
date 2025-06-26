@@ -106,6 +106,8 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
   resetQuiz: (clearSession = true) => {
     const { quizId, attemptId } = get();
 
+    console.log("퀴즈 스토어 초기화");
+
     if (clearSession && quizId && attemptId) {
       const key = `quiz-${quizId}-${attemptId}`;
       sessionStorage.removeItem("lastAttempt");
