@@ -22,7 +22,7 @@ const AuthSection = () => {
     data: recommendedQuizzes,
     isLoading: isLoadingRecommended,
     error: recommendedError,
-  } = useGetRecommendedQuizzes({ limit: 3 });
+  } = useGetRecommendedQuizzes({ limit: 1 });
 
   return (
     <section className="max-w-screen-xl text-foreground px-2 my-16 rounded-xl flex flex-col items-center text-center overflow-hidden">

@@ -20,11 +20,11 @@ export default function QuizPlayPage() {
     currentQuestionIndex,
     answers,
     isQuizCompleted,
-    remainingTime,
     setCurrentQuestionIndex,
     setAnswer,
     resetQuiz,
     getElapsedTime,
+    endTime,
   } = useQuizStore();
 
   const { quizPlayData, error, isLoading } = useLoadQuizPlayData(quizId);
@@ -38,7 +38,6 @@ export default function QuizPlayPage() {
       if (confirmLeave) {
         resetQuiz(true);
       } else {
-        // 강제로 앞으로 다시 가는 로직은 Next.js에서는 비추
         router.push(`/quizzes/${quizId}/play`);
       }
     };
@@ -47,19 +46,11 @@ export default function QuizPlayPage() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [quizId, resetQuiz, router]);
 
-  // ✅ 새로고침 방지용 beforeunload
-  // useEffect(() => {
-  //   const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-  //     e.preventDefault();
-  //     e.returnValue = "";
-  //   };
-  //   window.addEventListener("beforeunload", handleBeforeUnload);
-  //   return () => {
-  //     window.removeEventListener("beforeunload", handleBeforeUnload);
-  //   };
-  // }, []);
-
   const handleSubmitQuiz = async () => {
+    const now = Date.now();
+    const isTimeOver = endTime !== null && now >= endTime;
+    const shouldFillUnanswered = !isQuizCompleted || isTimeOver;
+
     if (!quizPlayData || !attemptId) {
       alert("퀴즈 정보를 불러오는 데 실패했습니다. 다시 시도해주세요.");
       router.push("/quizzes");
@@ -73,62 +64,48 @@ export default function QuizPlayPage() {
       return;
     }
 
-    // 시간이 음수로 내려간 경우 예외 처리
-    if (remainingTime < 0) {
-      alert("시간이 만료되었습니다. 퀴즈 목록으로 돌아갑니다.");
-      resetQuiz(true); // 세션 초기화
-      router.push(`/quizzes/${quizId}`);
-      return;
-    }
+    //  퀴즈 미완료
+    if (shouldFillUnanswered) {
+      const shouldSubmit = confirm(
+        "아직 모든 문제에 답하지 않았거나 시간이 초과되었습니다.\n답변하지 않은 문항은 '미선택'으로 처리됩니다.\n제출하시겠습니까?"
+      );
 
-    // 시간 초과 + 퀴즈 미완료
-    if (!isQuizCompleted && remainingTime === 0) {
-      alert("시간이 초과되었습니다. 퀴즈 목록으로 돌아갑니다.");
-      resetQuiz(true); // 세션 초기화
-      router.push(`/quizzes/${quizId}`);
-      return;
-    }
+      if (!shouldSubmit) {
+        alert("퀴즈 제출이 취소되었습니다.");
+        router.push(`/quizzes/${quizId}`);
+        return;
+      }
 
-    // 시간 초과 + 퀴즈 완료
-    if (isQuizCompleted && remainingTime === 0) {
-      alert("퀴즈 풀이가 완료되었습니다. 결과 페이지로 이동합니다.");
-      resetQuiz(true);
-      router.push(`/quizzes/${quizId}/results?attemptId=${attemptId}`);
-      return;
-    }
-
-    // 퀴즈 완료 + 시간 남음 → 중복 제출 방지
-    if (isQuizCompleted) {
-      alert("이미 퀴즈를 완료하였습니다. 결과 페이지로 이동합니다.");
-      router.push(`/quizzes/${quizId}/results?attemptId=${attemptId}`);
-      return;
-    }
-
-    // 시간 남았지만 퀴즈 미완료
-    if (!isQuizCompleted) {
-      alert("퀴즈가 완료되지 않았습니다. 모든 문제에 답을 선택해주세요.");
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-
-      const elapsedTime = getElapsedTime();
-      await submitQuizMutation.mutateAsync({
-        quizId,
-        submitData: {
-          quizAttemptId: attemptId!,
-          answers,
-          timeTaken: elapsedTime,
-        },
+      // 누락된 답변을 '미선택'으로 채워서 새로운 answers 객체 생성
+      const filledAnswers = { ...answers };
+      quizPlayData.questions.forEach((question) => {
+        if (!(question.id in filledAnswers)) {
+          filledAnswers[question.id] = "미선택";
+        }
       });
 
-      router.push(`/quizzes/${quizId}/results?attemptId=${attemptId}`);
-    } catch {
-      alert("퀴즈 제출 중 오류가 발생했습니다.");
-      router.push(`/quizzes/${quizId}`);
-    } finally {
-      setIsSubmitting(false);
+      try {
+        setIsSubmitting(true);
+        const elapsedTime = getElapsedTime();
+        await submitQuizMutation.mutateAsync({
+          quizId,
+          submitData: {
+            quizAttemptId: attemptId!,
+            answers: filledAnswers,
+            timeTaken: elapsedTime,
+          },
+        });
+
+        resetQuiz(true);
+        router.push(`/quizzes/${quizId}/results?attemptId=${attemptId}`);
+      } catch {
+        alert("퀴즈 제출 중 오류가 발생했습니다.");
+        router.push(`/quizzes/${quizId}`);
+      } finally {
+        setIsSubmitting(false);
+      }
+
+      return;
     }
   };
 

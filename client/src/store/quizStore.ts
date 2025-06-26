@@ -63,7 +63,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
       remainingTime: timeLimit * questionCount,
       questionCount,
       startTime,
-      endTime,
+      endTime: startTime + timeLimit * questionCount * 1000,
     });
 
     console.log("Quiz set:", {
