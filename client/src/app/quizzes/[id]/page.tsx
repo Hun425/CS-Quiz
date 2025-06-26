@@ -2,6 +2,7 @@
 
 import { useRouter, useParams } from "next/navigation";
 import { useGetQuizDetail } from "@/lib/api/quiz/useGetQuizDetail";
+import { useGetQuizStatistics } from "@/lib/api/quiz/useGetQuizStatistics";
 
 import { useAuthStore } from "@/store/authStore";
 import Image from "next/image";
@@ -16,7 +17,8 @@ import {
   Legend,
 } from "chart.js";
 import Loading from "@/app/_components/Loading";
-// import DifficultyChart from "../_components/DifficultyChart";
+import DifficultyChart from "../_components/DifficultyChart";
+import StatCard from "./../../(user)/_components/StatsCard";
 
 ChartJS.register(
   CategoryScale,
@@ -33,9 +35,10 @@ const QuizDetailPage: React.FC = () => {
 
   const { isAuthenticated } = useAuthStore();
   const { isLoading, error, data: quiz } = useGetQuizDetail(Number(quizId));
-  // 기능 완료시 삭제할것
-  console.log(quiz);
+  const { data: quizStatistics } = useGetQuizStatistics(Number(quizId));
+  const quizStatics = quizStatistics?.data;
 
+  console.log(quizStatics);
   const handleStartQuiz = () => {
     if (!isAuthenticated) {
       router.push(`/login?redirect=/quizzes/${quizId}`);
@@ -150,47 +153,56 @@ const QuizDetailPage: React.FC = () => {
       </button>
 
       {/* 📊 퀴즈 통계 */}
-      {quiz.attemptCount ? (
-        <div className="bg-background p-6 rounded-lg border border-border shadow-md">
-          <h2 className="text-lg sm:text-xl font-semibold text-primary mb-4">
-            📊 퀴즈 통계
-          </h2>
+      <div className="bg-background p-6 rounded-lg border border-border shadow-md">
+        <h2 className="text-lg sm:text-xl font-semibold text-primary mb-4">
+          📊 통계
+        </h2>
 
-          {/* 🔥 주요 통계 카드 */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard title="시도 횟수" value={`${quiz.attemptCount || "0"}`} />
-            <StatCard
-              title="평균 점수"
-              value={`${quiz.avgScore.toFixed(1) || "0"}`}
-            />
+        <div className="flex gap-4">
+          {/* 왼쪽: 통계 카드 (2/3) */}
+          <div className="flex-2 w-full gap-4">
+            <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-2">
+              <StatCard
+                title="시도 횟수"
+                value={`${quizStatics?.totalAttempts ?? 0}`}
+                isDummy={!quizStatics}
+              />
+              <StatCard
+                title="평균 점수"
+                value={`${quizStatics?.averageScore?.toFixed(1) ?? "0.0"}`}
+                isDummy={!quizStatics}
+              />
+              <StatCard
+                title="평균 시간"
+                value={`${quizStatics?.averageTimeSeconds ?? 0}`}
+                isDummy={!quizStatics}
+              />
+              <StatCard
+                title="완료율"
+                value={`${quizStatics?.completionRate?.toFixed(1) ?? "0.0"}%`}
+                isDummy={!quizStatics}
+              />
+            </div>
           </div>
 
-          {/* 📈 난이도 분포 그래프 */}
-          {/* {quizStatistics?.difficultyDistribution && (
-           <div className="mt-5 w-full">
-             <DifficultyChart
-               distribution={quiz.statistics?.difficultyDistribution ?? {}}
-             />
-           </div>
-         )} */}
+          {/* 오른쪽: 난이도 차트 (1/3) */}
+          <div className="flex-1 w-1/3 h-1/3 flex items-center justify-center">
+            <DifficultyChart
+              distribution={quizStatics?.difficultyDistribution ?? {}}
+              totalCount={quiz.questionCount}
+            />
+          </div>
         </div>
-      ) : !quiz.attemptCount ? (
-        <div className="bg-background p-6 rounded-lg border border-border shadow-md text-center">
-          <p className="text-lg text-danger font-semibold">
-            ❌ 통계 데이터를 불러오는 데 실패했습니다.
-          </p>
-        </div>
-      ) : null}
-    </div>
-  );
-};
+      </div>
 
-/* ✅ StatCard 컴포넌트 */
-const StatCard = ({ title, value }: { title: string; value: string }) => {
-  return (
-    <div className="bg-card-background p-2 rounded-md shadow-sm border border-card-border text-center">
-      <p className="text-xs sm:text-base text-foreground">{title}</p>
-      <p className="text-base sm:text-lg font-bold text-primary">{value}</p>
+      {/* 📈 통계 그래프 */}
+      <div className="mt-5 w-full">
+        <p>
+          {quizStatics?.questionStatistics.map(
+            (items, index) => items.averageTimeSeconds
+          )}
+        </p>
+      </div>
     </div>
   );
 };

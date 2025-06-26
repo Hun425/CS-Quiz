@@ -65,21 +65,11 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
       startTime,
       endTime: startTime + timeLimit * questionCount * 1000,
     });
-
-    console.log("Quiz set:", {
-      quizId,
-      attemptId,
-      timeLimit,
-      questionCount,
-      startTime,
-      endTime,
-    });
   },
 
   // 퀴즈 플레이 전체 응답 데이터 저장
   setQuizPlayData: (data) => {
     set({ quizPlayData: data });
-    console.log("Quiz play data set:", data);
   },
 
   // 문제 인덱스 이동
@@ -105,8 +95,6 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
   // 상태 초기화 및 세션 제거
   resetQuiz: (clearSession = true) => {
     const { quizId, attemptId } = get();
-
-    console.log("퀴즈 스토어 초기화");
 
     if (clearSession && quizId && attemptId) {
       const key = `quiz-${quizId}-${attemptId}`;

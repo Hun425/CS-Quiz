@@ -1,28 +1,34 @@
-const StatsCard: React.FC<{
-  completedQuizzes: number;
-  totalStudyTime: string;
-  accuracyRate: string;
-}> = ({ completedQuizzes, totalStudyTime, accuracyRate }) => {
+const StatCard = ({
+  title,
+  value,
+  isDummy = false,
+}: {
+  title: string;
+  value: string;
+  isDummy?: boolean;
+}) => {
   return (
-    <div className="bg-card p-6 rounded-lg shadow-md">
-      <h2 className="text-xl font-bold border-b-2 border-primary pb-2">
-        학습 진행 상황
-      </h2>
-      <div className="mt-4 flex justify-around text-center">
-        <div>
-          <p className="text-2xl font-bold text-primary">{completedQuizzes}</p>
-          <p className="text-neutral">완료한 문제</p>
+    <div
+      className={`relative p-2 rounded-md text-center border transition-all ${
+        isDummy
+          ? "bg-gray-100 text-gray-400 border-gray-300"
+          : "bg-card-background text-foreground border-border shadow-sm"
+      }`}
+    >
+      {/* ✅ '예시' 뱃지 표시 */}
+      {isDummy && (
+        <div
+          className="absolute top-1 right-1 text-[10px] px-1 py-[1px] rounded bg-gray-300 text-gray-600"
+          title="실제 데이터가 없어 예시 값이 표시됩니다."
+        >
+          예시
         </div>
-        <div>
-          <p className="text-2xl font-bold text-success">{totalStudyTime}</p>
-          <p className="text-neutral">총 학습 시간</p>
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-warning">{accuracyRate}</p>
-          <p className="text-neutral">정답률</p>
-        </div>
-      </div>
+      )}
+
+      <p className="text-xs sm:text-base">{title}</p>
+      <p className="text-base sm:text-lg font-bold">{value}</p>
     </div>
   );
 };
-export default StatsCard;
+
+export default StatCard;
