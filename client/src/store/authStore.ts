@@ -48,7 +48,10 @@ export const useAuthStore = create<AuthState>()(
 
         if (!wasLoggedOut) {
           alert("로그아웃 되었습니다.");
+        } else {
+          return; // 이미 로그아웃 상태이므로 추가 알림은 하지 않음
         }
+
         if (typeof window !== "undefined") {
           localStorage.removeItem("auth");
           localStorage.removeItem("profile");

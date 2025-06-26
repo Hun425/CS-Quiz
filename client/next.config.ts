@@ -7,7 +7,7 @@ const withAnalyzer = withBundleAnalyzer({
 
 const nextConfig: NextConfig = {
   reactStrictMode: false,
-  output: 'standalone', // Docker 배포를 위한 standalone 출력 활성화
+  output: "standalone", // Docker 배포를 위한 standalone 출력 활성화
   env: {},
   images: {
     remotePatterns: [
@@ -29,6 +29,11 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "via.placeholder.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "robohash.org",
         pathname: "/**",
       },
     ],

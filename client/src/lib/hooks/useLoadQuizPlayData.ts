@@ -17,7 +17,6 @@ export default function useLoadQuizPlayData(
   );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
-
   const { setQuiz, setQuizPlayData: setGlobalQuizPlayData } = useQuizStore();
 
   useEffect(() => {
@@ -62,7 +61,7 @@ export default function useLoadQuizPlayData(
       // 🔄 캐시 불가 → API 요청
       try {
         const fresh = await getPlayableQuiz(quizId);
-        const endTime = now + fresh.timeLimit * 1000;
+        const endTime = now + fresh.timeLimit * fresh.questionCount * 1000;
 
         setQuiz(
           quizId,

@@ -8,7 +8,7 @@ export default function CallbackClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { isAuthenticated, setToken } = useAuthStore();
-
+  console.log("🔵 CallbackClient: 로그인 응답 처리 중...");
   // ✅ 로그인 토큰 저장 및 인증 상태 업데이트
   useEffect(() => {
     const token = searchParams.get("token");
@@ -19,15 +19,6 @@ export default function CallbackClient() {
       const expiresAt = Date.now() + Number(expiresIn);
 
       setToken(token, refreshToken, expiresAt);
-
-      // //넥스트 서버에 토큰 보관
-      // fetch("/api/oauth2/set-token", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ token, refreshToken, expiresIn }),
-      // }).finally(() => {
-      //   router.replace("/quizzes");
-      // });
     } else {
       console.warn("🔴 잘못된 로그인 응답. 로그인 페이지로 이동.");
       router.replace("/login");

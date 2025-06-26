@@ -21,6 +21,7 @@ export const useGetQuizStatistics = (quizId: number) => {
       return response.data;
     },
     enabled: isAuthenticated && !!quizId,
+    staleTime: 0,
     refetchOnWindowFocus: true,
   });
 };

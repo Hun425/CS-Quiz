@@ -60,10 +60,10 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
       currentQuestionIndex: 0,
       answers: {},
       isQuizCompleted: false,
-      remainingTime: timeLimit,
+      remainingTime: timeLimit * questionCount,
       questionCount,
       startTime,
-      endTime,
+      endTime: startTime + timeLimit * questionCount * 1000,
     });
   },
 

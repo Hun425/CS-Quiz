@@ -20,81 +20,106 @@ export default function QuizPlayPage() {
     currentQuestionIndex,
     answers,
     isQuizCompleted,
-    remainingTime,
     setCurrentQuestionIndex,
     setAnswer,
     resetQuiz,
     getElapsedTime,
+    endTime,
   } = useQuizStore();
 
   const { quizPlayData, error, isLoading } = useLoadQuizPlayData(quizId);
 
-  // ✅ 뒤로가기 감지 + confirm
+  // ✅ 뒤로가기 방지용 popstate 이벤트 리스너`
   useEffect(() => {
     const handlePopState = () => {
-      const currentPath = window.location.pathname;
-      // ❗ "/quizzes/[id]/play"를 벗어나려 할 때만
-      if (!currentPath.includes(`/quizzes/${id}/play`)) {
-        const confirmLeave = window.confirm(
-          "퀴즈가 초기화됩니다. 나가시겠습니까?"
-        );
-        if (confirmLeave) {
-          resetQuiz(true); // 나가기 허용
-        } else {
-          setTimeout(() => {
-            window.history.forward(); // 취소했으면 앞으로 다시 밀기
-          }, 0);
-        }
+      const confirmLeave = window.confirm(
+        "퀴즈가 초기화됩니다. 나가시겠습니까?"
+      );
+      if (confirmLeave) {
+        resetQuiz(true);
+      } else {
+        router.push(`/quizzes/${quizId}/play`);
       }
     };
 
     window.addEventListener("popstate", handlePopState);
-
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-      resetQuiz(true); // 컴포넌트 언마운트 시 세션 정리
-    };
-  }, [id, resetQuiz]);
-
-  // ✅ 새로고침 방지용 beforeunload
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = "";
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, []);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [quizId, resetQuiz, router]);
 
   const handleSubmitQuiz = async () => {
-    if (!quizPlayData) return;
+    const now = Date.now();
+    const isTimeOver = endTime !== null && now >= endTime;
+    const shouldFillUnanswered = !isQuizCompleted || isTimeOver;
 
-    if (!isQuizCompleted && remainingTime === 0) {
-      alert("시간이 초과되었습니다. 퀴즈 목록으로 돌아갑니다.");
-      router.push(`/quizzes/${quizId}`);
+    if (!quizPlayData || !attemptId) {
+      alert("퀴즈 정보를 불러오는 데 실패했습니다. 다시 시도해주세요.");
+      router.push("/quizzes");
       return;
     }
 
-    if (!isQuizCompleted) {
-      alert("퀴즈가 완료되지 않았습니다. 모든 문제에 답을 선택해주세요.");
+    // 퀴즈에 문제가 없는 경우
+    if (quizPlayData.questions.length === 0) {
+      alert("문제가 존재하지 않는 퀴즈입니다.");
+      router.push("/quizzes");
       return;
     }
 
+    //  퀴즈 미완료
+    if (shouldFillUnanswered) {
+      const shouldSubmit = confirm(
+        "아직 모든 문제에 답하지 않았거나 시간이 초과되었습니다.\n답변하지 않은 문항은 '미선택'으로 처리됩니다.\n제출하시겠습니까?"
+      );
+
+      if (!shouldSubmit) {
+        alert("퀴즈 제출이 취소되었습니다.");
+        router.push(`/quizzes/${quizId}`);
+        return;
+      }
+
+      // 누락된 답변을 '미선택'으로 채워서 새로운 answers 객체 생성
+      const filledAnswers = { ...answers };
+      quizPlayData.questions.forEach((question) => {
+        if (!(question.id in filledAnswers)) {
+          filledAnswers[question.id] = "미선택";
+        }
+      });
+
+      try {
+        setIsSubmitting(true);
+        const elapsedTime = getElapsedTime();
+        await submitQuizMutation.mutateAsync({
+          quizId,
+          submitData: {
+            quizAttemptId: attemptId!,
+            answers: filledAnswers,
+            timeTaken: elapsedTime,
+          },
+        });
+
+        resetQuiz(true);
+        router.push(`/quizzes/${quizId}/results?attemptId=${attemptId}`);
+      } catch {
+        alert("퀴즈 제출 중 오류가 발생했습니다.");
+        router.push(`/quizzes/${quizId}`);
+      } finally {
+        setIsSubmitting(false);
+      }
+
+      return;
+    }
     try {
       setIsSubmitting(true);
-
       const elapsedTime = getElapsedTime();
       await submitQuizMutation.mutateAsync({
         quizId,
         submitData: {
           quizAttemptId: attemptId!,
-          answers,
+          answers: answers,
           timeTaken: elapsedTime,
         },
       });
 
+      resetQuiz(true);
       router.push(`/quizzes/${quizId}/results?attemptId=${attemptId}`);
     } catch {
       alert("퀴즈 제출 중 오류가 발생했습니다.");
@@ -102,6 +127,8 @@ export default function QuizPlayPage() {
     } finally {
       setIsSubmitting(false);
     }
+
+    return;
   };
 
   if (error) {
@@ -162,7 +189,7 @@ export default function QuizPlayPage() {
           onClick={handleSubmitQuiz}
           className="text-white mt-6"
         >
-          ✅ 제출하기
+          제출하기
         </Button>
       </aside>
 
@@ -187,7 +214,7 @@ export default function QuizPlayPage() {
               (option) => {
                 const selected =
                   answers[quizPlayData.questions[currentQuestionIndex].id] ===
-                  option.key;
+                  option.value;
                 return (
                   <button
                     key={option.key}
@@ -201,7 +228,7 @@ export default function QuizPlayPage() {
                     onClick={() =>
                       setAnswer(
                         quizPlayData.questions[currentQuestionIndex].id,
-                        option.key
+                        option.value
                       )
                     }
                   >
@@ -254,7 +281,7 @@ export default function QuizPlayPage() {
               className="text-white w-full md:w-auto"
               onClick={handleSubmitQuiz}
             >
-              ✅ 제출하기
+              제출하기
             </Button>
           ) : (
             <Button

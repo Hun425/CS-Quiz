@@ -8,7 +8,7 @@ const TokenTimer = memo(() => {
   const expiresAt = useAuthStore((state) => state.expiresAt);
   const logout = useAuthStore((state) => state.logout);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
-  const alertShownRef = useRef(false); // ✅ useRef로 alertShown 상태 관리
+  const alertShownRef = useRef(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -16,33 +16,38 @@ const TokenTimer = memo(() => {
 
     const updateTimer = () => {
       const now = Date.now();
-      const remainingTime = expiresAt - now; // ✅ 밀리초(ms) 단위
+      const remainingMs = expiresAt - now;
+      const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
 
-      if (remainingTime <= 0) {
+      setTimeLeft(remainingSec);
+
+      // 토큰 만료
+      if (remainingSec === 0) {
         logout();
-      } else {
-        setTimeLeft(Math.ceil(remainingTime / 1000)); // ✅ 초 단위 변환
+        alertShownRef.current = false; // 다음에 새로 로그인하면 다시 alert 가능하도록 초기화
+        return;
       }
 
-      // ✅ 59분 50초 (3590초) 이하일 때 한 번만 confirm 실행 // 300: 5분
-      if (remainingTime / 1000 <= 300 && !alertShownRef.current) {
+      // 5분 이하이고 alert가 아직 안 띄워졌으면
+      if (remainingSec <= 300 && !alertShownRef.current) {
         alertShownRef.current = true;
+
         if (window.confirm("토큰이 곧 만료됩니다. 연장하시겠습니까?")) {
           refreshAccessToken();
         }
       }
     };
 
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
+    updateTimer(); // 초기 실행
+    const intervalId = setInterval(updateTimer, 1000);
 
-    return () => clearInterval(interval);
+    return () => clearInterval(intervalId);
   }, [expiresAt, logout]);
 
   return (
     <span
-      className={`text-sm min-w-10  ${
-        timeLeft !== null && timeLeft < 300
+      className={`text-sm min-w-10 ${
+        timeLeft !== null && timeLeft <= 300
           ? "text-red-500 font-semibold"
           : "text-neutral-500"
       }`}

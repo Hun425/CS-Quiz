@@ -107,7 +107,7 @@ const BattleProgressBoard = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             >
-              🔄 게임 정보 수신 중...
+              문제를 풀고 있어요..
             </motion.li>
           ) : (
             <li className="text-sm text-center text-neutral-400">

@@ -2,6 +2,7 @@
 
 import { useRouter, useParams } from "next/navigation";
 import { useGetQuizDetail } from "@/lib/api/quiz/useGetQuizDetail";
+import { useGetQuizStatistics } from "@/lib/api/quiz/useGetQuizStatistics";
 
 import { useAuthStore } from "@/store/authStore";
 import Image from "next/image";
@@ -17,6 +18,8 @@ import {
 } from "chart.js";
 import Loading from "@/app/_components/Loading";
 import DifficultyChart from "../_components/DifficultyChart";
+import StatCard from "./../../(user)/_components/StatsCard";
+import QuestionStatisticsChart from "../_components/QuestionStaticsChart";
 
 ChartJS.register(
   CategoryScale,
@@ -33,9 +36,10 @@ const QuizDetailPage: React.FC = () => {
 
   const { isAuthenticated } = useAuthStore();
   const { isLoading, error, data: quiz } = useGetQuizDetail(Number(quizId));
+  const { data: quizStatistics } = useGetQuizStatistics(Number(quizId));
+  const quizStatics = quizStatistics?.data;
 
-  const quizStatistics = quiz?.statistics;
-
+  console.log(quizStatics);
   const handleStartQuiz = () => {
     if (!isAuthenticated) {
       router.push(`/login?redirect=/quizzes/${quizId}`);
@@ -87,7 +91,6 @@ const QuizDetailPage: React.FC = () => {
             {quiz.description}
           </p>
 
-          {/* 🔖 태그 목록 */}
           <div className="flex flex-wrap gap-2">
             <Tag difficultyLevel={quiz.difficultyLevel} />
             <Tag quizType={quiz.quizType} />
@@ -103,28 +106,28 @@ const QuizDetailPage: React.FC = () => {
             </div>
           )}
 
+          {quiz.creator}
           {/* 👤 제작자 정보 */}
           <div className="flex items-center gap-4 mt-2 border-t border-border pt-4">
-            {quiz.creator.profileImage ? (
-              <Image
-                src={quiz.creator.profileImage}
-                alt="프로필 이미지"
-                width={50}
-                height={50}
-                className="rounded-full border border-border"
-              />
+            {quiz.creatorProfileImage ? (
+              <>
+                <p>출제자</p>
+                <Image
+                  src={quiz.creatorProfileImage}
+                  alt="프로필 이미지"
+                  width={30}
+                  height={30}
+                  className="rounded-full border border-border"
+                />
+              </>
             ) : (
               <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-sm font-semibold">
-                {quiz.creator.username.charAt(0)}
+                {quiz.creatorUsername.charAt(0)}
               </div>
             )}
             <div className="text-sm">
               <p className="font-semibold text-primary">
-                {quiz.creator.username}
-              </p>
-              <p className="text-xs text-muted">
-                레벨 {quiz.creator.level} ・ 가입일:{" "}
-                {new Date(quiz.creator.joinedAt).toLocaleDateString()}
+                {quiz.creatorUsername}
               </p>
             </div>
           </div>
@@ -134,8 +137,10 @@ const QuizDetailPage: React.FC = () => {
         <div className="flex flex-col border border-border items-center justify-center p-3 sm:p-4 bg-background rounded-lg w-full sm:max-w-xs md:max-w-[10rem] text-center gap-1 sm:gap-2">
           <span className="text-xl sm:text-3xl font-bold text-primary">⏳</span>
           <span className="text-xs text-gray-500">제한 시간</span>
-          <span className="text-lg sm:text-3xl font-bold text-primary">
-            {Math.floor(quiz.timeLimit / 60)}분
+          <span className="text-lg sm:text-2xl font-bold text-primary">
+            {`${Math.floor((quiz.timeLimit * quiz.questionCount) / 60)}분 ${
+              (quiz.timeLimit * quiz.questionCount) % 60
+            }초`}
           </span>
         </div>
       </div>
@@ -149,58 +154,53 @@ const QuizDetailPage: React.FC = () => {
       </button>
 
       {/* 📊 퀴즈 통계 */}
-      {!quizStatistics ? (
-        <div className="bg-background p-6 rounded-lg border border-border shadow-md text-center">
-          <p className="text-lg text-danger font-semibold">
-            ❌ 통계 데이터를 불러오는 데 실패했습니다.
-          </p>
-        </div>
-      ) : quizStatistics ? (
-        <div className="bg-background p-6 rounded-lg border border-border shadow-md">
-          <h2 className="text-xl sm:text-2xl font-semibold text-primary mb-4">
-            📊 퀴즈 통계
-          </h2>
+      <div className="bg-background p-6 rounded-lg border border-border shadow-md">
+        <h2 className="text-lg sm:text-xl font-semibold text-primary mb-4">
+          📊 통계
+        </h2>
 
-          {/* 🔥 주요 통계 카드 */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard
-              title="🔥 시도"
-              value={`${quizStatistics.totalAttempts}`}
-            />
-            <StatCard
-              title="📊 평균 점수"
-              value={`${quizStatistics.averageScore?.toFixed(1) || "0"}`}
-            />
-            <StatCard
-              title="✅ 완료율"
-              value={`${quizStatistics.completionRate?.toFixed(1) || "0"}%`}
-            />
-            <StatCard
-              title="⏳ 평균 시간"
-              value={`${Math.floor(quizStatistics.averageTimeSeconds / 60)}분`}
-            />
-          </div>
-
-          {/* 📈 난이도 분포 그래프 */}
-          {quizStatistics?.difficultyDistribution && (
-            <div className="mt-5 w-full">
-              <DifficultyChart
-                distribution={quiz.statistics?.difficultyDistribution ?? {}}
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* 왼쪽: 통계 카드 (2/3) */}
+          <div className="md:flex-2 w-full gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-2">
+              <StatCard
+                title="시도 횟수"
+                value={`${quizStatics?.totalAttempts ?? 0}`}
+                isDummy={!quizStatics}
+              />
+              <StatCard
+                title="평균 점수"
+                value={`${quizStatics?.averageScore?.toFixed(1) ?? "0.0"}`}
+                isDummy={!quizStatics}
+              />
+              <StatCard
+                title="평균 시간"
+                value={`${quizStatics?.averageTimeSeconds ?? 0}`}
+                isDummy={!quizStatics}
+              />
+              <StatCard
+                title="완료율"
+                value={`${quizStatics?.completionRate?.toFixed(1) ?? "0.0"}%`}
+                isDummy={!quizStatics}
               />
             </div>
-          )}
-        </div>
-      ) : null}
-    </div>
-  );
-};
+          </div>
 
-/* ✅ StatCard 컴포넌트 */
-const StatCard = ({ title, value }: { title: string; value: string }) => {
-  return (
-    <div className="bg-card-background p-4 rounded-md shadow-sm border border-card-border text-center">
-      <p className="text-sm sm:text-base text-foreground">{title}</p>
-      <p className="text-base sm:text-lg font-bold text-primary">{value}</p>
+          {/* 오른쪽: 난이도 차트 (1/3) */}
+          <div className="flex-1 w-full md:w-1/3 h-full flex items-center justify-center">
+            <DifficultyChart
+              distribution={quizStatics?.difficultyDistribution ?? {}}
+              totalCount={quiz.questionCount}
+            />
+          </div>
+        </div>
+        {/* 📈 통계 그래프 */}
+        <div className="max-w-full mt-6 min-h-64">
+          <QuestionStatisticsChart
+            statistics={quizStatics?.questionStatistics ?? []}
+          />
+        </div>
+      </div>
     </div>
   );
 };

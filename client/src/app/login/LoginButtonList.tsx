@@ -35,7 +35,6 @@ const LoginButtonList = () => {
             }}
           >
             {providerStyles[provider].text}
-            {!isAvailable && <span className="text-xs">(준비 중)</span>}
           </button>
         );
       })}

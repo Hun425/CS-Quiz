@@ -34,7 +34,7 @@
     --theme-color-card-border: rgb(207, 212, 218);
     --theme-color-card-hover: #e2e8f0;
     --theme-color-tertiary: rgb(91, 51, 234);
-    --theme-color-muted: rgb(83, 88, 99);
+    --theme-color-muted: rgb(175, 175, 175);
     --theme-color-default-muted: rgb(54, 58, 65);
 
     --theme-color-background-gradient: radial-gradient(
@@ -68,7 +68,7 @@
     --theme-color-card-border: #374151;
     --theme-color-card-hover: rgba(255, 255, 255, 0.08);
     --theme-color-tertiary: #c084fc;
-    --theme-color-muted: rgb(83, 88, 99);
+    --theme-color-muted: rgb(119, 122, 128);
 
     --theme-color-background-gradient: radial-gradient(
       circle 700px at bottom,

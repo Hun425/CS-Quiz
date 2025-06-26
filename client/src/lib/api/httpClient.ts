@@ -6,11 +6,13 @@ import refreshAccessToken from "./refreshAccessToken";
 // 서버 사이드와 클라이언트 사이드를 구분하여 API URL 설정
 const getBaseURL = () => {
   // 서버 사이드 렌더링시 내부 Docker 네트워크 사용
-  if (typeof window === 'undefined') {
-    return process.env.API_BASE_URL ? `${process.env.API_BASE_URL}/api` : "http://backend:8080/api";
+  if (typeof window === "undefined") {
+    return process.env.API_BASE_URL
+      ? `${process.env.API_BASE_URL}/api`
+      : "http://backend:8080/api";
   }
   // 클라이언트 사이드에서는 외부 URL 사용
-  return process.env.NEXT_PUBLIC_API_BASE_URL 
+  return process.env.NEXT_PUBLIC_API_BASE_URL
     ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/api`
     : "http://localhost:8080/api";
 };
@@ -66,14 +68,16 @@ httpClient.interceptors.response.use(
       if (typeof window !== "undefined") {
         window.location.href = "/login";
       }
+    } else if (status >= 500) {
+      console.log("🚨 서버 오류:", error.response?.data);
     } else {
-      console.error("❌ API 오류:", error.response);
-
       const message =
         error.response?.data?.message || "서버 오류가 발생했습니다.";
 
-      const toastType =
-        status >= 500 ? "error" : status >= 400 ? "warning" : "info"; // fallback
+      const toastType = status < 500 && status >= 400 ? "warning" : "info"; // 500 이상은 console.log로 처리
+
+      // const toastType =
+      //   status >= 500 ? "error" : status >= 400 ? "warning" : "info"; // fallback
 
       showToast(message, toastType);
     }

@@ -52,7 +52,7 @@ const QuizSearchList: React.FC<Props> = ({
         <div className="flex justify-center mt-6 space-x-2">
           {/* 이전 버튼 */}
           <button
-            className={`px-5 py-2 rounded-lg border bg-gray-200 text-gray-600 hover:bg-gray-300 transition ${
+            className={`px-3 py-1 rounded-lg border bg-gray-200 text-gray-600 hover:bg-gray-300 transition ${
               currentPage === 0 ? "opacity-50" : ""
             }`}
             onClick={() => setCurrentPage(currentPage - 1)}
@@ -66,7 +66,7 @@ const QuizSearchList: React.FC<Props> = ({
             {[...Array(data.totalPages)].map((_, index) => (
               <button
                 key={index}
-                className={`px-4 py-2 rounded-lg border transition ${
+                className={`px-4 py-1 rounded-lg border transition ${
                   currentPage === index
                     ? "bg-primary text-white font-bold"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -80,7 +80,7 @@ const QuizSearchList: React.FC<Props> = ({
 
           {/* 다음 버튼 */}
           <button
-            className={`px-5 py-2 rounded-lg border bg-gray-200 text-gray-600 hover:bg-gray-300 transition ${
+            className={`px-3 py-1 rounded-lg border bg-gray-200 text-gray-600 hover:bg-gray-300 transition ${
               currentPage === data.totalPages - 1 ? "opacity-50" : ""
             }`}
             onClick={() => setCurrentPage(currentPage + 1)}
