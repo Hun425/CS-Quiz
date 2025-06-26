@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 /**
  * 사용자 프로필 표준 응답 DTO
@@ -39,21 +39,21 @@ public class UserProfileResponse {
     private Integer level;
 
     @Schema(description = "현재 경험치", example = "1250")
-    private Long experience;
+    private int experience;
 
     @Schema(description = "다음 레벨까지 필요 경험치", example = "1500")
-    private Long requiredExperience;
+    private int requiredExperience;
 
     @Schema(description = "총 포인트", example = "3450")
-    private Long totalPoints;
+    private int totalPoints;
 
     @Schema(description = "가입 일시", example = "2024-01-15 14:30:00")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime joinedAt;
+    private ZonedDateTime joinedAt;
 
     @Schema(description = "마지막 로그인 일시", example = "2024-06-23 09:15:00")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime lastLogin;
+    private ZonedDateTime lastLogin;
 
     // 확장 가능한 필드들 (필요 시 추가)
     @Schema(description = "총 퀴즈 시도 횟수", example = "42")

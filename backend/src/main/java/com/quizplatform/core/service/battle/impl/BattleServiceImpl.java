@@ -18,6 +18,7 @@ import com.quizplatform.core.repository.battle.BattleRoomRepository;
 import com.quizplatform.core.repository.quiz.QuizRepository;
 import com.quizplatform.core.repository.user.UserBattleStatsRepository;
 import com.quizplatform.core.service.battle.BattleService;
+import com.quizplatform.core.service.battle.BattleScoreManager;
 import com.quizplatform.core.service.common.EntityMapperService;
 import com.quizplatform.core.service.level.LevelingService;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +54,7 @@ public class BattleServiceImpl implements BattleService {
     private final LevelingService levelingService;
     private final EntityMapperService entityMapperService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final BattleScoreManager battleScoreManager;
 
     // Redis 키 접두사
     private static final String BATTLE_ROOM_KEY_PREFIX = "battle:room:";
@@ -67,7 +69,8 @@ public class BattleServiceImpl implements BattleService {
     public BattleServiceImpl(BattleRoomRepository battleRoomRepository, BattleParticipantRepository participantRepository,
                              UserRepository userRepository, QuizRepository quizRepository, UserBattleStatsRepository userBattleStatsRepository,
                              RedisTemplate<String, String> redisTemplate, LevelingService levelingService,
-                             EntityMapperService entityMapperService, @Lazy SimpMessagingTemplate messagingTemplate) {
+                             EntityMapperService entityMapperService, @Lazy SimpMessagingTemplate messagingTemplate,
+                             BattleScoreManager battleScoreManager) {
         this.battleRoomRepository = battleRoomRepository;
         this.participantRepository = participantRepository;
         this.userRepository = userRepository;
@@ -77,6 +80,7 @@ public class BattleServiceImpl implements BattleService {
         this.levelingService = levelingService;
         this.entityMapperService = entityMapperService;
         this.messagingTemplate = messagingTemplate;
+        this.battleScoreManager = battleScoreManager;
     }
 
     @Override
@@ -354,7 +358,7 @@ public class BattleServiceImpl implements BattleService {
                 participant.getUser().getId(), targetQuestion.getId(), 
                 request.getAnswer(), targetQuestion.getCorrectAnswer(), timeSpentSeconds);
 
-        // 답변 제출 및 점수 계산
+        // 답변 제출 및 점수 계산 (메모리에서만 처리)
         int oldScore = participant.getCurrentScore();
         BattleAnswer answer = participant.submitAnswer(
                 targetQuestion,
@@ -362,32 +366,43 @@ public class BattleServiceImpl implements BattleService {
                 timeSpentSeconds
         );
         
+        // 실시간 점수 업데이트 (BattleScoreManager 사용)
+        int scoreChange = answer.getEarnedPoints() + answer.getTimeBonus();
+        battleScoreManager.updateParticipantScore(
+                request.getRoomId(),
+                participant.getUser().getId(),
+                scoreChange,
+                answer.isCorrect(),
+                timeSpentSeconds
+        );
+        
         // 점수 변화 로깅
-        log.info("점수 계산 결과: userId={}, 문제ID={}, 정답여부={}, 기존점수={}, 획득점수={}, 새총점={}, 연속정답={}",
+        log.info("점수 계산 결과: userId={}, 문제ID={}, 정답여부={}, 기존점수={}, 획득점수={}, 새총점={}, 연속정답={}, 실시간점수={}",
                 participant.getUser().getId(), targetQuestion.getId(), answer.isCorrect(),
-                oldScore, answer.getEarnedPoints() + answer.getTimeBonus(),
-                participant.getCurrentScore(), participant.getCurrentStreak());
+                oldScore, scoreChange, participant.getCurrentScore(), participant.getCurrentStreak(),
+                battleScoreManager.getCurrentScore(request.getRoomId(), participant.getUser().getId()));
 
-        // 결과 저장
+        // 답변 기록만 저장 (점수는 메모리에서 관리)
         participant = participantRepository.save(participant);
 
         // Redis에 업데이트된 참가자 정보 저장
         saveParticipantToRedis(participant, sessionId);
 
-        // 응답 생성
+        // 응답 생성 (실시간 점수 사용)
+        int currentScoreFromManager = battleScoreManager.getCurrentScore(request.getRoomId(), participant.getUser().getId());
         BattleAnswerResponse response = BattleAnswerResponse.builder()
                 .questionId(answer.getQuestion().getId())
                 .isCorrect(answer.isCorrect())
                 .earnedPoints(answer.getEarnedPoints())
                 .timeBonus(answer.getTimeBonus())
-                .currentScore(participant.getCurrentScore())
+                .currentScore(currentScoreFromManager) // 실시간 점수 사용
                 .correctAnswer(answer.getQuestion().getCorrectAnswer())
                 .explanation(answer.getQuestion().getExplanation())
                 .build();
         
         log.info("답변 처리 완료: roomId={}, userId={}, questionId={}, 정답여부={}, 현재총점={}",
                 request.getRoomId(), participant.getUser().getId(), request.getQuestionId(),
-                answer.isCorrect(), participant.getCurrentScore());
+                answer.isCorrect(), currentScoreFromManager);
                 
         return response;
     }
@@ -438,7 +453,14 @@ public class BattleServiceImpl implements BattleService {
         room.startBattle();
         battleRoomRepository.save(room);
 
-        log.info("배틀 시작 처리 완료: roomId={}, 문제수={}, 참가자수={}",
+        // BattleScoreManager 초기화 (실시간 점수 관리)
+        List<Long> participantIds = room.getParticipants().stream()
+                .filter(BattleParticipant::isActive)
+                .map(p -> p.getUser().getId())
+                .collect(Collectors.toList());
+        battleScoreManager.initializeBattle(roomId, participantIds);
+
+        log.info("배틀 시작 처리 완료: roomId={}, 문제수={}, 참가자수={}, 실시간 점수 관리 초기화됨",
                 roomId, room.getQuestions().size(), room.getParticipants().size());
 
         return createBattleStartResponse(room);
@@ -535,8 +557,16 @@ public class BattleServiceImpl implements BattleService {
         BattleRoom room = battleRoomRepository.findByIdWithQuizQuestions(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BATTLE_ROOM_NOT_FOUND));
 
-        BattleProgress battleProgress = room.getProgress();
-        return createBattleProgressResponse(battleProgress);
+        // 실시간 점수 데이터 사용
+        if (battleScoreManager.isBattleActive(roomId)) {
+            Map<Long, com.quizplatform.core.dto.progress.ParticipantProgress> realtimeProgress = 
+                    battleScoreManager.getBattleProgress(roomId);
+            return createBattleProgressResponseFromRealtime(room, realtimeProgress);
+        } else {
+            // 배틀이 종료된 경우 기존 방식 사용
+            BattleProgress battleProgress = room.getProgress();
+            return createBattleProgressResponse(battleProgress);
+        }
     }
 
     @Override
@@ -547,10 +577,30 @@ public class BattleServiceImpl implements BattleService {
         // 대결 종료 및 결과 계산 (이미 종료된 경우 상태 변경 건너뜀)
         if (room.getStatus() != BattleRoomStatus.FINISHED) {
             log.info("배틀룸 종료 처리 수행: roomId={}", roomId);
+            
+            // 실시간 점수를 DB에 최종 저장
+            Map<Long, com.quizplatform.core.dto.progress.ParticipantProgress> finalScores = 
+                    battleScoreManager.finalizeBattleAndGetResults(roomId);
+            
+            // 참가자들의 최종 점수를 DB에 반영
+            for (BattleParticipant participant : room.getParticipants()) {
+                com.quizplatform.core.dto.progress.ParticipantProgress progress = 
+                        finalScores.get(participant.getUser().getId());
+                if (progress != null) {
+                    participant.setCurrentScore(progress.getCurrentScore());
+                    participant.setCurrentStreak(progress.getCurrentStreak());
+                    participantRepository.save(participant);
+                    log.info("최종 점수 저장: roomId={}, userId={}, finalScore={}", 
+                            roomId, participant.getUser().getId(), progress.getCurrentScore());
+                }
+            }
+            
             room.finishBattle();
             battleRoomRepository.save(room);
         } else {
             log.info("배틀룸 이미 종료됨: roomId={}", roomId);
+            // 이미 종료된 경우에도 캐시 정리
+            battleScoreManager.cleanupBattle(roomId);
         }
 
         BattleResult result = calculateBattleResult(room);
@@ -591,7 +641,9 @@ public class BattleServiceImpl implements BattleService {
             if (activeParticipantsCount < 1) {
                 battleRoom.setStatus(BattleRoomStatus.FINISHED);
                 battleRoomRepository.save(battleRoom);
-                log.info("마지막 활성 참가자가 나가서 배틀룸 상태 FINISHED로 변경: roomId={}", battleRoom.getId());
+                // 배틀 캐시 정리
+                battleScoreManager.cleanupBattle(battleRoom.getId());
+                log.info("마지막 활성 참가자가 나가서 배틀룸 상태 FINISHED로 변경 및 캐시 정리: roomId={}", battleRoom.getId());
             }
         }
 
@@ -1085,6 +1137,51 @@ public class BattleServiceImpl implements BattleService {
                 .remainingTimeSeconds((int) progress.getRemainingTime().getSeconds()) // 남은 시간 (초)
                 .participantProgress(participantProgress) // 참가자별 진행 상황 맵
                 .status(BattleRoomStatus.valueOf(progress.getStatus().name())) // 현재 배틀방 상태
+                .build();
+    }
+
+    /**
+     * 실시간 데이터로부터 대결 진행 상황 응답 객체를 생성합니다. (내부 헬퍼 메서드)
+     *
+     * @param room 배틀룸 객체
+     * @param realtimeProgress 실시간 참가자 진행 상황 데이터
+     * @return 생성된 {@link BattleProgressResponse} DTO
+     */
+    private BattleProgressResponse createBattleProgressResponseFromRealtime(
+            BattleRoom room, 
+            Map<Long, com.quizplatform.core.dto.progress.ParticipantProgress> realtimeProgress) {
+        
+        Map<Long, BattleProgressResponse.ParticipantProgress> participantProgress = new HashMap<>();
+
+        // 실시간 데이터를 사용하여 각 참가자의 진행 상황 매핑
+        for (BattleParticipant participant : room.getParticipants()) {
+            if (!participant.isActive()) continue;
+            
+            Long userId = participant.getUser().getId();
+            com.quizplatform.core.dto.progress.ParticipantProgress p = realtimeProgress.get(userId);
+            
+            if (p != null) {
+                participantProgress.put(
+                        userId,
+                        BattleProgressResponse.ParticipantProgress.builder()
+                                .userId(userId)
+                                .username(participant.getUser().getUsername())
+                                .currentScore(p.getCurrentScore()) // 실시간 점수 사용
+                                .correctAnswers(p.getCorrectAnswers())
+                                .hasAnsweredCurrent(participant.isHasAnsweredCurrent()) // DB에서 가져옴
+                                .currentStreak(p.getCurrentStreak()) // 실시간 연속 정답 수
+                                .build()
+                );
+            }
+        }
+
+        return BattleProgressResponse.builder()
+                .roomId(room.getId())
+                .currentQuestionIndex(room.getCurrentQuestionIndex())
+                .totalQuestions(room.getQuestions().size())
+                .remainingTimeSeconds(0) // 실시간에서는 별도 계산 필요
+                .participantProgress(participantProgress)
+                .status(room.getStatus())
                 .build();
     }
 

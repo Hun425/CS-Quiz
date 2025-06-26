@@ -539,6 +539,24 @@ public class BattleParticipant {
     }
     
     /**
+     * 현재 점수를 설정합니다.
+     * 
+     * @param score 설정할 점수
+     */
+    public void setCurrentScore(int score) {
+        this.currentScore = score;
+    }
+    
+    /**
+     * 현재 문제에 답변했는지 여부를 반환합니다.
+     * 
+     * @return 현재 문제에 답변했으면 true
+     */
+    public boolean isHasAnsweredCurrent() {
+        return hasAnsweredCurrentQuestion();
+    }
+    
+    /**
      * 점수 초기화 - 새 배틀 시작 시 호출
      */
     public void resetScore() {
