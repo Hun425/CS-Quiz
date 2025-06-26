@@ -107,6 +107,28 @@ export default function QuizPlayPage() {
 
       return;
     }
+    try {
+      setIsSubmitting(true);
+      const elapsedTime = getElapsedTime();
+      await submitQuizMutation.mutateAsync({
+        quizId,
+        submitData: {
+          quizAttemptId: attemptId!,
+          answers: answers,
+          timeTaken: elapsedTime,
+        },
+      });
+
+      resetQuiz(true);
+      router.push(`/quizzes/${quizId}/results?attemptId=${attemptId}`);
+    } catch {
+      alert("퀴즈 제출 중 오류가 발생했습니다.");
+      router.push(`/quizzes/${quizId}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+
+    return;
   };
 
   if (error) {

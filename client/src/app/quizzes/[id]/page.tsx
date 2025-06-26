@@ -19,6 +19,7 @@ import {
 import Loading from "@/app/_components/Loading";
 import DifficultyChart from "../_components/DifficultyChart";
 import StatCard from "./../../(user)/_components/StatsCard";
+import QuestionStatisticsChart from "../_components/QuestionStaticsChart";
 
 ChartJS.register(
   CategoryScale,
@@ -158,10 +159,10 @@ const QuizDetailPage: React.FC = () => {
           📊 통계
         </h2>
 
-        <div className="flex gap-4">
+        <div className="flex flex-col md:flex-row gap-4">
           {/* 왼쪽: 통계 카드 (2/3) */}
-          <div className="flex-2 w-full gap-4">
-            <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-2">
+          <div className="md:flex-2 w-full gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-2">
               <StatCard
                 title="시도 횟수"
                 value={`${quizStatics?.totalAttempts ?? 0}`}
@@ -186,22 +187,19 @@ const QuizDetailPage: React.FC = () => {
           </div>
 
           {/* 오른쪽: 난이도 차트 (1/3) */}
-          <div className="flex-1 w-1/3 h-1/3 flex items-center justify-center">
+          <div className="flex-1 w-full md:w-1/3 h-full flex items-center justify-center">
             <DifficultyChart
               distribution={quizStatics?.difficultyDistribution ?? {}}
               totalCount={quiz.questionCount}
             />
           </div>
         </div>
-      </div>
-
-      {/* 📈 통계 그래프 */}
-      <div className="mt-5 w-full">
-        <p>
-          {quizStatics?.questionStatistics.map(
-            (items, index) => items.averageTimeSeconds
-          )}
-        </p>
+        {/* 📈 통계 그래프 */}
+        <div className="max-w-full mt-6 min-h-64">
+          <QuestionStatisticsChart
+            statistics={quizStatics?.questionStatistics ?? []}
+          />
+        </div>
       </div>
     </div>
   );
