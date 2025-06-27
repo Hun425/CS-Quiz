@@ -82,7 +82,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-battle")
-                .setAllowedOrigins("http://localhost:5173", "http://localhost:3000")
+                .setAllowedOrigins(
+                    "http://localhost:5173", 
+                    "http://localhost:3000",
+                    "http://ec2-13-125-187-28.ap-northeast-2.compute.amazonaws.com",
+                    "http://13.125.187.28"
+                )
                 .addInterceptors(new HttpSessionHandshakeInterceptor())
                 .withSockJS()
                 .setDisconnectDelay(30 * 1000)
