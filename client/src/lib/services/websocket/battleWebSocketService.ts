@@ -14,9 +14,9 @@ type EventHandlerMap = {
   [K in BattleSocketEventKey]: (data: BattleWebSocketEvents[K]) => void;
 };
 
-// WebSocket 기본 주소
+// SockJS 기본 주소 (HTTP URL 사용)
 const WS_BASE_URL =
-  process.env.NEXT_PUBLIC_WS_BASE_URL || "ws://localhost:8080/ws-battle/";
+  process.env.NEXT_PUBLIC_WS_BASE_URL || "http://localhost:8080/ws-battle";
 
 class BattleWebSocketService {
   private client: Client | null = null;
